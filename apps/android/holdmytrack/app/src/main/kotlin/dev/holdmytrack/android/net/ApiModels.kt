@@ -1,6 +1,7 @@
 package dev.holdmytrack.android.net
 
 import dev.holdmytrack.android.map.SpotArea
+import java.io.File
 import java.io.IOException
 import java.time.Instant
 import okio.source
@@ -243,8 +244,12 @@ data class PhotoExif(
     val lon: Double? = null,
 )
 
-/** A photo's image, resized for upload: its bytes and their type (`image/webp`, `image/jpeg`). */
-class PhotoImage(val bytes: ByteArray, val contentType: String)
+/** A photo's image, resized for upload: a file in the app's cache holding it, and its type
+ *  (`image/webp`, `image/jpeg`). A file rather than bytes, so a draft of many photos isn't held
+ *  in memory until Save. */
+class PhotoImage(val file: File, val contentType: String) {
+    fun delete() = file.delete()
+}
 
 /** The server couldn't tell where on the track a photo was taken (`photo_needs_place`,
  *  FR-15.1): nothing was stored, and it goes again with the user's `route_at`. */

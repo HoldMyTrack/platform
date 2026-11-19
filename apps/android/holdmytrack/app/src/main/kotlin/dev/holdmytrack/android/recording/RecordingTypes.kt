@@ -2,7 +2,6 @@ package dev.holdmytrack.android.recording
 
 import android.content.Context
 import dev.holdmytrack.android.net.Session
-import dev.holdmytrack.android.recording.db.RecordedTrackRecord
 
 /**
  * The track-type field is free text — a custom type is the whole point — but the Type
@@ -51,14 +50,14 @@ object RecordingTypes {
 
     /**
      * What the Type picker lists: every type the account's server-side tracks use, plus
-     * this device's recordings (every one of them unsynced — a synced row is deleted from the
-     * device, and is counted in [server] instead), most-used first, then any [PRESETS] not already present. [server] is empty
+     * the types of this device's recordings waiting to be sent ([local]; a sent one is counted in
+     * [server] instead), most-used first, then any [PRESETS] not already present. [server] is empty
      * when it couldn't be read — offline, say — which still leaves a usable list.
      * [DEFAULT] is left out: it is the "no type yet" placeholder, not a choice worth offering.
      */
-    fun known(server: Map<String, Int>, local: List<RecordedTrackRecord>): List<TypeCount> {
+    fun known(server: Map<String, Int>, local: List<String>): List<TypeCount> {
         val counts = server.toMutableMap()
-        for (record in local) counts.merge(record.trackType, 1, Int::plus)
+        for (type in local) counts.merge(type, 1, Int::plus)
         counts.remove(DEFAULT)
         val used = counts.entries.sortedByDescending { it.value }.map { TypeCount(it.key, it.value) }
         return used + PRESETS.filter { it !in counts }.map { TypeCount(it, 0) }

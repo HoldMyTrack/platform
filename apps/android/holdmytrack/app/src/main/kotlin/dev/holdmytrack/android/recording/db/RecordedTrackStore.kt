@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
  * already prefers where a platform API covers the need (`LocationManager` over Play Services'
  * `FusedLocationProviderClient`, plain `OkHttp` over Retrofit).
  */
-internal class RecordingDbHelper(context: Context) :
+internal class RecordingDbHelper private constructor(context: Context) :
     SQLiteOpenHelper(context.applicationContext, "holdmytrack-recordings.db", null, 7) {
 
     init {
@@ -160,6 +160,13 @@ internal class RecordingDbHelper(context: Context) :
     override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
     companion object {
+        @Volatile private var instance: RecordingDbHelper? = null
+
+        /** The process's one helper for this file, so the stores and the journal share one
+         *  connection pool rather than each holding its own until the collector finds it. */
+        fun of(context: Context): RecordingDbHelper =
+            instance ?: synchronized(this) { instance ?: RecordingDbHelper(context.applicationContext).also { instance = it } }
+
         const val TABLE = "recorded_activities"
         const val LIVE_TABLE = "live_recording"
         const val LIVE_POINTS_TABLE = "live_points"
@@ -218,8 +225,8 @@ internal class RecordingDbHelper(context: Context) :
  * listed, edited and sent from the Sync tab (`panel/SyncTab`, `sync/SyncRunner`). A sent row is
  * marked rather than deleted, and deleted once its ingest lands (`sync/SyncProgress`): until then
  * the phone holds the only copy, which a failed ingest has to be able to give back, even after
- * the app was killed. One instance per caller is fine; `SQLiteOpenHelper` itself keeps the
- * single underlying connection.
+ * the app was killed. One instance per caller is fine: every one shares the process's
+ * helper ([RecordingDbHelper.of]).
  *
  * **Every read and write is scoped to the currently signed-in account.** Recording works
  * whether or not anyone is signed in, and the app supports switching accounts on one device
@@ -232,7 +239,7 @@ internal class RecordingDbHelper(context: Context) :
  */
 class RecordedTrackStore(context: Context) {
 
-    private val helper = RecordingDbHelper(context)
+    private val helper = RecordingDbHelper.of(context)
 
     private fun account() = Session.email
 
@@ -252,10 +259,22 @@ class RecordedTrackStore(context: Context) {
         Unit
     }
 
-    suspend fun get(id: String): RecordedTrackRecord? = withContext(Dispatchers.IO) {
+    suspend fun get(id: String): RecordedTrackRecord? = withContext(Dispatchers.IO) { row(id, withPoints = true) }
+
+    /** [id] without its points (an empty list): what the Save screen shows and edits, which
+     *  never needs a multi-hour recording's every fix. */
+    suspend fun header(id: String): RecordedTrackRecord? = withContext(Dispatchers.IO) { row(id, withPoints = false) }
+
+    private fun row(id: String, withPoints: Boolean): RecordedTrackRecord? =
         helper.readableDatabase.query(
             RecordingDbHelper.TABLE, null, "id = ? AND account = ?", arrayOf(id, account()), null, null, null,
-        ).use { if (it.moveToFirst()) it.toRecord() else null }
+        ).use { if (it.moveToFirst()) it.toRecord(withPoints) else null }
+
+    /** The type of each recording waiting to be sent, for the Type picker's counts. */
+    suspend fun waitingTypes(): List<String> = withContext(Dispatchers.IO) {
+        helper.readableDatabase.query(
+            RecordingDbHelper.TABLE, arrayOf("activity_type"), "account = ? AND sent_at_ms IS NULL", arrayOf(account()), null, null, null,
+        ).use { cursor -> buildList { while (cursor.moveToNext()) add(cursor.getString(0)) } }
     }
 
     private fun transaction(block: (SQLiteDatabase) -> Unit) {
@@ -317,7 +336,7 @@ class RecordedTrackStore(context: Context) {
         }
     }
 
-    private fun Cursor.toRecord() = RecordedTrackRecord(
+    private fun Cursor.toRecord(withPoints: Boolean = true) = RecordedTrackRecord(
         id = getString(getColumnIndexOrThrow("id")),
         name = getString(getColumnIndexOrThrow("name")),
         description = getString(getColumnIndexOrThrow("description")),
@@ -325,7 +344,7 @@ class RecordedTrackStore(context: Context) {
         startedAtMs = getLong(getColumnIndexOrThrow("started_at_ms")),
         distanceMeters = getDouble(getColumnIndexOrThrow("distance_meters")),
         durationSeconds = getLong(getColumnIndexOrThrow("duration_seconds")),
-        points = RecordingDbHelper.readPoints(helper.readableDatabase, getString(getColumnIndexOrThrow("id"))),
+        points = if (withPoints) RecordingDbHelper.readPoints(helper.readableDatabase, getString(getColumnIndexOrThrow("id"))) else emptyList(),
         createdAtMs = getLong(getColumnIndexOrThrow("created_at_ms")),
     )
 }

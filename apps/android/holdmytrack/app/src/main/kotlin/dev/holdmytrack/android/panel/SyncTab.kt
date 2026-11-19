@@ -142,6 +142,10 @@ class SyncTab(
     private var overlaps: Map<String, TrackOverlap> = emptyMap()
     /** The other waiting rows each one overlaps, by key ([Similar.waiting]), as last rendered. */
     private var similar: Map<String, List<Candidate>> = emptyMap()
+    /** The rows [similar] was worked out from: it compares every pair, so only a change redoes it. */
+    private var similarOf: List<Candidate>? = null
+    /** The lists as last rendered, for a tap to find its row in. */
+    private var rendered: SyncList? = null
     private var showHidden = false
 
     /** What Health Connect couldn't give, said over the list. */
@@ -356,13 +360,15 @@ class SyncTab(
 
     private fun render() {
         if (!showing) return
-        TrackTypes.refresh(all().map { it.trackType })
+        // Worked out once a pass: every list below is a view of it.
+        val list = list()
+        rendered = list
+        TrackTypes.refresh(list.everything.map { it.trackType })
         val demo = Session.isDemo
         accountNotice.text = if (demo) res.getString(R.string.sync_demo_read_only) else null
         accountNotice.visibility = if (demo) View.VISIBLE else View.GONE
         upload.visibility = if (demo) View.GONE else View.VISIBLE
 
-        val list = list()
         val everything = list.everything
         val shown = list.shown
         renderTypes(everything)
@@ -401,7 +407,10 @@ class SyncTab(
 
         // Rows that can still be sent: what's on its way or hidden isn't offered, so it isn't
         // anyone's double.
-        similar = Similar.waiting(list.offered)
+        if (list.offered != similarOf) {
+            similar = Similar.waiting(list.offered)
+            similarOf = list.offered
+        }
         rows.submitList(shown.map { row(it) })
         listNote.text = when {
             loading && everything.isEmpty() -> res.getString(R.string.sync_list_loading)
@@ -659,7 +668,7 @@ class SyncTab(
         )
     }
 
-    private fun candidate(key: String): Candidate? = all().firstOrNull { it.key == key }
+    private fun candidate(key: String): Candidate? = (rendered ?: list()).everything.firstOrNull { it.key == key }
 
     /** What one row shows — compared, unlike a [Candidate], whose line is an array. */
     private data class Row(

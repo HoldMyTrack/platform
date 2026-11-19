@@ -1,6 +1,7 @@
 package dev.holdmytrack.android.net
 
 import android.content.ContentResolver
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -12,10 +13,13 @@ import dev.holdmytrack.android.map.DateFilter
 import dev.holdmytrack.android.map.GeoPoint
 import dev.holdmytrack.android.panel.TrackKind
 import dev.holdmytrack.android.panel.TrackTypes
+import java.io.File
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
+import java.util.concurrent.Executors
+import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Dispatcher
@@ -27,6 +31,7 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import kotlinx.coroutines.Dispatchers
@@ -535,6 +540,51 @@ object HoldMyTrackApi {
         call(request, { body -> Uri.parse(BuildConfig.API_BASE_URL + decode<ExportLinkJson>(body).url) }, onResult)
     }
 
+    /** Where [imageClient] keeps its images: the app's cache directory, set at start. */
+    private var imageCacheDir: File? = null
+
+    /** Set from `HoldMyTrackApplication`, before any image is fetched. */
+    fun initImageCache(context: Context) {
+        imageCacheDir = File(context.cacheDir, "images")
+    }
+
+    /**
+     * [client] with a disk cache, for [image] alone: photos and their thumbnails are served
+     * immutable for a year, and the avatar's URL carries its version, so each is fetched once
+     * rather than on every return to the You tab or every step through the photo viewer. Not
+     * on [client] itself: MapLibre keeps its own tile cache through it.
+     */
+    private val imageClient: OkHttpClient by lazy {
+        val dir = imageCacheDir ?: return@lazy client
+        client.newBuilder().cache(Cache(dir, IMAGE_CACHE_BYTES)).build()
+    }
+
+    /** Where the image cache is emptied or trimmed: off the main thread, since it walks and
+     *  deletes files. */
+    private val imageCacheIo = Executors.newSingleThreadExecutor()
+
+    /** The account's images go with its session (`Session.clear`): the avatar's path is the
+     *  same for every account. Files left by an earlier process go too. */
+    fun clearImageCache() {
+        imageCacheIo.execute { runCatching { imageClient.cache?.evictAll() } }
+    }
+
+    /** Photo [id]'s image and thumbnail leave the cache once it's deleted. */
+    private fun forgetPhoto(id: String) {
+        val photo = v2("photos", id).toString()
+        imageCacheIo.execute {
+            runCatching {
+                val urls = imageClient.cache?.urls() ?: return@runCatching
+                while (urls.hasNext()) {
+                    val url = urls.next()
+                    if (url == photo || url.startsWith("$photo/") || url.startsWith("$photo?")) urls.remove()
+                }
+            }
+        }
+    }
+
+    private const val IMAGE_CACHE_BYTES = 64L shl 20
+
     /** The avatar at [path] (a [Profile.avatarUrl], relative to the API) — see [image]. */
     fun avatar(path: String, onResult: (Result<Bitmap>) -> Unit) = image(path, maxSide = null, onResult)
 
@@ -547,7 +597,7 @@ object HoldMyTrackApi {
      */
     fun image(path: String, maxSide: Int?, onResult: (Result<Bitmap>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + path).build()
-        client.newCall(request).enqueue(object : Callback {
+        imageClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 main.post { onResult(Result.failure(e)) }
             }
@@ -925,8 +975,8 @@ object HoldMyTrackApi {
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("track_id", trackId)
-            .addFormDataPart("file", "photo", file.bytes.toRequestBody(file.contentType.toMediaType()))
-            .addFormDataPart("thumb", "thumb", thumb.bytes.toRequestBody(thumb.contentType.toMediaType()))
+            .addFormDataPart("file", "photo", file.file.asRequestBody(file.contentType.toMediaType()))
+            .addFormDataPart("thumb", "thumb", thumb.file.asRequestBody(thumb.contentType.toMediaType()))
             .apply {
                 if (exif.takenAt != null) addFormDataPart("taken_at", exif.takenAt.toString())
                 else exif.takenLocal?.let { addFormDataPart("taken_local", it) }
@@ -957,7 +1007,11 @@ object HoldMyTrackApi {
     /** `DELETE /v2/photos/{id}` (FR-15.5) — the photo and both its images. */
     fun deletePhoto(id: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder().url(v2("photos", id)).delete().build()
-        call(request, { }) { onResult(deleteDone(it)) }
+        call(request, { }) { result ->
+            val done = deleteDone(result)
+            if (done.isSuccess) forgetPhoto(id)
+            onResult(done)
+        }
     }
 
     /** `photo_needs_place` as its own exception, so the Photos tab can tell it from a failure. */

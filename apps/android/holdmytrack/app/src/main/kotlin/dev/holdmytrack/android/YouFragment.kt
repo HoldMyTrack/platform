@@ -17,6 +17,7 @@ import dev.holdmytrack.android.panel.PanelFormat
 import dev.holdmytrack.android.privacy.PrivacyActivity
 import dev.holdmytrack.android.profile.ProfileStats
 import dev.holdmytrack.android.profile.RecentWeeksView
+import dev.holdmytrack.android.profile.YouRefresh
 import dev.holdmytrack.android.recording.RecordingFormat
 import dev.holdmytrack.android.settings.AccountDeletion
 import dev.holdmytrack.android.settings.AppLanguage
@@ -104,34 +105,44 @@ class YouFragment : Fragment(R.layout.fragment_you) {
 
     override fun onResume() {
         super.onResume()
-        // Back from Settings or Profile is a resume; a hidden tab reads when it shows.
-        if (!isHidden) load()
+        // Back from Settings, Profile or Privacy is a resume; a hidden tab reads when it next
+        // shows, as a return.
+        if (isHidden) resumedHidden = true else load(resumed = true)
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (!hidden) load()
+        if (hidden) return
+        load(resumed = resumedHidden)
+        resumedHidden = false
     }
 
-    /** The account, its numbers and its Private locations, each read afresh. */
-    private fun load() {
-        HoldMyTrackApi.verifySession { result ->
-            result.onSuccess { loaded ->
-                profile = loaded
-                Session.update(loaded)
-                if (view != null) renderAccount()
-            }
-        }
+    /** The app came back while another tab showed: the next show counts as a return. */
+    private var resumedHidden = false
+
+    /** When the numbers were last read, and when the account was. */
+    private var numbersRead: YouRefresh.Mark? = null
+    private var accountReadAtMs: Long? = null
+
+    /** The account and its numbers, each read again when it could have changed ([YouRefresh]),
+     *  and the Private locations. */
+    private fun load(resumed: Boolean) {
         val today = LocalDate.now(runCatching { ZoneId.of(Session.timezone) }.getOrDefault(ZoneId.systemDefault()))
-        HoldMyTrackApi.trackDays(EPOCH_DAY, "${today.year}-12-31") { result ->
-            val days = result.getOrNull() ?: return@trackDays
-            if (view == null) return@trackDays
-            val stats = ProfileStats.statsOf(days.days)
-            setStat(R.id.you_stat_tracks, R.string.profile_card_tracks, PanelFormat.count(resources, stats.count))
-            setStat(R.id.you_stat_distance, R.string.profile_card_distance, PanelFormat.totalDistance(resources, stats.distanceMeters))
-            setStat(R.id.you_stat_active_days, R.string.profile_card_active_days, PanelFormat.count(resources, stats.activeDays))
-            setStat(R.id.you_stat_streak, R.string.profile_card_longest_streak, PanelFormat.count(resources, stats.longestStreakDays))
-            weeks.setLevels(ProfileStats.recentWeeks(days.days, today, RECENT_WEEKS))
+        val now = YouRefresh.Mark(System.currentTimeMillis(), Session.tileVersion, today)
+        val reads = YouRefresh.of(numbersRead, accountReadAtMs, now, resumed)
+        if (reads.numbers) {
+            numbersRead = now
+            loadNumbers(today)
+        }
+        if (reads.account) {
+            accountReadAtMs = now.atMs
+            HoldMyTrackApi.verifySession { result ->
+                result.onSuccess { loaded ->
+                    profile = loaded
+                    Session.update(loaded)
+                    if (view != null) renderAccount()
+                }
+            }
         }
         HoldMyTrackApi.privateLocations { result ->
             val locations = result.getOrNull() ?: return@privateLocations
@@ -141,6 +152,21 @@ class YouFragment : Fragment(R.layout.fragment_you) {
             } else {
                 resources.getQuantityString(R.plurals.you_privacy_count, locations.size, locations.size)
             }
+        }
+    }
+
+    /** Every track day since 1970: the tab's numbers and its recent weeks. A failed read is
+     *  made again on the next show. */
+    private fun loadNumbers(today: LocalDate) {
+        HoldMyTrackApi.trackDays(EPOCH_DAY, "${today.year}-12-31") { result ->
+            val days = result.getOrNull() ?: run { numbersRead = null; return@trackDays }
+            if (view == null) return@trackDays
+            val stats = ProfileStats.statsOf(days.days)
+            setStat(R.id.you_stat_tracks, R.string.profile_card_tracks, PanelFormat.count(resources, stats.count))
+            setStat(R.id.you_stat_distance, R.string.profile_card_distance, PanelFormat.totalDistance(resources, stats.distanceMeters))
+            setStat(R.id.you_stat_active_days, R.string.profile_card_active_days, PanelFormat.count(resources, stats.activeDays))
+            setStat(R.id.you_stat_streak, R.string.profile_card_longest_streak, PanelFormat.count(resources, stats.longestStreakDays))
+            weeks.setLevels(ProfileStats.recentWeeks(days.days, today, RECENT_WEEKS))
         }
     }
 

@@ -6,32 +6,57 @@ import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.MapLayersResponse
 import dev.holdmytrack.android.net.Session
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 
 /**
  * Where the map's layers document ([MapLayersDoc]) comes from: `GET /v2/map/layers`, revalidated
  * by ETag, and the last one kept on disk, so a cold start draws Fog and the rest straight away
  * from cached tiles, as the stored tile version does (`net/Session.tileVersion`). A kept document
  * is used only at the account's stored tile version, which signing out clears, so one account's
- * never draws another's.
+ * never draws another's. The files are read ahead at start ([warm]) and written behind, on a
+ * thread of their own, so the map's main thread waits on neither.
  */
 object MapLayersSource {
 
     private class Kept(val doc: MapLayersDoc.Doc, val etag: String?)
 
-    private val kept = mutableMapOf<String, Kept>()
+    /** Read by the main thread, filled by [warm]'s too. */
+    private val kept = ConcurrentHashMap<String, Kept>()
 
-    private fun file(context: Context, flavor: String) = File(File(context.cacheDir, "map-layers"), "$flavor.json")
+    /** One thread, so reads ahead and writes stay in order. */
+    private val io = Executors.newSingleThreadExecutor()
 
-    private fun etagFile(context: Context, flavor: String) = File(File(context.cacheDir, "map-layers"), "$flavor.etag")
+    /** Reads every kept document into memory, from `HoldMyTrackApplication` before any map
+     *  asks; [last] reads a file itself only if it asks first. */
+    fun warm(context: Context) {
+        val app = context.applicationContext
+        io.execute {
+            val names = File(app.cacheDir, DIR).listFiles { f -> f.name.endsWith(".json") }.orEmpty()
+            for (name in names) {
+                val flavor = name.name.removeSuffix(".json")
+                read(app, flavor)?.let { kept.putIfAbsent(flavor, it) }
+            }
+        }
+    }
+
+    private fun file(context: Context, flavor: String) = File(File(context.cacheDir, DIR), "$flavor.json")
+
+    private fun etagFile(context: Context, flavor: String) = File(File(context.cacheDir, DIR), "$flavor.etag")
+
+    /** The flavor the map last asked for: [warm] keeps both, and [lastAny] wants the map's. */
+    @Volatile private var asked: String? = null
 
     /** The last document for [flavor], if it's at the stored tile version. */
     fun last(context: Context, flavor: String): MapLayersDoc.Doc? {
+        asked = flavor
         val entry = kept[flavor] ?: read(context, flavor)?.also { kept[flavor] = it }
         return entry?.doc?.takeIf { it.tileVersion.isNotEmpty() && it.tileVersion == Session.tileVersion }
     }
 
-    /** Any document this process has read, at whatever tile version: for colors only. */
-    fun lastAny(): MapLayersDoc.Doc? = kept.values.firstOrNull()?.doc
+    /** The document of the flavor the map last asked for, else any this process has read, at
+     *  whatever tile version: for colors only. */
+    fun lastAny(): MapLayersDoc.Doc? = (asked?.let { kept[it] } ?: kept.values.firstOrNull())?.doc
 
     /** What a fetch hands the map. */
     sealed interface Outcome {
@@ -60,15 +85,20 @@ object MapLayersSource {
      *  nothing on a failure, which leaves the map with what it has. */
     fun fetch(context: Context, flavor: String, onDoc: (MapLayersDoc.Doc) -> Unit) {
         val app = context.applicationContext
+        asked = flavor
         val previous = kept[flavor]
         HoldMyTrackApi.mapLayers(flavor, previous?.etag) { result ->
             result.onFailure { Log.w(TAG, "map layers: ${it.message}") }
             when (val outcome = outcome(result, previous?.doc)) {
                 is Outcome.Fresh -> {
                     kept[flavor] = Kept(outcome.doc, outcome.response.etag)
-                    runCatching {
-                        file(app, flavor).apply { parentFile?.mkdirs() }.writeText(outcome.response.text)
-                        etagFile(app, flavor).writeText(outcome.response.etag.orEmpty())
+                    val text = outcome.response.text
+                    val etag = outcome.response.etag.orEmpty()
+                    io.execute {
+                        runCatching {
+                            file(app, flavor).apply { parentFile?.mkdirs() }.writeText(text)
+                            etagFile(app, flavor).writeText(etag)
+                        }
                     }
                     onDoc(outcome.doc)
                 }
@@ -84,4 +114,5 @@ object MapLayersSource {
     }.getOrNull()
 
     private const val TAG = "MapLayersSource"
+    private const val DIR = "map-layers"
 }

@@ -152,6 +152,7 @@ object Session {
         runCatching { CookieManager.getInstance().removeAllCookies(null) }
         cachedToken = null
         verified = false
+        HoldMyTrackApi.clearImageCache()
         // Fog's locked level and picked place are the account's: the next account starts with neither.
         MapLayers.update(null) { it.copy(fogLevel = null, vars = it.vars - FogPlaces.VAR) }
         prefs.edit()

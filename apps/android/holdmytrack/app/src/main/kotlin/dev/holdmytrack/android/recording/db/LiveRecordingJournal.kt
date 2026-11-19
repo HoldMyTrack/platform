@@ -22,7 +22,7 @@ import java.time.Instant
  */
 class LiveRecordingJournal(context: Context) {
 
-    private val helper = RecordingDbHelper(context)
+    private val helper = RecordingDbHelper.of(context)
 
     /** What a process death left behind: the account it was recorded under, the moving time
      *  and distance as of its last fix or pause, and every point recorded. Moving time is kept

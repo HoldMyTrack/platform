@@ -65,6 +65,7 @@ HoldMyTrack keeps the outdoor tracks a user chooses to bring in and draws them a
 | A web visitor's hash of address and browser under a random daily salt, for the unique-visitor count | System | Database | Deleted with the salt once that day's statistics are taken, within 2 days |
 | Nightly backups: database dump, originals, photos, avatars | System | Cloudflare R2 | Up to 8 weeks after deletion; newest 3 dumps also on the server |
 | Data download archive | User's request | Cloudflare R2 | 7 days |
+| Photos and the avatar the Android app has shown | System | The phone, in the app's cache | Until the photo is deleted, the account signs out, or newer images push it out of 64 MB |
 
 **Who can see it:**
 

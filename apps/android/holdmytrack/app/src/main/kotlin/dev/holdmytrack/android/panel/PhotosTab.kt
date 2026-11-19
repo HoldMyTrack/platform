@@ -22,10 +22,10 @@ import com.google.android.material.textfield.TextInputEditText
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.PhotoMarkerItem
 import dev.holdmytrack.android.map.PhotoMarkerOverlay
-import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Photo
 import dev.holdmytrack.android.net.PhotoNeedsPlaceException
+import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.photos.DraftRow
 import dev.holdmytrack.android.photos.NewPhoto
 import dev.holdmytrack.android.photos.PhotoDraft
@@ -36,6 +36,7 @@ import dev.holdmytrack.android.photos.PlaceAnchor
 import dev.holdmytrack.android.photos.PreparedPhoto
 import dev.holdmytrack.android.photos.TimedPoint
 import dev.holdmytrack.android.photos.UnreadablePhotoException
+import java.io.File
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -128,6 +129,15 @@ class PhotosTab(
 
     /** New photos' thumbnails, decoded once from what will be uploaded. */
     private val localThumbs = HashMap<String, Bitmap>()
+
+    /** Where picked photos wait, resized, until Save ([PhotoPrep.prepare]); emptied when the
+     *  window closes, and when it opens on a track, which also sweeps a killed process's. Not the
+     *  cache directory, which Android may empty while a draft is open. */
+    private val drafts = File(context.noBackupFilesDir, "photo-drafts")
+
+    private fun clearDrafts() {
+        drafts.listFiles()?.forEach { it.delete() }
+    }
     private val holders = HashMap<String, RowHolder>()
 
     init {
@@ -156,6 +166,7 @@ class PhotosTab(
             render()
             return
         }
+        if (track == null) clearDrafts()
         track = opened
         route = null
         trackError = null
@@ -215,15 +226,23 @@ class PhotosTab(
         val resolver = context.contentResolver
         PREPARE.execute {
             val name = PhotoPrep.displayName(resolver, uri)
-            val prepared = runCatching { PhotoPrep.prepare(resolver, uri) }
+            val prepared = runCatching { PhotoPrep.prepare(resolver, uri, drafts) }
             main.post {
-                if (gen != generation) return@post
+                if (gen != generation) {
+                    // The window closed, or opened on another track, while this one was resized.
+                    prepared.onSuccess { it.file.delete(); it.thumb.delete() }
+                    return@post
+                }
                 prepared.onFailure { failure ->
                     fail(name, failure)
                     prepareNext(trackId, uris, index + 1, previous, gen)
                 }.onSuccess { photo ->
                     HoldMyTrackApi.checkPhotoPlace(trackId, photo.exif) { placed ->
-                        if (gen != generation) return@checkPhotoPlace
+                        if (gen != generation) {
+                            photo.file.delete()
+                            photo.thumb.delete()
+                            return@checkPhotoPlace
+                        }
                         val key = "new-${System.currentTimeMillis()}-$index"
                         placed.onSuccess { at ->
                             addNew(key, name, photo, at.epochSecond)
@@ -245,7 +264,7 @@ class PhotosTab(
     }
 
     private fun addNew(key: String, name: String, prepared: PreparedPhoto, routeAt: Long?) {
-        BitmapFactory.decodeByteArray(prepared.thumb.bytes, 0, prepared.thumb.bytes.size)?.let { localThumbs[key] = it }
+        BitmapFactory.decodeFile(prepared.thumb.file.path)?.let { localThumbs[key] = it }
         update(draft.withAdded(NewPhoto(key, name, prepared, routeAt)))
     }
 
@@ -276,6 +295,8 @@ class PhotosTab(
                 HoldMyTrackApi.uploadPhoto(trackId, p.file, p.thumb, p.exif, Instant.ofEpochSecond(photo.routeAt ?: 0), photo.caption.trim()) { result ->
                     result.onSuccess {
                         photosSaved = true
+                        p.file.delete()
+                        p.thumb.delete()
                         localThumbs.remove(photo.key)
                         draft = draft.withoutNew(photo.key)
                         next()
@@ -329,6 +350,7 @@ class PhotosTab(
     /** The window closed: the draft, the track and the overlay go. */
     fun close() {
         generation += 1
+        clearDrafts()
         track = null
         photos = emptyList()
         photosLoaded = false
@@ -358,6 +380,8 @@ class PhotosTab(
 
     private fun removeNew(photo: NewPhoto) {
         removed += photo.key
+        photo.prepared.file.delete()
+        photo.prepared.thumb.delete()
         localThumbs.remove(photo.key)
         if (editingId == photo.key) editingId = null
         update(draft.withoutNew(photo.key))

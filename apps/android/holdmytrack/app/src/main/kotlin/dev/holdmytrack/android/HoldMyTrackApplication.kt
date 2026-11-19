@@ -5,6 +5,7 @@ import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
+import dev.holdmytrack.android.map.MapLayersSource
 import dev.holdmytrack.android.net.AppOutdated
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
@@ -32,6 +33,8 @@ class HoldMyTrackApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Session.init(this)
+        HoldMyTrackApi.initImageCache(this)
+        MapLayersSource.warm(this)
         AppOutdated.init(this)
         TrackTypes.init(this)
         // Before any screen inflates, so the first one already has the chosen theme's colors.
