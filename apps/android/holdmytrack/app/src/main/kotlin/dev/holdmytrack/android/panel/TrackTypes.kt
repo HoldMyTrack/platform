@@ -2,6 +2,7 @@ package dev.holdmytrack.android.panel
 
 import android.content.Context
 import android.os.LocaleList
+import androidx.core.content.edit
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import org.json.JSONObject
 import java.lang.ref.WeakReference
@@ -101,7 +102,10 @@ object TrackTypes {
                 labels[type]?.let { put("label", it) }
             })
         }
-        prefs.edit().putString(KEY_TYPES, json.toString()).putString(KEY_LANGUAGE, language()).apply()
+        prefs.edit {
+            putString(KEY_TYPES, json.toString())
+            putString(KEY_LANGUAGE, language())
+        }
     }
 
     /** The languages the app asks the server in (`HoldMyTrackApi`'s Accept-Language). */
@@ -116,10 +120,10 @@ object TrackTypes {
         if (old.all.isEmpty()) return
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (!prefs.contains(KEY_TYPES)) {
-            prefs.edit()
-                .putString(KEY_TYPES, old.getString(KEY_TYPES, null))
-                .putString(KEY_LANGUAGE, old.getString(KEY_LANGUAGE, null))
-                .commit()
+            prefs.edit(commit = true) {
+                putString(KEY_TYPES, old.getString(KEY_TYPES, null))
+                putString(KEY_LANGUAGE, old.getString(KEY_LANGUAGE, null))
+            }
         }
         context.deleteSharedPreferences(OLD_PREFS)
     }

@@ -1,6 +1,7 @@
 package dev.holdmytrack.android.map
 
 import android.content.Context
+import androidx.core.content.edit
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -36,7 +37,7 @@ object MapSatellite {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY, false)
 
     fun set(context: Context, on: Boolean) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY, on).apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putBoolean(KEY, on) }
     }
 
     /** Whether the deployment configures imagery: the server leaves the source out otherwise. */

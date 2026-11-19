@@ -2,6 +2,7 @@ package dev.holdmytrack.android.sync
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 /**
  * Which sources Settings › Sync has switched on (`apps/android/docs/SPEC.md` FR-3.1), kept on this
@@ -21,7 +22,7 @@ class SyncSources(context: Context, account: String) {
     var healthConnect: Boolean
         get() = prefs.getBoolean(healthConnectKey, false)
         set(on) {
-            prefs.edit().putBoolean(healthConnectKey, on).apply()
+            prefs.edit { putBoolean(healthConnectKey, on) }
         }
 
     /** Switched on and not read yet: the one load that runs without Load being tapped
@@ -30,11 +31,14 @@ class SyncSources(context: Context, account: String) {
     var firstLoadPending: Boolean
         get() = prefs.getBoolean(firstLoadKey, false)
         set(pending) {
-            prefs.edit().putBoolean(firstLoadKey, pending).apply()
+            prefs.edit { putBoolean(firstLoadKey, pending) }
         }
 
     fun clear() {
-        prefs.edit().remove(healthConnectKey).remove(firstLoadKey).apply()
+        prefs.edit {
+            remove(healthConnectKey)
+            remove(firstLoadKey)
+        }
     }
 
     private companion object {

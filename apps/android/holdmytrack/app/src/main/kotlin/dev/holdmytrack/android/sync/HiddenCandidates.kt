@@ -2,6 +2,7 @@ package dev.holdmytrack.android.sync
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 /**
  * The Sync tab's hidden rows (`docs/SPEC.md` FR-3.4): candidates the user swiped aside, by
@@ -31,11 +32,11 @@ class HiddenCandidates(context: Context, account: String) {
     }
 
     fun clear() {
-        prefs.edit().remove(key).apply()
+        prefs.edit { remove(key) }
     }
 
     private fun write(keys: Set<String>) {
-        prefs.edit().putStringSet(key, keys).apply()
+        prefs.edit { putStringSet(key, keys) }
     }
 
     private companion object {
