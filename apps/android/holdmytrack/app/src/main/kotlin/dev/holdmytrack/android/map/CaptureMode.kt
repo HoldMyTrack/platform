@@ -349,8 +349,7 @@ class CaptureMode(
         }
     }
 
-    @Suppress("DEPRECATION") // activity.display needs API 30; the window manager's works on all.
-    private fun screenRotation(): Float = when (activity.windowManager.defaultDisplay.rotation) {
+    private fun screenRotation(): Float = when (activity.display?.rotation) {
         Surface.ROTATION_90 -> 90f
         Surface.ROTATION_180 -> 180f
         Surface.ROTATION_270 -> 270f
