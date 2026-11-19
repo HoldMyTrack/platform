@@ -40,6 +40,9 @@ class PendingTracker(
 
     private val poll = Runnable { check() }
 
+    /** The map is off screen: nothing is scheduled until [start], whatever answer lands. */
+    private var stopped = false
+
     private fun check() {
         val watched = PendingDiff.watched(pendingIds, awaiting)
         if (watched.isEmpty()) return
@@ -87,14 +90,22 @@ class PendingTracker(
     /** A read failed: polling goes on while rows were Pending. */
     fun readFailed() = schedule()
 
-    /** The map left the screen: no more checks, and the answer of one in flight is dropped,
-     *  since it would schedule the next. The next list read starts polling again. */
+    /** The map left the screen: no more checks, and the answer of a check or a list read in
+     *  flight schedules nothing. */
     fun stop() {
+        stopped = true
         generation++
         host()?.removeCallbacks(poll)
     }
 
+    /** The map is back: polling carries on while anything is Pending or awaited. */
+    fun start() {
+        stopped = false
+        schedule()
+    }
+
     private fun schedule() {
+        if (stopped) return
         val view = host() ?: return
         view.removeCallbacks(poll)
         if (pendingIds.isNotEmpty() || awaiting.isNotEmpty()) view.postDelayed(poll, POLL_MS)
