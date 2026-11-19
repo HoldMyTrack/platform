@@ -24,6 +24,7 @@ import dev.holdmytrack.android.R
 import dev.holdmytrack.android.SyncActivity
 import dev.holdmytrack.android.UploadActivity
 import dev.holdmytrack.android.health.HealthConnect
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.TrackOverlap
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.OverlapSpan
@@ -568,7 +569,7 @@ class SyncTab(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                showProblems(listOf(res.getString(R.string.sync_failed, e.message.orEmpty())))
+                showProblems(listOf(FailureText.of(e, res.getString(R.string.sync_failed))))
             } finally {
                 runJob = null
                 render()

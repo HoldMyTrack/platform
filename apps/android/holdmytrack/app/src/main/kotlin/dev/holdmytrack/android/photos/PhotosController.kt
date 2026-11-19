@@ -10,6 +10,7 @@ import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.PhotoMarkerOverlay
 import dev.holdmytrack.android.map.PhotoMarkers
 import dev.holdmytrack.android.map.PhotoPopup
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Photo
 import dev.holdmytrack.android.panel.EditTrackWindow
@@ -124,7 +125,7 @@ class PhotosController(
             if (gen != generation) return@photos
             photos = result.getOrDefault(emptyList())
             loaded = true
-            error = result.exceptionOrNull()?.let { it.message?.takeIf { m -> m.isNotBlank() } ?: fragment.getString(R.string.map_unreachable) }
+            error = result.exceptionOrNull()?.let { FailureText.of(it, fragment.getString(R.string.map_unreachable)) }
             if (error != null) Log.w(TAG, "could not load photos", result.exceptionOrNull())
             if (single != null && edit.single?.id == single.id) edit.setPhotos(photos, error)
             popup.retain(photos)

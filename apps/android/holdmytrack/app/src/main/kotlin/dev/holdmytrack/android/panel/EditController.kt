@@ -10,8 +10,8 @@ import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.MapOverlays
 import dev.holdmytrack.android.map.SpotsController
 import dev.holdmytrack.android.map.RouteEditOverlay
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.Track
-import dev.holdmytrack.android.net.ApiException
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.RoutePoint
 import dev.holdmytrack.android.photos.PhotosController
@@ -124,7 +124,7 @@ class EditController(
                     next()
                 }.onFailure { failure ->
                     opening = false
-                    val reason = (failure as? ApiException)?.message ?: root.resources.getString(R.string.map_unreachable)
+                    val reason = FailureText.of(failure, root.resources.getString(R.string.map_unreachable))
                     Toast.makeText(root.context, root.resources.getString(R.string.edit_open_failed, reason), Toast.LENGTH_LONG).show()
                 }
             }

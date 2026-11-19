@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Trip
 
@@ -106,7 +107,7 @@ object TripDialog {
                     onDone(saved)
                 }.onFailure { failure ->
                     renderButtons()
-                    error.text = failure.message?.takeIf { it.isNotBlank() } ?: context.getString(R.string.trip_save_failed)
+                    error.text = FailureText.of(failure, context.getString(R.string.trip_save_failed))
                     error.visibility = View.VISIBLE
                 }
             }

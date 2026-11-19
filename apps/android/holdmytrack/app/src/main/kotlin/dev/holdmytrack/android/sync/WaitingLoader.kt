@@ -3,6 +3,7 @@ package dev.holdmytrack.android.sync
 import android.content.Context
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.health.HealthConnect
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.sync.HealthConnectCard.Companion.isReadable
@@ -66,7 +67,7 @@ class WaitingLoader(private val context: Context) {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Result.Failed(context.getString(R.string.sync_read_failed, e.message.orEmpty()))
+            Result.Failed(context.getString(R.string.sync_read_failed))
         }
     }
 }

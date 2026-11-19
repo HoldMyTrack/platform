@@ -6,7 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
 import dev.holdmytrack.android.R
-import dev.holdmytrack.android.net.ApiException
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import java.io.File
@@ -167,8 +167,7 @@ object FileImports {
                 sentCount++
                 if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
             } catch (e: Exception) {
-                // The server's wording for its refusals; a dropped connection in the app's own.
-                val reason = (e as? ApiException)?.message ?: res.getString(R.string.upload_network_error)
+                val reason = FailureText.of(e, res.getString(R.string.network_error))
                 _notes += Note(res.getString(R.string.upload_failed_transfer, transfer.name, reason), error = true)
             } finally {
                 next.copy.delete()

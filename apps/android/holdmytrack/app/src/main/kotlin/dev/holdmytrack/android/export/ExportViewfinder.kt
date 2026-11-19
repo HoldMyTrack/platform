@@ -86,6 +86,7 @@ class ExportViewfinder(
     private val stats = ExportStatsCard(
         fetch = { r, done -> HoldMyTrackApi.statsCard(r.trackIds, r.width, r.height, r.dark, done) },
         onChange = ::renderStats,
+        unreachable = context.getString(R.string.network_error),
     )
 
     private var choice: ExportChoice = lastChoice

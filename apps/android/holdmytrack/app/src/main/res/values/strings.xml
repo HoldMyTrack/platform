@@ -47,7 +47,7 @@
     <string name="verify_email_code_hint">Code from the email</string>
     <string name="verify_email_resend">Resend verification email</string>
     <string name="verify_email_not_yet">Enter the 6-digit code from the email.</string>
-    <string name="verify_email_check_failed">Couldn\'t reach HoldMyTrack: %1$s</string>
+    <string name="verify_email_check_failed">Couldn\'t reach HoldMyTrack.</string>
 
     <string name="mode_normal">Normal</string>
     <string name="mode_fog">Fog</string>
@@ -265,7 +265,7 @@
     <string name="sync_allow_access">Allow Health Connect access</string>
     <string name="sync_open_health_connect">Open Health Connect</string>
     <string name="sync_now">Sync</string>
-    <string name="sync_failed">Sync failed: %1$s</string>
+    <string name="sync_failed">Sync failed.</string>
     <string name="sync_rejected_row">Rejected: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Stopped early. %1$s</string>
     <string name="sync_refusal_too_many_points">the route has %1$d points, more than one sync request accepts</string>
@@ -277,7 +277,7 @@
         <item quantity="one">Health Connect wouldn\'t hand over %1$d route. Keep HoldMyTrack on screen and check that exercise routes are still allowed.</item>
         <item quantity="other">Health Connect wouldn\'t hand over %1$d routes. Keep HoldMyTrack on screen and check that exercise routes are still allowed.</item>
     </plurals>
-    <string name="sync_read_failed">Couldn\'t list Health Connect: %1$s</string>
+    <string name="sync_read_failed">Couldn\'t list Health Connect.</string>
     <string name="sync_types">Track types</string>
     <string name="sync_select_all">Select all</string>
     <string name="sync_select_none">Select none</string>
@@ -381,7 +381,7 @@
     <string name="upload_too_large">%1$s is too large: at most %2$d MB.</string>
     <string name="upload_already">%1$s was already uploaded before.</string>
     <string name="upload_failed_transfer">%1$s: %2$s</string>
-    <string name="upload_network_error">Network error</string>
+    <string name="network_error">Network error</string>
     <string name="upload_unreadable">the file couldn\'t be read</string>
 
     <!-- The map's Tracks panel (panel/TracksPanel.kt), after the web's tracks.* and filters.* messages. -->

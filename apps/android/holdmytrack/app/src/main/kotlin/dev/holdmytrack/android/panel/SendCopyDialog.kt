@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Trip
 
@@ -66,7 +67,7 @@ object SendCopyDialog {
                     status.text = context.getString(R.string.trip_send_done, to)
                     status.setTextColor(context.getColor(R.color.hmt_ink))
                 }.onFailure { failure ->
-                    status.text = failure.message?.takeIf { it.isNotBlank() } ?: context.getString(R.string.trip_save_failed)
+                    status.text = FailureText.of(failure, context.getString(R.string.trip_save_failed))
                     status.setTextColor(context.getColor(R.color.hmt_danger))
                 }
                 status.visibility = View.VISIBLE

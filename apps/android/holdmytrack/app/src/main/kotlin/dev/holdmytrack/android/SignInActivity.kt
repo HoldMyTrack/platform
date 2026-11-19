@@ -21,6 +21,7 @@ import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import dev.holdmytrack.android.net.Account
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Providers
 import dev.holdmytrack.android.net.Session
@@ -286,7 +287,7 @@ class SignInActivity : AppCompatActivity() {
             }
             finish()
         }.onFailure { failure ->
-            if (!isDestroyed) showError(failure.message ?: getString(R.string.sign_in_failed))
+            if (!isDestroyed) showError(FailureText.of(failure, getString(R.string.sign_in_failed)))
         }
     }
 

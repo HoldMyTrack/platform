@@ -9,6 +9,7 @@ import com.google.android.material.textfield.TextInputLayout
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.SignInActivity
 import dev.holdmytrack.android.map.EmptyNoticeDismissal
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.RecordingService
@@ -57,7 +58,7 @@ object AccountDeletion {
                 }.onFailure {
                     if (activity.isDestroyed) return@onFailure
                     confirm.isEnabled = true
-                    layout.error = it.message.orEmpty()
+                    layout.error = FailureText.of(it, activity.getString(R.string.network_error))
                 }
             }
         }

@@ -48,7 +48,7 @@
     <string name="verify_email_code_hint">Код из письма</string>
     <string name="verify_email_resend">Отправить письмо ещё раз</string>
     <string name="verify_email_not_yet">Введите 6-значный код из письма.</string>
-    <string name="verify_email_check_failed">Не удалось связаться с HoldMyTrack: %1$s</string>
+    <string name="verify_email_check_failed">Не удалось связаться с HoldMyTrack.</string>
 
     <string name="mode_normal">Обычный</string>
     <string name="mode_fog">Туман</string>
@@ -267,7 +267,7 @@
     <string name="sync_allow_access">Разрешить доступ к Health Connect</string>
     <string name="sync_open_health_connect">Открыть Health Connect</string>
     <string name="sync_now">Отправить</string>
-    <string name="sync_failed">Ошибка синхронизации: %1$s</string>
+    <string name="sync_failed">Ошибка синхронизации.</string>
     <string name="sync_rejected_row">Отклонено: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Остановлено досрочно. %1$s</string>
     <string name="sync_refusal_too_many_points">в маршруте %1$d точек — больше, чем принимает один запрос синхронизации</string>
@@ -281,7 +281,7 @@
         <item quantity="many">Health Connect не отдал маршрутов: %1$d. Не уходите из HoldMyTrack и проверьте, что доступ к маршрутам тренировок всё ещё разрешён.</item>
         <item quantity="other">Health Connect не отдал маршрутов: %1$d. Не уходите из HoldMyTrack и проверьте, что доступ к маршрутам тренировок всё ещё разрешён.</item>
     </plurals>
-    <string name="sync_read_failed">Не удалось прочитать Health Connect: %1$s</string>
+    <string name="sync_read_failed">Не удалось прочитать Health Connect.</string>
     <string name="sync_types">Типы треков</string>
     <string name="sync_select_all">Выбрать все</string>
     <string name="sync_select_none">Снять все</string>
@@ -393,7 +393,7 @@
     <string name="upload_too_large">%1$s слишком большой: не больше %2$d МБ.</string>
     <string name="upload_already">%1$s уже был загружен раньше.</string>
     <string name="upload_failed_transfer">%1$s: %2$s</string>
-    <string name="upload_network_error">Ошибка сети</string>
+    <string name="network_error">Ошибка сети</string>
     <string name="upload_unreadable">не удалось прочитать файл</string>
 
     <!-- The map's Tracks panel (panel/TracksPanel.kt), after the web's tracks.* and filters.* messages. -->

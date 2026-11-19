@@ -17,6 +17,7 @@ import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.Circle
 import dev.holdmytrack.android.map.CircleHit
 import dev.holdmytrack.android.map.PrivateLocationsOverlay
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.PrivateLocation
 import dev.holdmytrack.android.net.Session
@@ -123,7 +124,7 @@ class PrivateLocationEditor(
                 draw()
                 openPending()
             }.onFailure {
-                Toast.makeText(context, it.message?.takeIf { m -> m.isNotBlank() } ?: res.getString(R.string.map_unreachable), Toast.LENGTH_LONG).show()
+                Toast.makeText(context, FailureText.of(it, res.getString(R.string.map_unreachable)), Toast.LENGTH_LONG).show()
                 stop()
             }
         }
@@ -292,7 +293,7 @@ class PrivateLocationEditor(
                 onChanged()
                 hideEditor()
             }.onFailure {
-                showError(it.message?.takeIf { m -> m.isNotBlank() } ?: res.getString(R.string.edit_save_failed))
+                showError(FailureText.of(it, res.getString(R.string.edit_save_failed)))
                 renderEditor()
             }
         }
@@ -320,7 +321,7 @@ class PrivateLocationEditor(
                     }.onFailure {
                         confirm.isEnabled = true
                         confirm.setText(R.string.panel_delete_confirm)
-                        dialog.setMessage(res.getString(R.string.private_delete_failed, it.message.orEmpty()))
+                        dialog.setMessage(res.getString(R.string.private_delete_failed, FailureText.of(it, res.getString(R.string.network_error))))
                     }
                 }
             }

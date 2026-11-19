@@ -11,6 +11,7 @@ import com.google.android.material.slider.RangeSlider
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.EditPreview
 import dev.holdmytrack.android.map.RouteEditOverlay
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.RouteEdit
@@ -180,7 +181,7 @@ class RouteEditor(
                 render()
                 onChange()
             }.onFailure {
-                note.text = it.message?.takeIf { m -> m.isNotBlank() } ?: res.getString(R.string.edit_save_failed)
+                note.text = FailureText.of(it, res.getString(R.string.edit_save_failed))
                 note.setTextColor(context.getColor(R.color.hmt_danger))
             }
         }
