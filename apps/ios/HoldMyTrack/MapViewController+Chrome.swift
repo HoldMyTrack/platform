@@ -35,6 +35,7 @@ extension MapViewController {
         state.satelliteFailed = status == .failed
         render()
         renderImageryNotice()
+        exportLookChanged()
     }
 
     func renderImageryNotice() {

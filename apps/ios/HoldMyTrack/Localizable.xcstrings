@@ -4001,6 +4001,240 @@
         }
       }
     },
+    "export.capture" : {
+      "comment" : "Map image export: make the image, save it to Photos and share it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save and share"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить и поделиться"
+          }
+        }
+      }
+    },
+    "export.custom" : {
+      "comment" : "Map image export: a free shape at a size, such as HD.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom · %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Свой · %@"
+          }
+        }
+      }
+    },
+    "export.customFull" : {
+      "comment" : "Map image export's menu: a free shape at a size, and its long side in pixels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom · %@ (%lld px long side)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Свой · %@ (%lld пикс. по длинной стороне)"
+          }
+        }
+      }
+    },
+    "export.failed" : {
+      "comment" : "Map image export: Capture failed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't create the image. Please try again."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось создать изображение. Попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "export.landscape" : {
+      "comment" : "Map image export: a platform's landscape image.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Landscape"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Альбомная"
+          }
+        }
+      }
+    },
+    "export.open" : {
+      "comment" : "The map's camera button: open the image export.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export map image"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Экспорт карты в картинку"
+          }
+        }
+      }
+    },
+    "export.portrait" : {
+      "comment" : "Map image export: a platform's portrait image.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portrait"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Портретная"
+          }
+        }
+      }
+    },
+    "export.saved" : {
+      "comment" : "Map image export: the image is in the Photos library.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved to Photos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранено в «Фото»"
+          }
+        }
+      }
+    },
+    "export.shape" : {
+      "comment" : "Map image export: the menu of the image's shapes and sizes.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image shape and size"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Форма и размер снимка"
+          }
+        }
+      }
+    },
+    "export.showStats" : {
+      "comment" : "Map image export: draw the checked tracks' stats card on the image.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show stats"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать статистику"
+          }
+        }
+      }
+    },
+    "export.showStatsHint" : {
+      "comment" : "Map image export: Show stats tapped with nothing checked.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check tracks to show their stats."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отметьте треки, чтобы показать их статистику."
+          }
+        }
+      }
+    },
+    "export.square" : {
+      "comment" : "Map image export: a platform's square image.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Square"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Квадрат"
+          }
+        }
+      }
+    },
+    "export.story" : {
+      "comment" : "Map image export: a platform's story image, tall.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Story"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "История"
+          }
+        }
+      }
+    },
     "follows the zoom" : {
       "comment" : "Fog's level control: under Auto.",
       "localizations" : {
@@ -8572,6 +8806,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вот и весь тур"
+          }
+        }
+      }
+    },
+    "tour.export.body" : {
+      "comment" : "The tour: the map image export.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save what's on the map as an image. Tick tracks in the list first to make them bold, and Show stats adds a card with their distance and time."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохраните то, что на карте, картинкой. Сначала отметьте треки в списке, чтобы выделить их, а «Показать статистику» добавит карточку с их расстоянием и временем."
+          }
+        }
+      }
+    },
+    "tour.export.title" : {
+      "comment" : "The tour: the map image export.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Экспорт"
           }
         }
       }

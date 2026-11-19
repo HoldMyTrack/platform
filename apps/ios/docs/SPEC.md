@@ -46,7 +46,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 
 ## 4. FR-2 — Map Visualization
 
-As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10 and FR-2.12), except as below.
+As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as below.
 
 ### FR-2.2 Two map modes: Normal and Fog of War
 
@@ -81,9 +81,14 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10 and FR-2.12),
 
 - Added photos come from iOS's photo picker, which hands over a photo's location with its time, unlike Android's, so the placement check can place a photo by where it was taken (`docs/SPEC.md` FR-15.1).
 
+### FR-2.11 Map image export
+
+- The image is saved to Photos, which the app may only add to, and offered to the share sheet; with Photos refused, only to the share sheet.
+- A basemap or Satellite that can't be reached fails the image, where Android leaves out the tiles it couldn't load.
+
 ### FR-2.12 Tour
 
-- Its steps are Android's without export and Record, with Places part of the Layers step.
+- Its steps are Android's without Record, with Places part of the Layers step.
 - The Sync step is about Sync history (FR-4.1).
 
 ## 5. FR-3 — Sync and Imports

@@ -6,6 +6,7 @@ is copied by hand (apps/ios/docs/ROADMAP.md, 3.2):
 - the spacing, radius and type scales from the same file as HoldMyTrack/DesignTokens.swift;
 - the icons from the Android app's Lucide vector drawables, as template SVGs;
 - the fonts, Inter, Fraunces and Source Serif 4, the same files the Android app bundles;
+- the logo a map image export carries, on a light map and a dark one, Android's same PNGs;
 - the licenses of the fonts and the icons, which the app ships as Android's does.
 
 `--check` writes nothing and fails when any of it differs from what is committed; CI runs it.
@@ -23,6 +24,9 @@ DRAWABLES = os.path.join(ROOT, 'apps/android/holdmytrack/app/src/main/res/drawab
 APP = os.path.join(ROOT, 'apps/ios/HoldMyTrack')
 PALETTE = os.path.join(APP, 'Assets.xcassets/Palette')
 ICONS = os.path.join(APP, 'Assets.xcassets/Icons')
+IMAGES = os.path.join(APP, 'Assets.xcassets/Images')
+ANDROID_IMAGES = os.path.join(ROOT, 'apps/android/holdmytrack/app/src/main/res/drawable-nodpi')
+IMAGE_FILES = ['export_logo_on_light', 'export_logo_on_dark']
 SWIFT = os.path.join(APP, 'DesignTokens.swift')
 ANDROID_FONTS = os.path.join(ROOT, 'apps/android/holdmytrack/app/src/main/res/font')
 FONTS = os.path.join(APP, 'Fonts')
@@ -178,12 +182,18 @@ def wanted():
     for name, (text, contents) in icons().items():
         files[os.path.join(ICONS, f'{name}.imageset', f'{name}.svg')] = text
         files[os.path.join(ICONS, f'{name}.imageset', 'Contents.json')] = json.dumps(contents, indent=2) + '\n'
+    files[os.path.join(IMAGES, 'Contents.json')] = json.dumps(folder, indent=2) + '\n'
+    for name in IMAGE_FILES:
+        asset = name.replace('_', '-')
+        files[os.path.join(IMAGES, f'{asset}.imageset', f'{asset}.png')] = open(os.path.join(ANDROID_IMAGES, f'{name}.png'), 'rb').read()
+        contents = {'images': [{'filename': f'{asset}.png', 'idiom': 'universal'}], 'info': CATALOG_INFO}
+        files[os.path.join(IMAGES, f'{asset}.imageset', 'Contents.json')] = json.dumps(contents, indent=2) + '\n'
     return files
 
 
 def existing():
     out = set()
-    for folder in (PALETTE, ICONS, FONTS, LICENSES):
+    for folder in (PALETTE, ICONS, IMAGES, FONTS, LICENSES):
         for dirpath, _, names in os.walk(folder):
             out.update(os.path.join(dirpath, n) for n in names)
     return out
@@ -213,7 +223,7 @@ def main():
         os.makedirs(os.path.dirname(p), exist_ok=True)
         with open(p, 'wb' if isinstance(files[p], bytes) else 'w') as f:
             f.write(files[p])
-    for folder in (PALETTE, ICONS):
+    for folder in (PALETTE, ICONS, IMAGES):
         for dirpath, dirs, names in os.walk(folder, topdown=False):
             if not dirs and not names:
                 os.rmdir(dirpath)

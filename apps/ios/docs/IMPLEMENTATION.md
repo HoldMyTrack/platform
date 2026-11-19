@@ -84,6 +84,15 @@ The split is Android's: `MapSession` holds the range or Trip shown and the camer
 - **The Private location circles are the app's own source and layers too** (`MapViewController+PrivateLocations`), empty while the editor is closed, since they point at the places they hide. Their handle's pan works as Move point's. A save or delete reloads the list at once and the routes once `GET /v2/coverage/status` stops rendering, since the server reprocesses every track the circle touches.
 - **Photos go up as JPEG** (`PhotoPrep`), where Android sends WebP: ImageIO decodes WebP but can't write it, and the server takes either.
 
+### 3.5 Map image export
+
+The web's design (root `docs/IMPLEMENTATION.md` §4.3.3), drawn by MapLibre's snapshotter (`ExportRenderer`) from the style the live map is composed from, with `ExportStyle` taking out Spots: the window's size in points at the live zoom and heading, at the scale that makes it the image's pixels.
+
+- **The snapshotter takes a style URL only**, so the composed style is written to a temporary file. Layers the map adds after its style loads (capture's guide, the route editor, the Private location circles) aren't in it; the viewfinder doesn't open while an editor has the map.
+- **The snapshotter renders once, and any resource it can't fetch fails the whole image**, where the live map draws without it. The dev stack's style points the basemap at the web's dev server (`localhost:5173`), so the export's UI test needs `web` running, or the basemap served there.
+- **The rest is drawn in the image's pixels** (`ExportImage`): the photo markers by `PhotoMarkerPainter`, the live markers' own drawing scaled, the stats card the window previewed at `ExportStats.placement`, then the credit, read from the served style's sources, and the mark.
+- **Photos runs its change block on a queue of its own**, so the save (`ExportPhotos`) is off the main actor: a block isolated to it traps there.
+
 ## 4. Sync engine
 
 ### 4.4 File upload

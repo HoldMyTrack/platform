@@ -21,10 +21,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let layersButton = UIButton(type: .system)
     /// The chip, the Layers badge and Satellite's watch (MapViewController+Chrome).
     lazy var chrome = MapChromeViews { [weak self] in self?.onImagery($0) }
-    private let locateButton = UIButton(type: .system)
+    let locateButton = UIButton(type: .system)
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
     private let location = CLLocationManager()
-    private let modesRow = UIStackView()
+    let modesRow = UIStackView()
 
     var session = MapSession()
 
@@ -66,6 +66,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let spotViews = SpotViews()
     /// Fog's level menu and place popup (MapViewController+Fog).
     let fogViews = FogViews()
+    /// The map image export (MapViewController+Export).
+    let export = ExportState()
     /// The Private location editor (MapViewController+PrivateLocations).
     let privateLocations = PrivateLocationsState()
     /// Photos on the map (MapViewController+Photos).
@@ -149,7 +151,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                 self.renderPanel()
             }
         }
-        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.load() }
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
+            self.load()
+            self.exportLookChanged()
+        }
         location.delegate = self
         load()
     }
@@ -169,6 +174,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         super.viewDidLayoutSubviews()
         let guide = view.safeAreaLayoutGuide.layoutFrame
         sheet.setRoom(container: guide.height, topInset: modesRow.frame.maxY - guide.minY + DesignTokens.Space.s8)
+        layoutExport()
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -179,6 +185,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         // no Back, and the Tracks tab is where they show.
         capturing.stop()
         closePrivateEditor()
+        closeExport()
     }
 
     // MARK: The documents
@@ -475,7 +482,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Notices
 
-    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending, capped, tour }
+    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending, capped, tour, exported }
 
     /// Shows kind's notice, or changes its text. onClose gives it a close button, which takes it
     /// down and then calls onClose.
@@ -584,6 +591,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             view.addSubview(v)
         }
         setUpFogControl()
+        setUpExport()
         bindPrivateEditor()
         // Over the sheet: opened low on the map, the photo popup runs past the sheet's edge.
         view.addSubview(photoViews.popup)

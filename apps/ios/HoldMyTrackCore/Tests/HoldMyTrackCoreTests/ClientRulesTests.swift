@@ -326,6 +326,12 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
             "counts": .array(label.counts.map { ["key": .string($0.key), "explored": .num($0.explored), "total": .num($0.total)] }),
         ]
     },
+    "statsOffered": { input in .bool(ExportStats.offered(checked: Set(input.strings("checked")), tripID: input["tripId"].string)) },
+    "statsCardPlacement": { input in
+        let card = input["card"]
+        let at = ExportStats.placement(width: input.int("width"), height: input.int("height"), cardWidth: card.int("width"), cardHeight: card.int("height"))
+        return ["x": .number(at.x), "y": .number(at.y)]
+    },
     "tourStart": { input in
         .string(TourRules.start(requested: input["requested"].bool!, isDemo: input["isDemo"].bool!, hasTracks: input["hasTracks"].bool, seen: tourSeen(input["seen"])).rawValue)
     },

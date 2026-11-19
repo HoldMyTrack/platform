@@ -14,12 +14,12 @@ final class TourTests: XCTestCase {
         app.buttons["demo"].tap()
         let progress = app.staticTexts["tourProgress"]
         XCTAssertTrue(progress.waitForExistence(timeout: 20), "the demo's tour starts by itself")
-        XCTAssertEqual(progress.label, "1 of 12")
+        XCTAssertEqual(progress.label, "1 of 13")
         let next = app.buttons["tourNext"]
-        for step in 2...12 {
+        for step in 2...13 {
             next.tap()
-            XCTAssertTrue(app.staticTexts["\(step) of 12"].waitForExistence(timeout: 10), "step \(step)")
-            if step == 6 || step == 12 { attach("Tour step \(step)") }
+            XCTAssertTrue(app.staticTexts["\(step) of 13"].waitForExistence(timeout: 10), "step \(step)")
+            if step == 6 || step == 13 { attach("Tour step \(step)") }
         }
         XCTAssertTrue(app.cells["youTour"].exists, "the last step is on the You tab")
         next.tap()
@@ -29,7 +29,7 @@ final class TourTests: XCTestCase {
 
         app.tabBars.buttons.element(boundBy: 3).tap()
         app.cells["youTour"].tap()
-        XCTAssertTrue(app.staticTexts["1 of 12"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["1 of 13"].waitForExistence(timeout: 10))
         app.buttons["tourSkip"].tap()
         XCTAssertTrue(app.otherElements["tourCard"].waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.tabBars.buttons.element(boundBy: 3).isSelected, "Skip leaves the user where they were")

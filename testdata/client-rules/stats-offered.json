@@ -1,7 +1,7 @@
 {
   "rule": "statsOffered",
   "description": "Whether the export's Show stats can be ticked: something checked in the Tracks panel, and no Trip open, since the Trips tab has no checkboxes.",
-  "clients": ["web", "android"],
+  "clients": ["web", "android", "ios"],
   "cases": [
     { "name": "checked", "input": { "checked": ["a", "b"] }, "expected": true },
     { "name": "nothing checked", "input": { "checked": [] }, "expected": false },

@@ -31,6 +31,7 @@ extension MapViewController {
         case .sheet: [sheet]
         case .dates: [tracksPanel.datesButton]
         case .layers: [layersButton]
+        case .export: [export.button]
         case .modes: [modes]
         case .fogLevel: fogViews.menuButton.isHidden ? [modes] : [fogViews.menuButton]
         case .page, .youTour: []

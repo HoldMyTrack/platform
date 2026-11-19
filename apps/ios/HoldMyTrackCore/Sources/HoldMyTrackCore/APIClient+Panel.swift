@@ -127,4 +127,12 @@ extension APIClient {
             if !DeleteOutcome.done(status: status) { throw APIError.http(status: status, code: code, message: message) }
         }
     }
+
+    /// `POST /v2/tracks/stats-card` (root docs/IMPLEMENTATION.md §4.3.3): the export's stats card
+    /// for request as a PNG drawn at the image's own scale, or nil when every track is Pending (204).
+    public func statsCard(_ request: ExportStats.Request) async throws -> Data? {
+        let body = StatsCardRequestJSON(trackIDs: request.trackIDs, width: request.width, height: request.height, theme: request.dark ? "dark" : "light")
+        let data = try await send("POST", "v2/tracks/stats-card", body: body)
+        return data.isEmpty ? nil : data
+    }
 }
