@@ -136,7 +136,9 @@ class PhotosController(
             loaded = true
             error = result.exceptionOrNull()?.let { FailureText.of(it, fragment.getString(R.string.map_unreachable)) }
             if (error != null) Log.w(TAG, "could not load photos", result.exceptionOrNull())
-            if (single != null && edit.single?.id == single.id) edit.setPhotos(photos, error)
+            // The Edit window as it is now: the map's view may have been built again meanwhile.
+            val window = editWindow()
+            if (single != null && window?.single?.id == single.id) window.setPhotos(photos, error)
             popup.retain(photos)
             render()
         }
