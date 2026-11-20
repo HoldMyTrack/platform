@@ -6,8 +6,9 @@ import UIKit
 /// What the tour asks of the map (TourController): its sheet, the controls a step points at, and
 /// the camera it flies through the demo's history.
 extension MapViewController {
-    /// The Edit window or the Private location editor has the map, which the tour leaves alone.
-    var tourBlocked: Bool { editOpen || privateLocations.open }
+    /// The Edit window, the Private location editor or a recording has the map, which the tour
+    /// and the export leave alone.
+    var tourBlocked: Bool { editOpen || privateLocations.open || recordingLive }
 
     var tourSheetDetent: SheetDetent { sheet.detent }
 
