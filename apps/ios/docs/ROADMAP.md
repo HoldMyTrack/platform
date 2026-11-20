@@ -141,7 +141,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 - [ ] **6.1 `WKWebView` signed in**
   - Set the session cookie and `hmt_app=ios` in the web view's `WKHTTPCookieStore` before the first load. Where a link goes is the `webPageRoute` rule (`testdata/client-rules/web-page-route.json`), shared with Android. Read the session again on leaving a page, since a page may change units, the name or the language.
-  - Done when: the rule's cases pass, and saving Settings changes the map's units on return. Built; left: a save, which the stock dev stack refuses as cross-origin (`docs/DEVELOPMENT.md`).
+  - Done when: the rule's cases pass, and saving Settings changes the map's units on return. Built, and checked against a dev stack with the app at the web's dev server (`docs/DEVELOPMENT.md`): a saved name shows on return, and a Country changed while the page shows changes the map's units when it closes. Left: picking a Country in the page by hand and saving it.
 - [ ] **6.2 Settings, Profile, Sync history, About**
   - First run: a verified account with no Country opens Settings, and only saving gets past it. The avatar uses the page's file input, which iOS answers with its own photo picker. Sync history's View on map opens the native map on that track (`apps/android/docs/SPEC.md` FR-4.1).
   - Done when: each page works offline with an error and Try again, and in both languages and themes. Built, with the first-run gate and View on map checked against a dev stack; left: offline, both languages and themes, and the avatar's upload.
