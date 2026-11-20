@@ -56,6 +56,56 @@ final class RecordingTests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["tabTracks"].isSelected)
     }
 
+    /// A recording the app is killed in comes back on the next launch: Discard, asked twice,
+    /// drops it; Resume goes on with its moving time, and Stop saves it.
+    @MainActor
+    func testARecordingTheAppDiesInIsOfferedBack() throws {
+        try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
+        defer { account.delete() }
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        let record = app.buttons["record"]
+        let status = app.staticTexts["recordStatus"]
+        let counting = NSPredicate(format: "label MATCHES %@", ".*[0-9]:[0-9]{2}:[0-9]{2} · .*")
+        func startAndWaitForAFix() {
+            record.tap()
+            let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow While Using App"]
+            if allow.waitForExistence(timeout: 3) { allow.tap() }
+            XCTAssertTrue(status.wait(for: counting, timeout: 30), "a fix")
+        }
+        func relaunch() -> XCUIElement {
+            app.terminate()
+            app.launchArguments = ["-hmtTourSeen"]
+            app.launch()
+            let prompt = app.alerts["Unfinished recording"]
+            XCTAssertTrue(prompt.waitForExistence(timeout: 20), "the leftover is asked about")
+            return prompt
+        }
+
+        startAndWaitForAFix()
+        var prompt = relaunch()
+        attach("Leftover")
+        prompt.buttons["Discard"].tap()
+        let confirm = app.alerts["Discard this recording?"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        confirm.buttons["Discard"].tap()
+        XCTAssertTrue(record.waitForLabel("Start recording", timeout: 5))
+
+        startAndWaitForAFix()
+        Thread.sleep(forTimeInterval: 62)
+        prompt = relaunch()
+        prompt.buttons["Resume"].tap()
+        XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))
+        let pastAMinute = NSPredicate(format: "label CONTAINS '0:01:'")
+        XCTAssertTrue(status.wait(for: pastAMinute, timeout: 10), "the moving time goes on from where it was")
+        record.press(forDuration: 2.6)
+        XCTAssertTrue(app.staticTexts["Recording saved on this phone."].waitForExistence(timeout: 5))
+    }
+
     @MainActor
     private func attach(_ name: String) {
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())

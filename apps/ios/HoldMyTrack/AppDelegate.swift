@@ -1,7 +1,25 @@
 import UIKit
+import UserNotifications
 
 @main
-final class AppDelegate: UIResponder, UIApplicationDelegate {
+final class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    /// Set before launching ends, or the tap that launched the app isn't handed over.
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
+
+    /// The notification posted as the app was swiped away while recording: its tap resumes the
+    /// recording once the signed-in screen is up (RecordingResume).
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+                                            withCompletionHandler completionHandler: @escaping () -> Void) {
+        let request = response.notification.request
+        if request.identifier == RecordingController.closedNotification, let id = request.content.userInfo[RecordingController.recordingKey] as? String {
+            DispatchQueue.main.async { MainActor.assumeIsolated { RecordingResume.ask(id) } }
+        }
+        completionHandler()
+    }
+
     func application(
         _ application: UIApplication,
         configurationForConnecting connectingSceneSession: UISceneSession,
