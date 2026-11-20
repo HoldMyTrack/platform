@@ -30,4 +30,16 @@ class PhotoRefreshTest {
         assertFalse(PhotoRefresh.owedWithoutView(force = false, owed = false))
         assertTrue(PhotoRefresh.owedWithoutView(force = false, owed = true))
     }
+
+    @Test
+    fun `fetched photos go to a window showing the track they were fetched for`() {
+        assertTrue(PhotoRefresh.deliversTo("a", "a"))
+    }
+
+    @Test
+    fun `nor to one showing another track, a group, or one fetched for no single track`() {
+        assertFalse(PhotoRefresh.deliversTo("a", "b"))
+        assertFalse(PhotoRefresh.deliversTo("a", null))
+        assertFalse(PhotoRefresh.deliversTo(null, null))
+    }
 }
