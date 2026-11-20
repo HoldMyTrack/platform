@@ -153,6 +153,22 @@ struct AccountTests {
         #expect(APIClient.uploadOutcome(status: 500, body: Data()) == .refused(""))
     }
 
+    @Test func aCancelledUploadSaysNothingAndAnotherFailureThatTheServerWasntReached() {
+        #expect(APIClient.uploadOutcome(error: URLError(.cancelled), status: 0, body: Data()) == nil)
+        #expect(APIClient.uploadOutcome(error: URLError(.timedOut), status: 0, body: Data()) == .unreachable)
+        #expect(APIClient.uploadOutcome(error: nil, status: 202, body: Data(#"{"status":"queued"}"#.utf8)) == .sent)
+    }
+
+    @Test func filesFromAnotherAppAreListedOnceUntilTaken() {
+        var shared = SharedFiles()
+        let a = URL(fileURLWithPath: "/Inbox/a.gpx"), b = URL(fileURLWithPath: "/Inbox/b.fit")
+        shared.add([a])
+        shared.add([b, a])
+        #expect(shared.names == ["a.gpx", "b.fit"])
+        #expect(shared.take() == [a, b])
+        #expect(shared.urls.isEmpty)
+    }
+
     @Test func theMultipartBodyHoldsTheFileUnderItsName() throws {
         let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

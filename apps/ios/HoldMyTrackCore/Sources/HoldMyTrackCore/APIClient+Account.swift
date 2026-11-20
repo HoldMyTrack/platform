@@ -113,6 +113,15 @@ extension APIClient {
     /// What an upload's answer says: nil when it went, "already" when the file was imported
     /// before, else the server's reason.
     public static func uploadOutcome(status: Int, body: Data) -> UploadOutcome {
+        uploadOutcome(error: nil, status: status, body: body)!
+    }
+
+    /// What a finished upload task says, error being its transport error: nil for one cancelled,
+    /// as sign-out cancels what the last account queued, which then has nothing to say.
+    public static func uploadOutcome(error: Error?, status: Int, body: Data) -> UploadOutcome? {
+        if let error {
+            return (error as? URLError)?.code == .cancelled ? nil : .unreachable
+        }
         if (200..<300).contains(status) {
             let json = try? JSONDecoder().decode(UploadResultJSON.self, from: body)
             return json?.status == "already_processed" ? .already : .sent
@@ -123,7 +132,7 @@ extension APIClient {
 }
 
 public enum UploadOutcome: Equatable, Sendable {
-    case sent, already
+    case sent, already, unreachable
     /// The server's reason, empty when it gave none.
     case refused(String)
 }

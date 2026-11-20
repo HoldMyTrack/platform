@@ -182,16 +182,21 @@ final class YouViewController: UITableViewController {
         }
     }
 
-    /// Upload with files already picked; the demo account is told it can't.
+    /// Upload with files another app opened listed, to send on its Upload; added to those already
+    /// listed when Upload shows. The demo account is told it can't.
     func upload(_ files: [URL]) {
         guard !account.isDemo else {
             TripDialogs.inform(over: view, String(localized: "The demo account can't upload. Sign up to add your own tracks."))
             return
         }
+        if let screen = navigationController?.topViewController as? UploadViewController {
+            screen.share(files)
+            return
+        }
         navigationController?.popToRootViewController(animated: false)
         let screen = UploadViewController(api: flow.api)
         navigationController?.pushViewController(screen, animated: true)
-        screen.send(files)
+        screen.share(files)
     }
 
     // MARK: Rows

@@ -87,6 +87,19 @@ final class Uploads: NSObject, URLSessionDataDelegate {
         changed()
     }
 
+    /// The session token ended: what it queued is cancelled and the notes go, so nothing it
+    /// picked is sent for, or shown to, the next account (apps/android/docs/SPEC.md FR-1.3). Each
+    /// task carries the token it was queued under, and only those are cancelled: the session
+    /// lists its tasks later, by when the next account may have queued its own.
+    func drop(token: String) {
+        let ended = "Bearer \(token)"
+        session.getAllTasks { tasks in
+            for task in tasks where task.originalRequest?.value(forHTTPHeaderField: "Authorization") == ended { task.cancel() }
+        }
+        notes = []
+        changed()
+    }
+
     private func changed() {
         NotificationCenter.default.post(name: Self.changed, object: nil)
     }
@@ -111,18 +124,19 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             let body = bodies.removeValue(forKey: task.taskIdentifier) ?? Data()
             transfers[task.taskIdentifier] = nil
             if let file = files.removeValue(forKey: task.taskIdentifier) { try? FileManager.default.removeItem(at: file) }
+            let status = (task.response as? HTTPURLResponse)?.statusCode ?? 0
+            if error == nil, status == 426 { NotificationCenter.default.post(name: Self.outdated, object: nil) }
+            guard let outcome = APIClient.uploadOutcome(error: error, status: status, body: body) else {
+                changed()
+                return
+            }
             sentCount += 1
-            if error != nil {
-                notes.append(Note(text: String(localized: "\(name) wasn't sent: the server couldn't be reached."), error: true))
-            } else {
-                let status = (task.response as? HTTPURLResponse)?.statusCode ?? 0
-                if status == 426 { NotificationCenter.default.post(name: Self.outdated, object: nil) }
-                switch APIClient.uploadOutcome(status: status, body: body) {
-                case .sent: break
-                case .already: notes.append(Note(text: String(localized: "\(name) was imported before."), error: false))
-                case .refused(let reason):
-                    notes.append(Note(text: String(localized: "\(name) wasn't sent: \(reason.isEmpty ? String(localized: "the server refused it.") : reason)"), error: true))
-                }
+            switch outcome {
+            case .sent: break
+            case .unreachable: notes.append(Note(text: String(localized: "\(name) wasn't sent: the server couldn't be reached."), error: true))
+            case .already: notes.append(Note(text: String(localized: "\(name) was imported before."), error: false))
+            case .refused(let reason):
+                notes.append(Note(text: String(localized: "\(name) wasn't sent: \(reason.isEmpty ? String(localized: "the server refused it.") : reason)"), error: true))
             }
             changed()
         }

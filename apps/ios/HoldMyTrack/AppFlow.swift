@@ -50,6 +50,12 @@ final class AppFlow {
         tabs.upload(files)
     }
 
+    /// The phone forgets the session, and the uploads it queued go with it.
+    private func endSession() {
+        if let token = store.stored?.token { Uploads.shared.drop(token: token) }
+        store.clear()
+    }
+
     /// Shows the screen the session's route calls for; a restored token is checked first.
     func show() {
         switch store.route {
@@ -98,7 +104,7 @@ final class AppFlow {
             return nil
         } catch let error as APIError {
             if SessionCheck.signsOut(error) {
-                store.clear()
+                endSession()
                 show()
             } else {
                 (window.rootViewController as? SessionCheckScreen)?.checkFailed(error)
@@ -118,7 +124,7 @@ final class AppFlow {
 
     /// A request refused for the session itself: the phone forgets it, as the check does.
     func sessionEnded() {
-        store.clear()
+        endSession()
         show()
     }
 
@@ -154,7 +160,7 @@ final class AppFlow {
             let api = api!
             Task.detached { try? await api.logout(token: token) }
         }
-        store.clear()
+        endSession()
         show()
     }
 
@@ -198,7 +204,7 @@ final class AppFlow {
             EmptyNoticeDismissal.forget(account: account)
             RecordingController.defaultStore.forget(account: account)
         }
-        store.clear()
+        endSession()
         keepsRecording = false
         show()
         keepsRecording = true
