@@ -796,18 +796,18 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The map follows the recording: while one runs the live track has the map, and the mode
      *  toggle, Find my location, the export and every history layer step aside. */
     private fun onRecordingChanged(active: Boolean, points: List<RecordedPoint>) {
+        locate.setShown(!active)
+        // Like every history layer, the photos give the map to the live track.
+        photos.render()
         val v = views ?: return
         // The recording has the map: Fog's layers step aside, and its place popup with them.
         if (active) v.fogPlaces.close()
         renderModeBar()
-        locate.setShown(!active)
         v.export.setAvailable(!active)
         renderSheet()
         v.notices.render()
         // The live line had the camera: the list asks about wherever it's left.
         if (!active) v.area.followArea(always = true)
-        // Like every history layer, the photos give the map to the live track.
-        photos.render()
 
         val loaded = style ?: return
         if (overlaysAttached) MapOverlays.setRecording(loaded, active, mode)
@@ -921,22 +921,22 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     // is forwarded, since a missed one leaks the surface or crashes on rotation.
     override fun onStart() {
         super.onStart()
-        val v = views ?: return
-        v.mapView.onStart()
-        v.basemap.start()
-        v.imagery.start()
+        val v = views
+        v?.mapView?.onStart()
+        v?.basemap?.start()
+        v?.imagery?.start()
         SyncProgress.addListener(syncProgressListener)
         SyncProgress.resume(requireContext())
-        v.area.pending.start()
+        v?.area?.pending?.start()
         coverage.resume()
         recording.start()
     }
 
     override fun onResume() {
         super.onResume()
-        val v = views ?: return
-        v.mapView.onResume()
         daysStale = true
+        val v = views
+        v?.mapView?.onResume()
         syncSession()
         if (overlaysAttached) {
             spots.loadCaptures(onlyNew = true)
@@ -945,6 +945,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             coverage.checkTileVersion()
         }
         spots.resume()
+        v ?: return
         // An empty map is checked again on every return, so the notice goes and the camera frames
         // the history once something arrives.
         if (v.notices.shown == MapNotice.EMPTY) v.camera.openAgain { v.area.followArea() }
@@ -983,11 +984,11 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(STATE_MODE, pickedMode.name)
+        AreaController.save(outState, session.dates)
         val v = views ?: return
         v.mapView.onSaveInstanceState(outState)
         // The camera MapLibre just saved is where the user left it, once it's been framed.
         outState.putBoolean(STATE_FRAMED, v.camera.framed)
-        v.area.save(outState)
         v.chrome.save(outState)
     }
 

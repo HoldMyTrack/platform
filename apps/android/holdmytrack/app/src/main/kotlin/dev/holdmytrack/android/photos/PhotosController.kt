@@ -50,6 +50,9 @@ class PhotosController(
     private var loaded = false
     private var generation = 0
 
+    /** A forced [refresh] came while the map had no view: the next one fetches, whatever the scope. */
+    private var owed = false
+
     /** The Photos tab's unsaved changes as they alter the markers, while it shows. */
     private var overlay: PhotoMarkerOverlay? = null
 
@@ -103,10 +106,15 @@ class PhotosController(
      * than showing the last one's while it loads.
      */
     fun refresh(force: Boolean) {
-        val edit = editWindow() ?: return
+        val edit = editWindow() ?: run {
+            if (force) owed = true
+            return
+        }
+        val forced = force || owed
+        owed = false
         val single = edit.single
         val next = PhotoMarkerScope.scope(mode(), edit.isOpen, single?.id, panelState.focused, tripId())
-        if (next == scope && !force) {
+        if (next == scope && !forced) {
             if (loaded && single != null) edit.setPhotos(photos, error)
             render()
             return
