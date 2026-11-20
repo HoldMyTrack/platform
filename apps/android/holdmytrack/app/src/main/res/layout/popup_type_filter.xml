@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The Type dropdown (.tracks-panel__type-panel): "All types", a divider, then one row per
      type the listed tracks use with how many do, checked meaning shown. Rows are added by
-     TracksPanel.showTypeFilter; the list scrolls past about twelve rows. -->
+     TrackFilters.showTypeFilter; the list scrolls past about twelve rows. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"

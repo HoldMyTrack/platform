@@ -38,7 +38,7 @@ android {
         // versionName is the release number, major.minor.patch, raised by hand (docs/DEPLOY.md §10);
         // GIT_SHA is the exact commit, the same short SHA the server's /healthz reports.
         versionCode = gitOutput("rev-list", "--count", "HEAD")?.toIntOrNull() ?: 1
-        versionName = "0.34.21"
+        versionName = "0.34.22"
         buildConfigField("String", "GIT_SHA", "\"${gitOutput("rev-parse", "--short", "HEAD") ?: "dev"}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

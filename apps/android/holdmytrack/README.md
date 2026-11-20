@@ -90,7 +90,7 @@ Everything is under `app/src/main/kotlin/dev/holdmytrack/android/`:
 - `sync/HiddenCandidates.kt` — the rows swiped aside, per account.
 - `sync/HealthConnectCard.kt` — Health Connect's setup card, on the Sync tab and in `SyncActivity`.
 - `sync/ImportHistory.kt` — the history of every import, the web's `/sync` page, on `SyncHistoryActivity.kt`.
-- `panel/` — the map's Tracks panel, the web's phone sheet: `TracksPanel.kt` (the sheet and its Tracks tab), `PanelState.kt` and `TrackFacets.kt` (its rules, unit-tested), `EditTrackWindow.kt` (Edit), `RouteEditor.kt` and `EditRouteOps.kt` (its Route tab, the rules unit-tested), `TripsTab.kt` (Trips), `SyncTab.kt` (Sync: what's on the phone, ticked and sent), `PrivateLocationEditor.kt` (a Private location, edited on the map).
+- `panel/` — the map's Tracks panel, the web's phone sheet: `TracksPanel.kt` (the sheet and its Tracks tab), `TrackFilters.kt` (its TYPE and DISTANCE filters), `PanelState.kt` and `TrackFacets.kt` (its rules, unit-tested), `EditTrackWindow.kt` (Edit), `RouteEditor.kt` and `EditRouteOps.kt` (its Route tab, the rules unit-tested), `TripsTab.kt` (Trips), `SyncTab.kt` (Sync: what's on the phone, ticked and sent) and `SyncRows.kt` (one of its rows), `PrivateLocationEditor.kt` (a Private location, edited on the map).
 - `privacy/` — the Privacy screen, from the You tab: `PrivacyActivity.kt` (the Private locations and what's kept), `CirclePreviewView.kt` (a location drawn small) and `DataExportActivity.kt` (Download your data).
 - `ui/LargeText.kt` — rows that stack instead of breaking words at a large font size.
 

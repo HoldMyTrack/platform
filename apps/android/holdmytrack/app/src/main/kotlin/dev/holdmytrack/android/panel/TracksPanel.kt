@@ -12,8 +12,6 @@ import android.graphics.Color
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
-import android.widget.PopupWindow
-import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.widget.TooltipCompat
 import androidx.recyclerview.widget.ConcatAdapter
@@ -26,7 +24,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.slider.RangeSlider
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.Track
@@ -35,7 +32,6 @@ import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Trip
 import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.ui.LargeText
-import kotlin.math.abs
 
 /** The panel's tabs: the web's `PanelTab`, and the bottom bar's Sync. */
 enum class PanelTab { TRACKS, TRIPS, SYNC }
@@ -103,7 +99,6 @@ class TracksPanel(
     private val tracksContent: View = sheet.findViewById(R.id.panel_tracks_content)
     private val head: View = sheet.findViewById(R.id.panel_head)
     private val subtext: TextView = sheet.findViewById(R.id.panel_subtext)
-    private val typeTrigger: View = sheet.findViewById(R.id.panel_type_trigger)
     private val datesChip: View = sheet.findViewById(R.id.panel_dates)
     private val datesLabel: TextView = sheet.findViewById(R.id.panel_dates_label)
     private val datesDot: View = sheet.findViewById(R.id.panel_dates_dot)
@@ -115,17 +110,8 @@ class TracksPanel(
     private var zoomedOut = false
     /** Dates is set ([setDates]), so an empty list may be its doing. */
     private var datesSet = false
-    private val typeDot: View = sheet.findViewById(R.id.panel_type_dot)
-    private val distance: View = sheet.findViewById(R.id.panel_distance)
-    private val distanceReadout: TextView = sheet.findViewById(R.id.panel_distance_readout)
-
-    /** DISTANCE's popup, inflated once so its slider keeps its listener and its values. */
-    @SuppressLint("InflateParams") // A popup's content has no parent to inflate against.
-    private val distanceContent: View = LayoutInflater.from(sheet.context).inflate(R.layout.popup_distance, null)
-    private val distanceSlider: RangeSlider = distanceContent.findViewById(R.id.panel_distance_slider)
-    private val distanceMin: TextView = distanceContent.findViewById(R.id.panel_distance_min)
-    private val distanceMax: TextView = distanceContent.findViewById(R.id.panel_distance_max)
-    private var distancePopup: PopupWindow? = null
+    /** TYPE, DISTANCE and Reset. */
+    private val filters = TrackFilters(sheet, state, onChanged = ::changed)
     private val selectionClose: View = selectionBar.findViewById(R.id.selection_close)
 
     private val card: View = sheet.findViewById(R.id.track_card)
@@ -144,7 +130,6 @@ class TracksPanel(
     /** The actions over the toolbar's target, twice: the selection bar's icons, and the selected
      *  track's card's — the same rules and the same enabled states, whichever shows. */
     private class Actions(val visibility: View, val edit: View, val addToTrip: View, val delete: View, val focus: View)
-    private val resetFilters: View = sheet.findViewById(R.id.panel_reset_filters)
     private val checkAll: MaterialCheckBox = selectionBar.findViewById(R.id.panel_check_all)
     private val selectMenu: ImageButton = selectionBar.findViewById(R.id.panel_select_menu)
     private val visibility: ImageButton = selectionBar.findViewById(R.id.panel_visibility)
@@ -212,7 +197,6 @@ class TracksPanel(
     /** Forced down to its head from outside without forgetting [expanded] — an edit window
      *  over the map; the sheet comes back as it was. */
     private var held = false
-    private var typePopup: PopupWindow? = null
 
     /** Add to trip's menu while it's open, and the target it was opened over — a different
      *  target closes it, as on the web. */
@@ -255,27 +239,7 @@ class TracksPanel(
             override fun onSlide(bottomSheet: View, slideOffset: Float) = Unit
         })
 
-        typeTrigger.setOnClickListener { showTypeFilter() }
         datesChip.setOnClickListener { onDatesTap() }
-        distanceSlider.addOnChangeListener { slider, _, fromUser ->
-            if (!fromUser) return@addOnChangeListener
-            val bounds = TrackFacets.distanceBounds(state.tracks) ?: return@addOnChangeListener
-            // The slider holds Floats, which can't carry every distance exactly: a knob at an
-            // end is snapped back onto that end's own track, or the band would leave it out.
-            fun snap(value: Float): Double = when {
-                abs(value - bounds.min) < SNAP_METERS -> bounds.min
-                abs(value - bounds.max) < SNAP_METERS -> bounds.max
-                else -> value.toDouble()
-            }
-            // The slider reports both knobs; the rule takes them one at a time, so both at the ends is no filter.
-            val min = TrackFacets.nextDistanceFilter(bounds, state.distanceFilter ?: bounds, DistanceKnob.MIN, snap(slider.values[0]))
-            state.setDistanceFilter(TrackFacets.nextDistanceFilter(bounds, min ?: bounds, DistanceKnob.MAX, snap(slider.values[1])))
-            changed()
-        }
-        resetFilters.setOnClickListener {
-            state.resetFilters()
-            changed()
-        }
 
         // Only ever shown while something is checked: partly checked, it checks every listed
         // row; all checked, it unchecks them all, which ends selecting.
@@ -299,7 +263,6 @@ class TracksPanel(
             actions.addToTrip.setOnClickListener { anchor -> if (tripMenu.target == null) showAddToTrip(anchor) else tripMenu.dismiss() }
             actions.delete.setOnClickListener { confirmDelete() }
         }
-        distance.setOnClickListener { showDistanceFilter() }
         selectionClose.setOnClickListener { endSelecting() }
         sheet.findViewById<View>(R.id.card_close).setOnClickListener { clearFocus() }
         render()
@@ -466,9 +429,8 @@ class TracksPanel(
     }
 
     fun dismissPopups() {
-        typePopup?.dismiss()
+        filters.dismiss()
         tripMenu.dismiss()
-        distancePopup?.dismiss()
     }
 
     /** Whether the rows are being checked — the selection bar over the map then. */
@@ -533,9 +495,7 @@ class TracksPanel(
         handle.contentDescription = res.getString(if (open) R.string.panel_collapse else R.string.panel_expand)
 
         renderCard()
-        typeDot.visibility = if (state.excludedTypes.isNotEmpty()) View.VISIBLE else View.GONE
-        renderDistance()
-        resetFilters.visibility = if (state.hasActiveFilters) View.VISIBLE else View.GONE
+        filters.render()
         renderToolbar(listed)
 
         val rows = listed.map { TrackRowItem(it, checked = it.id in state.checked, focused = it.id == state.focused, hidden = it.id in state.hidden, selecting = state.selecting) }
@@ -559,7 +519,6 @@ class TracksPanel(
             targets.size,
             PanelFormat.totalDistance(res, targets.sumOf { it.distanceMeters ?: 0.0 }),
         )
-        typePopup?.let { renderTypeRows(it.contentView) }
         if (tripMenu.target.let { it != null && it != targets.map { t -> t.id } }) tripMenu.dismiss()
     }
 
@@ -578,35 +537,6 @@ class TracksPanel(
         tracksContent.visibility = if (tab == PanelTab.TRACKS) View.VISIBLE else View.GONE
         tripsContent.visibility = if (tab == PanelTab.TRIPS) View.VISIBLE else View.GONE
         syncContent.visibility = if (tab == PanelTab.SYNC) View.VISIBLE else View.GONE
-    }
-
-    /** DISTANCE, the web's `DistanceFilter`: gone while the list has no spread of distances. */
-    private fun renderDistance() {
-        val bounds = TrackFacets.distanceBounds(state.tracks)
-        if (bounds == null || bounds.min >= bounds.max) {
-            distance.visibility = View.GONE
-            return
-        }
-        distance.visibility = View.VISIBLE
-        val current = state.distanceFilter ?: bounds
-        val lo = current.min.coerceIn(bounds.min, bounds.max).toFloat()
-        val hi = current.max.coerceIn(bounds.min, bounds.max).toFloat()
-        distanceSlider.valueFrom = bounds.min.toFloat()
-        distanceSlider.valueTo = bounds.max.toFloat()
-        if (distanceSlider.values != listOf(lo, hi)) distanceSlider.setValues(lo, hi)
-        distanceReadout.text = if (state.distanceFilter == null) {
-            res.getString(R.string.panel_any_distance_chip)
-        } else {
-            res.getString(
-                R.string.panel_distance_range,
-                PanelFormat.distanceValue(res, current.min),
-                PanelFormat.distanceValue(res, current.max),
-                PanelFormat.unit(res),
-            )
-        }
-        distance.contentDescription = "${res.getString(R.string.panel_distance)}, ${distanceReadout.text}"
-        distanceMin.text = PanelFormat.distance(res, bounds.min)
-        distanceMax.text = PanelFormat.distance(res, bounds.max)
     }
 
     private fun renderToolbar(listed: List<Track>) {
@@ -777,80 +707,10 @@ class TracksPanel(
         cardBands.visibility = if (bandsShown) View.VISIBLE else View.GONE
     }
 
-    /** DISTANCE's slider, under its chip, closed by a tap outside it. */
-    private fun showDistanceFilter() {
-        if (distancePopup != null) return
-        (distanceContent.parent as? ViewGroup)?.removeView(distanceContent)
-        // A fixed width, as a popup's content has no parent to take one from.
-        val width = (DISTANCE_POPUP_DP * res.displayMetrics.density).toInt()
-        val popup = PopupWindow(distanceContent, width, ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        popup.elevation = res.getDimension(R.dimen.hmt_space_8)
-        popup.setOnDismissListener { distancePopup = null }
-        distancePopup = popup
-        popup.showAsDropDown(distance, 0, res.getDimensionPixelSize(R.dimen.hmt_space_8))
-    }
-
     private fun describe(button: View, text: String, enabled: Boolean) {
         button.isEnabled = enabled
         button.contentDescription = text
         TooltipCompat.setTooltipText(button, text)
-    }
-
-    /** The Type dropdown, anchored under its trigger, closed by a tap outside it. */
-    @SuppressLint("InflateParams") // A popup's content has no parent to inflate against.
-    private fun showTypeFilter() {
-        if (typePopup != null) return
-        val content = LayoutInflater.from(context).inflate(R.layout.popup_type_filter, null)
-        content.findViewById<View>(R.id.type_filter_all).apply {
-            findViewById<TextView>(R.id.type_filter_label).apply {
-                setText(R.string.panel_all_types)
-                setTypeface(typeface, android.graphics.Typeface.BOLD)
-            }
-            findViewById<TextView>(R.id.type_filter_count).visibility = View.GONE
-            setOnClickListener {
-                state.includeAllTypes()
-                changed()
-            }
-        }
-        renderTypeRows(content)
-        val popup = PopupWindow(content, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        popup.elevation = res.getDimension(R.dimen.hmt_space_8)
-        popup.setOnDismissListener { typePopup = null }
-        typePopup = popup
-        popup.showAsDropDown(typeTrigger, 0, res.getDimensionPixelSize(R.dimen.hmt_space_8))
-    }
-
-    private fun renderTypeRows(content: View) {
-        val facets = TrackFacets.typeFacets(state.tracks, state.distanceFilter)
-        content.findViewById<View>(R.id.type_filter_empty).visibility = if (facets.isEmpty()) View.VISIBLE else View.GONE
-        content.findViewById<View>(R.id.type_filter_body).visibility = if (facets.isEmpty()) View.GONE else View.VISIBLE
-        content.findViewById<View>(R.id.type_filter_all)
-            .findViewById<MaterialCheckBox>(R.id.type_filter_check).isChecked = state.excludedTypes.isEmpty()
-        val rows = content.findViewById<LinearLayout>(R.id.type_filter_rows)
-        rows.removeAllViews()
-        val inflater = LayoutInflater.from(context)
-        for (facet in facets) {
-            val row = inflater.inflate(R.layout.item_type_filter, rows, false)
-            val label = TrackTypes.label(facet.type)
-            val shown = facet.type !in state.excludedTypes
-            row.findViewById<MaterialCheckBox>(R.id.type_filter_check).isChecked = shown
-            row.findViewById<TextView>(R.id.type_filter_label).text = label
-            row.findViewById<TextView>(R.id.type_filter_count).text = PanelFormat.count(res, facet.count)
-            row.contentDescription = "$label, ${facet.count}"
-            row.isSelected = shown
-            row.setOnClickListener {
-                state.toggleType(facet.type)
-                changed()
-            }
-            rows.addView(row)
-        }
-        // About twelve rows, then the list scrolls (.track-filters__type-list's max-height).
-        val scroll = content.findViewById<ScrollView>(R.id.type_filter_scroll)
-        rows.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-        val max = (TYPE_LIST_MAX_DP * res.displayMetrics.density).toInt()
-        scroll.layoutParams = scroll.layoutParams.apply {
-            height = if (rows.measuredHeight > max) max else ViewGroup.LayoutParams.WRAP_CONTENT
-        }
     }
 
     /** Centres [id]'s row in the list — the list alone, never the sheet around it, so a
@@ -961,10 +821,9 @@ class TracksPanel(
         /** How long a list load runs before the progress bar shows. */
         const val PROGRESS_DELAY_MS = 300L
 
-        /** About twelve rows, then a dropdown's list scrolls. */
+        /** About twelve rows, then a dropdown's list scrolls ([TrackFilters], [AddToTripMenu]). */
         const val TYPE_LIST_MAX_DP = 192
-        const val DISTANCE_POPUP_DP = 288
-        const val SNAP_METERS = 1.0
+
         val RESTING_STATES = setOf(
             BottomSheetBehavior.STATE_COLLAPSED,
             BottomSheetBehavior.STATE_HALF_EXPANDED,
