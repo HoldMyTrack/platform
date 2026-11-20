@@ -19,6 +19,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private var holdingToStop = false
     /// Whether the leftover check has run for this screen, once on its first appearance.
     private var leftoverChecked = false
+    /// The Live Activity's Stop question while it's up, taken down when the recording ends otherwise.
+    private weak var stopAlert: UIAlertController?
     /// The question about a leftover while it's up.
     private weak var leftoverAlert: UIAlertController?
     /// The middle item under the record button, never selected.
@@ -169,6 +171,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             self?.holdingToStop = holding
             self?.renderRecordingStatus()
         }
+        recorder.format = PanelFormat(account: account)
         recorder.onChange = { [weak self] in self?.renderRecording() }
         recorder.onTick = { [weak self] in self?.renderRecordingStatus() }
         recorder.onMessage = { [weak self] text in self?.map.say(text) }
@@ -198,6 +201,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     /// The recording's state or fixes changed: the button, the status and the map.
     private func renderRecording() {
         recordButton.recordingState = recorder.state
+        if recorder.state == .idle, let alert = stopAlert {
+            alert.presentingViewController?.dismiss(animated: true)
+            stopAlert = nil
+        }
         renderRecordingStatus()
         map.showRecording(active: recorder.state != .idle, points: recorder.recording.points)
     }
@@ -214,6 +221,24 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private func showMap() {
         guard let mapHost = viewControllers?.first, selectedViewController !== mapHost else { return }
         selectedViewController = mapHost
+    }
+
+    /// The Live Activity's Stop opened the app: it asks first, since a tap on the Lock Screen is
+    /// easy to make by mistake.
+    func askToStop() {
+        // One question at a time: a second tap on the Lock Screen's Stop finds it up.
+        guard recorder.state != .idle, stopAlert == nil else { return }
+        showMap()
+        let left = recorder.recording
+        let format = PanelFormat(account: account)
+        let message = String(localized: "recording.stopMessage", defaultValue: "\(RecordingStatus.clock(left.moving(at: Date()))) · \(format.distance(left.meters)) recorded so far.", comment: "Stopping from the Live Activity: the moving time and distance so far.")
+        let alert = UIAlertController(title: String(localized: "recording.stopTitle", defaultValue: "Stop recording?", comment: "Stopping from the Live Activity: the question."), message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: String(localized: "recording.keep", defaultValue: "Keep recording", comment: "Stopping from the Live Activity: don't."), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "activity.stop", defaultValue: "Stop", comment: "The recording's Live Activity: stop, which opens the app to ask first."), style: .destructive) { [weak self] _ in
+            self?.recorder.stop()
+        })
+        stopAlert = alert
+        presentOnTop(alert)
     }
 
     /// The signed-in screen is going: a sign-out or an ended session keeps the recording as a

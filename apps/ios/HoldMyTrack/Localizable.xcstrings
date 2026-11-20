@@ -3983,6 +3983,78 @@
         }
       }
     },
+    "activity.pause" : {
+      "comment" : "The recording's Live Activity: pause the recording.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза"
+          }
+        }
+      }
+    },
+    "activity.paused" : {
+      "comment" : "The recording's Live Activity: paused.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза"
+          }
+        }
+      }
+    },
+    "activity.recording" : {
+      "comment" : "The recording's Live Activity: recording.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись"
+          }
+        }
+      }
+    },
+    "activity.stop" : {
+      "comment" : "The recording's Live Activity: stop, which opens the app to ask first.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стоп"
+          }
+        }
+      }
+    },
     "dates.from" : {
       "comment" : "Dates: only the first day set.",
       "extractionState" : "manual",
@@ -8997,6 +9069,24 @@
         }
       }
     },
+    "recording.keep" : {
+      "comment" : "Stopping from the Live Activity: don't.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продолжить запись"
+          }
+        }
+      }
+    },
     "recording.leftoverMessage" : {
       "comment" : "The prompt about a recording the app was closed in: its moving time and distance.",
       "extractionState" : "manual",
@@ -9191,6 +9281,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось сохранить запись."
+          }
+        }
+      }
+    },
+    "recording.stopMessage" : {
+      "comment" : "Stopping from the Live Activity: the moving time and distance so far.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@ recorded so far."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже записано: %1$@ · %2$@."
+          }
+        }
+      }
+    },
+    "recording.stopTitle" : {
+      "comment" : "Stopping from the Live Activity: the question.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop recording?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Остановить запись?"
           }
         }
       }

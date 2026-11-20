@@ -202,7 +202,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - A Live Activity in place of Android's notification, with Pause or Resume; its Stop opens the app to confirm.
   - Difference: swiping the app away on iOS ends location updates, where Android's foreground service keeps going. 7d.2 brings the recording back; the first recording says once that swiping the app away stops it.
   - Done when: a 30-minute walk with the screen off records every fix.
-  - Built, and recorded on the simulator's simulated location: the button, background location, pause, resume, the hold that stops, the map showing only the recording, and Stop's save to the phone under the account. Left: the Live Activity, and the walk on a device.
+  - Built, and recorded on the simulator's simulated location: the button, background location, pause, resume, the hold that stops, the map showing only the recording, Stop's save to the phone under the account, and the Live Activity with its Stop asking first. Left: the walk on a device.
 - [ ] **7d.2 Journal and recovery**
   - Every fix written to SQLite as it arrives; after a crash the map offers Resume, Save or Discard (`apps/android/docs/SPEC.md` FR-5.1).
   - After a swipe, always: post a local notification as the app terminates ("Recording paused: HoldMyTrack was closed"), whose tap resumes the recording.
