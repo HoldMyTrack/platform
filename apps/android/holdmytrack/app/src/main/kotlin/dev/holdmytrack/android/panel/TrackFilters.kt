@@ -48,13 +48,7 @@ class TrackFilters(
         distanceSlider.addOnChangeListener { slider, _, fromUser ->
             if (!fromUser) return@addOnChangeListener
             val bounds = TrackFacets.distanceBounds(state.tracks) ?: return@addOnChangeListener
-            // The slider holds Floats, which can't carry every distance exactly: a knob at an
-            // end is snapped back onto that end's own track, or the band would leave it out.
-            fun snap(value: Float): Double = when {
-                abs(value - bounds.min) < SNAP_METERS -> bounds.min
-                abs(value - bounds.max) < SNAP_METERS -> bounds.max
-                else -> value.toDouble()
-            }
+            fun snap(value: Float): Double = snap(value, bounds)
             // The slider reports both knobs; the rule takes them one at a time, so both at the ends is no filter.
             val min = TrackFacets.nextDistanceFilter(bounds, state.distanceFilter ?: bounds, DistanceKnob.MIN, snap(slider.values[0]))
             state.setDistanceFilter(TrackFacets.nextDistanceFilter(bounds, min ?: bounds, DistanceKnob.MAX, snap(slider.values[1])))
@@ -177,8 +171,17 @@ class TrackFilters(
         }
     }
 
-    private companion object {
-        const val DISTANCE_POPUP_DP = 288
-        const val SNAP_METERS = 1.0
+    companion object {
+        private const val DISTANCE_POPUP_DP = 288
+        private const val SNAP_METERS = 1.0
+
+        /** A knob's [value] in metres. The slider holds Floats, which can't carry every distance
+         *  exactly: a knob at an end of [bounds] is snapped back onto that end's own track, or the
+         *  band would leave it out. */
+        fun snap(value: Float, bounds: DistanceRange): Double = when {
+            abs(value - bounds.min) < SNAP_METERS -> bounds.min
+            abs(value - bounds.max) < SNAP_METERS -> bounds.max
+            else -> value.toDouble()
+        }
     }
 }

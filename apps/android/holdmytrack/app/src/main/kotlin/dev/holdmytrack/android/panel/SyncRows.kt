@@ -31,6 +31,15 @@ data class SyncRow(
     val highlighted: Boolean,
 )
 
+/** What a Sync row offers. */
+object SyncRowRules {
+    /** Ticked to send: not hidden, not on its way already, and never for the demo account. */
+    fun tickable(row: SyncRow, demo: Boolean): Boolean = !row.hidden && !row.processing && !demo
+
+    /** Edit and Delete: a recording on the phone. One sent is off the phone already. */
+    fun editable(row: SyncRow): Boolean = row.recording && !row.processing
+}
+
 /** What a Sync row's controls ask of the tab, by the row's key. */
 class SyncRowActions(
     val tick: (key: String) -> Unit,
@@ -101,7 +110,7 @@ class SyncRowHolder(view: View, private val actions: SyncRowActions) : RecyclerV
         // On its way: the tile spins instead of offering a tick.
         icon.visibility = if (row.processing) View.INVISIBLE else View.VISIBLE
         spinner.visibility = if (row.processing) View.VISIBLE else View.GONE
-        val tickable = !row.hidden && !row.processing && !Session.isDemo
+        val tickable = SyncRowRules.tickable(row, Session.isDemo)
         tick.isEnabled = tickable
         tick.isClickable = tickable
         tick.contentDescription = when {
@@ -124,8 +133,7 @@ class SyncRowHolder(view: View, private val actions: SyncRowActions) : RecyclerV
             tickable
         }
 
-        // A recording sent is off the phone already: nothing here to edit or delete.
-        val editable = row.recording && !row.processing
+        val editable = SyncRowRules.editable(row)
         edit.visibility = if (editable) View.VISIBLE else View.GONE
         delete.visibility = if (editable) View.VISIBLE else View.GONE
         if (editable) {
