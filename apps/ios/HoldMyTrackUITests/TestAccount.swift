@@ -1,3 +1,4 @@
+import HoldMyTrackCore
 import XCTest
 
 /// A fresh account on the dev stack, as Android's flows use: signed up with a password, given a
@@ -75,29 +76,25 @@ final class TestAccount {
         (try? call("GET", "/v2/private-locations", nil)) as? [[String: Any]] ?? []
     }
 
+    /// A Trip named name holding every uploaded track.
+    func trip(_ name: String) throws {
+        try call("POST", "/v2/trips", ["name": name, "description": "", "track_ids": ids])
+    }
+
     func delete() {
         _ = try? call("DELETE", "/v2/account", ["email": email])
     }
 
-    /// The API origin the app was built for, `HMT_API_BASE_URL`, which the scheme's test action
-    /// hands the test runner; the Debug default when run without the scheme.
-    static let apiBaseURL: String = {
-        var base = ProcessInfo.processInfo.environment["HMT_API_BASE_URL"] ?? ""
-        if base.isEmpty || base.contains("$(") { base = "http://localhost:8080" }
-        while base.hasSuffix("/") { base.removeLast() }
-        return base
-    }()
-
-    /// The dev stack the Debug build talks to, when it answers.
-    static func base() -> String? {
+    /// Whether the dev stack answers `/healthz` at base.
+    static func answers(_ base: URL) -> Bool {
         let sem = DispatchSemaphore(value: 0)
         nonisolated(unsafe) var ok = false
-        URLSession.shared.dataTask(with: URLRequest(url: URL(string: apiBaseURL + "/healthz")!, timeoutInterval: 5)) { _, response, _ in
+        URLSession.shared.dataTask(with: URLRequest(url: base.appending(path: "healthz"), timeoutInterval: 5)) { _, response, _ in
             ok = (response as? HTTPURLResponse)?.statusCode == 200
             sem.signal()
         }.resume()
         sem.wait()
-        return ok ? apiBaseURL : nil
+        return ok
     }
 
     /// Signs the app in as this account from the sign-in screen.

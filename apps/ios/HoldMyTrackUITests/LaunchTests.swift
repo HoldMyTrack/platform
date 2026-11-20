@@ -1,3 +1,4 @@
+import HoldMyTrackCore
 import XCTest
 
 /// The app's own flows, end to end. Those that need a server run against the dev stack the Debug
@@ -57,9 +58,16 @@ final class LaunchTests: XCTestCase {
         XCTAssertFalse(error.label.isEmpty)
     }
 
-    /// Skips unless a dev stack answers at the API origin the app was built for.
+    /// The API origin the app was built for, `HMT_API_BASE_URL`, which the scheme's test action
+    /// hands the test runner, read as the app reads it; skips unless a dev stack answers there.
     @MainActor
-    static func requireDevStack(_ test: XCTestCase) throws {
-        try XCTSkipUnless(TestAccount.base() != nil, "no dev stack at \(TestAccount.apiBaseURL)")
+    @discardableResult
+    static func requireDevStack(_ test: XCTestCase) throws -> String {
+        let value = ProcessInfo.processInfo.environment["HMT_API_BASE_URL"] ?? ""
+        guard let base = AppInfo.apiBase(value) else {
+            throw XCTSkip("HMT_API_BASE_URL isn't an origin (\"\(value)\"): run the HoldMyTrack scheme, whose test action sets it")
+        }
+        try XCTSkipUnless(TestAccount.answers(base), "no dev stack at \(base.absoluteString)")
+        return base.absoluteString
     }
 }

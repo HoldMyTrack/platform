@@ -39,8 +39,8 @@ final class TourTests: XCTestCase {
     /// each earn their card once.
     @MainActor
     func testAnAccountIsOfferedTheTourAndEarnsEachCardOnce() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: ["west-side.gpx"])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourReset"]

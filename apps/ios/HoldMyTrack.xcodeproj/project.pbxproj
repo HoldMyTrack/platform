@@ -10,6 +10,7 @@
 		D1A00000000000000000001D /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = D1A00000000000000000001F /* MapLibre */; };
 		D1A000000000000000000035 /* HoldMyTrackCore in Frameworks */ = {isa = PBXBuildFile; productRef = D1A000000000000000000034 /* HoldMyTrackCore */; };
 		D1A000000000000000000046 /* HoldMyTrackCore in Frameworks */ = {isa = PBXBuildFile; productRef = D1A000000000000000000047 /* HoldMyTrackCore */; };
+		D1A000000000000000000060 /* HoldMyTrackCore in Frameworks */ = {isa = PBXBuildFile; productRef = D1A000000000000000000061 /* HoldMyTrackCore */; };
 		D1A000000000000000000048 /* HoldMyTrackWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D1A000000000000000000040 /* HoldMyTrackWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -109,6 +110,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D1A000000000000000000060 /* HoldMyTrackCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -232,6 +234,7 @@
 			);
 			name = HoldMyTrackUITests;
 			packageProductDependencies = (
+				D1A000000000000000000061 /* HoldMyTrackCore */,
 			);
 			productName = HoldMyTrackUITests;
 			productReference = D1A00000000000000000000A /* HoldMyTrackUITests.xctest */;
@@ -664,6 +667,10 @@
 			productName = HoldMyTrackCore;
 		};
 		D1A000000000000000000047 /* HoldMyTrackCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HoldMyTrackCore;
+		};
+		D1A000000000000000000061 /* HoldMyTrackCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = HoldMyTrackCore;
 		};

@@ -45,8 +45,8 @@ final class PanelTests: XCTestCase {
 
     @MainActor
     func testEditAndDeleteOnAFreshAccount() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()))
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
@@ -84,11 +84,14 @@ final class PanelTests: XCTestCase {
     /// Trips shows its Trip in Normal, with no mode toggle, and the Tracks tab gets its mode back.
     @MainActor
     func testTripsShowNormalAndTheTracksTabKeepsItsMode() throws {
-        try LaunchTests.requireDevStack(self)
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
+        try account.trip("Lakeside")
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
-        app.buttons["demo"].tap()
+        account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         let modes = app.segmentedControls["modes"]
         modes.buttons.element(boundBy: 1).tap()
