@@ -1,3 +1,4 @@
+import HoldMyTrackCore
 import XCTest
 
 /// The app's own flows, end to end. Those that need a server run against the dev stack the Debug
@@ -60,20 +61,16 @@ final class LaunchTests: XCTestCase {
         XCTAssertFalse(error.label.isEmpty)
     }
 
-    /// Skips unless a dev stack answers on one of the ports a Debug build talks to: compose's
-    /// default, or the one Config/Local.xcconfig.example suggests.
+    /// The API origin the app was built for, `HMT_API_BASE_URL`, which the scheme's test action
+    /// hands the test runner, read as the app reads it; skips unless a dev stack answers there.
     @MainActor
-    static func requireDevStack(_ test: XCTestCase) throws {
-        let answered = ["http://localhost:8080", "http://localhost:8081"].contains { base in
-            let done = test.expectation(description: base)
-            nonisolated(unsafe) var ok = false
-            URLSession.shared.dataTask(with: URL(string: base + "/healthz")!) { _, response, _ in
-                ok = (response as? HTTPURLResponse)?.statusCode == 200
-                done.fulfill()
-            }.resume()
-            test.wait(for: [done], timeout: 5)
-            return ok
+    @discardableResult
+    static func requireDevStack(_ test: XCTestCase) throws -> String {
+        let value = ProcessInfo.processInfo.environment["HMT_API_BASE_URL"] ?? ""
+        guard let base = AppInfo.apiBase(value) else {
+            throw XCTSkip("HMT_API_BASE_URL isn't an origin (\"\(value)\"): run the HoldMyTrack scheme, whose test action sets it")
         }
-        try XCTSkipUnless(answered, "no dev stack on localhost")
+        try XCTSkipUnless(TestAccount.answers(base), "no dev stack at \(base.absoluteString)")
+        return base.absoluteString
     }
 }

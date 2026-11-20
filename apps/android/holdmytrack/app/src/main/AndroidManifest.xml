@@ -95,7 +95,7 @@
             android:exported="false"
             android:targetActivity=".MainActivity" />
 
-        <!-- Not exported: the web's own pages shown in the app — the You tab's Settings, Activity
+        <!-- Not exported: the web's own pages shown in the app — the You tab's Settings, Track
              graph & trends and About, Sync history, and a new account's first run. -->
         <activity
             android:name=".web.WebPageActivity"

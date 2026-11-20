@@ -7,8 +7,8 @@ import XCTest
 final class CaptureTests: XCTestCase {
     @MainActor
     func testWalkingIntoAPlaceCapturesIt() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: TestAccount.base()!, samples: [])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
         defer { account.delete() }
         // Around the sample tracks, Northfield, Ohio.
         guard let place = try account.place("playground", in: [-81.56, 41.28, -81.48, 41.33]) else {

@@ -1,17 +1,17 @@
 import XCTest
 
-/// The map, end to end against the dev stack, on the demo account; skipped where no dev stack
-/// answers, as on CI.
+/// The map, end to end against the dev stack, on a fresh account with the sample tracks
+/// (TestAccount); skipped where no dev stack answers, as on CI.
 final class MapTests: XCTestCase {
     @MainActor
-    func testTheDemoOpensOnTheMapAndSwitchesModes() throws {
-        try LaunchTests.requireDevStack(self)
+    func testTheMapOpensAndSwitchesModes() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
-        let demo = app.buttons["demo"]
-        XCTAssertTrue(demo.waitForExistence(timeout: 10))
-        demo.tap()
+        account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         let modes = app.segmentedControls["modes"]
         XCTAssertTrue(modes.exists)
@@ -46,15 +46,17 @@ final class MapTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].exists, "the map keeps its place across a tab switch")
     }
 
-    /// Points of interest on the demo's own area: a picked category counts on the Layers badge,
+    /// Points of interest around the sample tracks: a picked category counts on the Layers badge,
     /// and below the tiles' zoom "Show in this area" loads its places and says how many.
     @MainActor
     func testAPickedCategoryShowsItsPlacesInTheArea() throws {
-        try LaunchTests.requireDevStack(self)
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
-        app.buttons["demo"].tap()
+        account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         let layers = app.buttons["layers"]
         app.setPlaygrounds(false)
@@ -70,15 +72,17 @@ final class MapTests: XCTestCase {
         XCTAssertEqual(layers.label, before)
     }
 
-    /// Fog's level control on the demo: its segment names the level, the menu offers Auto and
+    /// Fog's level control over the sample tracks: its segment names the level, the menu offers Auto and
     /// each level, a picked level holds, and a tap on a place names it in a popup.
     @MainActor
     func testFogsLevelMenuLocksALevelAndATapNamesAPlace() throws {
-        try LaunchTests.requireDevStack(self)
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
-        app.buttons["demo"].tap()
+        account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         app.segmentedControls["modes"].buttons.element(boundBy: 1).tap()
         let level = app.buttons["fogLevel"]
@@ -89,7 +93,7 @@ final class MapTests: XCTestCase {
         let auto = item("Auto")
         XCTAssertTrue(auto.waitForExistence(timeout: 10))
         attach("Fog level menu")
-        // The demo's country may have its own word for its regions.
+        // A country may have its own word for its regions.
         let region = item("State").exists ? "State" : "Region"
         item(region).tap()
         XCTAssertTrue(level.label.contains(region), level.label)

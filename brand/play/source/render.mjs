@@ -1,9 +1,11 @@
-// Draws the Play listing's callouts over raw device captures.
-// Usage, from the repository root: node brand/play/source/render.mjs brand/play/source/phone.json brand/play/en
-// Each shot: { name, raw, callouts: [{ x, y, w, title, body, to: [x, y] }] }, raw relative to the JSON file.
+// Draws the Play listing's callouts over the raw device captures shoot.mjs takes.
+// Usage, from the repository root: node brand/play/source/render.mjs brand/play/source/phone.json en brand/play/en
+// Each shot: { name, callouts: [{ x, y, w, to: [x, y], en: { title, body }, ru: { title, body } }] }; a language's
+// own x, y, w or to, beside its title, overrides the shared one. Each shot's capture is
+// raw/<locale>/<name>.png beside the JSON file.
 // Coordinates are the capture's own pixels; the output keeps its size. Needs apps/web's Playwright.
 import { createRequire } from "node:module";
-import { readFileSync, mkdirSync } from "node:fs";
+import { readFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,8 +13,13 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const { chromium } = createRequire(resolve(root, "apps/web/package.json"))("playwright");
 const fontDir = resolve(root, "apps/android/holdmytrack/app/src/main/res/font");
 
-const [specPath, outDir] = process.argv.slice(2);
+const [specPath, locale, outDir] = process.argv.slice(2);
 const shots = JSON.parse(readFileSync(specPath, "utf8"));
+const missing = shots.flatMap((s) => s.callouts.filter((c) => !c[locale]?.title).map(() => s.name));
+if (!outDir || missing.length) {
+  console.error(outDir ? `no ${locale} title for a callout in ${[...new Set(missing)].join(", ")}` : "usage: node render.mjs <spec.json> <locale> <out dir>");
+  process.exit(2);
+}
 const base = dirname(resolve(specPath));
 mkdirSync(outDir, { recursive: true });
 
@@ -23,7 +30,7 @@ const sizeOf = (png) => {
 };
 
 function page(shot, img, { w, h }) {
-  const s = Math.min(w, h) / 1080; // sizes below are for a 1080 px short side, so landscape tablets match portrait
+  const s = Math.min(w, h) / 1080; // sizes below are for a 1080 px short side
   const boxes = shot.callouts.map((c, i) => `<div class="c" id="c${i}" style="left:${c.x}px;top:${c.y}px;width:${c.w}px">
       <div class="t">${c.title}</div>${c.body ? `<div class="b">${c.body}</div>` : ""}</div>`);
   return `<!doctype html><html><head><style>
@@ -43,9 +50,15 @@ function page(shot, img, { w, h }) {
 }
 
 const browser = await chromium.launch();
-for (const shot of shots) {
-  const img = resolve(base, shot.raw);
+for (let shot of shots) {
+  const img = resolve(base, "raw", locale, shot.name + ".png");
+  if (!existsSync(img)) {
+    console.warn(`skipped ${shot.name}: no capture at ${img}`);
+    continue;
+  }
   const size = sizeOf(img);
+  // A language's own x, y, w or to, where its layout differs, override the shared ones.
+  shot = { ...shot, callouts: shot.callouts.map((c) => ({ ...c, ...c[locale] })) };
   const p = await browser.newPage({ viewport: { width: size.w, height: size.h } });
   await p.setContent(page(shot, img, size), { waitUntil: "load" });
   await p.evaluate(() => document.fonts.ready);

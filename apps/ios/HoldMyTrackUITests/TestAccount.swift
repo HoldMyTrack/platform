@@ -1,3 +1,4 @@
+import HoldMyTrackCore
 import XCTest
 
 /// A fresh account on the dev stack, as Android's flows use: signed up with a password, given a
@@ -84,22 +85,25 @@ final class TestAccount {
         (try? call("GET", "/v2/private-locations", nil)) as? [[String: Any]] ?? []
     }
 
+    /// A Trip named name holding every uploaded track.
+    func trip(_ name: String) throws {
+        try call("POST", "/v2/trips", ["name": name, "description": "", "track_ids": ids])
+    }
+
     func delete() {
         _ = try? call("DELETE", "/v2/account", ["email": email])
     }
 
-    /// The dev stack the Debug build talks to.
-    static func base() -> String? {
-        ["http://localhost:8080", "http://localhost:8081"].first { base in
-            let sem = DispatchSemaphore(value: 0)
-            nonisolated(unsafe) var ok = false
-            URLSession.shared.dataTask(with: URL(string: base + "/healthz")!) { _, response, _ in
-                ok = (response as? HTTPURLResponse)?.statusCode == 200
-                sem.signal()
-            }.resume()
-            sem.wait()
-            return ok
-        }
+    /// Whether the dev stack answers `/healthz` at base.
+    static func answers(_ base: URL) -> Bool {
+        let sem = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) var ok = false
+        URLSession.shared.dataTask(with: URLRequest(url: base.appending(path: "healthz"), timeoutInterval: 5)) { _, response, _ in
+            ok = (response as? HTTPURLResponse)?.statusCode == 200
+            sem.signal()
+        }.resume()
+        sem.wait()
+        return ok
     }
 
     /// Signs the app in as this account from the sign-in screen.

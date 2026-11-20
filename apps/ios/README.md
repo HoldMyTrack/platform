@@ -16,7 +16,9 @@ xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack -destination 
 
 The code with no UIKit in it is the `HoldMyTrackCore` package, and its tests need no simulator: `swift test` in `HoldMyTrackCore/`.
 
-A Debug build talks to `http://localhost:8080`, compose's API port on this Mac, which the simulator reaches directly. When `.env` sets another `API_PORT`, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set it there. Release always talks to `https://holdmytrack.com`. A Debug build's You tab shows the build and whether the API answers. Check the map on an iOS 27.0 or 27.1 simulator: on 27.2 it draws into part of the screen (`apps/ios/docs/IMPLEMENTATION.md` §6).
+A Debug build talks to `http://localhost:8080`, compose's API port on this Mac, which the simulator reaches directly. When `.env` sets another `API_PORT`, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set it there. Release always talks to `https://holdmytrack.com`. A Debug build's You tab shows the build and whether the API answers.
+
+The UI tests run against the dev stack at the same origin and skip when it doesn't answer, as on CI; `web` must be running too (`apps/ios/docs/IMPLEMENTATION.md` §3.5). The tests about the demo sign in as it, which the dev stack allows a few times an hour from one address; one refused with "Too many demo sessions" passes again once the hour is up.
 
 Signing for a device or an archive needs a team: copy `Config/Signing.xcconfig.example` to `Config/Signing.xcconfig`.
 

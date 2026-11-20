@@ -7,8 +7,8 @@ final class YouTests: XCTestCase {
     /// once signed in, sent only on its Upload, and lands as a track.
     @MainActor
     func testAFileOpenedInTheAppIsUploaded() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
         defer { account.delete() }
         let file = FileManager.default.temporaryDirectory.appending(path: "west-side.gpx")
         try account.sample("west-side.gpx").write(to: file)
@@ -32,8 +32,8 @@ final class YouTests: XCTestCase {
 
     @MainActor
     func testTheYouTabListsItsRowsAndPrivacy() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
@@ -54,8 +54,8 @@ final class YouTests: XCTestCase {
     /// Delete account, confirmed by the typed email, signs out; the account is gone.
     @MainActor
     func testDeleteAccountSignsOut() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
