@@ -12,19 +12,14 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
     private let notes = Controls.column([], spacing: DesignTokens.Space.s8)
     private let running = Controls.column([], spacing: DesignTokens.Space.s8)
     private var poll: Task<Void, Never>?
-    /// Files another app opened here, waiting for Upload or Cancel.
-    private var shared = SharedFiles()
     private let sharedNames = Controls.body("", color: UIColor(resource: .ink))
     private lazy var sharedSection: UIStackView = {
         let title = Controls.body(String(localized: "Upload these files to your account?", comment: "Upload: over the files another app opened in HoldMyTrack."), color: UIColor(resource: .ink))
         sharedNames.accessibilityIdentifier = "sharedFiles"
         let send = Controls.primaryButton(String(localized: "Upload"), id: "uploadShared")
-        send.addAction(UIAction { [weak self] _ in self?.sendShared() }, for: .primaryActionTriggered)
+        send.addAction(UIAction { _ in Uploads.shared.sendShared() }, for: .primaryActionTriggered)
         let cancel = Controls.secondaryButton(String(localized: "Cancel"), id: "cancelShared")
-        cancel.addAction(UIAction { [weak self] _ in
-            _ = self?.shared.take()
-            self?.renderShared()
-        }, for: .primaryActionTriggered)
+        cancel.addAction(UIAction { _ in Uploads.shared.cancelShared() }, for: .primaryActionTriggered)
         return Controls.column([title, sharedNames, send, cancel], spacing: DesignTokens.Space.s8)
     }()
 
@@ -48,7 +43,6 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
         pick.addAction(UIAction { [weak self] _ in self?.choose() }, for: .primaryActionTriggered)
         running.accessibilityIdentifier = "runningImports"
         Controls.host(Controls.column([sharedSection, about, pick, transfers, notes, running]), in: self)
-        renderShared()
         NotificationCenter.default.addObserver(forName: Uploads.changed, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.render() }
         }
@@ -76,23 +70,6 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
         Uploads.shared.enqueue(urls)
     }
 
-    /// Files another app opened here, listed to send on Upload.
-    func share(_ urls: [URL]) {
-        loadViewIfNeeded()
-        shared.add(urls)
-        renderShared()
-    }
-
-    private func sendShared() {
-        send(shared.take())
-        renderShared()
-    }
-
-    private func renderShared() {
-        sharedSection.isHidden = shared.urls.isEmpty
-        sharedNames.text = shared.names.joined(separator: "\n")
-    }
-
     private func choose() {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: Self.types, asCopy: true)
         picker.allowsMultipleSelection = true
@@ -106,6 +83,8 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
 
     private func render() {
         let uploads = Uploads.shared
+        sharedSection.isHidden = uploads.shared.urls.isEmpty
+        sharedNames.text = uploads.shared.names.joined(separator: "\n")
         transfers.arrangedSubviews.forEach { $0.removeFromSuperview() }
         for transfer in uploads.transfers.values.sorted(by: { $0.name < $1.name }) {
             let label = Controls.body(transfer.name, color: UIColor(resource: .ink))

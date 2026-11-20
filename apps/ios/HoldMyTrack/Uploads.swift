@@ -34,6 +34,13 @@ final class Uploads: NSObject, URLSessionDataDelegate {
     private var bodies: [Int: Data] = [:]
     /// Each task's multipart file, deleted once sent.
     private var files: [Int: URL] = [:]
+    /// Files another app opened here, listed on Upload until its Upload or Cancel, for as long as
+    /// the session lasts.
+    private(set) var shared = SharedFiles()
+    /// The tokens of sessions that ended this run: their tasks leave no note (UploadTasks).
+    private var endedTokens: Set<String> = []
+    /// Where iOS copies a file another app opens here; such a copy is the app's to delete.
+    private let inbox = URL.documentsDirectory.appending(path: "Inbox")
 
     private lazy var session: URLSession = {
         let config = URLSessionConfiguration.background(withIdentifier: Self.sessionID)
@@ -74,6 +81,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             let body = dir.appending(path: UUID().uuidString)
             do {
                 try UploadBody.write(file: url, name: name, boundary: boundary, to: body)
+                deleteIfInbox([url])
             } catch {
                 notes.append(Note(text: String(localized: "\(name) couldn't be read."), error: true))
                 continue
@@ -87,17 +95,41 @@ final class Uploads: NSObject, URLSessionDataDelegate {
         changed()
     }
 
-    /// The session token ended: what it queued is cancelled and the notes go, so nothing it
-    /// picked is sent for, or shown to, the next account (apps/android/docs/SPEC.md FR-1.3). Each
-    /// task carries the token it was queued under, and only those are cancelled: the session
-    /// lists its tasks later, by when the next account may have queued its own.
+    /// Lists files another app opened here, to send on Upload.
+    func share(_ urls: [URL]) {
+        shared.add(urls)
+        changed()
+    }
+
+    /// Upload's Upload: the listed files go.
+    func sendShared() {
+        enqueue(shared.take())
+    }
+
+    /// Upload's Cancel: the listed files are dropped.
+    func cancelShared() {
+        deleteIfInbox(shared.take())
+        changed()
+    }
+
+    /// The session token ended: what it queued is cancelled, and its notes and listed files go,
+    /// so nothing it picked is sent for, or shown to, the next account (apps/android/docs/SPEC.md
+    /// FR-1.3). Only the tasks queued under token are cancelled: the session lists its tasks
+    /// later, by when the next account may have queued its own.
     func drop(token: String) {
-        let ended = "Bearer \(token)"
-        session.getAllTasks { tasks in
-            for task in tasks where task.originalRequest?.value(forHTTPHeaderField: "Authorization") == ended { task.cancel() }
+        endedTokens.insert(token)
+        session.getAllTasks { [endedTokens] tasks in
+            for task in tasks where UploadTasks.ofEndedSession(task.originalRequest?.value(forHTTPHeaderField: "Authorization"), ended: endedTokens) {
+                task.cancel()
+            }
         }
         notes = []
+        deleteIfInbox(shared.take())
         changed()
+    }
+
+    private func deleteIfInbox(_ urls: [URL]) {
+        for url in urls where UploadTasks.isInboxCopy(url, inbox: inbox) { try? FileManager.default.removeItem(at: url) }
     }
 
     private func changed() {
@@ -126,12 +158,12 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             if let file = files.removeValue(forKey: task.taskIdentifier) { try? FileManager.default.removeItem(at: file) }
             let status = (task.response as? HTTPURLResponse)?.statusCode ?? 0
             if error == nil, status == 426 { NotificationCenter.default.post(name: Self.outdated, object: nil) }
-            guard let outcome = APIClient.uploadOutcome(error: error, status: status, body: body) else {
+            guard !UploadTasks.ofEndedSession(task.originalRequest?.value(forHTTPHeaderField: "Authorization"), ended: endedTokens) else {
                 changed()
                 return
             }
             sentCount += 1
-            switch outcome {
+            switch APIClient.uploadOutcome(error: error, status: status, body: body) {
             case .sent: break
             case .unreachable: notes.append(Note(text: String(localized: "\(name) wasn't sent: the server couldn't be reached."), error: true))
             case .already: notes.append(Note(text: String(localized: "\(name) was imported before."), error: false))

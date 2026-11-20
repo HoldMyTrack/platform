@@ -153,10 +153,24 @@ struct AccountTests {
         #expect(APIClient.uploadOutcome(status: 500, body: Data()) == .refused(""))
     }
 
-    @Test func aCancelledUploadSaysNothingAndAnotherFailureThatTheServerWasntReached() {
-        #expect(APIClient.uploadOutcome(error: URLError(.cancelled), status: 0, body: Data()) == nil)
+    @Test func anUploadWithNoAnswerWasntSent() {
+        #expect(APIClient.uploadOutcome(error: URLError(.cancelled), status: 0, body: Data()) == .unreachable)
         #expect(APIClient.uploadOutcome(error: URLError(.timedOut), status: 0, body: Data()) == .unreachable)
-        #expect(APIClient.uploadOutcome(error: nil, status: 202, body: Data(#"{"status":"queued"}"#.utf8)) == .sent)
+    }
+
+    @Test func onlyAnEndedSessionsTasksAreItsOwn() {
+        let ended: Set<String> = ["old"]
+        #expect(UploadTasks.ofEndedSession("Bearer old", ended: ended))
+        #expect(!UploadTasks.ofEndedSession("Bearer new", ended: ended))
+        #expect(!UploadTasks.ofEndedSession(nil, ended: ended))
+        #expect(!UploadTasks.ofEndedSession("old", ended: ended))
+    }
+
+    @Test func onlyTheInboxsCopiesAreTheAppsToDelete() {
+        let inbox = URL(fileURLWithPath: "/app/Documents/Inbox")
+        #expect(UploadTasks.isInboxCopy(URL(fileURLWithPath: "/app/Documents/Inbox/walk.gpx"), inbox: inbox))
+        #expect(!UploadTasks.isInboxCopy(URL(fileURLWithPath: "/app/Documents/Inbox2/walk.gpx"), inbox: inbox))
+        #expect(!UploadTasks.isInboxCopy(URL(fileURLWithPath: "/tmp/walk.gpx"), inbox: inbox))
     }
 
     @Test func filesFromAnotherAppAreListedOnceUntilTaken() {
