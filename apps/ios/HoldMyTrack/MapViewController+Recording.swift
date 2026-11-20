@@ -17,12 +17,17 @@ extension MapViewController {
         if active != recordingLive {
             recordingLive = active
             recordingFollowed = false
+            recordingFollows = true
             if active {
                 closeExport()
                 closeFogPlace()
+                closePrivateEditor()
                 spotViews.popup.close()
                 photoViews.popup.close()
             }
+            // The track's photos step aside with the tracks; Spots and paths stay, as on Android,
+            // being about where the recording goes.
+            photoViews.markers.isHidden = active
             export.button.isHidden = active
             state.hiddenGroups = TabMode.hiddenGroups(recording: active)
             applyTabMode()
@@ -31,14 +36,36 @@ extension MapViewController {
             if !active, !tourBlocked { onMapFreed?() }
         }
         drawRecording(points)
-        guard active, let last = points.last else { return }
+        followRecording()
+    }
+
+    /// The camera on the latest fix: flown to at the first, panned after, and left alone once the
+    /// user moves the map, until Find my location.
+    private func followRecording() {
+        guard recordingLive, recordingFollows, let last = lastRecordingPoints.last else { return }
         let at = CLLocationCoordinate2D(latitude: last.lat, longitude: last.lon)
+        recordingMoving = true
         if recordingFollowed {
             mapView.setCenter(at, animated: true)
         } else {
             recordingFollowed = true
             mapView.setCenter(at, zoomLevel: max(mapView.zoomLevel, 15), animated: true)
         }
+        recordingMoving = false
+    }
+
+    /// The user moved the map while recording: the camera stops following.
+    func mapView(_ mapView: MLNMapView, regionWillChangeWith reason: MLNCameraChangeReason, animated: Bool) {
+        guard recordingLive, !recordingMoving, reason.contains(.gesturePan) || reason.contains(.gesturePinch) || reason.contains(.gestureRotate) else { return }
+        recordingFollows = false
+    }
+
+    /// Find my location while recording: the camera follows the recording again.
+    func followRecordingAgain() -> Bool {
+        guard recordingLive else { return false }
+        recordingFollows = true
+        followRecording()
+        return true
     }
 
     /// A recording's message over the map, for a few seconds: the last one replaces the one before.

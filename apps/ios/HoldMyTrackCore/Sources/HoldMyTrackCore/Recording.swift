@@ -102,9 +102,12 @@ public struct Recording: Equatable, Sendable {
     }
 
     /// Whether a fix of accuracy metres (negative when CoreLocation couldn't tell) taken at time
-    /// is kept: only while recording, accurate enough, and not too soon after the last kept one.
+    /// is kept: only while recording, taken since the start or resume (CoreLocation hands over its
+    /// last cached fix first, which may be far away and long ago), accurate enough, and not too
+    /// soon after the last kept one.
     public func accepts(accuracy: Double, at time: Date) -> Bool {
         guard state == .recording, accuracy >= 0, accuracy <= Self.worstAccuracy else { return false }
+        if let runningSince, time < runningSince { return false }
         guard let last else { return true }
         return time.timeIntervalSince(last.time) >= Self.minimumInterval
     }
@@ -133,6 +136,34 @@ public struct Recording: Equatable, Sendable {
         let h = pow(sin((b.lat - a.lat) * rad / 2), 2) + cos(a.lat * rad) * cos(b.lat * rad) * pow(sin((b.lon - a.lon) * rad / 2), 2)
         return 2 * 6_371_008.8 * asin(min(1, h.squareRoot()))
     }
+}
+
+/// What the line over the record button says, as values: nothing while idle, the hold's count,
+/// paused with the moving time, waiting for the first fix, or the moving time and distance.
+public enum RecordingStatus: Equatable, Sendable {
+    case none, holding, waiting
+    case paused(moving: TimeInterval)
+    case running(moving: TimeInterval, meters: Double)
+
+    public static func of(_ recording: Recording, holding: Bool, at now: Date) -> RecordingStatus {
+        switch recording.state {
+        case .idle: return .none
+        case _ where holding: return .holding
+        case .paused: return .paused(moving: recording.moving(at: now))
+        case .recording:
+            return recording.points.isEmpty ? .waiting : .running(moving: recording.moving(at: now), meters: recording.meters)
+        }
+    }
+
+    /// H:MM:SS, as Android's.
+    public static func clock(_ seconds: TimeInterval) -> String {
+        let total = max(0, Int(seconds))
+        return String(format: "%d:%02d:%02d", total / 3600, total % 3600 / 60, total % 60)
+    }
+
+    /// Whether the record button takes the user to the map, from whichever tab: a start, since
+    /// the recording is drawn there, and a stop, whose outcome is said there.
+    public static func showsMap(stopping: Bool, state: RecordingState) -> Bool { stopping || state == .idle }
 }
 
 /// A stopped recording, kept on the phone under its account (RecordingStore).

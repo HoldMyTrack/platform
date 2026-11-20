@@ -99,6 +99,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var recordingLive = false
     /// Whether the camera has flown to this recording's first fix; later fixes only pan.
     var recordingFollowed = false
+    /// Whether the camera follows the recording; a pan or zoom by the user stops it.
+    var recordingFollows = true
+    /// The camera move is the recording's own, not the user's.
+    var recordingMoving = false
     var lastRecordingPoints: [RecordedPoint] = []
     var recordingNoticeShown = 0
     /// Counts the tour's camera moves, so a move's end only continues the latest (MapViewController+Tour).
@@ -368,6 +372,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     // MARK: Find my location
 
     private func locate() {
+        if followRecordingAgain() { return }
         switch location.authorizationStatus {
         case .notDetermined:
             locating = true

@@ -67,6 +67,41 @@ struct RecordingTests {
         #expect(kept6)
     }
 
+    @Test func aFixFromBeforeTheStartOrResumeIsDropped() {
+        var r = Recording()
+        r.start(at: t0.addingTimeInterval(100))
+        let cached = r.add(point(1, 1, 0), accuracy: 5)
+        #expect(!cached, "CoreLocation's last fix, from before the start")
+        let fresh = r.add(point(0, 0, 100), accuracy: 5)
+        #expect(fresh)
+        r.pause(at: t0.addingTimeInterval(110))
+        r.resume(at: t0.addingTimeInterval(200))
+        let stale = r.add(point(0, 0.001, 150), accuracy: 5)
+        #expect(!stale, "taken while paused")
+        #expect(r.meters == 0)
+    }
+
+    @Test func theStatusSaysWhatTheRecordingIsDoing() {
+        var r = Recording()
+        #expect(RecordingStatus.of(r, holding: false, at: t0) == .none)
+        r.start(at: t0)
+        #expect(RecordingStatus.of(r, holding: false, at: t0.addingTimeInterval(5)) == .waiting)
+        r.add(point(0, 0, 1), accuracy: 5)
+        #expect(RecordingStatus.of(r, holding: false, at: t0.addingTimeInterval(5)) == .running(moving: 5, meters: 0))
+        #expect(RecordingStatus.of(r, holding: true, at: t0.addingTimeInterval(5)) == .holding)
+        r.pause(at: t0.addingTimeInterval(10))
+        #expect(RecordingStatus.of(r, holding: false, at: t0.addingTimeInterval(99)) == .paused(moving: 10))
+        #expect(RecordingStatus.clock(3725) == "1:02:05")
+        #expect(RecordingStatus.clock(-1) == "0:00:00")
+    }
+
+    @Test func aStartOrAStopShowsTheMapAPauseDoesnt() {
+        #expect(RecordingStatus.showsMap(stopping: false, state: .idle))
+        #expect(RecordingStatus.showsMap(stopping: true, state: .recording))
+        #expect(!RecordingStatus.showsMap(stopping: false, state: .recording))
+        #expect(!RecordingStatus.showsMap(stopping: false, state: .paused))
+    }
+
     @Test func stopKeepsAMinuteAndTwoPoints() {
         var r = Recording()
         r.start(at: t0)

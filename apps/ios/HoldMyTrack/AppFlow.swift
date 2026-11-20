@@ -170,9 +170,14 @@ final class AppFlow {
         top?.present(update, animated: animated)
     }
 
+    /// Whether the signed-in screen going next keeps a recording in progress, as Stop would:
+    /// false only for a deleted account.
+    private var keepsRecording = true
+
     private func setRoot(_ controller: UIViewController) {
         // The sign-in keyboard would otherwise stay up over the next screen's bottom for a moment.
         window.endEditing(true)
+        (window.rootViewController as? MainTabBarController)?.endRecording(save: keepsRecording)
         window.rootViewController = controller
         if updateShown { presentUpdate(animated: false) }
         presentOpenedFiles()
@@ -188,7 +193,9 @@ final class AppFlow {
             RecordingController.defaultStore.forget(account: account)
         }
         store.clear()
+        keepsRecording = false
         show()
+        keepsRecording = true
     }
 }
 

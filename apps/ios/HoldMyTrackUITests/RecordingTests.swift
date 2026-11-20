@@ -5,7 +5,8 @@ import XCTest
 /// `xcrun simctl location booted start --speed=5 41.4800,-81.7000 41.4900,-81.6800`.
 final class RecordingTests: XCTestCase {
     /// A tap starts, the status counts time and distance, a tap pauses and resumes, a short hold
-    /// stops nothing, a stop under a minute keeps nothing, and one past a minute is saved.
+    /// stops nothing, a stop under a minute keeps nothing, and one past a minute, stopped from the
+    /// You tab, is saved and said on the map.
     @MainActor
     func testATapRecordsAndAHoldStopsAndSaves() throws {
         try LaunchTests.requireDevStack(self)
@@ -47,9 +48,12 @@ final class RecordingTests: XCTestCase {
 
         record.tap()
         XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))
+        // Stopped from another tab, the map shows again to say how it went.
+        app.tabBars.buttons["tabYou"].tap()
         Thread.sleep(forTimeInterval: 62)
         record.press(forDuration: 2.6)
         XCTAssertTrue(app.staticTexts["Recording saved on this phone."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tabBars.buttons["tabTracks"].isSelected)
     }
 
     @MainActor

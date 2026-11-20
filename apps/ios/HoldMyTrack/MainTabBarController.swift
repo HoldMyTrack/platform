@@ -83,18 +83,20 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         view.addSubview(recordButton)
         recordButton.onTap = { [weak self] in
             guard let self else { return }
-            // The recording is drawn on the map: a start from another tab goes there.
-            if self.recorder.state == .idle, let mapHost = self.viewControllers?.first, self.selectedViewController !== mapHost {
-                self.selectedViewController = mapHost
-            }
+            if RecordingStatus.showsMap(stopping: false, state: self.recorder.state) { self.showMap() }
             self.recorder.tap()
         }
-        recordButton.onStop = { [weak self] in self?.recorder.stop() }
+        recordButton.onStop = { [weak self] in
+            guard let self else { return }
+            if RecordingStatus.showsMap(stopping: true, state: self.recorder.state) { self.showMap() }
+            self.recorder.stop()
+        }
         recordButton.onHolding = { [weak self] holding in
             self?.holdingToStop = holding
-            self?.renderRecording()
+            self?.renderRecordingStatus()
         }
         recorder.onChange = { [weak self] in self?.renderRecording() }
+        recorder.onTick = { [weak self] in self?.renderRecordingStatus() }
         recorder.onMessage = { [weak self] text in self?.map.say(text) }
         recorder.onRefused = { [weak self] in self?.offerLocationSettings() }
     }
@@ -112,14 +114,31 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         recordStatus.frame = CGRect(x: bar.midX - width / 2, y: recordButton.frame.minY - DesignTokens.Space.s8 - height, width: width, height: height)
     }
 
+    /// The recording's state or fixes changed: the button, the status and the map.
     private func renderRecording() {
-        let state = recorder.state
-        recordButton.recordingState = state
-        let status = recorder.status(format: PanelFormat(account: account), holding: holdingToStop)
+        recordButton.recordingState = recorder.state
+        renderRecordingStatus()
+        map.showRecording(active: recorder.state != .idle, points: recorder.recording.points)
+    }
+
+    /// The status line alone, every second of the clock.
+    private func renderRecordingStatus() {
+        let status = recorder.status(format: PanelFormat(account: account), holding: holdingToStop, at: Date())
         recordStatus.text = status.map { "  \($0)  " }
         recordStatus.isHidden = status == nil
         view.setNeedsLayout()
-        map.showRecording(active: state != .idle, points: recorder.recording.points)
+    }
+
+    /// The Tracks tab, where the recording is drawn and its outcome said.
+    private func showMap() {
+        guard let mapHost = viewControllers?.first, selectedViewController !== mapHost else { return }
+        selectedViewController = mapHost
+    }
+
+    /// The signed-in screen is going: a sign-out or an ended session keeps the recording as a
+    /// Stop would, and a deleted account's is dropped with everything else it had.
+    func endRecording(save: Bool) {
+        recorder.end(save: save)
     }
 
     /// Location is off for HoldMyTrack: Settings is where it's turned on.

@@ -42,6 +42,8 @@ final class RecordButton: UIControl {
         layer.shadowRadius = 6
         layer.shadowOffset = CGSize(width: 0, height: 2)
         describe()
+        // The idle disc is the surface's color, which a theme change turns.
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.setNeedsDisplay() }
     }
 
     @available(*, unavailable)
