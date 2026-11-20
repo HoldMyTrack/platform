@@ -76,12 +76,16 @@ var trackBBoxColumns = orCircleEdge(shorterWay("ST_XMin"), "x - dx") + `, ` + or
 	orCircleEdge(shorterWay("ST_XMax"), "x + dx") + `, ` + orCircleEdge(`ST_YMax(trajectory)`, "y + dy")
 
 // orCircleEdge is the route's edge, else edge of the circle hiding the track, in terms of its
-// center x, y and its radius in degrees dx, dy on ingest's sphere (111,195 m a degree).
+// center x, y and its radius in degrees dx, dy on ingest's sphere (111,195 m a degree). A circle
+// whose west edge would pass −180 is moved a world's width east, so only east passes 180, as a
+// route's bbox does. A location's center is within ±85° (privateLocationRequest.validate), so its
+// circle stays clear of the poles.
 func orCircleEdge(routeEdge, edge string) string {
 	return `COALESCE(` + routeEdge + `, (SELECT ` + edge + ` FROM (
-         SELECT ST_X(z.center::geometry) AS x, ST_Y(z.center::geometry) AS y,
-                z.radius_m / (111195 * cos(radians(ST_Y(z.center::geometry)))) AS dx, z.radius_m / 111195.0 AS dy
-         FROM privacy_zones z WHERE z.id = tracks.hidden_by) c))`
+         SELECT x + CASE WHEN x - dx < -180 THEN 360 ELSE 0 END AS x, y, dx, dy FROM (
+           SELECT ST_X(z.center::geometry) AS x, ST_Y(z.center::geometry) AS y,
+                  z.radius_m / (111195 * cos(radians(ST_Y(z.center::geometry)))) AS dx, z.radius_m / 111195.0 AS dy
+           FROM privacy_zones z WHERE z.id = tracks.hidden_by) c0) c))`
 }
 
 func shorterWay(edge string) string {

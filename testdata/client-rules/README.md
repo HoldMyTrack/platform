@@ -38,6 +38,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `typeFacets` | `tracks`, `distanceFilter` | `[{ type, count }]` |
 | `passesFilters` | `track`, `excludedTypes`, `distanceFilter` | boolean |
 | `fitBoxes` | `tracks` (`{ bbox, pending, private }`) | the boxes, in order |
+| `selectionBoxes` | `tracks` (`{ bbox, pending, private }`) | the boxes, in order |
 | `openingView` | `boxes` (`[west, south, east, north]`, newest first), `viewport` (`{ width, height }`) | `{ center: [lon, lat], zoom }` or `null` |
 | `areaLoad` | `zoom`, `listed`, `total` | `{ load, capped }`, `load` `auto` or `none` |
 | `fogLevelInView` | `levels` (`{ level, from, below }`), `zoom`, `locked` | a level |

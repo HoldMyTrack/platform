@@ -73,9 +73,9 @@ class CameraFramer(
     /** Whether the camera just settled from the app's own flight, which this answer uses up. */
     fun consumeAppFlight(): Boolean = appFlight.also { appFlight = false }
 
-    /** Frames every one of [tracks] that has a track. */
+    /** Frames [tracks] as Show on map does ([FitBoxes.selection]). */
     fun flyTo(tracks: List<Track>) {
-        flyTo(BoxUnion.of(tracks.mapNotNull { it.bbox }) ?: return)
+        flyTo(BoxUnion.of(FitBoxes.selection(tracks)) ?: return)
     }
 
     /**

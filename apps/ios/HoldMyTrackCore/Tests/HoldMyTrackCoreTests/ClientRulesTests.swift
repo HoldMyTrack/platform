@@ -169,13 +169,8 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         let result = AreaLoad.of(zoom: input["zoom"].double!, listed: input.int("listed"), total: input["total"].double.map { Int($0) })
         return ["load": .string(result.load.rawValue), "capped": .bool(result.capped)]
     },
-    "fitBoxes": { input in
-        let tracks = (input["tracks"].list ?? []).map { t in
-            Track(id: "a", startedAt: "", trackType: "walking", bbox: t["bbox"].list?.map { $0.double! },
-                  pending: t["pending"].bool ?? false, isPrivate: t["private"].bool ?? false)
-        }
-        return .array(FitBoxes.of(tracks).map { box in .array(box.map { .number($0) }) })
-    },
+    "fitBoxes": { input in boxesJSON(FitBoxes.of(framable(input))) },
+    "selectionBoxes": { input in boxesJSON(FitBoxes.selection(framable(input))) },
     "openingView": { input in
         let boxes = (input["boxes"].list ?? []).map { $0.list!.map { $0.double! } }
         guard let view = OpeningView.of(boxes, width: input["viewport"]["width"].double!, height: input["viewport"]["height"].double!) else { return nil }
@@ -489,6 +484,17 @@ func distance(_ json: RuleJSON) -> DistanceRange? {
 
 func distanceJSON(_ range: DistanceRange?) -> RuleJSON {
     range.map { ["min": .num($0.min), "max": .num($0.max)] } ?? nil
+}
+
+func framable(_ input: RuleJSON) -> [Track] {
+    (input["tracks"].list ?? []).map { t in
+        Track(id: "a", startedAt: "", trackType: "walking", bbox: t["bbox"].list?.map { $0.double! },
+              pending: t["pending"].bool ?? false, isPrivate: t["private"].bool ?? false)
+    }
+}
+
+func boxesJSON(_ boxes: [[Double]]) -> RuleJSON {
+    .array(boxes.map { box in .array(box.map { .number($0) }) })
 }
 
 func track(_ json: RuleJSON, id: String = "a") -> TrackSummary {

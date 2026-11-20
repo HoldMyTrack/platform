@@ -121,12 +121,12 @@ func TestListAreaHiddenTracks(t *testing.T) {
 		}
 		return id
 	}
-	// a and b overlap (857 m apart); c is on its own; d crosses the antimeridian.
-	ca, cb, cc, cd := circle{10, 50}, circle{10.012, 50}, circle{12, 50}, circle{179.999, 0}
-	inA, inB, inC, inD := hidden(1, zone(ca)), hidden(2, zone(cb)), hidden(3, zone(cc)), hidden(5, zone(cd))
+	// a and b overlap (857 m apart); c is on its own; d and e cross the antimeridian, from either side.
+	ca, cb, cc, cd, ce := circle{10, 50}, circle{10.012, 50}, circle{12, 50}, circle{179.999, 0}, circle{-179.999, 10}
+	inA, inB, inC, inD, inE := hidden(1, zone(ca)), hidden(2, zone(cb)), hidden(3, zone(cc)), hidden(5, zone(cd)), hidden(6, zone(ce))
 	hidden(4, "") // its location deleted, its job not run yet: in no view
 	boxes := map[string][]float64{}
-	for id, c := range map[string]circle{inA: ca, inB: cb, inC: cc, inD: cd} {
+	for id, c := range map[string]circle{inA: ca, inB: cb, inC: cc, inD: cd, inE: {ce.lon + 360, ce.lat}} { // moved, so west stays at or past −180
 		boxes[id] = circleBBox(c.lon, c.lat, radiusM)
 	}
 	boxA, boxB, boxC := boxes[inA], boxes[inB], boxes[inC]
@@ -166,6 +166,7 @@ func TestListAreaHiddenTracks(t *testing.T) {
 		{"under Dates", band(9.9, 10.1) + "&from=2026-05-02", []string{inB}},
 		{"a view across the antimeridian", band(11.99, -179), []string{inC}},
 		{"a circle across the antimeridian", view(-179.999, -0.01, -179.99, 0.01), []string{inD}},
+		{"a circle across the antimeridian from the west", view(179.99, 9.99, 180, 10.01), []string{inE}},
 	} {
 		if got, total := list(tc.query); !slices.Equal(got, tc.want) || total != len(tc.want) {
 			t.Errorf("%s: %v of %d, want %v", tc.name, got, total, tc.want)

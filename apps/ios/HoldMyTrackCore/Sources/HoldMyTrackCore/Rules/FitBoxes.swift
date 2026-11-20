@@ -6,4 +6,10 @@ public enum FitBoxes {
     public static func of(_ tracks: [Track]) -> [[Double]] {
         tracks.filter { !$0.pending && !$0.isPrivate }.compactMap(\.bbox)
     }
+
+    /// What Show on map frames (the `selectionBoxes` rule): one track's own bbox, a Private one's
+    /// circle included; several, `of`'s, so a circle never joins other tracks' routes.
+    public static func selection(_ tracks: [Track]) -> [[Double]] {
+        tracks.count == 1 ? tracks.compactMap(\.bbox) : of(tracks)
+    }
 }

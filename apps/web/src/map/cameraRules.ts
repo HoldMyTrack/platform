@@ -14,6 +14,13 @@ export function fitBoxes(tracks: readonly Framable[]): BBox[] {
   return tracks.filter(framed).map((a) => a.bbox);
 }
 
+/** The boxes Show on map frames (the `selectionBoxes` rule): one track's own, a Private one's
+ *  circle included; several, fitBoxes's, so a circle never joins other tracks' routes. */
+export function selectionBoxes(tracks: readonly Framable[]): BBox[] {
+  if (tracks.length === 1) return tracks[0]!.bbox === null ? [] : [tracks[0]!.bbox];
+  return fitBoxes(tracks);
+}
+
 /**
  * A Trip's first loaded list fits all of it, a trip; a URL view (`#…`) keeps the camera. Returns
  * null to wait for a later list (a Trip with nothing drawn yet), else the tracks to fit,

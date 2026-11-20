@@ -360,7 +360,7 @@ extension MapViewController {
     func fly(_ ids: [String]) {
         let hidden = session.panel.mapHidden
         let wanted = Set(ids)
-        let boxes = tracks.filter { wanted.contains($0.id) && !hidden.contains($0.id) }.compactMap(\.bbox)
+        let boxes = FitBoxes.selection(tracks.filter { wanted.contains($0.id) && !hidden.contains($0.id) })
         guard let box = MapFraming.union(boxes) else { return }
         fit(box, animated: true)
     }

@@ -1,0 +1,36 @@
+{
+  "rule": "selectionBoxes",
+  "description": "The boxes Show on map frames for the tracks it acts on (docs/SPEC.md FR-5.8), Hidden ones already left out: one track's own bbox, a Private one's circle included; several, the fitBoxes rule's, so a Private track's circle never joins other tracks' routes. A track with no bbox has nothing to frame.",
+  "cases": [
+    {
+      "name": "one track",
+      "input": {"tracks": [{"bbox": [8.3, 47.04, 8.32, 47.05]}]},
+      "expected": [[8.3, 47.04, 8.32, 47.05]]
+    },
+    {
+      "name": "one Private track flies to its circle",
+      "input": {"tracks": [{"bbox": [10.0, 50.0, 10.01, 50.01], "private": true}]},
+      "expected": [[10.0, 50.0, 10.01, 50.01]]
+    },
+    {
+      "name": "several leave a Private track's circle out",
+      "input": {"tracks": [{"bbox": [10.0, 50.0, 10.01, 50.01], "private": true}, {"bbox": [8.3, 47.04, 8.32, 47.05]}]},
+      "expected": [[8.3, 47.04, 8.32, 47.05]]
+    },
+    {
+      "name": "several, all Private: nothing to frame",
+      "input": {"tracks": [{"bbox": [10.0, 50.0, 10.01, 50.01], "private": true}, {"bbox": [11.0, 50.0, 11.01, 50.01], "private": true}]},
+      "expected": []
+    },
+    {
+      "name": "one with no bbox",
+      "input": {"tracks": [{"bbox": null}]},
+      "expected": []
+    },
+    {
+      "name": "none",
+      "input": {"tracks": []},
+      "expected": []
+    }
+  ]
+}

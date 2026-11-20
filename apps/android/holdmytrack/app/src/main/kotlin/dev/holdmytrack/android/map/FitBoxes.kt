@@ -10,4 +10,9 @@ import dev.holdmytrack.android.net.Track
  */
 object FitBoxes {
     fun of(tracks: List<Track>): List<List<Double>> = tracks.filter { !it.pending && !it.isPrivate }.mapNotNull { it.bbox }
+
+    /** What Show on map frames (the `selectionBoxes` rule): one track's own bbox, a Private one's
+     *  circle included; several, [of]'s, so a circle never joins other tracks' routes. */
+    fun selection(tracks: List<Track>): List<List<Double>> =
+        if (tracks.size == 1) listOfNotNull(tracks[0].bbox) else of(tracks)
 }
