@@ -4,6 +4,7 @@
 import { basemapStatus } from '../src/map/basemapStatus.ts';
 import { satelliteLook, satelliteStatus } from '../src/map/satelliteStatus.ts';
 import { openingView } from '../src/map/openingView.ts';
+import { fitBoxes } from '../src/map/cameraRules.ts';
 import { areaLoad } from '../src/map/areaLoad.ts';
 import { fogLevelInView, fogLevelPick } from '../src/map/fogLevels.ts';
 import { placeLabel } from '../src/map/fogPlaceLabel.ts';
@@ -30,6 +31,7 @@ const sorted = (set) => [...set].sort();
 
 export const rules = {
   openingView: ({ boxes, viewport }) => openingView(boxes, viewport),
+  fitBoxes: ({ tracks }) => fitBoxes(tracks.map((a) => ({ bbox: a.bbox ?? null, pending: a.pending ?? false, private: a.private ?? false }))),
   areaLoad: ({ zoom, listed, total }) => areaLoad(zoom, listed, total ?? null),
   fogLevelInView: ({ levels, zoom, locked }) => fogLevelInView(levels, zoom, locked ?? null),
   fogLevelPick: ({ levels, zoom, locked, picked }) => fogLevelPick(levels, zoom, locked ?? null, picked),

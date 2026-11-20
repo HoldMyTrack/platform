@@ -429,7 +429,7 @@ stateDiagram-v2
 
 - At most one track is Focused, by clicking its row or route; any number are Checked. Bold is either, on the map and in its image (FR-4.7). The toolbar acts on the Checked ones when any are, else the Focused one. A Type or Distance filter that hides a Checked track unchecks it.
 - On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/android/docs/SPEC.md` FR-2.7).
-- Hiding keeps Focused and Checked; camera fits skip Hidden. Opening or closing a Trip clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on tracks still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
+- Hiding keeps Focused and Checked; camera fits skip Hidden. A fit over several tracks (the opening view, Dates, a Trip's) skips Pending and Private ones too, so only focusing a Private row frames its location's circle (FR-5.11). Opening or closing a Trip clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on tracks still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden track stays hidden after Pending clears.
 - Leaving Pending brings the route back at once, and Fog once redrawn.
 - A track entirely inside Private locations is Normal with no geometry.

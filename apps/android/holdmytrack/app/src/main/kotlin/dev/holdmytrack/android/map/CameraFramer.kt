@@ -51,7 +51,7 @@ class CameraFramer(
         HoldMyTrackApi.areaTracks(null, from = null, to = null, limit = OpeningView.TRACKS) { result ->
             val page = result.getOrNull()
             if (page == null) return@areaTracks onOpened()
-            val boxes = page.tracks.filter { !it.pending }.mapNotNull { it.bbox }
+            val boxes = FitBoxes.of(page.tracks)
             val instance = map()
             val view = OpeningView.of(boxes, root.width / density.toDouble(), root.height / density.toDouble())
             onEmpty(view == null)

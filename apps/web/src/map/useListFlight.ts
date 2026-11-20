@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { flyToBBox, unionBBox } from './bbox.ts';
-import { firstListFit } from './cameraRules.ts';
+import { firstListFit, fitBoxes } from './cameraRules.ts';
 import type { Track } from '../api.ts';
 
 interface ListFlightInputs {
@@ -54,7 +54,7 @@ export function useListFlight(map: MapLibreMap | null, inputs: ListFlightInputs)
     if (!flyRequest || tripId === null) return;
     onFlown();
     const visible = tracks.filter((a) => !mapHiddenIdsRef.current.has(a.id));
-    const bounds = unionBBox(visible.flatMap((a) => (a.bbox ? [a.bbox] : [])));
+    const bounds = unionBBox(fitBoxes(visible));
     if (bounds) flyToBBox(map, bounds);
   }, [map, tracks, loadedKey, fitTo, tripId, flyRequest]);
 }

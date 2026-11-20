@@ -165,7 +165,8 @@ extension MapViewController {
         renderCap()
         renderPendingNotice()
         if session.consumeFly() {
-            fly(next.map(\.id))
+            let hidden = session.panel.mapHidden
+            if let box = MapFraming.union(FitBoxes.of(next.filter { !hidden.contains($0.id) })) { fit(box, animated: true) }
         }
         if let id = focusWhenListed, next.contains(where: { $0.id == id }) {
             focusWhenListed = nil

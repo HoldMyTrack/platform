@@ -6,7 +6,8 @@ import { countryView } from './countryView.ts';
 import { OPENING_TRACKS, openingView } from './openingView.ts';
 import type { MapSessionEvent } from './session.ts';
 import { viewArea } from './useAreaList.ts';
-import { listArea, type BBox } from '../api.ts';
+import { listArea } from '../api.ts';
+import { fitBoxes } from './cameraRules.ts';
 
 interface OpeningViewInputs {
   /** The URL's camera, a Trip or an arriving track decides the camera instead. */
@@ -40,7 +41,7 @@ export function useOpeningView(map: MapLibreMap | null, dispatch: Dispatch<MapSe
     return listArea({ limit: OPENING_TRACKS }, signal)
       .then(({ tracks }) => {
         if (signal.aborted) return;
-        const boxes = tracks.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : []));
+        const boxes = fitBoxes(tracks);
         const container = m.getContainer();
         const view = openingView(boxes, { width: container.clientWidth, height: container.clientHeight });
         const fallback = countryView(country) ?? WORLD_VIEW;

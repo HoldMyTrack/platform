@@ -25,7 +25,7 @@ extension MapViewController {
             Self.framed.insert(accountKey)
             Self.hasTracks[accountKey] = !newest.tracks.isEmpty
             onHistoryKnown?(!newest.tracks.isEmpty)
-            let boxes = newest.tracks.filter { !$0.pending }.compactMap(\.bbox)
+            let boxes = FitBoxes.of(newest.tracks)
             if let view = OpeningView.of(boxes, width: mapView.bounds.width, height: mapView.bounds.height) {
                 hideNotice(.empty)
                 if !session.flyRequest {
@@ -146,7 +146,7 @@ extension MapViewController {
         Task {
             let read = try? await flow.api.areaList(box: nil, dates: dates)
             guard dates == session.dates else { return }
-            guard let box = MapFraming.union((read?.tracks ?? []).filter { !$0.pending }.compactMap(\.bbox)) else { return loadList() }
+            guard let box = MapFraming.union(FitBoxes.of(read?.tracks ?? [])) else { return loadList() }
             fit(box, animated: true) { [weak self] in
                 guard let self else { return }
                 self.followArea()

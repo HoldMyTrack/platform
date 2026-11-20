@@ -1,5 +1,18 @@
 /** Where the camera goes when a Trip's list lands (FR-13.6), as plain values. */
-import type { Track } from '../api.ts';
+import type { BBox, Track } from '../api.ts';
+
+type Framable = Pick<Track, 'bbox' | 'pending' | 'private'>;
+
+/** Whether a fit over several tracks frames this one (SPEC.md FR-5.8): not Pending, and not
+ *  Private, whose bbox is its location's circle, which only focusing that row flies to. */
+function framed<T extends Framable>(track: T): track is T & { bbox: BBox } {
+  return track.bbox !== null && !track.pending && !track.private;
+}
+
+/** The boxes a fit over several tracks frames, in the tracks' order (the `fitBoxes` rule). */
+export function fitBoxes(tracks: readonly Framable[]): BBox[] {
+  return tracks.filter(framed).map((a) => a.bbox);
+}
 
 /**
  * A Trip's first loaded list fits all of it, a trip; a URL view (`#…`) keeps the camera. Returns
@@ -8,6 +21,6 @@ import type { Track } from '../api.ts';
  */
 export function firstListFit(tracks: readonly Track[], tripId: string | null, urlView: boolean): Track[] | null {
   if (tripId === null || urlView) return [];
-  const drawn = tracks.filter((a) => a.bbox !== null && !a.pending);
+  const drawn = tracks.filter(framed);
   return drawn.length === 0 ? null : drawn;
 }

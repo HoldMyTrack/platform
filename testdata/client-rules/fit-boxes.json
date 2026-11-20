@@ -1,0 +1,31 @@
+{
+  "rule": "fitBoxes",
+  "description": "The boxes a camera fit over several tracks frames (docs/SPEC.md FR-5.8): a Trip's first fit, the Dates flight, the opening view and the list flight. A Pending track is left out, and so is a Private one, whose bbox is its location's circle: only focusing that one row flies there. A track with no bbox has nothing to frame. Boxes keep the tracks' order.",
+  "cases": [
+    {
+      "name": "every drawn track",
+      "input": {"tracks": [{"bbox": [8.3, 47.04, 8.32, 47.05]}, {"bbox": [8.31, 47.03, 8.33, 47.05], "pending": false, "private": false}]},
+      "expected": [[8.3, 47.04, 8.32, 47.05], [8.31, 47.03, 8.33, 47.05]]
+    },
+    {
+      "name": "a Private track's circle is left out",
+      "input": {"tracks": [{"bbox": [10.0, 50.0, 10.01, 50.01], "private": true}, {"bbox": [8.3, 47.04, 8.32, 47.05]}]},
+      "expected": [[8.3, 47.04, 8.32, 47.05]]
+    },
+    {
+      "name": "a Pending track is left out",
+      "input": {"tracks": [{"bbox": [8.3, 47.04, 8.32, 47.05], "pending": true}, {"bbox": [8.31, 47.03, 8.33, 47.05]}]},
+      "expected": [[8.31, 47.03, 8.33, 47.05]]
+    },
+    {
+      "name": "a track with no bbox has nothing to frame",
+      "input": {"tracks": [{"bbox": null, "private": true}, {"bbox": null}]},
+      "expected": []
+    },
+    {
+      "name": "none",
+      "input": {"tracks": []},
+      "expected": []
+    }
+  ]
+}

@@ -169,6 +169,13 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         let result = AreaLoad.of(zoom: input["zoom"].double!, listed: input.int("listed"), total: input["total"].double.map { Int($0) })
         return ["load": .string(result.load.rawValue), "capped": .bool(result.capped)]
     },
+    "fitBoxes": { input in
+        let tracks = (input["tracks"].list ?? []).map { t in
+            Track(id: "a", startedAt: "", trackType: "walking", bbox: t["bbox"].list?.map { $0.double! },
+                  pending: t["pending"].bool ?? false, isPrivate: t["private"].bool ?? false)
+        }
+        return .array(FitBoxes.of(tracks).map { box in .array(box.map { .number($0) }) })
+    },
     "openingView": { input in
         let boxes = (input["boxes"].list ?? []).map { $0.list!.map { $0.double! } }
         guard let view = OpeningView.of(boxes, width: input["viewport"]["width"].double!, height: input["viewport"]["height"].double!) else { return nil }

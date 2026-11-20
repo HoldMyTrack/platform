@@ -3,7 +3,8 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { datesQuery } from './trackQuery.ts';
 import { flyToBBox, unionBBox } from './bbox.ts';
 import { viewArea } from './useAreaList.ts';
-import { listArea, type BBox } from '../api.ts';
+import { listArea } from '../api.ts';
+import { fitBoxes } from './cameraRules.ts';
 import type { MapSessionEvent } from './session.ts';
 import type { DateFilter } from '../ui/dateFilter.ts';
 
@@ -31,7 +32,7 @@ export function useDatesFlight(map: MapLibreMap | null, dispatch: Dispatch<MapSe
     };
     listArea(datesQuery(dates), controller.signal)
       .then(({ tracks }) => {
-        const bounds = unionBBox(tracks.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : [])));
+        const bounds = unionBBox(fitBoxes(tracks));
         if (!bounds) return;
         flight = ++flights;
         map.on('moveend', onMoveEnd);
