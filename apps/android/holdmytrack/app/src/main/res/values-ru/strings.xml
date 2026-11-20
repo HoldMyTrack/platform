@@ -27,6 +27,7 @@
     <string name="continue_with_facebook">Войти через Facebook</string>
     <string name="sign_in_or">или</string>
     <string name="google_failed">Не удалось войти через Google. Попробуйте ещё раз.</string>
+    <string name="google_no_account">На этом телефоне нет аккаунта Google. Добавьте его в настройках телефона или войдите другим способом.</string>
     <string name="facebook_failed">Не удалось войти через Facebook. Попробуйте ещё раз.</string>
     <string name="sign_up_failed">Не удалось создать аккаунт. Попробуйте ещё раз.</string>
     <string name="facebook_no_email">Ваш аккаунт Facebook не передал адрес электронной почты, а он нужен HoldMyTrack. Попробуйте ещё раз и разрешите доступ к почте или зарегистрируйтесь по почте и паролю.</string>

@@ -16,6 +16,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.lifecycleScope
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -169,6 +170,10 @@ class SignInActivity : AppCompatActivity() {
                 }
             } catch (e: GetCredentialCancellationException) {
                 setBusy(false)
+            } catch (e: NoCredentialException) {
+                // No Google account on the phone: nothing to retry until one is added.
+                setBusy(false)
+                showError(getString(R.string.google_no_account))
             } catch (e: GetCredentialException) {
                 googleFailed(e)
             } catch (e: GoogleIdTokenParsingException) {
