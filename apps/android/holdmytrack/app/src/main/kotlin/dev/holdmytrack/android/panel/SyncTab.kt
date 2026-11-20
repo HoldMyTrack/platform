@@ -1,19 +1,15 @@
 package dev.holdmytrack.android.panel
 
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.ConcatAdapter
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -122,7 +118,15 @@ class SyncTab(
     private val showHiddenButton: Button = foot.findViewById(R.id.sync_show_hidden)
     private val upload: View = foot.findViewById(R.id.sync_upload)
 
-    private val rows = RowAdapter()
+    private val rows = SyncRowAdapter(
+        SyncRowActions(
+            tick = ::toggle,
+            similar = { key -> candidate(key)?.let(::showSimilar) },
+            show = { key -> candidate(key)?.let(::pick) },
+            edit = { id -> activity.startActivity(Intent(activity, RecordingActivity::class.java).putExtra(RecordingActivity.EXTRA_RECORDING_ID, id)) },
+            delete = { key -> candidate(key)?.let(::confirmDelete) },
+        ),
+    )
 
     private var showing = false
     private var loading = false
@@ -642,7 +646,7 @@ class SyncTab(
         problems.visibility = if (lines.isEmpty()) View.GONE else View.VISIBLE
     }
 
-    private fun row(candidate: Candidate): Row {
+    private fun row(candidate: Candidate): SyncRow {
         val date = DATE_FORMAT.withZone(ZoneId.systemDefault()).format(candidate.startedAt)
         val named = candidate.name.isNotBlank()
         val meta = listOfNotNull(
@@ -654,7 +658,7 @@ class SyncTab(
         val processing = processing(candidate)
         val note = if (processing) res.getString(R.string.sync_row_processing) else null
         val similarCount = if (processing) 0 else similar[candidate.key].orEmpty().size + (if (candidate.key in overlaps) 1 else 0)
-        return Row(
+        return SyncRow(
             key = candidate.key,
             title = if (named) candidate.name else date,
             meta = meta,
@@ -671,133 +675,15 @@ class SyncTab(
 
     private fun candidate(key: String): Candidate? = (rendered ?: list()).everything.firstOrNull { it.key == key }
 
-    /** What one row shows — compared, unlike a [Candidate], whose line is an array. */
-    private data class Row(
-        val key: String,
-        val title: String,
-        val meta: String,
-        /** "Adding to your map…" while it's on its way ([processing]). */
-        val note: String?,
-        /** Sent, and not on the map yet ([SyncProgress]): nothing to tick, hide or edit. */
-        val processing: Boolean,
-        /** How many tracks cover the same time (`docs/SPEC.md` FR-3.5): other rows, and the
-         *  account's track it overlaps the most. Its ⓘ shows while there are any. */
-        val similar: Int,
-        val type: String,
-        val recording: Boolean,
-        val ticked: Boolean,
-        val hidden: Boolean,
-        val highlighted: Boolean,
-    )
-
-    private inner class RowAdapter : ListAdapter<Row, RowHolder>(
-        object : DiffUtil.ItemCallback<Row>() {
-            override fun areItemsTheSame(old: Row, new: Row) = old.key == new.key
-            override fun areContentsTheSame(old: Row, new: Row) = old == new
-        },
-    ) {
-        override fun getItemViewType(position: Int) = TYPE_ROW
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-            RowHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_sync_candidate, parent, false))
-
-        override fun onBindViewHolder(holder: RowHolder, position: Int) = holder.bind(getItem(position))
-    }
-
-    private inner class RowHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val tick: View = view.findViewById(R.id.candidate_tick)
-        private val icon: ImageView = view.findViewById(R.id.candidate_icon)
-        private val text: View = view.findViewById(R.id.candidate_text)
-        private val title: TextView = view.findViewById(R.id.candidate_title)
-        private val meta: TextView = view.findViewById(R.id.candidate_meta)
-        private val note: TextView = view.findViewById(R.id.candidate_note)
-        private val similarButton: View = view.findViewById(R.id.candidate_similar)
-        private val spinner: View = view.findViewById(R.id.candidate_processing)
-        private val hiddenBadge: View = view.findViewById(R.id.candidate_hidden)
-        private val edit: View = view.findViewById(R.id.candidate_edit)
-        private val delete: View = view.findViewById(R.id.candidate_delete)
-
-        var key: String? = null
-            private set
-
-        var processing = false
-            private set
-
-        fun bind(row: Row) {
-            key = row.key
-            processing = row.processing
-            itemView.isSelected = row.highlighted
-            title.text = row.title
-            meta.text = row.meta
-            note.text = row.note
-            note.visibility = if (row.note != null) View.VISIBLE else View.GONE
-            val alpha = if (row.hidden) HIDDEN_ALPHA else 1f
-            title.alpha = alpha
-            meta.alpha = alpha
-            note.alpha = alpha
-            hiddenBadge.visibility = if (row.hidden) View.VISIBLE else View.GONE
-
-            val context = itemView.context
-            icon.setImageResource(if (row.ticked) R.drawable.ic_check else typeIcon(row.type))
-            icon.backgroundTintList = if (row.ticked) ColorStateList.valueOf(context.getColor(R.color.hmt_accent)) else null
-            icon.imageTintList = ColorStateList.valueOf(context.getColor(if (row.ticked) R.color.hmt_on_accent else R.color.hmt_ink_secondary))
-            // On its way: the tile spins instead of offering a tick.
-            icon.visibility = if (row.processing) View.INVISIBLE else View.VISIBLE
-            spinner.visibility = if (row.processing) View.VISIBLE else View.GONE
-            val tickable = !row.hidden && !row.processing && !Session.isDemo
-            tick.isEnabled = tickable
-            tick.isClickable = tickable
-            tick.contentDescription = when {
-                row.processing -> row.note
-                row.ticked -> res.getString(R.string.sync_row_untick, row.title)
-                else -> res.getString(R.string.sync_row_tick, row.title)
-            }
-            tick.setOnClickListener { toggle(row.key) }
-
-            similarButton.visibility = if (row.similar > 0) View.VISIBLE else View.GONE
-            if (row.similar > 0) {
-                similarButton.contentDescription = res.getQuantityString(R.plurals.sync_row_similar, row.similar, row.title, row.similar)
-                similarButton.setOnClickListener { candidate(row.key)?.let(::showSimilar) }
-            }
-
-            text.contentDescription = listOfNotNull(res.getString(R.string.sync_row_show, row.title), row.meta, row.note).joinToString(". ")
-            text.setOnClickListener { candidate(row.key)?.let(::pick) }
-            text.setOnLongClickListener {
-                if (tickable) toggle(row.key)
-                tickable
-            }
-
-            // A recording sent is off the phone already: nothing here to edit or delete.
-            val editable = row.recording && !row.processing
-            edit.visibility = if (editable) View.VISIBLE else View.GONE
-            delete.visibility = if (editable) View.VISIBLE else View.GONE
-            if (editable) {
-                // Named per row: TalkBack reads each control on its own, and "Delete" alone
-                // doesn't say which recording goes.
-                edit.contentDescription = res.getString(R.string.recorded_row_edit_named, row.title)
-                delete.contentDescription = res.getString(R.string.recorded_row_delete_named, row.title)
-                val id = row.key.substringAfter(':')
-                edit.setOnClickListener {
-                    activity.startActivity(
-                        Intent(activity, RecordingActivity::class.java).putExtra(RecordingActivity.EXTRA_RECORDING_ID, id),
-                    )
-                }
-                // Every recording here is unsynced, so Delete discards the only copy — the
-                // confirmation says so.
-                delete.setOnClickListener { candidate(row.key)?.let(::confirmDelete) }
-            }
-        }
-    }
-
     /** A row swiped either way is hidden — or, a hidden one, back. The head and foot stay. */
     private inner class SwipeToHide : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.START or ItemTouchHelper.END) {
         override fun getSwipeDirs(recyclerView: RecyclerView, holder: RecyclerView.ViewHolder): Int =
-            if (holder is RowHolder && !holder.processing && runJob == null) super.getSwipeDirs(recyclerView, holder) else 0
+            if (holder is SyncRowHolder && !holder.processing && runJob == null) super.getSwipeDirs(recyclerView, holder) else 0
 
         override fun onMove(recyclerView: RecyclerView, holder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder) = false
 
         override fun onSwiped(holder: RecyclerView.ViewHolder, direction: Int) {
-            val key = (holder as RowHolder).key ?: return
+            val key = (holder as SyncRowHolder).key ?: return
             swiped(key)
         }
     }
@@ -811,8 +697,6 @@ class SyncTab(
     }
 
     private companion object {
-        const val TYPE_ROW = 1
-        const val HIDDEN_ALPHA = 0.55f
         val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
     }
 }
