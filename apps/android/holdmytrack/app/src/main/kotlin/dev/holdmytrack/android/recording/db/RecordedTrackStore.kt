@@ -247,8 +247,8 @@ class RecordedTrackStore(context: Context) {
         transaction { RecordingDbHelper.writeRecord(it, record, account()) }
     }
 
-    /** The Save screen's fields, all at once, matching `handleUpdateActivity`'s own convention
-     *  (`services/server/internal/httpapi/activities.go`); the points aren't edited here. */
+    /** The Save screen's fields, all at once, matching `handleUpdateTrack`'s own convention
+     *  (`services/server/internal/httpapi/tracks.go`); the points aren't edited here. */
     suspend fun update(record: RecordedTrackRecord) = withContext(Dispatchers.IO) {
         val values = ContentValues().apply {
             put("name", record.name)
