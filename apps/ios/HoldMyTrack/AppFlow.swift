@@ -32,6 +32,11 @@ final class AppFlow {
     private var openedFiles: [URL] = []
 
     /// Upload, over the signed-in app, for files from Files or another app; kept until signed in.
+    /// The Live Activity's Stop: the signed-in screen asks first.
+    func askToStopRecording() {
+        (window.rootViewController as? MainTabBarController)?.askToStop()
+    }
+
     func openFiles(_ urls: [URL]) {
         openedFiles += urls
         presentOpenedFiles()

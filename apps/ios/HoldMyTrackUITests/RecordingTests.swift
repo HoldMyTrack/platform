@@ -133,6 +133,45 @@ final class RecordingTests: XCTestCase {
         XCTAssertTrue(app.cells["syncEmpty"].waitForExistence(timeout: 5))
     }
 
+    /// While recording, the Live Activity shows outside the app; its Stop opens the app, which
+    /// asks first: Keep recording keeps it, Stop ends it into Edit.
+    @MainActor
+    func testTheLiveActivitysStopAsksFirst() throws {
+        try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
+        defer { account.delete() }
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        let record = app.buttons["record"]
+        record.tap()
+        let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow While Using App"]
+        if allow.waitForExistence(timeout: 3) { allow.tap() }
+        XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))
+        XCUIDevice.shared.press(.home)
+        Thread.sleep(forTimeInterval: 3)
+        attach("Live Activity")
+
+        // As the Live Activity's Stop opens it: through the system, to the running app. The test
+        // app's own open() would relaunch it.
+        func tapStop() {
+            XCUIDevice.shared.system.open(URL(string: "holdmytrack://recording/stop")!)
+            let open = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Open"]
+            if open.waitForExistence(timeout: 3) { open.tap() }
+        }
+        tapStop()
+        let ask = app.alerts["Stop recording?"]
+        XCTAssertTrue(ask.waitForExistence(timeout: 10), "Stop asks first")
+        ask.buttons["Keep recording"].tap()
+        XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 5))
+        tapStop()
+        XCTAssertTrue(ask.waitForExistence(timeout: 10))
+        ask.buttons["Stop"].tap()
+        XCTAssertTrue(record.waitForLabel("Start recording", timeout: 5), "stopped")
+    }
+
     @MainActor
     private func attach(_ name: String) {
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())

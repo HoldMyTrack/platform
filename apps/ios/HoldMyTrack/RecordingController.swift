@@ -1,3 +1,4 @@
+import ActivityKit
 import CoreLocation
 import HoldMyTrackCore
 import OSLog
@@ -52,6 +53,12 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         location.desiredAccuracy = kCLLocationAccuracyBest
         location.distanceFilter = kCLDistanceFilterNone
         location.pausesLocationUpdatesAutomatically = false
+        Self.endLeftoverActivities()
+        // The Live Activity's Pause or Resume, run in the app.
+        ToggleRecordingIntent.perform = { [weak self] in
+            guard let self, self.recording.state != .idle else { return }
+            self.tap()
+        }
     }
 
     deinit {
@@ -205,7 +212,61 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         String(localized: "recording.needsLocation", defaultValue: "HoldMyTrack needs location access to record a GPS track.", comment: "Recording: location or precise location refused.")
     }
 
-    private func changed() { onChange?() }
+    private func changed() {
+        onChange?()
+        showActivity()
+    }
+
+    // MARK: The Live Activity
+
+    private var activity: Activity<RecordingActivityAttributes>?
+    /// The format the Live Activity's distance is written in, set by the tab bar.
+    var format: PanelFormat?
+
+    /// The recording on the Lock Screen and in the Dynamic Island, in place of Android's
+    /// notification: started with the recording, its clock and distance updated on each change,
+    /// ended with it. One a crash left behind is ended at launch, the leftover prompt being where
+    /// that recording comes back.
+    private func showActivity() {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        guard recording.state != .idle, let format else {
+            // Activity isn't marked Sendable; ActivityKit's own calls on it are safe from anywhere.
+            if let current = activity {
+                nonisolated(unsafe) let ending = current
+                Task { await ending.end(nil, dismissalPolicy: .immediate) }
+            }
+            activity = nil
+            return
+        }
+        let now = Date()
+        let moving = recording.moving(at: now)
+        let paused = recording.state == .paused
+        let state = RecordingActivityState(
+            paused: paused, clockStart: RecordingActivityState.clockStart(moving: moving, at: now),
+            clock: RecordingStatus.clock(moving), distance: format.distance(recording.meters),
+            title: paused
+                ? String(localized: "activity.paused", defaultValue: "Paused", comment: "The recording's Live Activity: paused.")
+                : String(localized: "activity.recording", defaultValue: "Recording", comment: "The recording's Live Activity: recording."),
+            toggle: paused
+                ? String(localized: "recording.resume", defaultValue: "Resume", comment: "An unfinished recording: go on recording it.")
+                : String(localized: "activity.pause", defaultValue: "Pause", comment: "The recording's Live Activity: pause the recording."),
+            stop: String(localized: "activity.stop", defaultValue: "Stop", comment: "The recording's Live Activity: stop, which opens the app to ask first."))
+        let content = ActivityContent(state: state, staleDate: nil)
+        if let activity {
+            nonisolated(unsafe) let target = activity
+            Task { await target.update(content) }
+        } else {
+            activity = try? Activity.request(attributes: RecordingActivityAttributes(), content: content)
+        }
+    }
+
+    /// Activities a run that died left on the Lock Screen.
+    private static func endLeftoverActivities() {
+        for left in Activity<RecordingActivityAttributes>.activities {
+            nonisolated(unsafe) let ending = left
+            Task { await ending.end(nil, dismissalPolicy: .immediate) }
+        }
+    }
 
     // MARK: Location
 

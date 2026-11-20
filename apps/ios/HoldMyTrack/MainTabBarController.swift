@@ -169,6 +169,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             self?.holdingToStop = holding
             self?.renderRecordingStatus()
         }
+        recorder.format = PanelFormat(account: account)
         recorder.onChange = { [weak self] in self?.renderRecording() }
         recorder.onTick = { [weak self] in self?.renderRecordingStatus() }
         recorder.onMessage = { [weak self] text in self?.map.say(text) }
@@ -214,6 +215,22 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private func showMap() {
         guard let mapHost = viewControllers?.first, selectedViewController !== mapHost else { return }
         selectedViewController = mapHost
+    }
+
+    /// The Live Activity's Stop opened the app: it asks first, since a tap on the Lock Screen is
+    /// easy to make by mistake.
+    func askToStop() {
+        guard recorder.state != .idle else { return }
+        showMap()
+        let left = recorder.recording
+        let format = PanelFormat(account: account)
+        let message = String(localized: "recording.stopMessage", defaultValue: "\(RecordingStatus.clock(left.moving(at: Date()))) · \(format.distance(left.meters)) recorded so far.", comment: "Stopping from the Live Activity: the moving time and distance so far.")
+        let alert = UIAlertController(title: String(localized: "recording.stopTitle", defaultValue: "Stop recording?", comment: "Stopping from the Live Activity: the question."), message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: String(localized: "recording.keep", defaultValue: "Keep recording", comment: "Stopping from the Live Activity: don't."), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "activity.stop", defaultValue: "Stop", comment: "The recording's Live Activity: stop, which opens the app to ask first."), style: .destructive) { [weak self] _ in
+            self?.recorder.stop()
+        })
+        presentOnTop(alert)
     }
 
     /// The signed-in screen is going: a sign-out or an ended session keeps the recording as a

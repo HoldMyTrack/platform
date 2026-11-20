@@ -27,6 +27,8 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     private func open(_ contexts: Set<UIOpenURLContext>) {
+        // The Live Activity's Stop.
+        if contexts.contains(where: { RecordingLink.isStop($0.url) }) { flow?.askToStopRecording() }
         let files = contexts.map(\.url).filter(\.isFileURL)
         if !files.isEmpty { flow?.openFiles(files) }
     }

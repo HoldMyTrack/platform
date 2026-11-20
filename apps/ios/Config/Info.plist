@@ -101,6 +101,19 @@
 	<string>HoldMyTrack only adds the map images you export to your photos; it never reads them.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>HoldMyTrack uses the camera only when you take a photo for your avatar in Settings.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dev.holdmytrack.ios</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>holdmytrack</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

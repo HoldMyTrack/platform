@@ -104,7 +104,8 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-3.6), except as below.
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
 
-- Location is used while the app is in use, with iOS's location indicator showing while it records in the background; nothing else shows the recording outside the app. Pause, Resume and Stop are on the button, and VoiceOver stops it with the button's Stop action.
+- Location is used while the app is in use, with iOS's location indicator showing while it records in the background. VoiceOver stops it with the record button's Stop action.
+- A Live Activity on the Lock Screen and in the Dynamic Island takes the place of Android's notification: the clock and distance, Pause or Resume, and Stop, which opens the app to ask first.
 - iOS has no GPS-only positions: a fix vaguer than 50 m is left out.
 - Swiping HoldMyTrack away in the app switcher stops the recording, which the first recording on the phone says once. Crash recovery keeps it to the last fix as on Android, and a notification posted as the app closes resumes it with a tap, with no prompt.
 - A pause turns location off until Resume. Location or precise location taken away while recording pauses it.
