@@ -2,6 +2,7 @@
 // gestures, and finding a view by its id or text in a UI Automator dump.
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
+import { toPanel, zoomPlan } from "./rules.mjs";
 
 const SDK = process.env.ANDROID_HOME ?? "/opt/homebrew/share/android-commandlinetools";
 const ADB = `${SDK}/platform-tools/adb`;
@@ -18,15 +19,6 @@ export function geometry() {
   const o = out.match(/Override size: (\d+)x(\d+)/);
   const [w, h] = o ? o.slice(1).map(Number) : [pw, ph];
   return { pw, ph, w, h };
-}
-
-/** Where screen pixel (x, y) lands on the touch panel's 0–32767 axes. An overridden size is
- *  scaled to fit the panel and centred, so the panel's edges are letterbox, not screen. */
-export function toPanel({ pw, ph, w, h }, x, y) {
-  const s = Math.min(pw / w, ph / h);
-  const ox = (pw - w * s) / 2;
-  const oy = (ph - h * s) / 2;
-  return [Math.round(((ox + x * s) / pw) * 32767), Math.round(((oy + y * s) / ph) * 32767)];
 }
 
 let geo;
@@ -80,17 +72,6 @@ export async function zoomOut(x, y) {
   await sleep(700);
 }
 
-/** How to zoom by `levels` (fractional, negative to zoom out): a pinch of 2 to 3 levels either
- *  way, then `taps` two-finger taps of one level out each. The map ignores a pinch whose fingers'
- *  spread changes by less than about 720 px, so a smaller zoom is a bigger pinch taken back by
- *  taps. */
-export function zoomPlan(levels) {
-  for (let taps = 0; ; taps++) {
-    const p = levels + taps;
-    if ((p >= 2 && p <= 3) || (p <= -2 && p >= -3)) return { pinch: p, taps };
-  }
-}
-
 /** Map zoom by `levels` about (x, y); see zoomPlan. The fingers move along the horizontal, at
  *  most 1000 px apart, and rest before they lift so the map doesn't fling. */
 export async function pinch(x, y, levels, n = 30) {
@@ -107,7 +88,8 @@ export async function pinch(x, y, levels, n = 30) {
     { hold: 500 },
   );
   await sleep(700);
-  for (let i = 0; i < plan.taps; i++) await zoomOut(x, y);
+  for (let i = 0; i < plan.outTaps; i++) await zoomOut(x, y);
+  for (let i = 0; i < plan.inTaps; i++) await zoomIn(x, y);
 }
 
 export const tap = async (x, y) => {
@@ -154,6 +136,9 @@ export async function tapView(q, opts) {
 export function screenshot(path) {
   writeFileSync(path, execFileSync(ADB, ["exec-out", "screencap", "-p"], { maxBuffer: 64 << 20 }));
 }
+
+/** Leaves SystemUI's demo mode. */
+export const exitDemoStatusBar = () => shell("am broadcast -a com.android.systemui.demo -e command exit >/dev/null");
 
 /** A still status bar: 9:30, full Wi-Fi and battery, no notifications. */
 export function demoStatusBar() {

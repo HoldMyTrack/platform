@@ -5,14 +5,14 @@
 import { resolve, dirname } from "node:path";
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { APP, shell, sleep, tap, tapView, drag, pinch, screenshot, demoStatusBar, resetGeometry } from "./device.mjs";
+import { APP, shell, sleep, tap, tapView, drag, pinch, screenshot, demoStatusBar, exitDemoStatusBar, resetGeometry } from "./device.mjs";
 import { restart, layers, mode, places, scrollTo, focusTrack } from "./app.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
 // Every shot starts from a restart at the account's opening view, so its camera comes from the
 // same pinches and drags each time. Coordinates are the screen's pixels at 1080×1920 and 420 dpi,
-// found by matching the shots the listing had before.
+// tuned against the committed captures (README.md).
 const MAP = [540, 800];
 
 /** Where the profile's rows sit, per language: Month with the page 1000 px above its bottom, the
@@ -21,6 +21,9 @@ const PROFILE = {
   en: { month: [281, 1154], italy: [158, 1392], lazio: [240, 1457], roma: [410, 1457], up: 380 },
   ru: { month: [319, 860], italy: [192, 1274], lazio: [250, 1397], roma: [408, 1399], up: 450 },
 };
+
+/** The Fog levels' labels, as the app shows them. */
+const FOG = { en: { city: "City", exact: "Exact" }, ru: { city: "Город", exact: "Точно" } };
 
 /** Beachwood, Ohio: beside the demo's captured playground and museum. */
 const SPOTS_LOCATION = "41.4755,-81.4916";
@@ -41,18 +44,18 @@ const SHOTS = {
     await tapView("card_focus");
     await sleep(3000);
   },
-  "02-fog": async () => {
+  "02-fog": async (locale) => {
     await layers({ satellite: false, roads: false });
-    await mode("City");
+    await mode(FOG[locale].city);
     await pinch(...MAP, -2.2);
     await drag(...MAP, 53, 235);
     await sleep(1500);
     await tap(615, 840); // Bedford
     await sleep(1500);
   },
-  "03-fog-exact": async () => {
+  "03-fog-exact": async (locale) => {
     await layers({ satellite: false, roads: false });
-    await mode("Exact");
+    await mode(FOG[locale].exact);
     await pinch(...MAP, -1.33);
     await drag(300, 400, 350, 883);
   },
@@ -129,17 +132,27 @@ shell("wm density 420");
 resetGeometry();
 shell(`cmd locale set-app-locales ${APP} --locales ${locale}`);
 demoStatusBar();
-for (const [name, steps] of Object.entries(SHOTS)) {
-  if (only.length && !only.includes(name)) continue;
+try {
+  for (const [name, steps] of Object.entries(SHOTS)) {
+    if (only.length && !only.includes(name)) continue;
+    shell("cmd uimode night no");
+    location(false);
+    await restart();
+    await places(false);
+    await mode();
+    await steps(locale);
+    await sleep(1500);
+    screenshot(resolve(out, `phone-${name}.png`));
+    console.log(`phone-${name}`);
+  }
+} finally {
+  // The emulator as it was: no fake location, the app in the phone's language, the real screen.
   shell("cmd uimode night no");
   location(false);
-  await restart();
-  await places(false);
-  await mode();
-  await steps(locale);
-  await sleep(1500);
-  screenshot(resolve(out, `phone-${name}.png`));
-  console.log(`phone-${name}`);
+  shell("cmd location providers remove-test-provider gps");
+  shell("appops set com.android.shell android:mock_location default");
+  shell(`cmd locale set-app-locales ${APP} --locales ""`);
+  exitDemoStatusBar();
+  shell("wm size reset");
+  shell("wm density reset");
 }
-shell("cmd uimode night no");
-location(false);

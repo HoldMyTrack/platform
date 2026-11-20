@@ -1,5 +1,6 @@
 // The app's own controls for shoot.mjs: start it on the map, and set the map's mode and layers.
 import { APP, shell, sleep, find, tapView, views, tap, zoomOut } from "./device.mjs";
+import { fogRadio, panelExpanded } from "./rules.mjs";
 
 /** Starts the app afresh on the Tracks tab, at the account's opening view. */
 export async function restart() {
@@ -19,11 +20,8 @@ export async function places(on) {
 }
 const PLACE_CATEGORIES = ["places_playground", "places_dog_park", "places_monument", "places_viewpoint", "places_waterfall", "places_history"];
 
-/** Whether the Tracks or Trips panel is expanded. */
-const expanded = () => views().some((v) => v.id === "panel_handle" && v.desc === "Collapse the panel");
-
 export async function expandPanel(on = true) {
-  if (expanded() !== on) await tapView("panel_handle");
+  if (panelExpanded(views()) !== on) await tapView("panel_handle");
   await sleep(1200);
 }
 
@@ -33,6 +31,11 @@ export async function scrollTo(listId, q, { towards = "end", timeout = 20 } = {}
   for (let i = 0; i < timeout; i++) {
     const vs = views();
     const list = vs.find((v) => v.id === listId);
+    if (!list) {
+      // The tab may still be loading.
+      await sleep(1000);
+      continue;
+    }
     const v = vs.find((v) => matches(v, q));
     if (v && v.y0 >= list.y0 && v.y1 <= list.y1) return v;
     // Back towards the start when the row is cut off at the top or above the list.
@@ -42,7 +45,7 @@ export async function scrollTo(listId, q, { towards = "end", timeout = 20 } = {}
     shell(`input swipe ${Math.round(list.x)} ${from} ${Math.round(list.x)} ${to} 600`);
     await sleep(700);
   }
-  throw new Error(`no ${q} in ${listId}`);
+  throw new Error(`no ${q} in ${listId}, or no ${listId} on screen`);
 }
 
 const matches = (v, q) => (typeof q === "function" ? q(v) : v.id === q || v.text === q || v.desc === q);
@@ -72,17 +75,14 @@ export async function layers({ satellite, roads }) {
   await sleep(800);
 }
 
-const FOG_LEVELS = ["Auto", "Country", "State", "County", "City", "Exact"];
-
-/** Normal, or Fog at `level`, one of FOG_LEVELS. */
-export async function mode(level) {
-  if (!level) return tapView("mode_normal");
+/** Normal, or Fog at the level labelled `label` in the app's language. */
+export async function mode(label) {
+  if (!label) return tapView("mode_normal");
   await tapView("mode_fog");
   await sleep(1000);
   if (!views().some((v) => v.id === "fog_level_radio")) await tapView("mode_fog");
-  // By position, so the same steps work in every language.
-  const radios = views().filter((v) => v.id === "fog_level_radio");
-  const r = radios[FOG_LEVELS.indexOf(level)];
+  const r = fogRadio(views(), label);
+  if (!r) throw new Error(`no Fog level labelled ${label}`);
   await tap(r.x, r.y);
   await sleep(1500);
 }

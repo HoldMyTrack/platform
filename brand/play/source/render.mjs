@@ -1,8 +1,8 @@
 // Draws the Play listing's callouts over the raw device captures shoot.mjs takes.
 // Usage, from the repository root: node brand/play/source/render.mjs brand/play/source/phone.json en brand/play/en
 // Each shot: { name, callouts: [{ x, y, w, to: [x, y], en: { title, body }, ru: { title, body } }] }; a language's
-// own x, y, w or to, beside its title, overrides the shared one.
-// its capture is raw/<locale>/<name>.png beside the JSON file.
+// own x, y, w or to, beside its title, overrides the shared one. Each shot's capture is
+// raw/<locale>/<name>.png beside the JSON file.
 // Coordinates are the capture's own pixels; the output keeps its size. Needs apps/web's Playwright.
 import { createRequire } from "node:module";
 import { readFileSync, mkdirSync, existsSync } from "node:fs";
@@ -15,6 +15,11 @@ const fontDir = resolve(root, "apps/android/holdmytrack/app/src/main/res/font");
 
 const [specPath, locale, outDir] = process.argv.slice(2);
 const shots = JSON.parse(readFileSync(specPath, "utf8"));
+const missing = shots.flatMap((s) => s.callouts.filter((c) => !c[locale]?.title).map(() => s.name));
+if (!outDir || missing.length) {
+  console.error(outDir ? `no ${locale} title for a callout in ${[...new Set(missing)].join(", ")}` : "usage: node render.mjs <spec.json> <locale> <out dir>");
+  process.exit(2);
+}
 const base = dirname(resolve(specPath));
 mkdirSync(outDir, { recursive: true });
 
