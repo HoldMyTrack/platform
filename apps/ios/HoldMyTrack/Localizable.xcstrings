@@ -3807,6 +3807,17 @@
         }
       }
     },
+    "Upload these files to your account?" : {
+      "comment" : "Upload: over the files another app opened in HoldMyTrack.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузить эти файлы в аккаунт?"
+          }
+        }
+      }
+    },
     "Verify your email" : {
       "comment" : "Verify email screen: title.",
       "localizations" : {

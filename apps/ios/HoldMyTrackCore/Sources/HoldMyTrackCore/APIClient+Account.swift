@@ -110,9 +110,11 @@ extension APIClient {
         return request
     }
 
-    /// What an upload's answer says: nil when it went, "already" when the file was imported
-    /// before, else the server's reason.
-    public static func uploadOutcome(status: Int, body: Data) -> UploadOutcome {
+    /// What a finished upload task says, error being its transport error: `.sent` when it went,
+    /// `.already` when the file was imported before, `.unreachable` when no answer came (a cancel
+    /// by iOS included), else the server's reason.
+    public static func uploadOutcome(error: Error? = nil, status: Int, body: Data) -> UploadOutcome {
+        if error != nil { return .unreachable }
         if (200..<300).contains(status) {
             let json = try? JSONDecoder().decode(UploadResultJSON.self, from: body)
             return json?.status == "already_processed" ? .already : .sent
@@ -123,7 +125,7 @@ extension APIClient {
 }
 
 public enum UploadOutcome: Equatable, Sendable {
-    case sent, already
+    case sent, already, unreachable
     /// The server's reason, empty when it gave none.
     case refused(String)
 }

@@ -153,6 +153,36 @@ struct AccountTests {
         #expect(APIClient.uploadOutcome(status: 500, body: Data()) == .refused(""))
     }
 
+    @Test func anUploadWithNoAnswerWasntSent() {
+        #expect(APIClient.uploadOutcome(error: URLError(.cancelled), status: 0, body: Data()) == .unreachable)
+        #expect(APIClient.uploadOutcome(error: URLError(.timedOut), status: 0, body: Data()) == .unreachable)
+    }
+
+    @Test func onlyAnEndedSessionsTasksAreItsOwn() {
+        let ended: Set<String> = ["old"]
+        #expect(UploadTasks.ofEndedSession("Bearer old", ended: ended))
+        #expect(!UploadTasks.ofEndedSession("Bearer new", ended: ended))
+        #expect(!UploadTasks.ofEndedSession(nil, ended: ended))
+        #expect(!UploadTasks.ofEndedSession("old", ended: ended))
+    }
+
+    @Test func onlyTheInboxsCopiesAreTheAppsToDelete() {
+        let inbox = URL(fileURLWithPath: "/app/Documents/Inbox")
+        #expect(UploadTasks.isInboxCopy(URL(fileURLWithPath: "/app/Documents/Inbox/walk.gpx"), inbox: inbox))
+        #expect(!UploadTasks.isInboxCopy(URL(fileURLWithPath: "/app/Documents/Inbox2/walk.gpx"), inbox: inbox))
+        #expect(!UploadTasks.isInboxCopy(URL(fileURLWithPath: "/tmp/walk.gpx"), inbox: inbox))
+    }
+
+    @Test func filesFromAnotherAppAreListedOnceUntilTaken() {
+        var shared = SharedFiles()
+        let a = URL(fileURLWithPath: "/Inbox/a.gpx"), b = URL(fileURLWithPath: "/Inbox/b.fit")
+        shared.add([a])
+        shared.add([b, a])
+        #expect(shared.names == ["a.gpx", "b.fit"])
+        #expect(shared.take() == [a, b])
+        #expect(shared.urls.isEmpty)
+    }
+
     @Test func theMultipartBodyHoldsTheFileUnderItsName() throws {
         let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

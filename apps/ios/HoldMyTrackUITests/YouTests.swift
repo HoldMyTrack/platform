@@ -3,8 +3,8 @@ import XCTest
 /// The You tab and Upload, end to end against the dev stack on fresh accounts (TestAccount).
 /// Skipped where no dev stack answers, as on CI.
 final class YouTests: XCTestCase {
-    /// A GPX opened in the app, as from Files (the Debug build's -hmtUpload), goes to Upload once
-    /// signed in and lands as a track.
+    /// A GPX opened in the app, as from Files (the Debug build's -hmtUpload), is listed on Upload
+    /// once signed in, sent only on its Upload, and lands as a track.
     @MainActor
     func testAFileOpenedInTheAppIsUploaded() throws {
         let base = try LaunchTests.requireDevStack(self)
@@ -18,6 +18,14 @@ final class YouTests: XCTestCase {
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.buttons["chooseFiles"].waitForExistence(timeout: 15), "Upload opens with the file")
+        XCTAssertTrue(app.staticTexts["sharedFiles"].label.contains("west-side.gpx"), "listed")
+        Thread.sleep(forTimeInterval: 4)
+        XCTAssertEqual(try account.trackCount(), 0, "nothing is sent unasked")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.cells["youUpload"].tap()
+        XCTAssertTrue(app.staticTexts["sharedFiles"].waitForExistence(timeout: 5), "still listed after leaving Upload")
+        app.buttons["uploadShared"].tap()
+        XCTAssertFalse(app.buttons["uploadShared"].isHittable, "the list empties")
         XCTAssertTrue(account.waitForTracks(1, timeout: 90))
         XCTAssertFalse(app.staticTexts["uploadNote"].exists, "nothing refused")
     }
