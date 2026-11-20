@@ -178,7 +178,7 @@
   "profile.legend_count": "По числу треков: меньше",
   "profile.legend_distance": "По расстоянию: меньше",
   "profile.legend_more": "больше",
-  "profile.year_stats": "{tracks} · {distance} · {active_days} · самая длинная серия: {streak}",
+  "profile.year_stats": "{tracks} · {distance} · {active_days} · самая долгая серия: {streak}",
   "profile.cell_empty": "{date}: нет треков",
   "profile.cell": "{date}: {tracks}, {distance}",
   "profile.trend_bar": "{date}: {distance} · {tracks} · {hours} ч в движении · набор {gain}",
