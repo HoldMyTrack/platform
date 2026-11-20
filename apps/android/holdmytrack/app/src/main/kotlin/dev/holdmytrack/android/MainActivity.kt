@@ -187,7 +187,7 @@ class MainActivity : AppCompatActivity() {
         when (next) {
             Tab.TRIPS -> map()?.showTrips()
             Tab.SYNC -> map()?.showSync()
-            Tab.TRACKS -> if (map()?.panelTab.let { it != null && it != PanelTab.TRACKS }) map()?.showTracks()
+            Tab.TRACKS -> map()?.showTracks()
             else -> Unit
         }
         markTab(next)

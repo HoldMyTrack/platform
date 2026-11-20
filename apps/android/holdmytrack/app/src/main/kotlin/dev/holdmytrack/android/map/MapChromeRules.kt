@@ -22,6 +22,11 @@ object MapChromeRules {
      *  whose sheet and tracks are Normal mode's; back on Tracks, the pick comes back. */
     fun tabMode(picked: MapMode, tab: PanelTab): MapMode = if (tab == PanelTab.TRACKS) picked else MapMode.NORMAL
 
+    /** The tab the bottom bar's [asked] switches the panel to from [current], or null for none:
+     *  Tracks on Tracks changes nothing, so a sheet left open stays open. */
+    fun tabRequest(current: PanelTab, asked: PanelTab): PanelTab? =
+        if (asked == PanelTab.TRACKS && current == PanelTab.TRACKS) null else asked
+
     /** The mode carried through a recreation, by name; Normal for none or one this build lacks. */
     fun restoredMode(saved: String?): MapMode = MapMode.entries.firstOrNull { it.name == saved } ?: MapMode.NORMAL
 

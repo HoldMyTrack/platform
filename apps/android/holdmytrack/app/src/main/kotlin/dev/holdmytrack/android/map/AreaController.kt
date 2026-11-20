@@ -296,16 +296,17 @@ class AreaController(
         renderDates()
     }
 
-    fun save(out: Bundle) {
-        out.putString(STATE_AFTER, session.dates.after)
-        out.putString(STATE_BEFORE, session.dates.before)
-    }
-
     fun release() = dialog.dismiss()
 
-    private companion object {
-        const val TAG = "HoldMyTrack"
-        const val STATE_AFTER = "dates_after"
-        const val STATE_BEFORE = "dates_before"
+    companion object {
+        private const val TAG = "HoldMyTrack"
+        private const val STATE_AFTER = "dates_after"
+        private const val STATE_BEFORE = "dates_before"
+
+        /** [dates] for [restore]: the session's, kept whether or not the map has a view. */
+        fun save(out: Bundle, dates: DateFilter) {
+            out.putString(STATE_AFTER, dates.after)
+            out.putString(STATE_BEFORE, dates.before)
+        }
     }
 }
