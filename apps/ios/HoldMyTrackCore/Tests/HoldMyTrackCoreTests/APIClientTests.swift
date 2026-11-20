@@ -119,11 +119,15 @@ struct APIClientTests {
     }
 
     @Test func theCookiesKeptForTheAPIAreForgotten() throws {
-        let jar = HTTPCookieStorage.sharedCookieStorage(forGroupContainerIdentifier: "hmt-tests-\(UUID().uuidString)")
+        // One store for every run, emptied before and after, so the runs leave nothing behind.
+        let jar = HTTPCookieStorage.sharedCookieStorage(forGroupContainerIdentifier: "hmt-tests")
+        jar.removeCookies(since: .distantPast)
+        defer { jar.removeCookies(since: .distantPast) }
         let other = URL(string: "https://tiles.holdmytrack.com/")!
         for url in [app.apiBaseURL, other] {
             jar.setCookies(HTTPCookie.cookies(withResponseHeaderFields: ["Set-Cookie": "holdmytrack_session=stale; Path=/"], for: url), for: url, mainDocumentURL: nil)
         }
+        try #require(jar.cookies(for: app.apiBaseURL)?.count == 1, "the API's cookie is kept to begin with")
         client().forgetCookies(in: jar)
         #expect(jar.cookies(for: app.apiBaseURL)?.isEmpty ?? true)
         #expect(jar.cookies(for: other)?.count == 1)
