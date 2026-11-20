@@ -38,7 +38,7 @@
     <string name="profile_card_tracks">Треки</string>
     <string name="profile_card_distance">Расстояние</string>
     <string name="profile_card_active_days">Активные дни</string>
-    <string name="profile_card_longest_streak">Самая длинная серия</string>
+    <string name="profile_card_longest_streak">Самая долгая серия</string>
 
     <string name="verify_email_title">Подтвердите почту</string>
     <string name="update_app_title">Обновите HoldMyTrack</string>
