@@ -99,6 +99,14 @@ The web's design (root `docs/IMPLEMENTATION.md` §4.3.3), drawn by MapLibre's sn
 
 **`Uploads` sends on a background `URLSession` that allows one connection per host**, so every picked file is queued at once and iOS sends them one at a time while the app is suspended; the app needn't wake between files to start the next. A background session sends only from a file, so each file is first written as its multipart body (`UploadBody`) to a temporary file, deleted when its task ends. The session's events after a relaunch reach `Uploads` through `AppDelegate`'s `handleEventsForBackgroundURLSession`, and `AppFlow` makes the session at launch so its delegate exists. Files opened from another app wait in `AppFlow` until the signed-in tab bar shows. `UploadPlan` is the shared `uploadPlan` rule. A Debug build's `-hmtUpload <path>` launch argument opens a file as if from Files, for the UI tests.
 
+## 5. Recording
+
+`RecordingController` records for the tab bar, which owns it since the button is on every tab; `Recording` in `HoldMyTrackCore` decides which fixes are kept, the moving time and the distance, and `RecordingStore` keeps a stopped recording as a file in the account's folder. The map draws what the controller reports (`MapViewController+Recording`).
+
+- **`allowsBackgroundLocationUpdates` is set before updates start, and only while recording**, with the `location` background mode in Info.plist: set any other time, the indicator shows with nothing recording.
+- **The record button sits over an empty middle tab item, placed by frame** in `viewDidLayoutSubviews`: the tab bar isn't in a hierarchy the controller's view can be constrained to, and activating such a constraint throws.
+- **The UI test needs a moving simulated location**, set with `xcrun simctl location` before it runs: a route that has reached its end gives one fix, and nothing is kept.
+
 ## 6. Build traps
 
 - **The API origin is a build setting, `HMT_API_BASE_URL`**, read from Info.plist. An xcconfig file reads `//` as a comment, so the origins are written `http:$(SLASH)$(SLASH)…`. Release sets its origin after every include and never reads `Local.xcconfig`, so no developer's override reaches the App Store build.

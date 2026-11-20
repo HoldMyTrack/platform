@@ -40,7 +40,7 @@ final class MapTests: XCTestCase {
         app.buttons["Done"].tap()
         XCTAssertEqual(dates.value as? String, unset)
 
-        app.tabBars.buttons.element(boundBy: 3).tap()
+        app.tabBars.buttons["tabYou"].tap()
         XCTAssertTrue(app.staticTexts["account"].waitForExistence(timeout: 5))
         app.tabBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.otherElements["map"].exists, "the map keeps its place across a tab switch")
