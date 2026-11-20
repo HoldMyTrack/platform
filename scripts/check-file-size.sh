@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Warns when a change makes a source file over the soft limit any bigger. A file over the limit
-# is a split candidate, not an error: this always exits 0, and a long file left untouched is silent.
+# is split only where a feature comes away cleanly (AGENTS.md): this always exits 0, and a long
+# file left untouched is silent.
 #
 # Compares each changed Go, Kotlin, TypeScript or TSX file in the working tree against the merge
 # base with the base ref. Generated code, tests, migrations and the load-test driver are left out.
@@ -23,7 +24,7 @@ git diff --name-only --diff-filter=AMR "$base" -- '*.go' '*.kt' '*.ts' '*.tsx' |
     now=$(wc -l < "$path" | tr -d ' ')
     before=$(git show "$base:$path" 2>/dev/null | wc -l | tr -d ' ')
     [ "$now" -gt "$LIMIT" ] && [ "$now" -gt "$before" ] || continue
-    message="$now lines (+$((now - before))), soft limit $LIMIT: a split candidate"
+    message="$now lines (+$((now - before))), soft limit $LIMIT: move a feature out if one comes away cleanly"
     if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
       echo "::warning file=$path,title=File size::$message"
     else

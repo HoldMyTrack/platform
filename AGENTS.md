@@ -52,7 +52,7 @@ A rule every client applies has its cases in `testdata/client-rules/` (ADR-0049)
 
 A pull request that changes what an app does, its code or resources outside `docs/` and tests, raises that app's release number in the same change (`docs/DEPLOY.md` §10): patch for a fix, minor with patch reset for a feature.
 
-A file past about 600 lines is a split candidate: when adding to one, move the touched feature out first. This is not a blocker, and an API client or a parser can stay long; `scripts/check-file-size.sh` flags growth on a pull request without failing it.
+A file under about 600 lines is easier to read, but a split must make the code clearer. When adding to a longer file, move the touched feature out if it comes away cleanly, with its own state and a narrow interface to the rest; if it doesn't, leave the file long. `scripts/check-file-size.sh` flags growth on a pull request without failing it.
 
 ## Commits and pull requests
 
