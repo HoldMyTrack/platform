@@ -6,8 +6,8 @@ final class RouteEditTests: XCTestCase {
     /// Chop and Undo on the map, then a Chop saved, then a Split saved: a second track.
     @MainActor
     func testAChopAndASplitAreSaved() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: ["west-side.gpx"])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
@@ -48,8 +48,8 @@ final class RouteEditTests: XCTestCase {
     /// Delete point takes out the point tapped on the map; Move point drags one.
     @MainActor
     func testDeleteAndMoveAPointOnTheMap() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: ["west-side.gpx"])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]

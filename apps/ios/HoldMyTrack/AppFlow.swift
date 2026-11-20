@@ -20,6 +20,7 @@ final class AppFlow {
             token: { token.get() },
             onOutdated: { [weak self] in Task { @MainActor in self?.showUpdate() } }
         )
+        api.forgetCookies(in: .shared)
         MapNetwork.install(api: api)
         Uploads.shared.api = api
         Uploads.shared.reconnect()

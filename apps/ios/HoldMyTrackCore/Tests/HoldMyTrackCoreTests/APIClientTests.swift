@@ -103,6 +103,36 @@ struct APIClientTests {
         #expect(tile.value(forHTTPHeaderField: "Authorization") == "Bearer tok")
     }
 
+    /// The server reads a session cookie before the bearer token, so a cookie kept from another
+    /// account would outrank the token: no request to the API sends or keeps one.
+    @Test func theSessionGoesOnlyAsTheBearerToken() async throws {
+        let api = client()
+        _ = try? await api.me()
+        #expect(StubProtocol.sent.first?.httpShouldHandleCookies == false)
+        var tile = URLRequest(url: URL(string: "http://localhost:8081/tiles/v1/tracks/4/4/6.mvt")!)
+        api.prepareMapRequest(&tile)
+        #expect(tile.httpShouldHandleCookies == false)
+        #expect(api.uploadRequest(boundary: "b").httpShouldHandleCookies == false)
+        var basemap = URLRequest(url: URL(string: "https://tiles.holdmytrack.com/20261001/basemap.pmtiles")!)
+        api.prepareMapRequest(&basemap)
+        #expect(basemap.httpShouldHandleCookies, "another origin's requests are left alone")
+    }
+
+    @Test func theCookiesKeptForTheAPIAreForgotten() throws {
+        // One store for every run, emptied before and after, so the runs leave nothing behind.
+        let jar = HTTPCookieStorage.sharedCookieStorage(forGroupContainerIdentifier: "hmt-tests")
+        jar.removeCookies(since: .distantPast)
+        defer { jar.removeCookies(since: .distantPast) }
+        let other = URL(string: "https://tiles.holdmytrack.com/")!
+        for url in [app.apiBaseURL, other] {
+            jar.setCookies(HTTPCookie.cookies(withResponseHeaderFields: ["Set-Cookie": "holdmytrack_session=stale; Path=/"], for: url), for: url, mainDocumentURL: nil)
+        }
+        try #require(jar.cookies(for: app.apiBaseURL)?.count == 1, "the API's cookie is kept to begin with")
+        client().forgetCookies(in: jar)
+        #expect(jar.cookies(for: app.apiBaseURL)?.isEmpty ?? true)
+        #expect(jar.cookies(for: other)?.count == 1)
+    }
+
     @Test func aSignInSendsTheCredentialsAndReturnsTheTokenAndTheAccount() async throws {
         var body = accountBody
         body["session_token"] = "new-token"

@@ -23,9 +23,11 @@ public enum ServerStatus: Equatable, Sendable {
 }
 
 public enum ServerCheck {
-    /// The `/healthz` request to app's API, as app, in language.
+    /// The `/healthz` request to app's API, as app, in language; with no cookie, as every request
+    /// to the API (APIClient.authorize).
     public static func request(_ app: AppInfo, language: String) -> URLRequest {
         var request = URLRequest(url: app.apiBaseURL.appending(path: "healthz"), timeoutInterval: 10)
+        request.httpShouldHandleCookies = false
         request.setValue(app.userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue(language, forHTTPHeaderField: "Accept-Language")
         return request

@@ -171,6 +171,14 @@ public final class APIClient: Sendable {
         }
     }
 
+    /// Deletes the cookies storage would send to the API: a session cookie left on disk is a token
+    /// no request reads.
+    public func forgetCookies(in storage: HTTPCookieStorage) {
+        for cookie in storage.cookies(for: app.apiBaseURL) ?? [] {
+            storage.deleteCookie(cookie)
+        }
+    }
+
     static func origin(of url: URL) -> String? {
         guard let scheme = url.scheme, let host = url.host else { return nil }
         let port = url.port.map { ":\($0)" } ?? ""
@@ -209,8 +217,11 @@ public final class APIClient: Sendable {
 
     /// Adds the app's headers, and the token when the request is bound for the API's own origin;
     /// a request anywhere else (the basemap, imagery) gets neither the token nor the headers.
+    /// The API's requests send and keep no cookie: the server reads its session cookie before the
+    /// bearer token, so one kept from another account would sign this one out.
     public func authorize(_ request: inout URLRequest) {
         guard let url = request.url, ApiOrigin.isAPI(url, base: app.apiBaseURL) else { return }
+        request.httpShouldHandleCookies = false
         request.setValue(app.userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue(language, forHTTPHeaderField: "Accept-Language")
         if let token = token(), !token.isEmpty {

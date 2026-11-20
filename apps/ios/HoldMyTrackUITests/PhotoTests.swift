@@ -47,8 +47,8 @@ final class PhotoTests: XCTestCase {
     /// captioned, saved, still there when the Edit window opens again, then deleted.
     @MainActor
     func testAPhotoAddedThroughSaveSurvivesAReload() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: ["west-side.gpx"])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]

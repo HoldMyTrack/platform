@@ -5,11 +5,13 @@ import XCTest
 final class SitePageTests: XCTestCase {
     @MainActor
     func testSettingsOpensSignedInAndCloses() throws {
-        try LaunchTests.requireDevStack(self)
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
+        defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
-        app.buttons["demo"].tap()
+        account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         app.tabBars.buttons["tabYou"].tap()
         app.cells["youSettings"].tap()
@@ -30,8 +32,8 @@ final class SitePageTests: XCTestCase {
     /// A verified account with no Country opens on Settings, with no map behind it.
     @MainActor
     func testTheFirstRunGatesOnSettings() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [], country: false)
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [], country: false)
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
@@ -52,8 +54,8 @@ final class SitePageTests: XCTestCase {
     /// range when it was outside it.
     @MainActor
     func testViewOnMapFocusesTheTrack() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: ["west-side.gpx"])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]

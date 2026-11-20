@@ -6,8 +6,8 @@ final class ExportTests: XCTestCase {
     /// the map back, and Capture saves the image to Photos and opens the share sheet.
     @MainActor
     func testTheViewfinderSizesTheImageAndCaptureSavesAndShares() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: ["west-side.gpx"])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]

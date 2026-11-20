@@ -1,16 +1,41 @@
+import CoreLocation
 import XCTest
 
 /// Recording (apps/ios/docs/SPEC.md FR-5.1) on a fresh account. The fixes come from the
-/// simulator's simulated location, so a route has to be moving first:
-/// `xcrun simctl location booted start --speed=5 41.4800,-81.7000 41.4900,-81.6800`.
+/// simulator's simulated location, which the tests walk themselves (walk(for:)).
 final class RecordingTests: XCTestCase {
+    /// The simulated location, a step north every 2 seconds for seconds, from where the last walk
+    /// stopped. A route `simctl location` started is replaced by any earlier test that sets the
+    /// location (CaptureTests), and a route that has reached its end gives no fixes.
+    @MainActor
+    private func walk(for seconds: Int) {
+        for _ in 0..<max(1, seconds / 2) {
+            Self.step += 1
+            XCUIDevice.shared.location = XCUILocation(location: CLLocation(latitude: 41.48 + Double(Self.step) * 0.0001, longitude: -81.70))
+            Thread.sleep(forTimeInterval: 2)
+        }
+    }
+
+    @MainActor private static var step = 0
+
+    /// Walks until status counts a fix, for at most 30 seconds.
+    @MainActor
+    private func walkToAFix(_ status: XCUIElement) -> Bool {
+        let counting = NSPredicate(format: "SELF MATCHES %@", ".*[0-9]:[0-9]{2}:[0-9]{2} · .*")
+        for _ in 0..<15 {
+            walk(for: 2)
+            if status.exists, counting.evaluate(with: status.label) { return true }
+        }
+        return false
+    }
+
     /// A tap starts, the status counts time and distance, a tap pauses and resumes, a short hold
     /// stops nothing, a stop under a minute keeps nothing, and one past a minute, stopped from the
     /// You tab, opens for naming, is listed on the Sync tab, and once sent lands on the account.
     @MainActor
     func testATapRecordsAndAHoldStopsAndSaves() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
@@ -28,8 +53,7 @@ final class RecordingTests: XCTestCase {
         XCTAssertFalse(app.segmentedControls["modes"].exists, "the map shows only the recording")
 
         let status = app.staticTexts["recordStatus"]
-        let counting = NSPredicate(format: "label MATCHES %@", ".*[0-9]:[0-9]{2}:[0-9]{2} · .*")
-        XCTAssertTrue(status.wait(for: counting, timeout: 30), "a fix: the clock and the distance")
+        XCTAssertTrue(walkToAFix(status), "a fix: the clock and the distance")
         attach("Recording")
 
         record.tap()
@@ -50,7 +74,7 @@ final class RecordingTests: XCTestCase {
         XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))
         // Stopped from another tab, it opens for naming on the Sync tab.
         app.tabBars.buttons["tabYou"].tap()
-        Thread.sleep(forTimeInterval: 62)
+        walk(for: 62)
         record.press(forDuration: 2.6)
         let name = app.textFields["recordingName"]
         XCTAssertTrue(name.waitForExistence(timeout: 5), "Edit opens on the saved recording")
@@ -76,8 +100,8 @@ final class RecordingTests: XCTestCase {
     /// until a swipe deletes it.
     @MainActor
     func testARecordingTheAppDiesInIsOfferedBack() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
@@ -86,12 +110,11 @@ final class RecordingTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         let record = app.buttons["record"]
         let status = app.staticTexts["recordStatus"]
-        let counting = NSPredicate(format: "label MATCHES %@", ".*[0-9]:[0-9]{2}:[0-9]{2} · .*")
         func startAndWaitForAFix() {
             record.tap()
             let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow While Using App"]
             if allow.waitForExistence(timeout: 3) { allow.tap() }
-            XCTAssertTrue(status.wait(for: counting, timeout: 30), "a fix")
+            XCTAssertTrue(walkToAFix(status), "a fix")
         }
         func relaunch() -> XCUIElement {
             app.terminate()
@@ -112,7 +135,7 @@ final class RecordingTests: XCTestCase {
         XCTAssertTrue(record.waitForLabel("Start recording", timeout: 5))
 
         startAndWaitForAFix()
-        Thread.sleep(forTimeInterval: 62)
+        walk(for: 62)
         prompt = relaunch()
         prompt.buttons["Resume"].tap()
         XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))
@@ -137,8 +160,8 @@ final class RecordingTests: XCTestCase {
     /// asks first: Keep recording keeps it, Stop ends it into Edit.
     @MainActor
     func testTheLiveActivitysStopAsksFirst() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]

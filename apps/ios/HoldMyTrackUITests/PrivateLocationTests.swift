@@ -7,8 +7,8 @@ final class PrivateLocationTests: XCTestCase {
     /// again from its row, and is deleted there.
     @MainActor
     func testAPrivateLocationIsAddedOnTheMapAndDeleted() throws {
-        try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: ["west-side.gpx"])
         defer { account.delete() }
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
