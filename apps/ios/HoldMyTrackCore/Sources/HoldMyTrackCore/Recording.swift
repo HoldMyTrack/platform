@@ -224,7 +224,8 @@ public struct RecordedTrack: Codable, Equatable, Sendable {
 }
 
 /// Stopped recordings on the phone, each account's in a folder of its own (apps/android/docs/SPEC.md
-/// FR-5.3), so two accounts on one phone never see each other's. A file per recording.
+/// FR-5.3), so two accounts on one phone never see each other's, with the account's default type
+/// beside them. A file per recording. Nothing here goes into a device backup.
 public struct RecordingStore: Sendable {
     let root: URL
 
@@ -238,8 +239,7 @@ public struct RecordingStore: Sendable {
     }
 
     public func save(_ track: RecordedTrack, account: String) throws {
-        let folder = folder(account: account)
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let folder = try made(account)
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         try encoder.encode(track).write(to: folder.appending(path: "\(track.id).json"), options: .atomic)
@@ -253,6 +253,27 @@ public struct RecordingStore: Sendable {
         return names.filter { $0.pathExtension == "json" }
             .compactMap { try? decoder.decode(RecordedTrack.self, from: Data(contentsOf: $0)) }
             .sorted { $0.startedAt < $1.startedAt }
+    }
+
+    /// The account's folder, made if it isn't there, with the store kept out of backups.
+    private func made(_ account: String) throws -> URL {
+        let folder = folder(account: account)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        var base = root
+        try? base.setResourceValues(values)
+        return folder
+    }
+
+    /// The type a new recording gets: the last one set in Edit under the account, `unknown` at first.
+    public func defaultType(account: String) -> String {
+        (try? String(contentsOf: folder(account: account).appending(path: "type"), encoding: .utf8)) ?? "unknown"
+    }
+
+    public func setDefaultType(_ type: String, account: String) {
+        guard let folder = try? made(account) else { return }
+        try? type.write(to: folder.appending(path: "type"), atomically: true, encoding: .utf8)
     }
 
     /// One recording, gone for good: the phone's copy is the only one until it's on the map.

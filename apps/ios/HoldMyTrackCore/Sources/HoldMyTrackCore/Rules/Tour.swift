@@ -196,7 +196,7 @@ public enum TourSteps {
             TourStep("layers", .layers),
             TourStep("export", .export),
         ] + fog + [
-            TourStep("record", .record),
+            TourStep("record", .record, text: isDemo ? "record_demo" : "record"),
             TourStep("sync", .page, tab: .sync, text: isDemo ? "sync_demo" : "sync"),
             TourStep("done", .youTour, tab: .you),
         ]

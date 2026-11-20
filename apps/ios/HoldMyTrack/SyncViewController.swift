@@ -161,7 +161,9 @@ final class SyncViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         switch sections[indexPath.section][indexPath.row] {
-        case .recording(let track): edit(track)
+        case .recording(let track):
+            guard !recordings.isSending(track.id) else { return }
+            edit(track)
         case .empty: break
         case .upload:
             navigationController?.pushViewController(UploadViewController(api: flow.api), animated: true)
@@ -173,7 +175,7 @@ final class SyncViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        guard case .recording(let track) = sections[indexPath.section][indexPath.row] else { return nil }
+        guard case .recording(let track) = sections[indexPath.section][indexPath.row], !recordings.isSending(track.id) else { return nil }
         let delete = UIContextualAction(style: .destructive, title: String(localized: "recording.delete", defaultValue: "Delete", comment: "A recording: delete it from the phone.")) { [weak self] _, _, done in
             self?.confirmDelete(track)
             done(false)
@@ -182,7 +184,7 @@ final class SyncViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        guard case .recording(let track) = sections[indexPath.section][indexPath.row] else { return nil }
+        guard case .recording(let track) = sections[indexPath.section][indexPath.row], !recordings.isSending(track.id) else { return nil }
         return UIContextMenuConfiguration(actionProvider: { [weak self] _ in
             UIMenu(children: [
                 UIAction(title: String(localized: "recording.edit", defaultValue: "Edit", comment: "A recording: edit its name, description and type."), image: UIImage(systemName: "pencil")) { _ in self?.edit(track) },

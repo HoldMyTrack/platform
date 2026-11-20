@@ -117,9 +117,12 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         })
         alert.addAction(UIAlertAction(title: String(localized: "recording.save", defaultValue: "Save", comment: "An unfinished recording: keep it as Stop would."), style: .default) { [weak self] _ in
             guard let self, self.recorder.isCurrent(left) else { return }
-            self.map.say(self.recorder.save(left)
-                ? String(localized: "recording.saved", defaultValue: "Recording saved on this phone.", comment: "Recording: Stop kept it on the phone.")
-                : String(localized: "recording.tooShort", defaultValue: "Too short — not saved.", comment: "Recording: Stop on less than a minute or two points."))
+            // Saved, it opens for naming as a Stop's does.
+            if let saved = self.recorder.save(left) {
+                self.openRecording(saved)
+            } else {
+                self.map.say(String(localized: "recording.tooShort", defaultValue: "Too short — not saved.", comment: "Recording: Stop on less than a minute or two points."))
+            }
         })
         alert.addAction(UIAlertAction(title: String(localized: "recording.discard", defaultValue: "Discard", comment: "An unfinished recording: delete it."), style: .destructive) { [weak self] _ in
             self?.confirmDiscard(left)

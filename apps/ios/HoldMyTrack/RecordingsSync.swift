@@ -12,6 +12,10 @@ final class RecordingsSync {
     let isDemo: Bool
     private let store: RecordingStore
     private var polling: Task<Void, Never>?
+    /// Counts follow-ups, so one cancelled and replaced doesn't clear its replacement.
+    private var pollGeneration = 0
+    /// The signed-in screen went: nothing more is sent, written or asked.
+    private var stopped = false
     private(set) var sending = false
     /// The rows ticked to send; nothing starts ticked.
     var ticked: Set<String> = []
@@ -36,12 +40,22 @@ final class RecordingsSync {
     var listed: [RecordedTrack] { RecordingSync.listed(all) }
     var awaited: Int { all.filter(\.sent).count }
 
+    /// Edit's name, description and type, written onto the stored recording as it is now: one
+    /// that landed meanwhile isn't written back, and one sent meanwhile stays sent.
     func update(_ track: RecordedTrack) {
-        try? store.save(track, account: account)
+        guard !stopped, var current = all.first(where: { $0.id == track.id }) else { return }
+        current.name = track.name
+        current.description = track.description
+        current.type = track.type
+        try? store.save(current, account: account)
         changed()
     }
 
+    /// Whether id is being sent now: Edit and Delete wait for the send.
+    func isSending(_ id: String) -> Bool { sending && ticked.contains(id) }
+
     func delete(_ id: String) {
+        guard !isSending(id) else { return }
         store.delete(id: id, account: account)
         ticked.remove(id)
         refusals[id] = nil
@@ -50,21 +64,27 @@ final class RecordingsSync {
 
     /// The ticked rows, one recording at a time; a run cut short leaves the rest ticked.
     func send() async {
-        guard !sending, RecordingSync.canSend(ticked: ticked, isDemo: isDemo) else { return }
+        guard !sending, !stopped, RecordingSync.canSend(ticked: ticked, isDemo: isDemo) else { return }
         sending = true
         changed()
         for track in listed where ticked.contains(track.id) {
+            if stopped { break }
             if let refusal = RecordingSync.refusal(track) {
                 refusals[track.id] = refusal
                 continue
             }
             do {
-                if let refusal = try await api.sendRecording(track) {
+                let refusal = try await api.sendRecording(track)
+                // Signed out meanwhile: the account's folder may be gone, and stays gone.
+                if stopped { break }
+                if let refusal {
                     refusals[track.id] = refusal
                 } else {
-                    var sent = track
-                    sent.sent = true
-                    try? store.save(sent, account: account)
+                    // The stored copy as it is now, so nothing written meanwhile is lost.
+                    if var sent = all.first(where: { $0.id == track.id }) {
+                        sent.sent = true
+                        try? store.save(sent, account: account)
+                    }
                     ticked.remove(track.id)
                     refusals[track.id] = nil
                 }
@@ -81,9 +101,11 @@ final class RecordingsSync {
 
     /// Asks after every recording sent and awaited until none is left.
     func follow() {
-        guard polling == nil, !isDemo, awaited > 0 else { return }
+        guard polling == nil, !stopped, !isDemo, awaited > 0 else { return }
+        pollGeneration += 1
+        let generation = pollGeneration
         polling = Task { [weak self] in
-            while let self, !Task.isCancelled {
+            while let self, !Task.isCancelled, !self.stopped {
                 let waiting = self.all.filter(\.sent)
                 if waiting.isEmpty { break }
                 if let answer = try? await self.api.knownRecordings(waiting.map(\.id)) {
@@ -91,11 +113,12 @@ final class RecordingsSync {
                 }
                 try? await Task.sleep(for: .seconds(RecordingSync.poll))
             }
-            self?.polling = nil
+            if let self, self.pollGeneration == generation { self.polling = nil }
         }
     }
 
     private func settle(_ waiting: [RecordedTrack], known: Set<String>, processing: Set<String>) {
+        guard !stopped else { return }
         var landed = false, failed = false
         for track in waiting {
             switch RecordingSync.outcome(track.id, known: known, processing: processing) {
@@ -117,6 +140,7 @@ final class RecordingsSync {
 
     /// The signed-in screen is going: nothing more is asked.
     func stop() {
+        stopped = true
         polling?.cancel()
         polling = nil
     }
@@ -125,12 +149,9 @@ final class RecordingsSync {
         NotificationCenter.default.post(name: Self.changed, object: self)
     }
 
-    /// The type a new recording gets: the last one set in Edit on this account, `unknown` at first.
-    static func defaultType(account: String) -> String {
-        UserDefaults.standard.string(forKey: "recording.type.\(account)") ?? "unknown"
-    }
-
-    static func setDefaultType(_ type: String, account: String) {
-        UserDefaults.standard.set(type, forKey: "recording.type.\(account)")
+    /// The type the account's next recording gets, kept in its recordings folder (RecordingStore),
+    /// so it goes with a deleted account and stays out of backups.
+    func setDefaultType(_ type: String) {
+        store.setDefaultType(type, account: account)
     }
 }

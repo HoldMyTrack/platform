@@ -43,8 +43,10 @@ final class RecordingEditViewController: UIViewController {
         about.adjustsFontForContentSizeCategory = true
         about.backgroundColor = UIColor(resource: .surface)
         about.layer.cornerRadius = DesignTokens.Radius.md
-        about.layer.borderColor = UIColor(resource: .borderStrong).cgColor
         about.layer.borderWidth = 1
+        border()
+        // A CGColor doesn't follow the theme: set again on a change.
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.border() }
         about.accessibilityIdentifier = "recordingDescription"
         about.accessibilityLabel = String(localized: "recording.description", defaultValue: "Description (optional)", comment: "A recording's Edit: its description.")
         about.heightAnchor.constraint(greaterThanOrEqualToConstant: 96).isActive = true
@@ -68,6 +70,10 @@ final class RecordingEditViewController: UIViewController {
             error, gpx, delete,
         ])
         Controls.host(column, in: self)
+    }
+
+    private func border() {
+        about.layer.borderColor = UIColor(resource: .borderStrong).resolvedColor(with: traitCollection).cgColor
     }
 
     private static func caption(_ text: String) -> UILabel {
@@ -124,7 +130,7 @@ final class RecordingEditViewController: UIViewController {
         track.name = nameText.isEmpty ? nil : nameText
         track.description = aboutText.isEmpty ? nil : aboutText
         recordings.update(track)
-        RecordingsSync.setDefaultType(track.type, account: AccountKey.of(email: account.email, isDemo: account.isDemo))
+        recordings.setDefaultType(track.type)
         dismiss(animated: true)
     }
 }

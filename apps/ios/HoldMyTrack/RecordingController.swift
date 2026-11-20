@@ -121,7 +121,7 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
             return nil
         }
         let now = Date()
-        let finished = save ? recording.finished(at: now, type: RecordingsSync.defaultType(account: account)) : nil
+        let finished = save ? recording.finished(at: now, type: store.defaultType(account: account)) : nil
         Self.log.info("end: \(self.recording.points.count) points, \(Int(self.recording.moving(at: now))) s moving, kept: \(finished != nil)")
         locate(false)
         ticker?.invalidate()
@@ -151,7 +151,7 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
                 onLeftover?(left)
                 return
             }
-            guard save(left) else {
+            guard save(left) != nil else {
                 onMessage?(String(localized: "recording.saveFailed", defaultValue: "The recording couldn't be saved.", comment: "Recording: Stop failed to write it."))
                 return
             }
@@ -266,21 +266,21 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         tap()
     }
 
-    /// Kept as Stop keeps it, under its own account.
+    /// Kept as Stop keeps it, under its own account: the recording saved, or nil.
     @discardableResult
-    func save(_ left: RecordingJournal.Leftover) -> Bool {
-        guard isCurrent(left) else { return false }
+    func save(_ left: RecordingJournal.Leftover) -> RecordedTrack? {
+        guard isCurrent(left) else { return nil }
         let restored = Recording.restored(left)
-        guard let track = restored.finished(at: left.points.last?.time ?? Date(), type: RecordingsSync.defaultType(account: left.account)) else {
+        guard let track = restored.finished(at: left.points.last?.time ?? Date(), type: store.defaultType(account: left.account)) else {
             clearJournal()
-            return false
+            return nil
         }
         do {
             try store.save(track, account: left.account)
             clearJournal()
-            return true
+            return track
         } catch {
-            return false
+            return nil
         }
     }
 

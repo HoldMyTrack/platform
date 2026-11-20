@@ -9195,24 +9195,6 @@
         }
       }
     },
-    "recording.saved" : {
-      "comment" : "Recording: Stop kept it on the phone.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recording saved on this phone."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Запись сохранена на этом телефоне."
-          }
-        }
-      }
-    },
     "recording.swipeEnds" : {
       "comment" : "Recording: said once, at the first recording on the phone.",
       "extractionState" : "manual",
@@ -10012,6 +9994,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Запись"
+          }
+        }
+      }
+    },
+    "tour.record_demo.body" : {
+      "comment" : "The demo's tour: the record button; the demo can't send.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. In your own account, recordings are sent to your map from Sync."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. В своём аккаунте записи отправляются на карту из Синхронизации."
           }
         }
       }

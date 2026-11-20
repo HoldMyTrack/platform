@@ -21,6 +21,7 @@ struct TourTests {
         #expect(fog.first?.text == "fog_exact" && fog.first?.card == .fog)
         #expect(fog.last?.target == .fogLevel)
         #expect(steps.first { $0.id == "sync" }?.text == "sync_demo")
+        #expect(steps.first { $0.id == "record" }?.text == "record_demo", "the demo can't send what it records")
     }
 
     @Test func everyStepHasItsOwnTabAndOnlyTheMapsStepsChangeTheMode() {

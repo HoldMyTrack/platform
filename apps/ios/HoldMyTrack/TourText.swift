@@ -43,6 +43,9 @@ enum TourText {
         case "record": (
             String(localized: "tour.record.title", defaultValue: "Record", comment: "The tour: the record button."),
             String(localized: "tour.record.body", defaultValue: "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from Sync.", comment: "The tour: the record button."))
+        case "record_demo": (
+            String(localized: "tour.record.title", defaultValue: "Record", comment: "The tour: the record button."),
+            String(localized: "tour.record_demo.body", defaultValue: "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. In your own account, recordings are sent to your map from Sync.", comment: "The demo's tour: the record button; the demo can't send."))
         case "sync": (
             String(localized: "tour.sync.title", defaultValue: "Sync", comment: "The tour: the Sync tab."),
             String(localized: "tour.sync.body", defaultValue: "Your recordings wait here until you tick and send them: only what you tick is sent. Upload files and see how each import went from here too.", comment: "The tour: the Sync tab, which lists the phone's recordings and leads to Upload and Sync history."))

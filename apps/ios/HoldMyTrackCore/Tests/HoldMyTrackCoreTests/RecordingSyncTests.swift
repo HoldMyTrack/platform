@@ -62,6 +62,19 @@ struct RecordingSyncTests {
         #expect(read.name == nil && read.description == nil && !read.sent)
     }
 
+    @Test func theDefaultTypeIsTheAccountsAndGoesWithIt() {
+        let root = FileManager.default.temporaryDirectory.appending(path: "recordings-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = RecordingStore(root: root)
+        #expect(store.defaultType(account: "x") == "unknown")
+        store.setDefaultType("hiking", account: "x")
+        #expect(store.defaultType(account: "x") == "hiking")
+        #expect(store.defaultType(account: "y") == "unknown", "each account's own")
+        #expect((try? root.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup) == true, "kept out of backups")
+        store.forget(account: "x")
+        #expect(store.defaultType(account: "x") == "unknown", "forgotten with the account")
+    }
+
     @Test func aDeletedRecordingIsGoneFromItsAccount() throws {
         let root = FileManager.default.temporaryDirectory.appending(path: "recordings-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
