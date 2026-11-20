@@ -38,7 +38,7 @@ android {
         // versionName is the release number, major.minor.patch, raised by hand (docs/DEPLOY.md §10);
         // GIT_SHA is the exact commit, the same short SHA the server's /healthz reports.
         versionCode = gitOutput("rev-list", "--count", "HEAD")?.toIntOrNull() ?: 1
-        versionName = "0.34.17"
+        versionName = "0.34.18"
         buildConfigField("String", "GIT_SHA", "\"${gitOutput("rev-parse", "--short", "HEAD") ?: "dev"}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -97,10 +97,9 @@ android {
     // lists it, so only new ones stop a pull request. The checks that compare against what was
     // published since (a newer library, AGP or SDK) are off, since they would fail a build that
     // changed nothing; versions are raised on purpose. So is a library's advice to log through
-    // Timber, which the app doesn't use. lint.xml ignores what can't sit in the baseline.
+    // Timber, which the app doesn't use.
     lint {
         baseline = file("lint-baseline.xml")
-        lintConfig = file("lint.xml")
         warningsAsErrors = true
         disable += setOf(
             "GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion", "OldTargetApi",
@@ -142,6 +141,7 @@ dependencies {
     implementation(libs.credentials.play.services)
     implementation(libs.google.id)
     implementation(libs.browser)
+    implementation(libs.exifinterface)
     implementation(libs.recyclerview)
     implementation(libs.fragment)
     implementation(libs.serialization.json)

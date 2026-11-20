@@ -2,46 +2,13 @@
 <issues format="6" by="lint 9.5.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.1)" variant="all" version="9.5.1">
 
     <issue
-        id="ExifInterface"
-        message="Avoid using `android.media.ExifInterface`; use `androidx.exifinterface.media.ExifInterface` instead"
-        errorLine1="import android.media.ExifInterface"
-        errorLine2="       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/dev/holdmytrack/android/photos/PhotoPrep.kt"
-            line="6"
-            column="8"/>
-    </issue>
-
-    <issue
-        id="ExifInterface"
-        message="Avoid using `android.media.ExifInterface`; use `androidx.exifinterface.media.ExifInterface` instead"
-        errorLine1="        val exif = resolver.openInputStream(uri)?.use { ExifInterface(it) } ?: return PhotoExif()"
-        errorLine2="                                                        ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/dev/holdmytrack/android/photos/PhotoPrep.kt"
-            line="99"
-            column="57"/>
-    </issue>
-
-    <issue
-        id="CredentialManagerMisuse"
-        message="Call to `CredentialManager.getCredential` without use of `NoCredentialException`"
-        errorLine1="                val credential = CredentialManager.create(this@SignInActivity)"
-        errorLine2="                                 ^">
-        <location
-            file="src/main/kotlin/dev/holdmytrack/android/SignInActivity.kt"
-            line="160"
-            column="34"/>
-    </issue>
-
-    <issue
         id="PluralsCandidate"
         message="Formatting %d followed by words (&quot;ticked&quot;): This should probably be a plural rather than a string"
         errorLine1="    &lt;string name=&quot;sync_ticked&quot;>%1$d of %2$d ticked · %3$s&lt;/string>"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="294"
+            line="295"
             column="5"/>
     </issue>
 
@@ -52,7 +19,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="305"
+            line="306"
             column="5"/>
     </issue>
 
@@ -63,7 +30,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="419"
+            line="420"
             column="5"/>
     </issue>
 
@@ -382,7 +349,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/dev/holdmytrack/android/SignInActivity.kt"
-            line="118"
+            line="119"
             column="25"/>
     </issue>
 
@@ -393,7 +360,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/dev/holdmytrack/android/SignInActivity.kt"
-            line="118"
+            line="119"
             column="25"/>
     </issue>
 
@@ -404,7 +371,7 @@
         errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/dev/holdmytrack/android/SignInActivity.kt"
-            line="118"
+            line="119"
             column="62"/>
     </issue>
 
@@ -415,7 +382,7 @@
         errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/dev/holdmytrack/android/SignInActivity.kt"
-            line="118"
+            line="119"
             column="62"/>
     </issue>
 

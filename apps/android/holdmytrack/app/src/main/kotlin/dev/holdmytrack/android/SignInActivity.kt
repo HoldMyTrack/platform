@@ -14,7 +14,6 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.lifecycleScope
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
@@ -167,10 +166,12 @@ class SignInActivity : AppCompatActivity() {
                 } else {
                     googleFailed(IllegalStateException("unexpected credential type ${credential.type}"))
                 }
-            } catch (e: GetCredentialCancellationException) {
-                setBusy(false)
             } catch (e: GetCredentialException) {
-                googleFailed(e)
+                when (GoogleFailure.of(e)) {
+                    GoogleFailure.CANCELLED -> setBusy(false)
+                    GoogleFailure.NO_ACCOUNT -> googleFailed(e, R.string.google_no_account)
+                    GoogleFailure.FAILED -> googleFailed(e)
+                }
             } catch (e: GoogleIdTokenParsingException) {
                 googleFailed(e)
             }
@@ -178,12 +179,12 @@ class SignInActivity : AppCompatActivity() {
     }
 
     /** Logged because the usual cause in development is a missing Android OAuth client for
-     *  this signing key in Google Cloud (`docs/DEPLOY.md`), which the picker reports only as a
-     *  generic failure. */
-    private fun googleFailed(cause: Exception) {
+     *  this signing key in Google Cloud (`docs/DEPLOY.md`), which the picker reports as a
+     *  generic failure or as no account to offer. */
+    private fun googleFailed(cause: Exception, message: Int = R.string.google_failed) {
         Log.w(TAG, "google sign-in failed", cause)
         setBusy(false)
-        showError(getString(R.string.google_failed))
+        showError(getString(message))
     }
 
     /**
