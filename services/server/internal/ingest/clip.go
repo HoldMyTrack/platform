@@ -17,6 +17,7 @@ import (
 // circle whose contents never leave ingest. Salt is its secret, random per location, that
 // seeds how far past its edge a track's end is cut (trimSeed).
 type Zone struct {
+	ID       string
 	Lat, Lon float64
 	RadiusM  float64
 	Salt     string
@@ -49,7 +50,7 @@ func insideAny(zones []Zone, p parse.Point) bool {
 // in the queue still applies to it.
 func LoadZones(ctx context.Context, q Querier, userID string) ([]Zone, error) {
 	rows, err := q.Query(ctx, `
-		SELECT ST_Y(center::geometry), ST_X(center::geometry), radius_m, salt::text
+		SELECT id::text, ST_Y(center::geometry), ST_X(center::geometry), radius_m, salt::text
 		FROM privacy_zones WHERE user_id = $1
 		ORDER BY salt
 	`, userID)
@@ -62,13 +63,27 @@ func LoadZones(ctx context.Context, q Querier, userID string) ([]Zone, error) {
 	for rows.Next() {
 		var z Zone
 		var r int
-		if err := rows.Scan(&z.Lat, &z.Lon, &r, &z.Salt); err != nil {
+		if err := rows.Scan(&z.ID, &z.Lat, &z.Lon, &r, &z.Salt); err != nil {
 			return nil, err
 		}
 		z.RadiusM = float64(r)
 		zones = append(zones, z)
 	}
 	return zones, rows.Err()
+}
+
+// HiddenBy is the Private location a track entirely inside them is listed under
+// (tracks.hidden_by, IMPLEMENTATION.md §7): the one holding the first of points that lies in
+// any, the first of them in zones' order where locations overlap. Empty when none does.
+func HiddenBy(points []parse.Point, zones []Zone) string {
+	for _, p := range points {
+		for _, z := range zones {
+			if z.contains(p) {
+				return z.ID
+			}
+		}
+	}
+	return ""
 }
 
 // ClipEnds is §4.1 step 3: it drops the leading points that lie inside any zone and the
