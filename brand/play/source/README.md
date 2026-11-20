@@ -1,0 +1,38 @@
+# Play listing screenshots
+
+`shoot.mjs` retakes the phone's raw captures on the Android emulator as production's demo account, one set per language in `raw/<locale>/`; `render.mjs` draws the callouts in `phone.json` over them into `brand/play/<locale>/`.
+
+## Running it
+
+From the repository root, after `npm ci` in `apps/web` (for Playwright), with the emulator running, a release build installed (it talks to production) and signed in with **Try the demo**:
+
+```sh
+node brand/play/source/shoot.mjs en                 # every shot in one language
+node brand/play/source/shoot.mjs ru 02-fog 08-profile
+node brand/play/source/render.mjs brand/play/source/phone.json en brand/play/en
+node brand/play/source/render.mjs brand/play/source/phone.json ru brand/play/ru
+```
+
+The script sets the screen to 1080×1920 at 420 dpi with `wm` and the app's language with `cmd locale`; `adb shell wm size reset` and `wm density reset` undo it. A callout's `en` and `ru` hold its text, and may also hold an `x`, `y`, `w` or `to` of their own where the languages' layouts differ.
+
+## How it works
+
+```mermaid
+flowchart LR
+  A[set size, language, still status bar] --> B{each shot}
+  B --> C[force-stop and start the app at the demo's opening view]
+  C --> D[set layers, mode, Places; pinch and drag the camera]
+  D --> E[screencap to raw/locale]
+  E --> B
+```
+
+Each shot starts from the account's opening view, so the same pinch and drags give the same camera every run. The numbers were found by matching the shots the listing had before: measure two labels in the old capture and in a trial one, take the zoom from the ratio of their distances (`log2`) and the drag from the offset of one.
+
+## Traps
+
+- **`adb shell input` has one finger.** Pinches and drags go through the emulator console (`adb emu event send`) on the touch panel's 0–32767 axes; the `wm size` override is letterboxed inside the panel, which `toPanel` accounts for.
+- **A short pinch is ignored.** The map ignores a pinch whose spread changes by less than about 720 px, so `zoomPlan` pinches 2 to 3 levels and takes the rest back with two-finger taps of one level each.
+- **A drag that lifts while moving flings.** Every gesture rests before lifting.
+- **The profile is a WebView**, which UI Automator can't see into, so its rows are tapped at measured positions, per language. Choosing Month reloads the page and scrolls it to the top, so it goes first.
+- **Edit is closed to the demo account**, so the listing has no Edit shot.
+- **The location dot greys out** on a stale fix; the Spots shot sends a fresh one from a test provider just before the capture.
