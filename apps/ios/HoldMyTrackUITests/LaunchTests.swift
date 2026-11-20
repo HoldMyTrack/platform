@@ -57,20 +57,9 @@ final class LaunchTests: XCTestCase {
         XCTAssertFalse(error.label.isEmpty)
     }
 
-    /// Skips unless a dev stack answers on one of the ports a Debug build talks to: compose's
-    /// default, or the one Config/Local.xcconfig.example suggests.
+    /// Skips unless a dev stack answers at the API origin the app was built for.
     @MainActor
     static func requireDevStack(_ test: XCTestCase) throws {
-        let answered = ["http://localhost:8080", "http://localhost:8081"].contains { base in
-            let done = test.expectation(description: base)
-            nonisolated(unsafe) var ok = false
-            URLSession.shared.dataTask(with: URL(string: base + "/healthz")!) { _, response, _ in
-                ok = (response as? HTTPURLResponse)?.statusCode == 200
-                done.fulfill()
-            }.resume()
-            test.wait(for: [done], timeout: 5)
-            return ok
-        }
-        try XCTSkipUnless(answered, "no dev stack on localhost")
+        try XCTSkipUnless(TestAccount.base() != nil, "no dev stack at \(TestAccount.apiBaseURL)")
     }
 }

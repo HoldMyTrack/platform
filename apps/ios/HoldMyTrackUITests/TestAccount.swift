@@ -79,18 +79,25 @@ final class TestAccount {
         _ = try? call("DELETE", "/v2/account", ["email": email])
     }
 
-    /// The dev stack the Debug build talks to.
+    /// The API origin the app was built for, `HMT_API_BASE_URL`, which the scheme's test action
+    /// hands the test runner; the Debug default when run without the scheme.
+    static let apiBaseURL: String = {
+        var base = ProcessInfo.processInfo.environment["HMT_API_BASE_URL"] ?? ""
+        if base.isEmpty || base.contains("$(") { base = "http://localhost:8080" }
+        while base.hasSuffix("/") { base.removeLast() }
+        return base
+    }()
+
+    /// The dev stack the Debug build talks to, when it answers.
     static func base() -> String? {
-        ["http://localhost:8080", "http://localhost:8081"].first { base in
-            let sem = DispatchSemaphore(value: 0)
-            nonisolated(unsafe) var ok = false
-            URLSession.shared.dataTask(with: URL(string: base + "/healthz")!) { _, response, _ in
-                ok = (response as? HTTPURLResponse)?.statusCode == 200
-                sem.signal()
-            }.resume()
-            sem.wait()
-            return ok
-        }
+        let sem = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) var ok = false
+        URLSession.shared.dataTask(with: URLRequest(url: URL(string: apiBaseURL + "/healthz")!, timeoutInterval: 5)) { _, response, _ in
+            ok = (response as? HTTPURLResponse)?.statusCode == 200
+            sem.signal()
+        }.resume()
+        sem.wait()
+        return ok ? apiBaseURL : nil
     }
 
     /// Signs the app in as this account from the sign-in screen.
