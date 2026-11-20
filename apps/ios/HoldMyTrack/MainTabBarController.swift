@@ -12,6 +12,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private let account: Account
     private lazy var tour = TourController(host: self)
     private let recorder: RecordingController
+    /// The recordings on the phone and their sending, followed on every tab.
+    private let recordings: RecordingsSync
     private let recordButton = RecordButton()
     private let recordStatus = Controls.label("", font: Typeface.sans(DesignTokens.Text.md, weight: DesignTokens.Weight.semibold), color: UIColor(resource: .ink))
     private var holdingToStop = false
@@ -27,6 +29,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         self.map = map
         self.account = account
         recorder = RecordingController(account: AccountKey.of(email: account.email, isDemo: account.isDemo))
+        recordings = RecordingsSync(api: flow.api, account: AccountKey.of(email: account.email, isDemo: account.isDemo), isDemo: account.isDemo)
         super.init(nibName: nil, bundle: nil)
         delegate = self
         let mapHost = MapHostViewController(map: map, tab: .tracks)
@@ -35,8 +38,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         let trips = MapHostViewController(map: map, tab: .trips)
         trips.tabBarItem = UITabBarItem(title: String(localized: "Trips"), image: UIImage(resource: .bookOpen), tag: 1)
         trips.tabBarItem.accessibilityIdentifier = "tabTrips"
-        let history = WebPageViewController(flow: flow, page: .syncHistory)
-        let sync = UINavigationController(rootViewController: history)
+        let syncList = SyncViewController(flow: flow, account: account, recordings: recordings)
+        let sync = UINavigationController(rootViewController: syncList)
         sync.tabBarItem = UITabBarItem(title: String(localized: "Sync"), image: UIImage(resource: .refreshCw), tag: 2)
         let home = YouViewController(flow: flow, account: account)
         let you = UINavigationController(rootViewController: home)
@@ -49,7 +52,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         tabBar.tintColor = UIColor(resource: .accent)
         tabBar.backgroundColor = UIColor(resource: .surface)
         sync.tabBarItem.accessibilityIdentifier = "tabSync"
-        history.onViewOnMap = { [weak self, weak mapHost, weak map] track, day in
+        syncList.onViewOnMap = { [weak self, weak mapHost, weak map] track, day in
             guard let self, let mapHost, let map else { return }
             self.selectedViewController = mapHost
             map.viewOnMap(track: track, day: day)
@@ -114,9 +117,12 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         })
         alert.addAction(UIAlertAction(title: String(localized: "recording.save", defaultValue: "Save", comment: "An unfinished recording: keep it as Stop would."), style: .default) { [weak self] _ in
             guard let self, self.recorder.isCurrent(left) else { return }
-            self.map.say(self.recorder.save(left)
-                ? String(localized: "recording.saved", defaultValue: "Recording saved on this phone.", comment: "Recording: Stop kept it on the phone.")
-                : String(localized: "recording.tooShort", defaultValue: "Too short — not saved.", comment: "Recording: Stop on less than a minute or two points."))
+            // Saved, it opens for naming as a Stop's does.
+            if let saved = self.recorder.save(left) {
+                self.openRecording(saved)
+            } else {
+                self.map.say(String(localized: "recording.tooShort", defaultValue: "Too short — not saved.", comment: "Recording: Stop on less than a minute or two points."))
+            }
         })
         alert.addAction(UIAlertAction(title: String(localized: "recording.discard", defaultValue: "Discard", comment: "An unfinished recording: delete it."), style: .destructive) { [weak self] _ in
             self?.confirmDiscard(left)
@@ -168,6 +174,12 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         recorder.onMessage = { [weak self] text in self?.map.say(text) }
         recorder.onRefused = { [weak self] in self?.offerLocationSettings() }
         recorder.onLeftover = { [weak self] left in self?.askAboutLeftover(left) }
+        // Stop opens the new recording for naming, on the Sync tab where it's listed.
+        recorder.onSaved = { [weak self] track in self?.openRecording(track) }
+        recordings.onLanded = { [weak self] in self?.map.recordingLanded() }
+        recordings.onFailed = { [weak self] in
+            self?.map.say(String(localized: "sync.failed", defaultValue: "A recording couldn't be added. It's back on the Sync tab; Sync history says why.", comment: "Sync: a sent recording's ingest failed."))
+        }
     }
 
     /// The button over the middle item, by frame: the tab bar isn't in a hierarchy the
@@ -208,6 +220,14 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     /// Stop would, and a deleted account's is dropped with everything else it had.
     func endRecording(save: Bool) {
         recorder.end(save: save)
+        recordings.stop()
+    }
+
+    private func openRecording(_ track: RecordedTrack) {
+        guard let sync = viewControllers?[3] as? UINavigationController, let list = sync.viewControllers.first as? SyncViewController else { return }
+        sync.popToRootViewController(animated: false)
+        selectedViewController = sync
+        list.edit(track)
     }
 
     /// Location is off for HoldMyTrack: Settings is where it's turned on.
@@ -251,6 +271,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             guard let page = (selectedViewController as? UINavigationController)?.topViewController?.view else { return [] }
             return [page]
         case .youTour: return youHome?.tourCell.map { [$0] } ?? []
+        case .record: return [recordButton]
         default:
             // The map's controls only while a map tab shows it.
             return tourTab == .map || tourTab == .trips ? map.tourViews(target) : []

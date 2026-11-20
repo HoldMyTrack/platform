@@ -177,6 +177,14 @@ extension MapViewController {
         watchPending()
     }
 
+    /// A recording sent from the Sync tab is on the map: its tiles, Dates' bounds and the list.
+    func recordingLanded() {
+        tracksVersion += 1
+        updateTracksQuery()
+        loadHistory()
+        loadList()
+    }
+
     /// Reprocesses of ids finished, seen by a list or by the Pending check: the tracks' tiles,
     /// Dates' bounds and the photos follow the new points, and the focused track's bands if it
     /// is among them.

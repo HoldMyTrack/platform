@@ -40,7 +40,7 @@ HoldMyTrack keeps the outdoor tracks a user chooses to bring in and draws them a
 
 1. File upload on the web or in the app (GPX, FIT, TCX).
 2. Health Connect on Android: exercise sessions and their routes, read only while the Sync screen is open.
-3. In-app GPS recording on Android and iOS, kept on the phone; Android sends it when the user syncs it.
+3. In-app GPS recording on Android and iOS, kept on the phone until the user sends it.
 4. A Trip copy another user sends, added only once the recipient accepts it.
 
 **What happens on the server.** Private locations are applied when a track is processed, before routes, tiles or stats are stored. The original upload is kept unclipped so routes can be rebuilt after an edit or a Private location change.

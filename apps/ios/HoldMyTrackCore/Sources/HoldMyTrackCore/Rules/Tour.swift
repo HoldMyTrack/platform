@@ -133,7 +133,7 @@ public enum TourRules {
 }
 
 /// What a step points at, found by the app; nil points at nothing and puts the card at the bottom.
-public enum TourTarget: Sendable { case sheet, dates, layers, export, modes, fogLevel, page, youTour }
+public enum TourTarget: Sendable { case sheet, dates, layers, export, modes, fogLevel, record, page, youTour }
 
 /// One step of the tour. tab is the tab bar's tab for the step, mode the map's, sheet whether the
 /// map's sheet is open; the user's come back when the tour ends. view is the camera, nil for the
@@ -162,7 +162,7 @@ public struct TourStep: Equatable, Sendable {
     }
 }
 
-/// The iOS tour's steps (apps/ios/docs/SPEC.md FR-2.12): Android's, less Record, with
+/// The iOS tour's steps (apps/ios/docs/SPEC.md FR-2.12): Android's, with
 /// Places folded into Layers, whose menu holds both. A step about a menu (Layers, Fog's level)
 /// points at its button and leaves the menu closed, since UIKit can't open a button's menu for
 /// the app.
@@ -196,6 +196,7 @@ public enum TourSteps {
             TourStep("layers", .layers),
             TourStep("export", .export),
         ] + fog + [
+            TourStep("record", .record, text: isDemo ? "record_demo" : "record"),
             TourStep("sync", .page, tab: .sync, text: isDemo ? "sync_demo" : "sync"),
             TourStep("done", .youTour, tab: .you),
         ]

@@ -72,7 +72,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 ### FR-2.9 The bottom bar
 
-- Tracks, Trips, the record button, Sync and You. Sync is Sync history (FR-4.1).
+- Tracks, Trips, the record button, Sync and You. Sync lists the recordings on the phone (FR-5.2) and leads to Upload and Sync history (FR-4.1).
 - You leads to Settings, Track graph & trends, Upload, Privacy, Theme, Language, Take a tour, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
 - Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
 
@@ -87,8 +87,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 ### FR-2.12 Tour
 
-- Its steps are Android's without Record, with Places part of the Layers step.
-- The Sync step is about Sync history (FR-4.1).
+- Its steps are Android's, with Places part of the Layers step.
 
 ## 5. FR-3 — Sync and Imports
 
@@ -109,7 +108,14 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
 - iOS has no GPS-only positions: a fix vaguer than 50 m is left out.
 - Swiping HoldMyTrack away in the app switcher stops the recording, which the first recording on the phone says once. Crash recovery keeps it to the last fix as on Android, and a notification posted as the app closes resumes it with a tap, with no prompt.
 - A pause turns location off until Resume. Location or precise location taken away while recording pauses it.
-- Stop keeps the recording on the phone under its account; no screen shows it, and nothing names or sends it.
+
+### FR-5.2 Recorded tracks — review, edit, tick, sync
+
+As the Android app's (`apps/android/docs/SPEC.md` FR-5.2), except as below.
+
+- The Sync tab is a list of the recordings, not the map: they aren't drawn, and no overlap is marked. A swipe deletes a recording, asked first; no row is hidden.
+- The type menu lists the types the phone's recordings use, most used first, then the server's, and Other… types a new one.
+- Download GPX goes to the share sheet, which saves to Files among its choices.
 
 ## 8. Non-Functional Requirements (summary)
 
