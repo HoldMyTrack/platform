@@ -18,7 +18,7 @@ The code with no UIKit in it is the `HoldMyTrackCore` package, and its tests nee
 
 A Debug build talks to `http://localhost:8080`, compose's API port on this Mac, which the simulator reaches directly. When `.env` sets another `API_PORT`, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set it there. Release always talks to `https://holdmytrack.com`. A Debug build's You tab shows the build and whether the API answers.
 
-The UI tests run against the dev stack at the same origin and skip when it doesn't answer, as on CI. The map's basemap comes from the web's dev server, so `web` must be running. The recording tests need a simulated location still moving: `xcrun simctl location booted start --speed=5 41.48,-81.70 41.49,-81.68 41.48,-81.66 41.49,-81.64`. The dev stack allows 5 demo sign-ins an hour from one address, so a full run fails its later demo tests with "Too many demo sessions"; run them again after the hour.
+The UI tests run against the dev stack at the same origin and skip when it doesn't answer, as on CI; `web` must be running too (`apps/ios/docs/IMPLEMENTATION.md` §3.5). The tests about the demo sign in as it, which the dev stack allows a few times an hour from one address; one refused with "Too many demo sessions" passes again once the hour is up.
 
 Signing for a device or an archive needs a team: copy `Config/Signing.xcconfig.example` to `Config/Signing.xcconfig`.
 
