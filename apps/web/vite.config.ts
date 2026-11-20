@@ -20,8 +20,8 @@ const pagesTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:8080';
 // proxies every page path to it — production's Caddy sends it everything that isn't a static
 // file (apps/web/docker/Caddyfile) — and this server is left serving the app's modules and
 // public/. /v1 and /v2 serve the header's avatar image; the app itself calls the API directly at
-// VITE_API_BASE_URL. /tiles and /healthz, with /v2, let an iOS simulator's Debug build use this
-// origin as its API, so the site's pages it shows post from APP_BASE_URL (docs/DEVELOPMENT.md).
+// VITE_API_BASE_URL. /tiles and /healthz: an iOS simulator's Debug build at this origin
+// (docs/DEVELOPMENT.md).
 // Vite matches these against the URL with its query string, hence the `(\?|$)` endings.
 const pageRoutes = [
   '^/(\\?|$)',
