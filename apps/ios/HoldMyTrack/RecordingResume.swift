@@ -6,16 +6,17 @@ import Foundation
 @MainActor
 enum RecordingResume {
     static let asked = Notification.Name("RecordingResume.asked")
-    private static var pending = false
+    private static var pending: String?
 
-    static func ask() {
-        pending = true
+    /// The tap on the notification for recording id.
+    static func ask(_ id: String) {
+        pending = id
         NotificationCenter.default.post(name: asked, object: nil)
     }
 
-    /// Whether a tap is waiting, which this answers once.
-    static func take() -> Bool {
-        defer { pending = false }
+    /// The recording a tap is waiting to resume, which this answers once.
+    static func take() -> String? {
+        defer { pending = nil }
         return pending
     }
 }

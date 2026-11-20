@@ -109,7 +109,11 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
     /// calls it as it goes, so a sign-out keeps what a Stop would.
     @discardableResult
     func end(save: Bool) -> Bool? {
-        guard recording.state != .idle else { return nil }
+        guard recording.state != .idle else {
+            // A deleted account's leftover goes with everything else it had.
+            if !save, journal?.leftover()?.account == account { clearJournal() }
+            return nil
+        }
         let now = Date()
         let finished = save ? recording.finished(at: now, type: "unknown") : nil
         Self.log.info("end: \(self.recording.points.count) points, \(Int(self.recording.moving(at: now))) s moving, kept: \(finished != nil)")
@@ -119,13 +123,13 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         recording = Recording()
         changed()
         guard let finished else {
-            try? journal?.clear()
+            clearJournal()
             return nil
         }
         do {
             try store.save(finished, account: account)
             // Only once it's in the store: a save that failed leaves it to be offered again.
-            try? journal?.clear()
+            clearJournal()
             return true
         } catch {
             return false
@@ -133,8 +137,18 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
     }
 
     private func start() {
-        // Another account's leftover waits for it; a new recording saves it under that account first.
-        if let left = journal?.leftover(), left.account != account { save(left) }
+        // The journal holds one recording, which a new one would replace: this account's is asked
+        // about first, and another account's saved under it first. One that can't be saved stays.
+        if let left = journal?.leftover() {
+            guard left.account != account else {
+                onLeftover?(left)
+                return
+            }
+            guard save(left) else {
+                onMessage?(String(localized: "recording.saveFailed", defaultValue: "The recording couldn't be saved.", comment: "Recording: Stop failed to write it."))
+                return
+            }
+        }
         recording.start(at: Date())
         do {
             try journal?.begin(id: recording.id, account: account, startedAt: recording.startedAt ?? Date())
@@ -214,8 +228,9 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
 
     /// The signed-in screen opened, or the notification's tap brought the app back: a leftover
     /// under this account is resumed for that tap and asked about otherwise.
-    func checkLeftover(resumeAsked: Bool) {
+    func checkLeftover(resumeAsked tapped: String?) {
         let left = journal?.leftover()
+        let resumeAsked = tapped != nil && tapped == left?.id
         Self.log.info("leftover: \(left?.points.count ?? -1) points for \(left?.account == self.account ? "this" : "another", privacy: .public) account, journal \(self.journal == nil ? "missing" : "open", privacy: .public)")
         switch LeftoverAction.of(leftover: left?.account, signedIn: account, recording: recording.state, resumeAsked: resumeAsked) {
         case .none, .wait: return
@@ -226,7 +241,15 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
 
     /// Picked up paused where it was, then resumed as a tap would, asking for precise location
     /// first if it's gone; refused, it stays paused.
+    /// Whether left is still the journal's and nothing records: an alert about it may outlive it,
+    /// the notification's tap having resumed it meanwhile.
+    func isCurrent(_ left: RecordingJournal.Leftover) -> Bool {
+        recording.state == .idle && journal?.leftover()?.id == left.id
+    }
+
     func resume(_ left: RecordingJournal.Leftover) {
+        guard isCurrent(left) else { return }
+        Self.withdrawClosedNotification()
         recording = Recording.restored(left)
         ticker?.invalidate()
         ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -239,22 +262,36 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
     /// Kept as Stop keeps it, under its own account.
     @discardableResult
     func save(_ left: RecordingJournal.Leftover) -> Bool {
+        guard isCurrent(left) else { return false }
         let restored = Recording.restored(left)
         guard let track = restored.finished(at: left.points.last?.time ?? Date(), type: "unknown") else {
-            try? journal?.clear()
+            clearJournal()
             return false
         }
         do {
             try store.save(track, account: left.account)
-            try? journal?.clear()
+            clearJournal()
             return true
         } catch {
             return false
         }
     }
 
-    func discard() {
+    func discard(_ left: RecordingJournal.Leftover) {
+        guard isCurrent(left) else { return }
+        clearJournal()
+    }
+
+    /// The journal emptied, and the swipe's notification with it: its tap has nothing to resume.
+    private func clearJournal() {
         try? journal?.clear()
+        Self.withdrawClosedNotification()
+    }
+
+    private static func withdrawClosedNotification() {
+        let center = UNUserNotificationCenter.current()
+        center.removeDeliveredNotifications(withIdentifiers: [closedNotification])
+        center.removePendingNotificationRequests(withIdentifiers: [closedNotification])
     }
 
     // MARK: The app going away
@@ -267,6 +304,8 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         writeTotals()
         guard recording.state == .recording else { return }
         let content = UNMutableNotificationContent()
+        // The tap resumes this recording only, not whatever is left when it comes.
+        content.userInfo = [Self.recordingKey: recording.id]
         content.title = String(localized: "recording.closedTitle", defaultValue: "Recording paused: HoldMyTrack was closed", comment: "The notification posted as the app is swiped away while recording.")
         content.body = String(localized: "recording.closedBody", defaultValue: "Tap to go on recording.", comment: "The notification posted as the app is swiped away while recording: its tap resumes.")
         let request = UNNotificationRequest(identifier: Self.closedNotification, content: content, trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false))
@@ -277,8 +316,10 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
     }
 
     nonisolated static let closedNotification = "recording-closed"
+    nonisolated static let recordingKey = "recording"
 
-    /// Asked once, at the first recording: the swipe's notification needs it, recording doesn't.
+    /// Asked at every start, which iOS shows only the first time: the swipe's notification needs
+    /// it, recording doesn't.
     private func askNotifications() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }

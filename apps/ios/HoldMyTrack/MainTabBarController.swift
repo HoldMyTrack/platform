@@ -17,6 +17,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private var holdingToStop = false
     /// Whether the leftover check has run for this screen, once on its first appearance.
     private var leftoverChecked = false
+    /// The question about a leftover while it's up.
+    private weak var leftoverAlert: UIAlertController?
     /// The middle item under the record button, never selected.
     private let gap = UIViewController()
 
@@ -83,12 +85,26 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         }
     }
 
-    /// What a crash or a swipe left: resumed for the notification's tap, else asked about.
+    /// What a crash or a swipe left: resumed for the notification's tap, else asked about. A
+    /// resume takes down the question about the same recording.
     private func checkLeftover() {
         recorder.checkLeftover(resumeAsked: RecordingResume.take())
+        if recorder.state != .idle, let alert = leftoverAlert {
+            alert.presentingViewController?.dismiss(animated: true)
+            leftoverAlert = nil
+        }
+    }
+
+    /// Over whatever is already presented, such as the Update screen or an opened file's Upload,
+    /// which would otherwise keep the question from showing.
+    private func presentOnTop(_ alert: UIAlertController) {
+        var top: UIViewController = self
+        while let presented = top.presentedViewController, !presented.isBeingDismissed { top = presented }
+        top.present(alert, animated: true)
     }
 
     private func askAboutLeftover(_ left: RecordingJournal.Leftover) {
+        guard recorder.isCurrent(left) else { return }
         if let mapHost = viewControllers?.first { selectedViewController = mapHost }
         let format = PanelFormat(account: account)
         let message = String(localized: "recording.leftoverMessage", defaultValue: "HoldMyTrack was closed while recording. \(RecordingStatus.clock(left.moving)) · \(format.distance(left.meters)) was recorded before it stopped.", comment: "The prompt about a recording the app was closed in: its moving time and distance.")
@@ -97,7 +113,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             self?.recorder.resume(left)
         })
         alert.addAction(UIAlertAction(title: String(localized: "recording.save", defaultValue: "Save", comment: "An unfinished recording: keep it as Stop would."), style: .default) { [weak self] _ in
-            guard let self else { return }
+            guard let self, self.recorder.isCurrent(left) else { return }
             self.map.say(self.recorder.save(left)
                 ? String(localized: "recording.saved", defaultValue: "Recording saved on this phone.", comment: "Recording: Stop kept it on the phone.")
                 : String(localized: "recording.tooShort", defaultValue: "Too short — not saved.", comment: "Recording: Stop on less than a minute or two points."))
@@ -105,7 +121,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         alert.addAction(UIAlertAction(title: String(localized: "recording.discard", defaultValue: "Discard", comment: "An unfinished recording: delete it."), style: .destructive) { [weak self] _ in
             self?.confirmDiscard(left)
         })
-        present(alert, animated: true)
+        leftoverAlert = alert
+        presentOnTop(alert)
     }
 
     /// Discard asks first: the copy on the phone is the only one.
@@ -115,9 +132,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
                                       preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { [weak self] _ in self?.askAboutLeftover(left) })
         alert.addAction(UIAlertAction(title: String(localized: "recording.discard", defaultValue: "Discard", comment: "An unfinished recording: delete it."), style: .destructive) { [weak self] _ in
-            self?.recorder.discard()
+            self?.recorder.discard(left)
         })
-        present(alert, animated: true)
+        leftoverAlert = alert
+        presentOnTop(alert)
     }
 
     // MARK: Recording

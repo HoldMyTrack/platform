@@ -13,8 +13,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationC
     /// recording once the signed-in screen is up (RecordingResume).
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                             withCompletionHandler completionHandler: @escaping () -> Void) {
-        if response.notification.request.identifier == RecordingController.closedNotification {
-            DispatchQueue.main.async { MainActor.assumeIsolated { RecordingResume.ask() } }
+        let request = response.notification.request
+        if request.identifier == RecordingController.closedNotification, let id = request.content.userInfo[RecordingController.recordingKey] as? String {
+            DispatchQueue.main.async { MainActor.assumeIsolated { RecordingResume.ask(id) } }
         }
         completionHandler()
     }
