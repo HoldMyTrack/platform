@@ -77,7 +77,7 @@ export async function layers({ satellite, roads }) {
 
 /** Normal, or Fog at the level labelled `label` in the app's language. */
 export async function mode(label) {
-  // A tap on Normal while it's on would uncheck it in builds before 0.35.3.
+  // Tapped only when off: a build whose tap on Normal while it's on unchecks it shows neither checked.
   if (!label) return setChecked("mode_normal", true);
   await tapView("mode_fog");
   await sleep(1000);

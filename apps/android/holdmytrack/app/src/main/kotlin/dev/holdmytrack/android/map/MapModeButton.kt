@@ -11,7 +11,8 @@ import com.google.android.material.button.MaterialButton
  * One of the map's Normal and Fog buttons: a checkable [MaterialButton] that TalkBack
  * reads as a radio button, since exactly one of the two is on. `MaterialButton` names itself a
  * toggle outside a `MaterialButtonToggleGroup`, and sets that last, so the name is set here after
- * it. [position] is its place in the row, read out as "1 of 2".
+ * it. [position] is its place in the row, read out as "1 of 2". A tap checks it and never
+ * unchecks it, as a radio button's does: [ModeBar.check] unchecks the other.
  */
 class MapModeButton @JvmOverloads constructor(
     context: Context,
@@ -20,6 +21,10 @@ class MapModeButton @JvmOverloads constructor(
 ) : MaterialButton(context, attrs, defStyleAttr) {
 
     var position = 0
+
+    override fun toggle() {
+        if (!isChecked) super.toggle()
+    }
 
     override fun getAccessibilityClassName(): CharSequence = RadioButton::class.java.name
 

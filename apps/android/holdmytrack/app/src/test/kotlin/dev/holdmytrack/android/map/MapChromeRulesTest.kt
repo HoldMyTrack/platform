@@ -43,11 +43,11 @@ class MapChromeRulesTest {
     }
 
     @Test
-    fun `a tap on the mode that's on keeps it checked, and Fog's opens the level menu`() {
-        assertEquals(ModeTap.RECHECK, MapChromeRules.modeTap(MapMode.NORMAL, MapMode.NORMAL))
-        assertEquals(ModeTap.FOG_MENU, MapChromeRules.modeTap(MapMode.FOG, MapMode.FOG))
-        assertEquals(ModeTap.SWITCH, MapChromeRules.modeTap(MapMode.FOG, MapMode.NORMAL))
-        assertEquals(ModeTap.SWITCH, MapChromeRules.modeTap(MapMode.NORMAL, MapMode.FOG))
+    fun `only a tap on Fog while it's on opens the level menu`() {
+        assertTrue(MapChromeRules.fogMenuOnTap(MapMode.FOG, MapMode.FOG))
+        assertFalse(MapChromeRules.fogMenuOnTap(MapMode.NORMAL, MapMode.NORMAL))
+        assertFalse(MapChromeRules.fogMenuOnTap(MapMode.FOG, MapMode.NORMAL))
+        assertFalse(MapChromeRules.fogMenuOnTap(MapMode.NORMAL, MapMode.FOG))
     }
 
     @Test
