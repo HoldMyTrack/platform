@@ -1,20 +1,28 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The signed-in app: Tracks, Trips, Sync and You (apps/android/docs/SPEC.md FR-2.9), each keeping
-/// its state across a switch. Tracks and Trips are one map screen with its sheet on the Tracks
-/// or the Trips tab (MapHostViewController); Trips counts copies waiting to be answered. The
-/// record button comes with recording (ROADMAP.md, 7d). The tour runs over all four
-/// (TourController).
+/// The signed-in app: Tracks, Trips, the record button, Sync and You
+/// (apps/android/docs/SPEC.md FR-2.9), each tab keeping its state across a switch. Tracks and
+/// Trips are one map screen with its sheet on the Tracks or the Trips tab
+/// (MapHostViewController); Trips counts copies waiting to be answered. The record button sits
+/// over an empty middle item, with the recording's status above it (RecordingController). The
+/// tour runs over all of it (TourController).
 final class MainTabBarController: UITabBarController, UITabBarControllerDelegate, TourHost {
     let map: MapViewController
     private let account: Account
     private lazy var tour = TourController(host: self)
+    private let recorder: RecordingController
+    private let recordButton = RecordButton()
+    private let recordStatus = Controls.label("", font: Typeface.sans(DesignTokens.Text.md, weight: DesignTokens.Weight.semibold), color: UIColor(resource: .ink))
+    private var holdingToStop = false
+    /// The middle item under the record button, never selected.
+    private let gap = UIViewController()
 
     init(flow: AppFlow, account: Account) {
         let map = MapViewController(flow: flow, account: account)
         self.map = map
         self.account = account
+        recorder = RecordingController(account: AccountKey.of(email: account.email, isDemo: account.isDemo))
         super.init(nibName: nil, bundle: nil)
         delegate = self
         let mapHost = MapHostViewController(map: map, tab: .tracks)
@@ -31,7 +39,9 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         you.navigationBar.prefersLargeTitles = false
         you.tabBarItem = UITabBarItem(title: String(localized: "You"), image: UIImage(resource: .user), tag: 3)
         you.tabBarItem.accessibilityIdentifier = "tabYou"
-        viewControllers = [mapHost, trips, sync, you]
+        gap.tabBarItem = UITabBarItem(title: nil, image: nil, tag: 4)
+        gap.tabBarItem.isEnabled = false
+        viewControllers = [mapHost, trips, gap, sync, you]
         tabBar.tintColor = UIColor(resource: .accent)
         tabBar.backgroundColor = UIColor(resource: .surface)
         sync.tabBarItem.accessibilityIdentifier = "tabSync"
@@ -55,6 +65,97 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setUpRecording()
+    }
+
+    // MARK: Recording
+
+    private func setUpRecording() {
+        recordStatus.textAlignment = .center
+        recordStatus.backgroundColor = UIColor(resource: .surface)
+        recordStatus.layer.cornerRadius = DesignTokens.Radius.md
+        recordStatus.layer.masksToBounds = true
+        recordStatus.accessibilityIdentifier = "recordStatus"
+        recordStatus.isHidden = true
+        view.addSubview(recordStatus)
+        view.addSubview(recordButton)
+        recordButton.onTap = { [weak self] in
+            guard let self else { return }
+            if RecordingStatus.showsMap(stopping: false, state: self.recorder.state) { self.showMap() }
+            self.recorder.tap()
+        }
+        recordButton.onStop = { [weak self] in
+            guard let self else { return }
+            if RecordingStatus.showsMap(stopping: true, state: self.recorder.state) { self.showMap() }
+            self.recorder.stop()
+        }
+        recordButton.onHolding = { [weak self] holding in
+            self?.holdingToStop = holding
+            self?.renderRecordingStatus()
+        }
+        recorder.onChange = { [weak self] in self?.renderRecording() }
+        recorder.onTick = { [weak self] in self?.renderRecordingStatus() }
+        recorder.onMessage = { [weak self] text in self?.map.say(text) }
+        recorder.onRefused = { [weak self] in self?.offerLocationSettings() }
+    }
+
+    /// The button over the middle item, by frame: the tab bar isn't in a hierarchy the
+    /// controller's view can constrain to, and moves with its own layout.
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let bar = tabBar.convert(tabBar.bounds, to: view)
+        let items = bar.height - tabBar.safeAreaInsets.bottom
+        let side = RecordButton.side
+        recordButton.frame = CGRect(x: bar.midX - side / 2, y: bar.minY + items / 2 - side / 2, width: side, height: side)
+        let fit = recordStatus.sizeThatFits(CGSize(width: view.bounds.width - 2 * DesignTokens.Space.s16, height: .greatestFiniteMagnitude))
+        let width = min(fit.width, view.bounds.width - 2 * DesignTokens.Space.s16), height = max(fit.height + DesignTokens.Space.s8, 28)
+        recordStatus.frame = CGRect(x: bar.midX - width / 2, y: recordButton.frame.minY - DesignTokens.Space.s8 - height, width: width, height: height)
+    }
+
+    /// The recording's state or fixes changed: the button, the status and the map.
+    private func renderRecording() {
+        recordButton.recordingState = recorder.state
+        renderRecordingStatus()
+        map.showRecording(active: recorder.state != .idle, points: recorder.recording.points)
+    }
+
+    /// The status line alone, every second of the clock.
+    private func renderRecordingStatus() {
+        let status = recorder.status(format: PanelFormat(account: account), holding: holdingToStop, at: Date())
+        recordStatus.text = status.map { "  \($0)  " }
+        recordStatus.isHidden = status == nil
+        view.setNeedsLayout()
+    }
+
+    /// The Tracks tab, where the recording is drawn and its outcome said.
+    private func showMap() {
+        guard let mapHost = viewControllers?.first, selectedViewController !== mapHost else { return }
+        selectedViewController = mapHost
+    }
+
+    /// The signed-in screen is going: a sign-out or an ended session keeps the recording as a
+    /// Stop would, and a deleted account's is dropped with everything else it had.
+    func endRecording(save: Bool) {
+        recorder.end(save: save)
+    }
+
+    /// Location is off for HoldMyTrack: Settings is where it's turned on.
+    private func offerLocationSettings() {
+        let alert = UIAlertController(title: nil, message: RecordingController.needsLocation, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Settings"), style: .default) { _ in
+            UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+        })
+        present(alert, animated: true)
+    }
+
+    /// The middle item is the record button's place, never a tab.
+    func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
+        viewController !== gap
+    }
+
     /// The user's own pick of a tab, which may earn the Trips card.
     func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
         tour.notice(.tab(tourTab))
@@ -64,9 +165,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
 
     var isDemo: Bool { account.isDemo }
 
-    private static let tourTabs: [TourTab] = [.map, .trips, .sync, .you]
+    /// The tab bar's items, the record button's empty one in the middle.
+    private static let tourTabs: [TourTab?] = [.map, .trips, nil, .sync, .you]
 
-    var tourTab: TourTab { Self.tourTabs[min(selectedIndex, Self.tourTabs.count - 1)] }
+    var tourTab: TourTab { Self.tourTabs[min(selectedIndex, Self.tourTabs.count - 1)] ?? .map }
 
     func showTourTab(_ tab: TourTab, root: Bool) {
         guard let index = Self.tourTabs.firstIndex(of: tab), let next = viewControllers?[index] else { return }

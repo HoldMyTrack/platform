@@ -27,12 +27,12 @@ final class TourTests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons.element(boundBy: 0).isSelected, "the Tracks tab comes back")
         XCTAssertTrue(app.segmentedControls["modes"].buttons.element(boundBy: 0).isSelected, "Normal comes back")
 
-        app.tabBars.buttons.element(boundBy: 3).tap()
+        app.tabBars.buttons["tabYou"].tap()
         app.cells["youTour"].tap()
         XCTAssertTrue(app.staticTexts["1 of 13"].waitForExistence(timeout: 10))
         app.buttons["tourSkip"].tap()
         XCTAssertTrue(app.otherElements["tourCard"].waitForNonExistence(timeout: 5))
-        XCTAssertTrue(app.tabBars.buttons.element(boundBy: 3).isSelected, "Skip leaves the user where they were")
+        XCTAssertTrue(app.tabBars.buttons["tabYou"].isSelected, "Skip leaves the user where they were")
     }
 
     /// An account with tracks is offered the tour; Not now declines it, and Fog and the Trips tab

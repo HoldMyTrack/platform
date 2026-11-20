@@ -32,7 +32,7 @@ final class LaunchTests: XCTestCase {
         app.launchArguments = ["-hmtTourSeen"]
         app.launch()
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
-        app.tabBars.buttons.element(boundBy: 3).tap()
+        app.tabBars.buttons["tabYou"].tap()
         XCTAssertTrue(app.staticTexts["account"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["build"].label.contains("commit"))
 
