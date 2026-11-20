@@ -35,7 +35,7 @@ TrackRow:
     bbox:
       type: array
       nullable: true
-      description: "[minLon, minLat, maxLon, maxLat], or null when the track has no route."
+      description: "[minLon, minLat, maxLon, maxLat]; east may pass 180 across the antimeridian. A track with no route has the bbox of the Private location's circle it is listed under (docs/SPEC.md FR-5.11), or null while it has none."
       minItems: 4
       maxItems: 4
       items: { type: number }
@@ -84,6 +84,7 @@ AreaTrackRow:
     bbox:
       type: array
       nullable: true
+      description: As TrackRow's.
       minItems: 4
       maxItems: 4
       items: { type: number }

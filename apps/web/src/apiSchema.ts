@@ -1535,7 +1535,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * The newest tracks whose route crosses a map view, the web's list and the set its map draws
+         * The newest tracks whose route crosses a map view, or with none, whose Private location's circle reaches it; the web's list and the set its map draws
          * @description Type and Trip filters (types, trip) are refused, since the list filters those itself.
          */
         get: {
@@ -4071,7 +4071,7 @@ export interface components {
             /** @description The time a client shows for the track, as Trips and Trends sum it; elapsed time where the source gave no moving time. */
             moving_seconds: number | null;
             description: string | null;
-            /** @description [minLon, minLat, maxLon, maxLat], or null when the track has no route. */
+            /** @description [minLon, minLat, maxLon, maxLat]; east may pass 180 across the antimeridian. A track with no route has the bbox of the Private location's circle it is listed under (docs/SPEC.md FR-5.11), or null while it has none. */
             bbox: [
                 number,
                 number,
@@ -4135,6 +4135,7 @@ export interface components {
             name: string | null;
             distance_meters: number | null;
             moving_seconds: number | null;
+            /** @description As TrackRow's. */
             bbox: [
                 number,
                 number,

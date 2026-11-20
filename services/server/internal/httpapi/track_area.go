@@ -30,17 +30,20 @@ var areaRowColumns = `id, started_at, timezone, track_type, name, distance_meter
 var areaFilterSQL = `user_id = $1 AND ` + inDateRange("$2", "$3")
 
 // listAreaQuery is the newest $4 tracks, at every zoom, for the opening view; with an area,
-// listInAreaQuery is those crossing it ($5–$10), and countInAreaQuery their total past the limit.
+// listInAreaQuery is those in it ($5–$10), and countInAreaQuery their total past the limit.
 // The total counts tracks whose box reaches the view, which the index answers alone: testing every
 // line took 400 ms for an area of 15,000 tracks against 70 ms, and miscounted 2 of them.
 var listAreaQuery = `SELECT ` + areaRowColumns + ` FROM tracks WHERE ` + areaFilterSQL + `
 ORDER BY started_at DESC, id DESC LIMIT $4`
 
 var listInAreaQuery = `SELECT ` + areaRowColumns + ` FROM tracks WHERE ` + areaFilterSQL + `
-  AND ` + trajectoryInAreaSQL(5, true) + `
+  AND (` + trajectoryInAreaSQL(5, true) + `
+    OR ` + hiddenInAreaSQL(5) + `)
 ORDER BY started_at DESC, id DESC LIMIT $4`
 
-var countInAreaQuery = `SELECT count(*) FROM tracks WHERE ` + areaFilterSQL + ` AND ` + trajectoryInAreaSQL(4, false)
+var countInAreaQuery = `SELECT count(*) FROM tracks WHERE ` + areaFilterSQL + `
+  AND (` + trajectoryInAreaSQL(4, false) + `
+    OR ` + hiddenInAreaSQL(4) + `)`
 
 // trajectoryInAreaSQL is "the track crosses one of the area's two boxes" (mapArea.boxes), with
 // the parameters from $first: south, north, then each box's west and east. A track stored past
@@ -61,6 +64,26 @@ func trajectoryInAreaSQL(first int, exact bool) string {
 		}
 	}
 	return "(" + strings.Join(tests, "\n    OR ") + ")"
+}
+
+// hiddenInAreaSQL is "the track has no route and the circle of the Private location it is listed
+// under (§7) reaches the area", with the area's parameters from $first as trajectoryInAreaSQL
+// takes them. A circle reaches a box when the box's point nearest its center, found by clamping
+// the center into the box, lies within the radius; the center is tried a world's width either
+// way too, so a circle across the antimeridian reaches the box on the far side. The account's
+// few locations are read once, before the tracks.
+func hiddenInAreaSQL(first int) string {
+	p := func(i int) string { return fmt.Sprintf("$%d::float8", first+i) }
+	var tests []string
+	for _, box := range [][2]string{{p(2), p(3)}, {p(4), p(5)}} {
+		for _, shift := range []string{"", " + 360", " - 360"} {
+			nearest := "ST_SetSRID(ST_MakePoint(greatest(" + box[0] + ", least(ST_X(z.center::geometry)" + shift + ", " + box[1] + ")), " +
+				"greatest(" + p(0) + ", least(ST_Y(z.center::geometry), " + p(1) + "))), 4326)::geography"
+			tests = append(tests, "ST_DWithin(z.center, "+nearest+", z.radius_m)")
+		}
+	}
+	return `(trajectory IS NULL AND hidden_by = ANY(ARRAY(
+      SELECT z.id FROM privacy_zones z WHERE z.user_id = $1 AND (` + strings.Join(tests, "\n        OR ") + `))))`
 }
 
 // areaRow is one slim row of the area list.
@@ -100,7 +123,7 @@ type areaResponse struct {
 }
 
 // handleListArea serves `GET /v2/tracks/area?bbox=&from=&to=&limit=`, the web's list and the
-// set its map draws (docs/SPEC.md FR-5.11): the newest tracks whose track crosses the view,
+// set its map draws (docs/SPEC.md FR-5.11): the newest tracks in the view,
 // areaTracksLimit at most, with the area's total. Without `bbox`, the newest `limit` of the
 // whole history, for the opening view (FR-4.4).
 func (s *Server) handleListArea(w http.ResponseWriter, r *http.Request) {

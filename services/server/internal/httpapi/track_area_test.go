@@ -97,6 +97,90 @@ func TestListArea(t *testing.T) {
 	}
 }
 
+// A track with no route (FR-7.1) is listed while the circle of the location it is listed under
+// reaches the view, with that circle's bbox, under the same Dates and cap (FR-5.11). Another
+// location's circle, even one overlapping, never brings it in.
+func TestListAreaHiddenTracks(t *testing.T) {
+	d := newDBTest(t)
+	me := d.newAccount(false)
+	ctx := context.Background()
+	const radiusM = 500
+	type circle struct{ lon, lat float64 }
+	zone := func(c circle) string {
+		var id string
+		if err := d.pool.QueryRow(ctx, `INSERT INTO privacy_zones (user_id, center, radius_m)
+			VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography, $4) RETURNING id`, me.id, c.lon, c.lat, radiusM).Scan(&id); err != nil {
+			t.Fatal(err)
+		}
+		return id
+	}
+	hidden := func(day int, zoneID string) string {
+		id := d.newTrack(me, testTrack{trackType: "walking", startedAt: time.Date(2026, 5, day, 10, 0, 0, 0, time.UTC)})
+		if _, err := d.pool.Exec(ctx, `UPDATE tracks SET hidden_by = NULLIF($2, '')::uuid WHERE id = $1`, id, zoneID); err != nil {
+			t.Fatal(err)
+		}
+		return id
+	}
+	// a and b overlap (857 m apart); c is on its own; d crosses the antimeridian.
+	ca, cb, cc, cd := circle{10, 50}, circle{10.012, 50}, circle{12, 50}, circle{179.999, 0}
+	inA, inB, inC, inD := hidden(1, zone(ca)), hidden(2, zone(cb)), hidden(3, zone(cc)), hidden(5, zone(cd))
+	hidden(4, "") // its location deleted, its job not run yet: in no view
+	boxes := map[string][]float64{}
+	for id, c := range map[string]circle{inA: ca, inB: cb, inC: cc, inD: cd} {
+		boxes[id] = circleBBox(c.lon, c.lat, radiusM)
+	}
+	boxA, boxB, boxC := boxes[inA], boxes[inB], boxes[inC]
+
+	list := func(query string) ([]string, int) {
+		t.Helper()
+		var resp areaResponse
+		d.decode(d.do(me, "GET", "/v2/tracks/area?"+query, nil), http.StatusOK, &resp)
+		ids := []string{}
+		for _, r := range resp.Tracks {
+			ids = append(ids, r.ID)
+			if !sameBBox(r.BBox, boxes[r.ID]) {
+				t.Errorf("?%s: %s's bbox %v, want its circle's %v", query, r.ID, r.BBox, boxes[r.ID])
+			}
+		}
+		total := -1
+		if resp.Total != nil {
+			total = *resp.Total
+		}
+		return ids, total
+	}
+	view := func(w, s, e, n float64) string { return fmt.Sprintf("bbox=%.6f,%.6f,%.6f,%.6f", w, s, e, n) }
+	band := func(w, e float64) string { return view(w, 49.9, e, 50.1) }
+	const eps = 0.0005 // about 36 m of longitude here
+	for _, tc := range []struct {
+		name  string
+		query string
+		want  []string
+	}{
+		{"a circle in view", band(11.99, 12.01), []string{inC}},
+		{"a circle partly in view", band(boxC[2]-eps, boxC[2]+eps), []string{inC}},
+		{"a circle out of view", band(boxC[2]+eps, boxC[2]+3*eps), []string{}},
+		{"the circle's bbox in view, the circle not", view(boxC[2]-0.0015, boxC[3]-0.0005, 12.1, 50.1), []string{}},
+		{"only the first of two overlapping circles", band(boxA[0]-eps, boxA[0]+eps), []string{inA}},
+		{"only the second", band(boxB[2]-eps, boxB[2]+eps), []string{inB}},
+		{"both", band(9.9, 10.1), []string{inB, inA}},
+		{"under Dates", band(9.9, 10.1) + "&from=2026-05-02", []string{inB}},
+		{"a view across the antimeridian", band(11.99, -179), []string{inC}},
+		{"a circle across the antimeridian", view(-179.999, -0.01, -179.99, 0.01), []string{inD}},
+	} {
+		if got, total := list(tc.query); !slices.Equal(got, tc.want) || total != len(tc.want) {
+			t.Errorf("%s: %v of %d, want %v", tc.name, got, total, tc.want)
+		}
+	}
+	// Past the cap, the total counts them as the list does.
+	if got, total := list(band(9.9, 10.1) + "&limit=1"); len(got) != 1 || total != 2 {
+		t.Errorf("limit=1: %v of %d, want one of 2", got, total)
+	}
+	// The full row carries the same bbox, so a Trip's list flies there too.
+	if row := d.track(me, inA); !sameBBox(row.BBox, boxA) {
+		t.Errorf("GET /v2/tracks row bbox %v, want %v", row.BBox, boxA)
+	}
+}
+
 // One track in full, for the Edit window; another account's is a 404, like a missing one.
 func TestGetTrack(t *testing.T) {
 	d := newDBTest(t)

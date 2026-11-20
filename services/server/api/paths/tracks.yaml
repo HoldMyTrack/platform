@@ -62,7 +62,7 @@ tracks_upload:
       "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
 tracks_area:
   get:
-    summary: The newest tracks whose route crosses a map view, the web's list and the set its map draws
+    summary: The newest tracks whose route crosses a map view, or with none, whose Private location's circle reaches it; the web's list and the set its map draws
     description: Type and Trip filters (types, trip) are refused, since the list filters those itself.
     parameters:
       - $ref: "../components/parameters.yaml#/FilterFrom"

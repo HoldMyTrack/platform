@@ -185,11 +185,19 @@ func TestPrivateLocationReprocessesTracks(t *testing.T) {
 		t.Errorf("after rename, jobs %+v, want none", jobs)
 	}
 
-	// Move and grow it over the whole of walk: walk is kept but hidden, with no track at all.
+	if got := d.hiddenBy(walk); got != "" {
+		t.Errorf("clipped walk is listed under location %q, want none", got)
+	}
+
+	// Move and grow it over the whole of walk: walk is kept but hidden, with no track at all,
+	// listed under the location with its circle's bbox.
 	move(home.ID, map[string]any{"name": "Flat", "lon": 10.0, "lat": 50.005, "radius_m": 2000})
 	d.runReprivacyJob(me)
-	if a := d.track(me, walk); !a.Private || a.BBox != nil || a.Pending {
-		t.Errorf("covered: %+v, want kept, Private, with no track", a)
+	if a, want := d.track(me, walk), circleBBox(10.0, 50.005, 2000); !a.Private || !sameBBox(a.BBox, want) || a.Pending {
+		t.Errorf("covered: %+v, want kept, Private, with the circle's bbox %v", a, want)
+	}
+	if got := d.hiddenBy(walk); got != home.ID {
+		t.Errorf("covered walk is listed under location %q, want %s", got, home.ID)
 	}
 	whole("moved away, other", other)
 
@@ -197,12 +205,63 @@ func TestPrivateLocationReprocessesTracks(t *testing.T) {
 	if rec := d.do(me, "DELETE", "/v2/private-locations/"+home.ID, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete: %d %s", rec.Code, rec.Body)
 	}
+	if a := d.track(me, walk); a.BBox != nil || !a.Pending {
+		t.Errorf("location deleted, job waiting: %+v, want Pending with no bbox", a)
+	}
 	d.runReprivacyJob(me)
 	restored := d.track(me, walk)
 	if restored.Private || restored.Pending || !slices.Equal(restored.BBox, full.BBox) {
 		t.Errorf("after delete: %+v, want walk back as it was (bbox %v)", restored, full.BBox)
 	}
 	whole("deleted", walk)
+}
+
+// A track ingested entirely inside a Private location is listed under it from the start.
+func TestIngestHiddenTrackListedUnderItsLocation(t *testing.T) {
+	d := newDBTestWithS3(t, newMemS3())
+	me := d.newAccount(false)
+	var home privateLocation
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.005, "radius_m": 2000}), http.StatusCreated, &home)
+	walk := d.ingestNorth(me, "walk.gpx", 10.0)
+	if got := d.hiddenBy(walk); got != home.ID {
+		t.Errorf("listed under %q, want %s", got, home.ID)
+	}
+	if a, want := d.track(me, walk), circleBBox(10.0, 50.005, 2000); !a.Private || !sameBBox(a.BBox, want) {
+		t.Errorf("row %+v, want Private with the circle's bbox %v", a, want)
+	}
+}
+
+// hiddenBy is the location a track is listed under while it has no route, "" for none.
+func (d *dbTest) hiddenBy(trackID string) string {
+	d.t.Helper()
+	var id *string
+	if err := d.pool.QueryRow(context.Background(), `SELECT hidden_by::text FROM tracks WHERE id = $1`, trackID).Scan(&id); err != nil {
+		d.t.Fatal(err)
+	}
+	if id == nil {
+		return ""
+	}
+	return *id
+}
+
+// circleBBox is the bbox of the circle at lon, lat with radiusM, as a row hidden by it carries it.
+func circleBBox(lon, lat float64, radiusM int) []float64 {
+	dy := float64(radiusM) / 111195
+	dx := dy / math.Cos(lat*math.Pi/180)
+	return []float64{lon - dx, lat - dy, lon + dx, lat + dy}
+}
+
+// sameBBox reports whether two bboxes agree to well under a metre.
+func sameBBox(a, b []float64) bool {
+	if len(a) != 4 || len(b) != 4 {
+		return false
+	}
+	for i := range a {
+		if math.Abs(a[i]-b[i]) > 1e-7 {
+			return false
+		}
+	}
+	return true
 }
 
 func TestListPrivateLocations(t *testing.T) {

@@ -186,8 +186,8 @@ func TestSplitIntoPrivateLocation(t *testing.T) {
 		t.Fatalf("after split: %d tracks", len(list))
 	}
 	later, earlier := list[0], list[1]
-	if later.Pending || later.BBox != nil || !later.Private || (later.DistanceMeters != nil && *later.DistanceMeters != 0) {
-		t.Errorf("later part %+v, want kept with no track", later)
+	if later.Pending || !sameBBox(later.BBox, circleBBox(10.0, 50.0045, 100)) || !later.Private || (later.DistanceMeters != nil && *later.DistanceMeters != 0) {
+		t.Errorf("later part %+v, want kept with no track, listed under Home", later)
 	}
 	if earlier.Pending || earlier.BBox == nil || earlier.Private {
 		t.Errorf("earlier part %+v, want its track up to the location's edge", earlier)

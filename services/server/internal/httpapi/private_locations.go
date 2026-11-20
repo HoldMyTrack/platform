@@ -117,8 +117,8 @@ func (s *Server) handleListPrivateLocations(w http.ResponseWriter, r *http.Reque
 }
 
 // handleHiddenTracks serves `GET /v2/private-locations/hidden`: how many of the account's
-// tracks its Private locations hide entirely, the rows the list badges Private (FR-5.1).
-// Account-wide, since a hidden track keeps no track to tell which location hid it.
+// tracks its Private locations hide entirely, the rows the list badges Private (FR-5.1),
+// account-wide.
 func (s *Server) handleHiddenTracks(w http.ResponseWriter, r *http.Request) {
 	var count int
 	if err := s.pool.QueryRow(r.Context(), `SELECT count(*) FROM tracks WHERE user_id = $1 AND trajectory IS NULL`,
