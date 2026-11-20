@@ -37,7 +37,10 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["account"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["build"].label.contains("commit"))
 
-        app.buttons["signOut"].tap()
+        let signOut = app.cells["signOut"]
+        app.tables["you"].swipeUp()
+        XCTAssertTrue(signOut.waitForExistence(timeout: 5))
+        signOut.tap()
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 10))
     }
 

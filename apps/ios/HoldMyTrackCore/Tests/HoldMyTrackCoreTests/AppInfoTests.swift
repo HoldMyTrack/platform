@@ -69,5 +69,6 @@ struct ServerCheckTests {
         #expect(request.url?.absoluteString == "http://localhost:8081/healthz")
         #expect(request.value(forHTTPHeaderField: "User-Agent") == "HoldMyTrack-iOS/0.1.0 (62da50b; 1400)")
         #expect(request.value(forHTTPHeaderField: "Accept-Language") == "ru")
+        #expect(!request.httpShouldHandleCookies)
     }
 }
