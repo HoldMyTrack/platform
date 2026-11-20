@@ -105,6 +105,8 @@ The web's design (root `docs/IMPLEMENTATION.md` §4.3.3), drawn by MapLibre's sn
 
 - **`allowsBackgroundLocationUpdates` is set before updates start, and only while recording**, with the `location` background mode in Info.plist: set any other time, the indicator shows with nothing recording.
 - **The record button sits over an empty middle tab item, placed by frame** in `viewDidLayoutSubviews`: the tab bar isn't in a hierarchy the controller's view can be constrained to, and activating such a constraint throws.
+- **Every kept fix is written to the journal as it arrives** (`RecordingJournal`, SQLite, one per phone with the recording's account in it), and a pause writes the totals. Stop saves to the store under the recording's id and only then clears the journal, so a failed save is offered again and a second save of a leftover writes the same file.
+- **A swipe in the app switcher reaches `willTerminate` only while the app runs in the background**, and the app ends when it returns: the notification is added with a 1-second trigger and waited for. Its tap can launch the app before anyone is signed in, so `RecordingResume` holds it until the signed-in screen checks for a leftover; the notification delegate is set in `didFinishLaunching`, or the launching tap is lost.
 - **The UI test needs a moving simulated location**, set with `xcrun simctl location` before it runs: a route that has reached its end gives one fix, and nothing is kept.
 
 ## 6. Build traps

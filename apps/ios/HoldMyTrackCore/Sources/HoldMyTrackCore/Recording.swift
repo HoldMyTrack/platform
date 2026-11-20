@@ -23,8 +23,9 @@ public enum RecordingAccess: Sendable {
     case notAsked, denied, approximate, precise
 }
 
-/// What a tap on the record button does (apps/ios/docs/SPEC.md FR-5.1): idle starts once precise
-/// location is allowed; recording pauses; paused resumes. A tap never stops: that takes a hold.
+/// What a tap on the record button does (apps/ios/docs/SPEC.md FR-5.1): recording pauses; idle
+/// starts and paused resumes, each once precise location is allowed, so a leftover can't resume
+/// without it. A tap never stops: that takes a hold.
 public enum RecordTap: Equatable, Sendable {
     case start, pause, resume
     /// Ask for location while in use, or for precise location this once.
@@ -33,16 +34,12 @@ public enum RecordTap: Equatable, Sendable {
     case refused
 
     public static func of(_ state: RecordingState, access: RecordingAccess) -> RecordTap {
-        switch state {
-        case .recording: return .pause
-        case .paused: return .resume
-        case .idle:
-            switch access {
-            case .notAsked: return .askLocation
-            case .denied: return .refused
-            case .approximate: return .askPrecise
-            case .precise: return .start
-            }
+        if state == .recording { return .pause }
+        switch access {
+        case .notAsked: return .askLocation
+        case .denied: return .refused
+        case .approximate: return .askPrecise
+        case .precise: return state == .paused ? .resume : .start
         }
     }
 }
@@ -51,6 +48,8 @@ public enum RecordTap: Equatable, Sendable {
 /// time with pauses left out, and its distance, none of it across a pause. The first fix after a
 /// pause is a fresh baseline, not a jump from wherever the phone was when it paused.
 public struct Recording: Equatable, Sendable {
+    /// The recording's id from its start: the journal's, and the saved file's.
+    public private(set) var id = ""
     public private(set) var state: RecordingState = .idle
     public private(set) var points: [RecordedPoint] = []
     public private(set) var startedAt: Date?
@@ -75,11 +74,25 @@ public struct Recording: Equatable, Sendable {
 
     public init() {}
 
-    public mutating func start(at now: Date) {
+    public mutating func start(at now: Date, id: String = UUID().uuidString.lowercased()) {
         self = Recording()
+        self.id = id
         state = .recording
         startedAt = now
         runningSince = now
+    }
+
+    /// A recording the app died in, picked up paused where it was: the time it was dead adds no
+    /// moving time, and the next fix starts afresh.
+    public static func restored(_ leftover: RecordingJournal.Leftover) -> Recording {
+        var recording = Recording()
+        recording.id = leftover.id
+        recording.state = .paused
+        recording.startedAt = leftover.startedAt
+        recording.movedBefore = leftover.moving
+        recording.meters = leftover.meters
+        recording.points = leftover.points
+        return recording
     }
 
     public mutating func pause(at now: Date) {
@@ -127,7 +140,7 @@ public struct Recording: Equatable, Sendable {
     public func finished(at now: Date, type: String) -> RecordedTrack? {
         let moved = moving(at: now)
         guard let startedAt, moved >= Self.minimumMoving, points.count >= 2 else { return nil }
-        return RecordedTrack(id: UUID().uuidString.lowercased(), startedAt: startedAt, endedAt: now, movingSeconds: moved, meters: meters, type: type, points: points)
+        return RecordedTrack(id: id, startedAt: startedAt, endedAt: now, movingSeconds: moved, meters: meters, type: type, points: points)
     }
 
     /// The great-circle distance between two fixes, in metres.

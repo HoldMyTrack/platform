@@ -8799,6 +8799,96 @@
         }
       }
     },
+    "recording.closedBody" : {
+      "comment" : "The notification posted as the app is swiped away while recording: its tap resumes.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to go on recording."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите, чтобы продолжить запись."
+          }
+        }
+      }
+    },
+    "recording.closedTitle" : {
+      "comment" : "The notification posted as the app is swiped away while recording.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording paused: HoldMyTrack was closed"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись приостановлена: HoldMyTrack закрыт"
+          }
+        }
+      }
+    },
+    "recording.discard" : {
+      "comment" : "An unfinished recording: delete it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить"
+          }
+        }
+      }
+    },
+    "recording.discardMessage" : {
+      "comment" : "Discarding an unfinished recording: why it asks.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The track will be deleted from this device. This can't be undone."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Трек будет удалён с этого устройства. Это нельзя отменить."
+          }
+        }
+      }
+    },
+    "recording.discardTitle" : {
+      "comment" : "Discarding an unfinished recording: the question.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard this recording?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить эту запись?"
+          }
+        }
+      }
+    },
     "recording.holding" : {
       "comment" : "Recording: the hold that stops is under way.",
       "extractionState" : "manual",
@@ -8813,6 +8903,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удерживайте, чтобы остановить…"
+          }
+        }
+      }
+    },
+    "recording.leftoverMessage" : {
+      "comment" : "The prompt about a recording the app was closed in: its moving time and distance.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack was closed while recording. %1$@ · %2$@ was recorded before it stopped."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack закрылся во время записи. До остановки записано %1$@ · %2$@."
+          }
+        }
+      }
+    },
+    "recording.leftoverTitle" : {
+      "comment" : "The prompt about a recording the app was closed in.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unfinished recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Незавершённая запись"
           }
         }
       }
@@ -8849,6 +8975,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пауза · %@"
+          }
+        }
+      }
+    },
+    "recording.resume" : {
+      "comment" : "An unfinished recording: go on recording it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продолжить"
+          }
+        }
+      }
+    },
+    "recording.save" : {
+      "comment" : "An unfinished recording: keep it as Stop would.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить"
           }
         }
       }

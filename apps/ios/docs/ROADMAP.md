@@ -209,6 +209,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - After a swipe, if 1.2 found the app relaunched: on a background relaunch with a recording in the journal, recreate the session and resume by itself, with no prompt.
   - Either way the time the app was dead counts as a pause: no time or distance added, the first fix after it starting afresh. The rule choosing resume, prompt or nothing is a pure function of the journal's state and the launch reason, with tests. This app's `SPEC.md` states which path shipped.
   - Done when: after a swipe mid-walk, the recording carries on by itself, or one tap on the notification brings it back, with every fix before the swipe kept.
+  - Built, and a recording killed mid-run is offered back, resumed and saved on the simulator: the journal, Resume, Save and Discard, and the notification as the app closes. Left: the notification's path on a device, and the relaunch path once 1.2 decides it.
 - [ ] **7d.3 Recordings on the Sync tab**
   - Edit, Download GPX through the share sheet, Delete, and sending under `recorded` (`apps/android/docs/SPEC.md` FR-5.2).
   - Done when: a recording lands on the map and leaves the phone only then.
