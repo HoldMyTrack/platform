@@ -25,5 +25,6 @@ Changing a Private location after the fact means reprocessing already-ingested t
 
 - Every current and future renderer (fog, routes, colored bands, export, and any print pipeline built later) inherits correct privacy behavior automatically, with nothing extra to implement or to get wrong.
 - Raw, unclipped payloads have to be retained server-side to make retroactive re-clipping possible at all — which makes them the most sensitive thing held (`DPIA.md` R2). They are kept as long as their track, so every track can be re-clipped.
+- A track entirely inside Private locations keeps no route, so nothing can draw or frame it. It is listed by the circle of the location holding it instead (`IMPLEMENTATION.md` §7), and that circle reaches only the owner's own list, never a copy, export or image.
 - Changing a Private location is not instant for existing history — it requires a background job over every track it affects, not an immediate render-time change.
 - This decision is exactly why the no-signup demo account (`IMPLEMENTATION.md` §4.10) could safely reuse the real ingest pipeline: privacy enforcement is identical for a demo account and a real one, with nothing demo-specific to get wrong.
