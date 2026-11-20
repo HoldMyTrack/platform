@@ -26,13 +26,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "HoldMyTrack shows where you are on the map when you tap Find my location, and checks you're inside a place you capture."
+            "value" : "HoldMyTrack shows where you are on the map when you tap Find my location, records the tracks you start with the record button, and checks you're inside a place you capture."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "HoldMyTrack показывает на карте, где вы находитесь, когда вы нажимаете «Моё местоположение», и проверяет, что вы внутри места, которое захватываете."
+            "value" : "HoldMyTrack показывает на карте, где вы находитесь, когда вы нажимаете «Моё местоположение», записывает треки, которые вы начинаете кнопкой записи, и проверяет, что вы внутри места, которое захватываете."
           }
         }
       }
@@ -51,6 +51,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "HoldMyTrack только добавляет в «Фото» картинки карты, которые вы экспортируете, и никогда их не читает."
+          }
+        }
+      }
+    },
+    "Recording" : {
+      "comment" : "The one-time precise location prompt, shown when a recording starts with approximate location allowed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A recording keeps only precise positions, so the track follows the way you went."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись сохраняет только точные координаты, чтобы трек повторял ваш путь."
           }
         }
       }

@@ -101,10 +101,16 @@
 	<string>HoldMyTrack only adds the map images you export to your photos; it never reads them.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>HoldMyTrack uses the camera only when you take a photo for your avatar in Settings.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>HoldMyTrack shows where you are on the map when you tap Find my location, and checks you're inside a place you capture.</string>
+	<string>HoldMyTrack shows where you are on the map when you tap Find my location, records the tracks you start with the record button, and checks you're inside a place you capture.</string>
 	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
 	<dict>
+		<key>Recording</key>
+		<string>A recording keeps only precise positions, so the track follows the way you went.</string>
 		<key>SpotCapture</key>
 		<string>Capturing a place counts only a precise position, so a place you walk past isn't captured.</string>
 	</dict>

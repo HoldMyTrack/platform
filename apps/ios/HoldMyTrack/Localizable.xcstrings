@@ -8709,6 +8709,240 @@
         }
       }
     },
+    "record.holdHint" : {
+      "comment" : "The record button while a recording runs: a two-second hold stops it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold to stop."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удерживайте, чтобы остановить."
+          }
+        }
+      }
+    },
+    "record.pause" : {
+      "comment" : "The record button while recording.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приостановить запись"
+          }
+        }
+      }
+    },
+    "record.resume" : {
+      "comment" : "The record button while paused.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продолжить запись"
+          }
+        }
+      }
+    },
+    "record.start" : {
+      "comment" : "The record button, nothing recording.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Начать запись"
+          }
+        }
+      }
+    },
+    "record.stop" : {
+      "comment" : "VoiceOver's action on the record button that stops the recording.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Остановить запись"
+          }
+        }
+      }
+    },
+    "recording.holding" : {
+      "comment" : "Recording: the hold that stops is under way.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep holding to stop…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удерживайте, чтобы остановить…"
+          }
+        }
+      }
+    },
+    "recording.needsLocation" : {
+      "comment" : "Recording: location or precise location refused.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack needs location access to record a GPS track."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack нужен доступ к местоположению, чтобы записать GPS-трек."
+          }
+        }
+      }
+    },
+    "recording.paused" : {
+      "comment" : "Recording: paused, and its moving time.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused · %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза · %@"
+          }
+        }
+      }
+    },
+    "recording.saveFailed" : {
+      "comment" : "Recording: Stop failed to write it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The recording couldn't be saved."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить запись."
+          }
+        }
+      }
+    },
+    "recording.saved" : {
+      "comment" : "Recording: Stop kept it on the phone.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording saved on this phone."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись сохранена на этом телефоне."
+          }
+        }
+      }
+    },
+    "recording.swipeEnds" : {
+      "comment" : "Recording: said once, at the first recording on the phone.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording. Swiping HoldMyTrack away in the app switcher stops it."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Идёт запись. Если смахнуть HoldMyTrack в переключателе приложений, запись остановится."
+          }
+        }
+      }
+    },
+    "recording.tooShort" : {
+      "comment" : "Recording: Stop on less than a minute or two points.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Too short — not saved."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Слишком коротко — не сохранено."
+          }
+        }
+      }
+    },
+    "recording.waiting" : {
+      "comment" : "Recording: no precise fix yet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for GPS…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ожидание GPS…"
+          }
+        }
+      }
+    },
     "the server refused it." : {
       "comment" : "Upload: the end of a refusal with no reason from the server.",
       "localizations" : {

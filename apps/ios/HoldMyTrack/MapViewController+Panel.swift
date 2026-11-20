@@ -264,7 +264,7 @@ extension MapViewController {
         tracksPanel.content.isHidden = !tracksTab
         tripsPanel.content.isHidden = tracksTab
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
-        sheet.isHidden = state.mode != .normal || privateLocations.open
+        sheet.isHidden = state.mode != .normal || privateLocations.open || recordingLive
         sheet.setNeedsLayout()
     }
 

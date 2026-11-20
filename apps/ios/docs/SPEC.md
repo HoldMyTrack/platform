@@ -51,7 +51,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 ### FR-2.2 Two map modes: Normal and Fog of War
 
 - Trips is Normal mode's, as on Android; the Sync tab is a page with no map.
-- There is no recording to hide the modes.
 
 ### FR-2.3 Initial camera framing
 
@@ -73,7 +72,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 ### FR-2.9 The bottom bar
 
-- Tracks, Trips, Sync and You, with no record button yet. Sync is Sync history (FR-4.1).
+- Tracks, Trips, the record button, Sync and You. Sync is Sync history (FR-4.1).
 - You leads to Settings, Track graph & trends, Upload, Privacy, Theme, Language, Take a tour, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
 - Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
 
@@ -99,6 +98,18 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-3.6), except as below.
 
 - Files come from the document picker, or are opened in HoldMyTrack from Files or another app's share sheet.
 - Files go on even after the app is left, sent by iOS one at a time. Imports still running show on the Upload screen.
+
+## 7. FR-5 — In-App GPS Recording
+
+### FR-5.1 Record — one button on the map
+
+As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
+
+- Location is used while the app is in use, with iOS's location indicator showing while it records in the background; nothing else shows the recording outside the app. Pause, Resume and Stop are on the button, and VoiceOver stops it with the button's Stop action.
+- iOS has no GPS-only positions: a fix vaguer than 50 m is left out.
+- The recording in progress is held in memory: swiping HoldMyTrack away in the app switcher, or a crash, loses it. The first recording on the phone says that swiping away stops it.
+- Location taken away while recording pauses it.
+- Stop keeps the recording on the phone under its account; no screen shows it, and nothing names or sends it.
 
 ## 8. Non-Functional Requirements (summary)
 

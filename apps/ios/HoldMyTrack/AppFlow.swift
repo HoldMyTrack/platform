@@ -185,6 +185,7 @@ final class AppFlow {
             let account = AccountKey.of(email: stored.email, isDemo: stored.isDemo)
             MapDocuments.forget(account: account)
             EmptyNoticeDismissal.forget(account: account)
+            RecordingController.defaultStore.forget(account: account)
         }
         store.clear()
         show()

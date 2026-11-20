@@ -25,6 +25,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
     private let location = CLLocationManager()
     let modesRow = UIStackView()
+    /// Takes the row's room while the toggle is hidden, so Layers keeps its size.
+    private let modesSpacer = UIView()
 
     var session = MapSession()
 
@@ -93,6 +95,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Whether each account (AccountKey) has any track, as its first framing found, for a later
     /// signed-in screen in the same app session, which doesn't frame again.
     static var hasTracks: [String: Bool] = [:]
+    /// A recording runs: the map shows only it (MapViewController+Recording).
+    var recordingLive = false
+    /// Whether the camera has flown to this recording's first fix; later fixes only pan.
+    var recordingFollowed = false
+    var lastRecordingPoints: [RecordedPoint] = []
+    var recordingNoticeShown = 0
     /// Counts the tour's camera moves, so a move's end only continues the latest (MapViewController+Tour).
     var tourMoves = 0
 
@@ -254,6 +262,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         addBadgeImages(to: style)
         addGuide(to: style)
         addRouteEdit(to: style)
+        addRecording(to: style)
         addPrivateLocations(to: style)
     }
 
@@ -281,8 +290,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         let onTracks = panelTab == .tracks
         // The editor is the Tracks tab's, in Normal.
         if !onTracks || pickedMode != .normal { closePrivateEditor() }
-        modes.isHidden = !TabMode.toggleShown(onTracksTab: onTracks)
-        let shown = TabMode.shown(picked: pickedMode, onTracksTab: onTracks)
+        modes.isHidden = !TabMode.toggleShown(onTracksTab: onTracks, recording: recordingLive)
+        modesSpacer.isHidden = !modes.isHidden
+        let shown = TabMode.shown(picked: pickedMode, onTracksTab: onTracks, recording: recordingLive)
         modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: pickedMode) ?? 0
         renderLevel()
         guard shown != state.mode else { return }
@@ -482,7 +492,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Notices
 
-    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending, capped, tour, exported }
+    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending, capped, tour, exported, recording }
 
     /// Shows kind's notice, or changes its text. onClose gives it a close button, which takes it
     /// down and then calls onClose.
@@ -559,7 +569,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         locateButton.addAction(UIAction { [weak self] _ in self?.locate() }, for: .primaryActionTriggered)
         updateLayersMenu()
 
-        for v in [modes, layersButton] { modesRow.addArrangedSubview(v) }
+        modesSpacer.isHidden = true
+        for v in [modes, modesSpacer, layersButton] { modesRow.addArrangedSubview(v) }
         modesRow.spacing = DesignTokens.Space.s8
         modesRow.alignment = .center
         let inArea = UIStackView(arrangedSubviews: [spotViews.inArea])
