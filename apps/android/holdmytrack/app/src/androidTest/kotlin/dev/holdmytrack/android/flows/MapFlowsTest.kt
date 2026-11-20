@@ -23,7 +23,9 @@ import androidx.test.uiautomator.Until
 import dev.holdmytrack.android.MainActivity
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.Session
+import dev.holdmytrack.android.recording.RecordingService
 import dev.holdmytrack.android.tour.TourStore
+import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
@@ -255,14 +257,18 @@ class MapFlowsTest {
         need(By.res("android", "button1")).click()
     }
 
-    /** [selector] once it's on screen and its bounds have held for a quarter second: a dialog
-     *  sliding back down as the keyboard goes takes a tap meant for its button elsewhere. */
+    /** [selector] once it's on screen and its bounds have held for half a second, two readings
+     *  in a row: a dialog sliding back down as the keyboard goes, or a layout that stalls for a
+     *  dropped frame, takes a tap meant for it elsewhere. */
     private fun still(selector: BySelector): UiObject2 {
         var last = need(selector).visibleBounds
+        var held = 0
         expect("still moving: $selector", waitUntil {
             Thread.sleep(250)
             val now = need(selector).visibleBounds
-            (now == last).also { last = now }
+            held = if (now == last) held + 1 else 0
+            last = now
+            held >= STILL_READINGS
         })
         return need(selector)
     }
@@ -285,7 +291,10 @@ class MapFlowsTest {
      *  screen it's still being laid out, and a tap read from those bounds lands on the record
      *  button and starts a recording, which then hides the sheet from every flow after. */
     private fun openTab(tab: String) {
-        tapUntil({ still(id(tab)) }) { device.hasObject(id(tab).selected(true)) && device.hasObject(id("panel_title")) }
+        tapUntil({ still(id(tab)) }) {
+            if (device.hasObject(id("recording_status"))) fail("a tap on $tab started a recording")
+            device.hasObject(id(tab).selected(true)) && device.hasObject(id("panel_title"))
+        }
     }
 
     /** The Tracks sheet open full height, so its rows are on screen. */
@@ -326,6 +335,12 @@ class MapFlowsTest {
         need(id("panel_handle"))
     }
 
+    /** A recording a failed flow left running would hide the sheet from every flow after it. */
+    @After
+    fun endRecording() {
+        RecordingService.forgetAccount(context, account.email)
+    }
+
     private companion object {
         const val PACKAGE = "dev.holdmytrack.android"
         // Generous: an emulator on a busy machine takes seconds to draw a screen.
@@ -336,6 +351,8 @@ class MapFlowsTest {
         const val MONTHS = 24
         /** Quarter seconds the map's height is read under the keyboard. */
         const val KEYBOARD_SAMPLES = 12
+        /** Quarter-second readings a view's bounds must hold before it's tapped ([still]). */
+        const val STILL_READINGS = 2
         /** About a second per swipe: a fling would snap the sheet back. */
         const val SWIPE_STEPS = 200
         const val SIGN_IN_MS = 15_000L
