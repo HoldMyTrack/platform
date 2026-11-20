@@ -19,6 +19,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private var holdingToStop = false
     /// Whether the leftover check has run for this screen, once on its first appearance.
     private var leftoverChecked = false
+    /// The Live Activity's Stop question while it's up, taken down when the recording ends otherwise.
+    private weak var stopAlert: UIAlertController?
     /// The question about a leftover while it's up.
     private weak var leftoverAlert: UIAlertController?
     /// The middle item under the record button, never selected.
@@ -199,6 +201,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     /// The recording's state or fixes changed: the button, the status and the map.
     private func renderRecording() {
         recordButton.recordingState = recorder.state
+        if recorder.state == .idle, let alert = stopAlert {
+            alert.presentingViewController?.dismiss(animated: true)
+            stopAlert = nil
+        }
         renderRecordingStatus()
         map.showRecording(active: recorder.state != .idle, points: recorder.recording.points)
     }
@@ -220,7 +226,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     /// The Live Activity's Stop opened the app: it asks first, since a tap on the Lock Screen is
     /// easy to make by mistake.
     func askToStop() {
-        guard recorder.state != .idle else { return }
+        // One question at a time: a second tap on the Lock Screen's Stop finds it up.
+        guard recorder.state != .idle, stopAlert == nil else { return }
         showMap()
         let left = recorder.recording
         let format = PanelFormat(account: account)
@@ -230,6 +237,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         alert.addAction(UIAlertAction(title: String(localized: "activity.stop", defaultValue: "Stop", comment: "The recording's Live Activity: stop, which opens the app to ask first."), style: .destructive) { [weak self] _ in
             self?.recorder.stop()
         })
+        stopAlert = alert
         presentOnTop(alert)
     }
 

@@ -27,6 +27,32 @@ public struct RecordingActivityState: Codable, Hashable, Sendable {
 
     /// The moment a clock showing moving would have started, counted from now.
     public static func clockStart(moving: TimeInterval, at now: Date) -> Date { now.addingTimeInterval(-moving) }
+
+    /// The words the activity shows, in the app's language.
+    public struct Words: Sendable {
+        public let recording, paused, pause, resume, stop: String
+
+        public init(recording: String, paused: String, pause: String, resume: String, stop: String) {
+            self.recording = recording
+            self.paused = paused
+            self.pause = pause
+            self.resume = resume
+            self.stop = stop
+        }
+    }
+
+    /// What the activity shows for recording at now, nil while nothing records. Its clock start
+    /// stays put while recording, the system ticking the clock, and while paused, so a state equal
+    /// to the last one sent needs no update: only a pause, a resume or a new distance changes it.
+    public static func of(_ recording: Recording, at now: Date, distance: String, words: Words) -> RecordingActivityState? {
+        guard recording.state != .idle, let startedAt = recording.startedAt else { return nil }
+        let paused = recording.state == .paused
+        let moving = recording.moving(at: now)
+        let clockStart = recording.runningSince.map { $0.addingTimeInterval(-recording.movedBefore) } ?? startedAt
+        return RecordingActivityState(paused: paused, clockStart: clockStart, clock: RecordingStatus.clock(paused ? moving : 0),
+                                      distance: distance, title: paused ? words.paused : words.recording,
+                                      toggle: paused ? words.resume : words.pause, stop: words.stop)
+    }
 }
 
 /// Where the Live Activity's Stop goes: the app opens on it and asks before stopping.
@@ -45,6 +71,10 @@ public struct RecordingActivityAttributes: ActivityAttributes {
     public typealias ContentState = RecordingActivityState
     public init() {}
 }
+
+/// The package's App Intents, which the app and the extension each name in their own
+/// AppIntentsPackage: without it, iOS doesn't find an intent defined in a package.
+public struct HoldMyTrackCoreIntents: AppIntentsPackage {}
 
 /// The Live Activity's Pause or Resume, run in the app's process, which hands it to the recording.
 public struct ToggleRecordingIntent: LiveActivityIntent {

@@ -38,7 +38,8 @@ struct RecordingLiveActivity: Widget {
             } compactLeading: {
                 Image(systemName: context.state.paused ? "pause.circle.fill" : "record.circle").foregroundStyle(.red)
             } compactTrailing: {
-                Clock(state: context.state).monospacedDigit().frame(maxWidth: 64)
+                // Wide enough for H:MM:SS past an hour.
+                Clock(state: context.state).monospacedDigit().multilineTextAlignment(.trailing).frame(minWidth: 44)
             } minimal: {
                 Image(systemName: context.state.paused ? "pause.circle.fill" : "record.circle").foregroundStyle(.red)
             }

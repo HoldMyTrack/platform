@@ -131,6 +131,7 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         let finished = save ? recording.finished(at: now, type: store.defaultType(account: account)) : nil
         Self.log.info("end: \(self.recording.points.count) points, \(Int(self.recording.moving(at: now))) s moving, kept: \(finished != nil)")
         locate(false)
+        holdBackground(false)
         ticker?.invalidate()
         ticker = nil
         recording = Recording()
@@ -147,6 +148,15 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
             return true
         } catch {
             return false
+        }
+    }
+
+    private func holdBackground(_ on: Bool) {
+        if on {
+            if backgroundSession == nil { backgroundSession = CLBackgroundActivitySession() }
+        } else {
+            backgroundSession?.invalidate()
+            backgroundSession = nil
         }
     }
 
@@ -170,6 +180,7 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
             Self.log.error("journal: \(String(describing: error), privacy: .public)")
         }
         askNotifications()
+        holdBackground(true)
         locate(true)
         ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.onTick?() }
@@ -220,6 +231,11 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
     // MARK: The Live Activity
 
     private var activity: Activity<RecordingActivityAttributes>?
+    /// What the activity last showed, so an unchanged state isn't sent again.
+    private var sentActivityState: RecordingActivityState?
+    /// Lets a resume from the Live Activity, with the app in the background, start location again:
+    /// held for the whole recording, paused included.
+    private var backgroundSession: CLBackgroundActivitySession?
     /// The format the Live Activity's distance is written in, set by the tab bar.
     var format: PanelFormat?
 
@@ -236,21 +252,19 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
                 Task { await ending.end(nil, dismissalPolicy: .immediate) }
             }
             activity = nil
+            sentActivityState = nil
             return
         }
-        let now = Date()
-        let moving = recording.moving(at: now)
-        let paused = recording.state == .paused
-        let state = RecordingActivityState(
-            paused: paused, clockStart: RecordingActivityState.clockStart(moving: moving, at: now),
-            clock: RecordingStatus.clock(moving), distance: format.distance(recording.meters),
-            title: paused
-                ? String(localized: "activity.paused", defaultValue: "Paused", comment: "The recording's Live Activity: paused.")
-                : String(localized: "activity.recording", defaultValue: "Recording", comment: "The recording's Live Activity: recording."),
-            toggle: paused
-                ? String(localized: "recording.resume", defaultValue: "Resume", comment: "An unfinished recording: go on recording it.")
-                : String(localized: "activity.pause", defaultValue: "Pause", comment: "The recording's Live Activity: pause the recording."),
+        let words = RecordingActivityState.Words(
+            recording: String(localized: "activity.recording", defaultValue: "Recording", comment: "The recording's Live Activity: recording."),
+            paused: String(localized: "activity.paused", defaultValue: "Paused", comment: "The recording's Live Activity: paused."),
+            pause: String(localized: "activity.pause", defaultValue: "Pause", comment: "The recording's Live Activity: pause the recording."),
+            resume: String(localized: "recording.resume", defaultValue: "Resume", comment: "An unfinished recording: go on recording it."),
             stop: String(localized: "activity.stop", defaultValue: "Stop", comment: "The recording's Live Activity: stop, which opens the app to ask first."))
+        guard let state = RecordingActivityState.of(recording, at: Date(), distance: format.distance(recording.meters), words: words) else { return }
+        // A fix that moves the written distance on is worth an update; the clock ticks by itself.
+        guard state != sentActivityState || activity == nil else { return }
+        sentActivityState = state
         let content = ActivityContent(state: state, staleDate: nil)
         if let activity {
             nonisolated(unsafe) let target = activity
@@ -258,6 +272,20 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         } else {
             activity = try? Activity.request(attributes: RecordingActivityAttributes(), content: content)
         }
+    }
+
+    /// The app is going: the activity goes now, not at the next launch, so the Lock Screen doesn't
+    /// show a recording that has stopped. Waited for, the app ending once this returns.
+    private func endActivityNow() {
+        guard let current = activity else { return }
+        activity = nil
+        nonisolated(unsafe) let ending = current
+        let ended = DispatchSemaphore(value: 0)
+        Task.detached {
+            await ending.end(nil, dismissalPolicy: .immediate)
+            ended.signal()
+        }
+        _ = ended.wait(timeout: .now() + 2)
     }
 
     /// Activities a run that died left on the Lock Screen.
@@ -319,6 +347,7 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         guard isCurrent(left) else { return }
         Self.withdrawClosedNotification()
         recording = Recording.restored(left)
+        holdBackground(true)
         ticker?.invalidate()
         ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.onTick?() }
@@ -370,6 +399,7 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
     private func appWillTerminate() {
         guard recording.state != .idle else { return }
         writeTotals()
+        endActivityNow()
         guard recording.state == .recording else { return }
         let content = UNMutableNotificationContent()
         // The tap resumes this recording only, not whatever is left when it comes.
