@@ -65,13 +65,11 @@ class ModeBar(
         })
         buttons.forEach { (value, button) ->
             button.setOnClickListener {
-                val menu = value == MapMode.FOG && state().mode == MapMode.FOG
+                val tap = MapChromeRules.modeTap(value, state().mode)
                 onPick(value)
-                if (menu) {
-                    // Checkable, so the tap just unchecked it: Fog stays on, and the tap opens its menu.
-                    button.isChecked = true
-                    fogMenu.toggle()
-                }
+                // Checkable, so a tap on the mode that's on just unchecked it: the mode stays on.
+                if (tap != ModeTap.SWITCH) button.isChecked = true
+                if (tap == ModeTap.FOG_MENU) fogMenu.toggle()
             }
             button.minWidth = ChromeInsets.minTouchTargetPx(button)
             button.minimumWidth = ChromeInsets.minTouchTargetPx(button)

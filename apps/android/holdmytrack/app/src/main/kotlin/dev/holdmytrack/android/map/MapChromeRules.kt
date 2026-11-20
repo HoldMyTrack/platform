@@ -5,6 +5,9 @@ import dev.holdmytrack.android.panel.PanelTab
 /** The map's notices, most important first: when two apply, the earlier stays up. */
 enum class MapNotice { MAP_FAILED, UNREACHABLE, BASEMAP_UNREACHABLE, SATELLITE_FAILED, CHECKING, EMPTY, CAPPED }
 
+/** What a tap on a mode button does ([MapChromeRules.modeTap]). */
+enum class ModeTap { SWITCH, RECHECK, FOG_MENU }
+
 /**
  * Which of the map's controls and notices show, as plain values `MapFragment` renders.
  * `sessionReady` is the session confirmed and the mode toggle shown once (`syncSession`).
@@ -21,6 +24,14 @@ object MapChromeRules {
     /** The mode the map shows: the one picked on the Tracks tab there, Normal on Trips and Sync,
      *  whose sheet and tracks are Normal mode's; back on Tracks, the pick comes back. */
     fun tabMode(picked: MapMode, tab: PanelTab): MapMode = if (tab == PanelTab.TRACKS) picked else MapMode.NORMAL
+
+    /** A tap on [tapped]'s button while [current] is on: another mode switches; the mode that's
+     *  on keeps its button checked, and Fog's opens its level menu. */
+    fun modeTap(tapped: MapMode, current: MapMode): ModeTap = when {
+        tapped != current -> ModeTap.SWITCH
+        tapped == MapMode.FOG -> ModeTap.FOG_MENU
+        else -> ModeTap.RECHECK
+    }
 
     /** The tab the bottom bar's [asked] switches the panel to from [current], or null for none:
      *  Tracks on Tracks changes nothing, so a sheet left open stays open. */

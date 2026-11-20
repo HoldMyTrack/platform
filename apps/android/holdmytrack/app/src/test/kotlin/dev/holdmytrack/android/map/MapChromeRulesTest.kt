@@ -43,6 +43,14 @@ class MapChromeRulesTest {
     }
 
     @Test
+    fun `a tap on the mode that's on keeps it checked, and Fog's opens the level menu`() {
+        assertEquals(ModeTap.RECHECK, MapChromeRules.modeTap(MapMode.NORMAL, MapMode.NORMAL))
+        assertEquals(ModeTap.FOG_MENU, MapChromeRules.modeTap(MapMode.FOG, MapMode.FOG))
+        assertEquals(ModeTap.SWITCH, MapChromeRules.modeTap(MapMode.FOG, MapMode.NORMAL))
+        assertEquals(ModeTap.SWITCH, MapChromeRules.modeTap(MapMode.NORMAL, MapMode.FOG))
+    }
+
+    @Test
     fun `a mode carried through a recreation comes back, and one this build lacks opens Normal`() {
         assertEquals(MapMode.FOG, MapChromeRules.restoredMode("FOG"))
         assertEquals(MapMode.NORMAL, MapChromeRules.restoredMode("NORMAL"))
