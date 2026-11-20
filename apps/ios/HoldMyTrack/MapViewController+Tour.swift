@@ -35,7 +35,7 @@ extension MapViewController {
         case .export: [export.button]
         case .modes: [modes]
         case .fogLevel: fogViews.menuButton.isHidden ? [modes] : [fogViews.menuButton]
-        case .page, .youTour: []
+        case .page, .youTour, .record: []
         }
     }
 

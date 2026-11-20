@@ -131,7 +131,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [x] **5.3 Verification, sign-out and Update**
   - The "check your email" screen (`apps/android/docs/SPEC.md` FR-1.4), sign-out (`apps/android/docs/SPEC.md` FR-1.3), and the Update screen on any `426` (`apps/android/docs/SPEC.md` FR-1.8), which opens the App Store listing.
   - Done when: a dev stack with `MIN_IOS_BUILD` above the build shows the Update screen once, over any screen.
-- [ ] **5.4 Per-account local state**
+- [x] **5.4 Per-account local state**
   - Everything kept on the phone is keyed by the account's email, the demo account with a key of its own (`apps/android/docs/SPEC.md` FR-5.3). `AccountKey` makes the key; nothing is kept per account until recordings or HealthKit (7c, 7d), so this step is done with the first of them.
   - Done when: two accounts on one phone never see each other's recordings, hidden rows or HealthKit switch, under test.
 
@@ -210,7 +210,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Either way the time the app was dead counts as a pause: no time or distance added, the first fix after it starting afresh. The rule choosing resume, prompt or nothing is a pure function of the journal's state and the launch reason, with tests. This app's `SPEC.md` states which path shipped.
   - Done when: after a swipe mid-walk, the recording carries on by itself, or one tap on the notification brings it back, with every fix before the swipe kept.
   - Built, and a recording killed mid-run is offered back, resumed and saved on the simulator: the journal, Resume, Save and Discard, and the notification as the app closes. Left: the notification's path on a device, and the relaunch path once 1.2 decides it.
-- [ ] **7d.3 Recordings on the Sync tab**
+- [x] **7d.3 Recordings on the Sync tab**
   - Edit, Download GPX through the share sheet, Delete, and sending under `recorded` (`apps/android/docs/SPEC.md` FR-5.2).
   - Done when: a recording lands on the map and leaves the phone only then.
 

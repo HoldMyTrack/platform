@@ -19,6 +19,8 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
     /// A tap that asked for access, made once iOS answers.
     private var startWhenAllowed = false
     private var ticker: Timer?
+    /// The recording the last Stop saved.
+    private var lastSaved: RecordedTrack?
 
     /// The recording changed: its state or a fix kept.
     var onChange: (() -> Void)?
@@ -28,6 +30,8 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
     var onMessage: ((String) -> Void)?
     /// Location is off for the app; the owner offers Settings.
     var onRefused: (() -> Void)?
+    /// Stop saved a recording, which opens for naming.
+    var onSaved: ((RecordedTrack) -> Void)?
     /// A recording the app died in, to ask about: Resume, Save or Discard.
     var onLeftover: ((RecordingJournal.Leftover) -> Void)?
     private let journal: RecordingJournal?
@@ -99,9 +103,11 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
             onMessage?(String(localized: "recording.tooShort", defaultValue: "Too short — not saved.", comment: "Recording: Stop on less than a minute or two points."))
             return
         }
-        onMessage?(outcome
-            ? String(localized: "recording.saved", defaultValue: "Recording saved on this phone.", comment: "Recording: Stop kept it on the phone.")
-            : String(localized: "recording.saveFailed", defaultValue: "The recording couldn't be saved.", comment: "Recording: Stop failed to write it."))
+        guard outcome, let saved = lastSaved else {
+            onMessage?(String(localized: "recording.saveFailed", defaultValue: "The recording couldn't be saved.", comment: "Recording: Stop failed to write it."))
+            return
+        }
+        onSaved?(saved)
     }
 
     /// Ends the recording, saved as Stop saves it or, for a deleted account, dropped: nil when
@@ -115,7 +121,7 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
             return nil
         }
         let now = Date()
-        let finished = save ? recording.finished(at: now, type: "unknown") : nil
+        let finished = save ? recording.finished(at: now, type: RecordingsSync.defaultType(account: account)) : nil
         Self.log.info("end: \(self.recording.points.count) points, \(Int(self.recording.moving(at: now))) s moving, kept: \(finished != nil)")
         locate(false)
         ticker?.invalidate()
@@ -128,6 +134,7 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         }
         do {
             try store.save(finished, account: account)
+            lastSaved = finished
             // Only once it's in the store: a save that failed leaves it to be offered again.
             clearJournal()
             return true
@@ -264,7 +271,7 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
     func save(_ left: RecordingJournal.Leftover) -> Bool {
         guard isCurrent(left) else { return false }
         let restored = Recording.restored(left)
-        guard let track = restored.finished(at: left.points.last?.time ?? Date(), type: "unknown") else {
+        guard let track = restored.finished(at: left.points.last?.time ?? Date(), type: RecordingsSync.defaultType(account: left.account)) else {
             clearJournal()
             return false
         }

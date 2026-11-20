@@ -8835,6 +8835,42 @@
         }
       }
     },
+    "recording.delete" : {
+      "comment" : "A recording: delete it from the phone.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить"
+          }
+        }
+      }
+    },
+    "recording.description" : {
+      "comment" : "A recording's Edit: its description.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Description (optional)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Описание (необязательно)"
+          }
+        }
+      }
+    },
     "recording.discard" : {
       "comment" : "An unfinished recording: delete it.",
       "extractionState" : "manual",
@@ -8885,6 +8921,60 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить эту запись?"
+          }
+        }
+      }
+    },
+    "recording.edit" : {
+      "comment" : "A recording: edit its name, description and type.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить"
+          }
+        }
+      }
+    },
+    "recording.editTitle" : {
+      "comment" : "A recording's Edit: the screen's title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить запись"
+          }
+        }
+      }
+    },
+    "recording.gpx" : {
+      "comment" : "A recording: save its route as GPX.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download GPX"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скачать GPX"
           }
         }
       }
@@ -8943,6 +9033,24 @@
         }
       }
     },
+    "recording.name" : {
+      "comment" : "A recording's Edit: its name, optional.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Название"
+          }
+        }
+      }
+    },
     "recording.needsLocation" : {
       "comment" : "Recording: location or precise location refused.",
       "extractionState" : "manual",
@@ -8957,6 +9065,60 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "HoldMyTrack нужен доступ к местоположению, чтобы записать GPS-трек."
+          }
+        }
+      }
+    },
+    "recording.otherType" : {
+      "comment" : "A recording's type menu: type a new one.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другой…"
+          }
+        }
+      }
+    },
+    "recording.otherTypeAdd" : {
+      "comment" : "A recording's new type: use what was typed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрать"
+          }
+        }
+      }
+    },
+    "recording.otherTypeTitle" : {
+      "comment" : "A recording's new type: the prompt's title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track type"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тип трека"
           }
         }
       }
@@ -9069,6 +9231,24 @@
         }
       }
     },
+    "recording.tooLong" : {
+      "comment" : "A recording's Edit: a field past its limit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The name or the description is too long."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Название или описание слишком длинное."
+          }
+        }
+      }
+    },
     "recording.tooShort" : {
       "comment" : "Recording: Stop on less than a minute or two points.",
       "extractionState" : "manual",
@@ -9101,6 +9281,168 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ожидание GPS…"
+          }
+        }
+      }
+    },
+    "sync.empty" : {
+      "comment" : "Sync: no recordings.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing recorded on this phone. The record button on the tab bar records a track."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "На этом телефоне нет записей. Кнопка записи на панели вкладок записывает трек."
+          }
+        }
+      }
+    },
+    "sync.failed" : {
+      "comment" : "Sync: a sent recording's ingest failed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A recording couldn't be added. It's back on the Sync tab; Sync history says why."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись не удалось добавить. Она снова на вкладке «Синхр.», а причина — в истории синхронизации."
+          }
+        }
+      }
+    },
+    "sync.onTheirWay" : {
+      "comment" : "Sync: recordings the server took, still processing, written as label: N.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Being added to your map: %lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавляются на карту: %lld"
+          }
+        }
+      }
+    },
+    "sync.onThisPhone" : {
+      "comment" : "Sync: the heading over the recordings.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recorded on this phone"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Записано на этом телефоне"
+          }
+        }
+      }
+    },
+    "sync.refused" : {
+      "comment" : "Sync: the server refused a recording, giving no reason.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not sent."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не отправлено."
+          }
+        }
+      }
+    },
+    "sync.send" : {
+      "comment" : "Sync: send the ticked recordings, and how many.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send %lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить %lld"
+          }
+        }
+      }
+    },
+    "sync.sending" : {
+      "comment" : "Sync: recordings being sent.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sending…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправка…"
+          }
+        }
+      }
+    },
+    "sync.tick" : {
+      "comment" : "Sync: a recording's tick box, ticked to send it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить"
+          }
+        }
+      }
+    },
+    "sync.tooManyPoints" : {
+      "comment" : "Sync: a recording too long to send, and the limit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not sent: over %lld points."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не отправлено: больше %lld точек."
           }
         }
       }
@@ -9638,6 +9980,42 @@
         }
       }
     },
+    "tour.record.body" : {
+      "comment" : "The tour: the record button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from Sync."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. Записи ждут на телефоне, пока вы не отправите их из Синхронизации."
+          }
+        }
+      }
+    },
+    "tour.record.title" : {
+      "comment" : "The tour: the record button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись"
+          }
+        }
+      }
+    },
     "tour.skip" : {
       "comment" : "The tour: leave it.",
       "extractionState" : "manual",
@@ -9657,19 +10035,19 @@
       }
     },
     "tour.sync.body" : {
-      "comment" : "The tour: the Sync tab, which lists imports.",
+      "comment" : "The tour: the Sync tab, which lists the phone's recordings and leads to Upload and Sync history.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Every file you've sent, and how its import went. Upload GPX, FIT and TCX files from the You tab."
+            "value" : "Your recordings wait here until you tick and send them: only what you tick is sent. Upload files and see how each import went from here too."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Все отправленные вами файлы и как прошёл их импорт. Загружайте файлы GPX, FIT и TCX на вкладке «Вы»."
+            "value" : "Ваши записи ждут здесь, пока вы не отметите и не отправите их: отправляется только отмеченное. Здесь же загрузка файлов и история импорта."
           }
         }
       }
@@ -9699,13 +10077,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In your own account, the files you upload are listed here. The demo can't upload: sign out and create an account to start yours."
+            "value" : "In your own account, your recordings are sent from here, and your files uploaded. The demo can't send: sign out and create an account to start yours."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В своём аккаунте здесь видны загруженные вами файлы. Демо не может загружать: выйдите и создайте аккаунт, чтобы начать свой."
+            "value" : "В своём аккаунте отсюда отправляются ваши записи и загружаются файлы. Демо не может отправлять: выйдите и создайте аккаунт, чтобы начать свой."
           }
         }
       }

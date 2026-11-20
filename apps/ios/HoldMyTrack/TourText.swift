@@ -40,12 +40,15 @@ enum TourText {
         case "fog_countries": (
             String(localized: "tour.fog_countries.title", defaultValue: "Fog of War: countries", comment: "The demo's tour: Fog's country level."),
             String(localized: "tour.fog_countries.body", defaultValue: "And a whole country. Auto follows the zoom, as you just saw. Pick a level to keep it at every zoom, or Exact to clear the fog only along your routes.", comment: "The demo's tour: Fog's country level."))
+        case "record": (
+            String(localized: "tour.record.title", defaultValue: "Record", comment: "The tour: the record button."),
+            String(localized: "tour.record.body", defaultValue: "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from Sync.", comment: "The tour: the record button."))
         case "sync": (
             String(localized: "tour.sync.title", defaultValue: "Sync", comment: "The tour: the Sync tab."),
-            String(localized: "tour.sync.body", defaultValue: "Every file you've sent, and how its import went. Upload GPX, FIT and TCX files from the You tab.", comment: "The tour: the Sync tab, which lists imports."))
+            String(localized: "tour.sync.body", defaultValue: "Your recordings wait here until you tick and send them: only what you tick is sent. Upload files and see how each import went from here too.", comment: "The tour: the Sync tab, which lists the phone's recordings and leads to Upload and Sync history."))
         case "sync_demo": (
             String(localized: "tour.sync.title", defaultValue: "Sync", comment: "The tour: the Sync tab."),
-            String(localized: "tour.sync_demo.body", defaultValue: "In your own account, the files you upload are listed here. The demo can't upload: sign out and create an account to start yours.", comment: "The demo's tour: the Sync tab."))
+            String(localized: "tour.sync_demo.body", defaultValue: "In your own account, your recordings are sent from here, and your files uploaded. The demo can't send: sign out and create an account to start yours.", comment: "The demo's tour: the Sync tab."))
         default: (
             String(localized: "tour.done.title", defaultValue: "That's the tour", comment: "The tour's last step."),
             String(localized: "tour.done.body", defaultValue: "Take it again any time from Take a tour, here on the You tab.", comment: "The tour's last step, on the You tab's Take a tour."))

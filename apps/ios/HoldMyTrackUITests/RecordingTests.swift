@@ -6,7 +6,7 @@ import XCTest
 final class RecordingTests: XCTestCase {
     /// A tap starts, the status counts time and distance, a tap pauses and resumes, a short hold
     /// stops nothing, a stop under a minute keeps nothing, and one past a minute, stopped from the
-    /// You tab, is saved and said on the map.
+    /// You tab, opens for naming, is listed on the Sync tab, and once sent lands on the account.
     @MainActor
     func testATapRecordsAndAHoldStopsAndSaves() throws {
         try LaunchTests.requireDevStack(self)
@@ -48,16 +48,32 @@ final class RecordingTests: XCTestCase {
 
         record.tap()
         XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))
-        // Stopped from another tab, the map shows again to say how it went.
+        // Stopped from another tab, it opens for naming on the Sync tab.
         app.tabBars.buttons["tabYou"].tap()
         Thread.sleep(forTimeInterval: 62)
         record.press(forDuration: 2.6)
-        XCTAssertTrue(app.staticTexts["Recording saved on this phone."].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.tabBars.buttons["tabTracks"].isSelected)
+        let name = app.textFields["recordingName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5), "Edit opens on the saved recording")
+        name.tap()
+        name.typeText("Test walk")
+        app.buttons["recordingSave"].tap()
+        XCTAssertTrue(app.tabBars.buttons["tabSync"].isSelected)
+        let row = app.cells.matching(identifier: "recordingRow").firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(row.staticTexts["Test walk"].exists, "listed by its name")
+        attach("Sync")
+
+        // Ticked and sent, it's on its way, then on the map and off the phone.
+        row.buttons["recordingTick"].tap()
+        app.buttons["syncSend"].tap()
+        XCTAssertTrue(app.staticTexts["syncOnTheirWay"].waitForExistence(timeout: 15), "being added")
+        XCTAssertTrue(app.cells["syncEmpty"].waitForExistence(timeout: 90), "landed: it leaves the phone")
+        XCTAssertTrue(account.waitForTracks(1, timeout: 10), "the account has it")
     }
 
     /// A recording the app is killed in comes back on the next launch: Discard, asked twice,
-    /// drops it; Resume goes on with its moving time, and Stop saves it.
+    /// drops it; Resume goes on with its moving time, and Stop saves it, listed on the Sync tab
+    /// until a swipe deletes it.
     @MainActor
     func testARecordingTheAppDiesInIsOfferedBack() throws {
         try LaunchTests.requireDevStack(self)
@@ -103,7 +119,18 @@ final class RecordingTests: XCTestCase {
         let pastAMinute = NSPredicate(format: "label CONTAINS '0:01:'")
         XCTAssertTrue(status.wait(for: pastAMinute, timeout: 10), "the moving time goes on from where it was")
         record.press(forDuration: 2.6)
-        XCTAssertTrue(app.staticTexts["Recording saved on this phone."].waitForExistence(timeout: 5))
+        // Saved, it opens for naming; cancelled, it's listed, and a swipe deletes it, asked first.
+        let cancel = app.navigationBars.buttons["Cancel"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5))
+        cancel.tap()
+        let row = app.cells.matching(identifier: "recordingRow").firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.swipeLeft()
+        app.buttons["Delete"].firstMatch.tap()
+        let confirmDelete = app.alerts["Discard this recording?"]
+        XCTAssertTrue(confirmDelete.waitForExistence(timeout: 5))
+        confirmDelete.buttons["Delete"].tap()
+        XCTAssertTrue(app.cells["syncEmpty"].waitForExistence(timeout: 5))
     }
 
     @MainActor

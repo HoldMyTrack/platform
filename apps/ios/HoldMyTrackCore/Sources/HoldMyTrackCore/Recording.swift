@@ -179,16 +179,48 @@ public enum RecordingStatus: Equatable, Sendable {
     public static func showsMap(stopping: Bool, state: RecordingState) -> Bool { stopping || state == .idle }
 }
 
-/// A stopped recording, kept on the phone under its account (RecordingStore).
+/// A stopped recording, kept on the phone under its account (RecordingStore) until it's on the
+/// map: its fixes, what Edit sets, and whether it was sent and is awaited (RecordingSync).
 public struct RecordedTrack: Codable, Equatable, Sendable {
     public let id: String
     public let startedAt: Date
     public let endedAt: Date
     public let movingSeconds: TimeInterval
     public let meters: Double
-    /// `unknown` until Edit sets one, or the account's last.
-    public let type: String
+    /// The account's last type set in Edit, `unknown` at first.
+    public var type: String
     public let points: [RecordedPoint]
+    /// Set only by someone typing one.
+    public var name: String?
+    public var description: String?
+    /// The server took it and its ingest hasn't ended: it isn't listed or tickable meanwhile.
+    public var sent: Bool
+
+    public init(id: String, startedAt: Date, endedAt: Date, movingSeconds: TimeInterval, meters: Double, type: String, points: [RecordedPoint],
+                name: String? = nil, description: String? = nil, sent: Bool = false) {
+        self.id = id
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+        self.movingSeconds = movingSeconds
+        self.meters = meters
+        self.type = type
+        self.points = points
+        self.name = name
+        self.description = description
+        self.sent = sent
+    }
+
+    enum CodingKeys: String, CodingKey { case id, startedAt, endedAt, movingSeconds, meters, type, points, name, description, sent }
+
+    /// A file written before a field existed reads it as unset.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(id: try c.decode(String.self, forKey: .id), startedAt: try c.decode(Date.self, forKey: .startedAt),
+                  endedAt: try c.decode(Date.self, forKey: .endedAt), movingSeconds: try c.decode(TimeInterval.self, forKey: .movingSeconds),
+                  meters: try c.decode(Double.self, forKey: .meters), type: try c.decode(String.self, forKey: .type),
+                  points: try c.decode([RecordedPoint].self, forKey: .points), name: try c.decodeIfPresent(String.self, forKey: .name),
+                  description: try c.decodeIfPresent(String.self, forKey: .description), sent: try c.decodeIfPresent(Bool.self, forKey: .sent) ?? false)
+    }
 }
 
 /// Stopped recordings on the phone, each account's in a folder of its own (apps/android/docs/SPEC.md
@@ -221,6 +253,11 @@ public struct RecordingStore: Sendable {
         return names.filter { $0.pathExtension == "json" }
             .compactMap { try? decoder.decode(RecordedTrack.self, from: Data(contentsOf: $0)) }
             .sorted { $0.startedAt < $1.startedAt }
+    }
+
+    /// One recording, gone for good: the phone's copy is the only one until it's on the map.
+    public func delete(id: String, account: String) {
+        try? FileManager.default.removeItem(at: folder(account: account).appending(path: "\(id).json"))
     }
 
     /// Everything kept for an account, as Delete account leaves nothing on the phone.

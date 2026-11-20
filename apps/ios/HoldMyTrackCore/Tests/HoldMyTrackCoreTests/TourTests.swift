@@ -7,7 +7,7 @@ import Testing
 struct TourTests {
     @Test func aRealAccountGetsOneFogStepOnItsLevelMenu() {
         let steps = TourSteps.of(isDemo: false)
-        #expect(steps.map(\.id) == ["welcome", "tracks", "range", "trips", "layers", "export", "fog", "sync", "done"])
+        #expect(steps.map(\.id) == ["welcome", "tracks", "range", "trips", "layers", "export", "fog", "record", "sync", "done"])
         let fog = steps.first { $0.id == "fog" }!
         #expect(fog.target == .fogLevel && fog.mode == .fog && fog.card == .fog && fog.view == nil)
         #expect(steps.first { $0.id == "sync" }?.text == "sync")
