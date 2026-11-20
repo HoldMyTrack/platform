@@ -17,7 +17,7 @@ Settings, Track graph & trends, Sync history and About are the server's pages in
 
 ### 2.1 One credential
 
-**`APIClient.authorize` is the one place a request gets the token and the app's headers**: the bearer token, the User-Agent the minimum-build check reads and `Accept-Language`, and only for a URL `ApiOrigin.isAPI` places on the API's own origin, compared parsed since a string prefix also matches `holdmytrack.com.evil.tld`. MapLibre's tile requests are to go through it too (`ROADMAP.md`, 7a.1). A `426` from any call runs `onOutdated` before the call throws, and `AppFlow` puts the Update screen over every screen from then on, so no screen checks for it.
+**`APIClient.authorize` is the one place a request gets the token and the app's headers**: the bearer token, the User-Agent the minimum-build check reads and `Accept-Language`, and only for a URL `ApiOrigin.isAPI` places on the API's own origin, compared parsed since a string prefix also matches `holdmytrack.com.evil.tld`. MapLibre's tile requests and the uploads go through it too. It turns off cookie handling on each such request: the server reads its session cookie before the bearer token, and URLSession keeps the cookie every sign-in answers with, so a cookie left from another account, or one not yet written to disk when the app died, would override the kept token and sign the user out at the next launch. `AppFlow` deletes any such cookie still on disk at launch. A `426` from any call runs `onOutdated` before the call throws, and `AppFlow` puts the Update screen over every screen from then on, so no screen checks for it.
 
 ### 2.2 The wire
 
