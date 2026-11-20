@@ -51,7 +51,7 @@ class CameraFramer(
         HoldMyTrackApi.areaTracks(null, from = null, to = null, limit = OpeningView.TRACKS) { result ->
             val page = result.getOrNull()
             if (page == null) return@areaTracks onOpened()
-            val boxes = page.tracks.filter { !it.pending }.mapNotNull { it.bbox }
+            val boxes = FitBoxes.of(page.tracks)
             val instance = map()
             val view = OpeningView.of(boxes, root.width / density.toDouble(), root.height / density.toDouble())
             onEmpty(view == null)
@@ -73,9 +73,9 @@ class CameraFramer(
     /** Whether the camera just settled from the app's own flight, which this answer uses up. */
     fun consumeAppFlight(): Boolean = appFlight.also { appFlight = false }
 
-    /** Frames every one of [tracks] that has a track. */
+    /** Frames [tracks] as Show on map does ([FitBoxes.selection]). */
     fun flyTo(tracks: List<Track>) {
-        flyTo(BoxUnion.of(tracks.mapNotNull { it.bbox }) ?: return)
+        flyTo(BoxUnion.of(FitBoxes.selection(tracks)) ?: return)
     }
 
     /**

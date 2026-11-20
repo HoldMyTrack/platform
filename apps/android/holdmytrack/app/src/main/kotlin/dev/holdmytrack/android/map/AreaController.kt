@@ -144,7 +144,7 @@ class AreaController(
             panel.focusFromMap(id)
         }
         // A recording started since owns the camera.
-        if (session.consumeFly() && !recording()) framer()?.flyTo(tracks.filter { !it.pending })
+        if (session.consumeFly() && !recording()) BoxUnion.of(FitBoxes.of(tracks))?.let { framer()?.flyTo(it) }
     }
 
     /** Past the cap the map draws only the listed tracks and says how many the area holds. */
@@ -240,7 +240,7 @@ class AreaController(
         val dates = session.dates
         HoldMyTrackApi.areaTracks(null, dates.after, dates.before) { result ->
             if (dates != session.dates) return@areaTracks
-            val box = BoxUnion.of(result.getOrNull()?.tracks.orEmpty().filter { !it.pending }.mapNotNull { it.bbox })
+            val box = BoxUnion.of(FitBoxes.of(result.getOrNull()?.tracks.orEmpty()))
             if (box == null) {
                 reloadList()
                 return@areaTracks

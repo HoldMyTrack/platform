@@ -11,7 +11,7 @@ public struct Track: Equatable, Sendable {
     public let distanceMeters: Double?
     public let movingSeconds: Int?
     public let description: String?
-    /// `[west, south, east, north]`, or nil with no track.
+    /// `[west, south, east, north]`; a Private track's is its location's circle's, nil while it is listed under none.
     public let bbox: [Double]?
     public let pending: Bool
     public let isPrivate: Bool

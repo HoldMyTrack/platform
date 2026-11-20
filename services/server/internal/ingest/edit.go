@@ -315,6 +315,7 @@ type reprocess struct {
 	editJSON           []byte
 	userEdit           bool
 	zonePoint          parse.Point
+	hiddenBy           string
 	recStart, recEnd   *time.Time
 	editable           bool
 	oldTiles, newTiles [][2]int
@@ -389,8 +390,14 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	// The zone is the piece's first recorded point's, before Private locations and the edit,
 	// as ingest looks it up (§4.30): a split piece starts somewhere else, an edit doesn't.
 	zonePoint := act.Points[0]
-	if piece := rng.Apply(act.Points, nil); len(piece) > 0 {
+	piece := rng.Apply(act.Points, nil)
+	if len(piece) > 0 {
 		zonePoint = piece[0]
+	}
+	// Listed under the location holding the piece's first hidden point (§7).
+	var hiddenBy string
+	if points == nil {
+		hiddenBy = HiddenBy(piece, zones)
 	}
 	// The overlap hint's span, from the same points: a split piece covers its own stretch,
 	// while Private locations and the edit leave it as recorded (§4.6).
@@ -417,7 +424,7 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 
 	return &reprocess{
 		userID: userID, trackID: trackID, points: points, pp: pp, startedAt: startedAt,
-		editJSON: editJSON, userEdit: userEdit, zonePoint: zonePoint, recStart: recStart,
+		editJSON: editJSON, userEdit: userEdit, zonePoint: zonePoint, hiddenBy: hiddenBy, recStart: recStart,
 		recEnd: recEnd, editable: editable, oldTiles: oldTiles, newTiles: newTiles,
 	}, nil
 }
@@ -428,6 +435,7 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 	trackID, userID, points, pp, m := r.trackID, r.userID, r.points, r.pp, r.pp.m
 	startedAt, editJSON, userEdit, zonePoint := r.startedAt, r.editJSON, r.userEdit, r.zonePoint
 	recStart, recEnd, editable, oldTiles, newTiles := r.recStart, r.recEnd, r.editable, r.oldTiles, r.newTiles
+	hiddenBy := r.hiddenBy
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -436,6 +444,8 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 
 	// started_at moves with a Chop — the track now starts where its first kept point does.
 	// route_edit is only rewritten by a user's edit; a reprivacy pass leaves it as stored.
+	// hidden_by is NULL when its location was deleted since the clip, which that deletion's own
+	// job reruns.
 	if _, err := tx.Exec(ctx, `
 		UPDATE tracks SET
 			distance_meters = $3, duration_seconds = $4, moving_seconds = $5,
@@ -444,7 +454,8 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 			route_edit = CASE WHEN $12 THEN $11::jsonb ELSE route_edit END,
 			timezone = `+geo.TimezoneAtSQL("$13::float8", "$14::float8", "$2")+`,
 			recorded_started_at = $15, recorded_ended_at = $16,
-			editable_times = $17
+			editable_times = $17,
+			hidden_by = (SELECT id FROM privacy_zones WHERE id = NULLIF($18, '')::uuid AND user_id = $2)
 		WHERE id = $1 AND user_id = $2
 	`, trackID, userID,
 		m.distanceM, m.durationS, m.movingS, m.elevationGainM, startedAt,
@@ -452,7 +463,7 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 		editJSON, userEdit,
 		zonePoint.Lon, zonePoint.Lat,
 		recStart, recEnd,
-		editable,
+		editable, hiddenBy,
 	); err != nil {
 		return fmt.Errorf("update track: %w", err)
 	}

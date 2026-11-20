@@ -163,7 +163,8 @@ export interface Track {
   distanceMeters: number | null;
   /** The time a row shows: moving time, the same Trips and Trends sum, else elapsed. */
   movingSeconds: number | null;
-  /** [minLon, minLat, maxLon, maxLat], or null for a row with no trajectory. */
+  /** [minLon, minLat, maxLon, maxLat]; a Private row's is its location's circle's, null while it
+   *  is listed under none. */
   bbox: BBox | null;
   /** An Edit route reprocess (§4.7.7) is queued or running — the row's numbers and geometry
    *  are still the pre-edit ones until it finishes. */

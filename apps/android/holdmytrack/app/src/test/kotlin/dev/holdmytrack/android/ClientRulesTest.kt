@@ -3,6 +3,7 @@ package dev.holdmytrack.android
 import dev.holdmytrack.android.export.ExportStatsRules
 import dev.holdmytrack.android.imports.UploadPlan
 import dev.holdmytrack.android.map.BasemapStatus
+import dev.holdmytrack.android.map.FitBoxes
 import dev.holdmytrack.android.map.FogLevels
 import dev.holdmytrack.android.map.FogPlaceLabel
 import dev.holdmytrack.android.map.MapLayersDoc
@@ -415,6 +416,8 @@ class ClientRulesTest {
                 put("capped", result.capped)
             }
         },
+        "fitBoxes" to { input -> boxesJson(FitBoxes.of(framable(input))) },
+        "selectionBoxes" to { input -> boxesJson(FitBoxes.selection(framable(input))) },
         "openingView" to { input ->
             val boxes = input["boxes"]!!.jsonArray.map { box -> box.jsonArray.map { it.jsonPrimitive.double } }
             val viewport = input["viewport"]!!.jsonObject
@@ -520,6 +523,16 @@ class ClientRulesTest {
     private fun distanceJson(range: DistanceRange?): JsonElement = range?.let { buildJsonObject { put("min", it.min); put("max", it.max) } } ?: JsonNull
 
     private fun tracks(json: JsonElement?) = json!!.jsonArray.map { facetTrack(it.jsonObject) }
+
+    private fun framable(input: JsonObject) = input["tracks"]!!.jsonArray.map { it.jsonObject }.map { json ->
+        track("a").copy(
+            bbox = (json["bbox"] as? JsonArray)?.map { it.jsonPrimitive.double },
+            pending = json.bool("pending"),
+            isPrivate = json.bool("private"),
+        )
+    }
+
+    private fun boxesJson(boxes: List<List<Double>>) = buildJsonArray { boxes.forEach { box -> add(buildJsonArray { box.forEach { add(JsonPrimitive(it)) } }) } }
 
     private fun facetTrack(json: JsonObject) = track("a").copy(
         trackType = json.string("trackType")!!,

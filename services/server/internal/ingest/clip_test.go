@@ -242,3 +242,31 @@ func TestClipEndsEntirelyInsideReturnsNil(t *testing.T) {
 		t.Fatalf("got %d points, want nil for a fully hidden track", len(got))
 	}
 }
+
+// A hidden track is listed under the location holding its first point inside any
+// (tracks.hidden_by): the first in the zones' order where two overlap there, and none when no
+// point lies in one.
+func TestHiddenBy(t *testing.T) {
+	points := line(41.4, -81.7, 21, 10) // 0–200 m north
+	home := Zone{ID: "home", Lat: points[5].Lat, Lon: -81.7, RadiusM: 100}
+	park := Zone{ID: "park", Lat: points[18].Lat, Lon: -81.7, RadiusM: 100}
+	flat := Zone{ID: "flat", Lat: points[0].Lat, Lon: -81.7, RadiusM: 50}
+	far := Zone{ID: "far", Lat: 42.4, Lon: -81.7, RadiusM: 100}
+	for _, tc := range []struct {
+		name   string
+		points []parse.Point
+		zones  []Zone
+		want   string
+	}{
+		{"the first point's location", points, []Zone{park, home}, "home"},
+		{"overlapping at the first point: the first in order", points, []Zone{park, home, flat}, "home"},
+		{"overlapping, the other order", points, []Zone{park, flat, home}, "flat"},
+		{"starting outside every location: the first one entered", points[16:], []Zone{home, park}, "park"},
+		{"in none", points, []Zone{far}, ""},
+		{"no locations", points, nil, ""},
+	} {
+		if got := HiddenBy(tc.points, tc.zones); got != tc.want {
+			t.Errorf("%s: %q, want %q", tc.name, got, tc.want)
+		}
+	}
+}

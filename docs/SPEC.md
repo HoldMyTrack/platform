@@ -429,7 +429,7 @@ stateDiagram-v2
 
 - At most one track is Focused, by clicking its row or route; any number are Checked. Bold is either, on the map and in its image (FR-4.7). The toolbar acts on the Checked ones when any are, else the Focused one. A Type or Distance filter that hides a Checked track unchecks it.
 - On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/android/docs/SPEC.md` FR-2.7).
-- Hiding keeps Focused and Checked; camera fits skip Hidden. Opening or closing a Trip clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on tracks still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
+- Hiding keeps Focused and Checked; camera fits skip Hidden. A fit over several tracks (the opening view, Dates, a Trip's, the toolbar's over Checked ones) skips Pending and Private ones too, so only a Private row framed alone frames its location's circle (FR-5.11). Opening or closing a Trip clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on tracks still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden track stays hidden after Pending clears.
 - Leaving Pending brings the route back at once, and Fog once redrawn.
 - A track entirely inside Private locations is Normal with no geometry.
@@ -454,7 +454,7 @@ A track is split in two at a point on its route. Each part is a full track, and 
 
 The list holds every track whose route crosses the visible map, of all time unless the Dates filter (FR-5.12) narrows it, and the map draws the same set.
 
-- A track with no route (FR-7.1) is never in it.
+- A track with no route (FR-7.1) is in it while the circle of the Private location holding its first hidden point reaches the visible map, and focusing its row frames that circle.
 - From zoom 4, where routes are drawn (FR-4.1), the list follows the map each time it settles after a move; further out it lists nothing. The camera moving onto a track or a Trip leaves the list as it is.
 - At most the newest 1,000. Past that the map draws only the listed routes and says how many the area holds, and only zooming in or Dates bring the rest in.
 - A reload keeps Focused, Checked and Hidden on tracks still listed, and every filter as set.
@@ -490,7 +490,7 @@ Circles a user marks so routes don't reveal where they start and end. The part o
 - Each end's stretch is random but fixed per track, so the ends of many routes scatter over a band outside the circle instead of outlining it, and reprocessing doesn't move them.
 - An end the stretch carries back inside a Private location is cut again where the route next leaves it. The same clip runs on an edited route (FR-5.7).
 - Distance, duration, elevation gain, pace, coverage and the places it clears come from the visible part.
-- A track left with fewer than two points is kept with no geometry and a Private badge (FR-5.1), and the Privacy tab counts them; moving or deleting the location brings it back.
+- A track left with fewer than two points is kept with no geometry and a Private badge (FR-5.1), listed while its location's circle is in view (FR-5.11), and the Privacy tab counts them; moving or deleting the location brings it back. Its circle reaches nothing that leaves the owner's screen: no Trip copy (FR-13.8), export or map image is framed on it.
 - Every change is retroactive: tracks whose route comes within twice the radius of the old or new center go Pending until reprocessed from their originals, retried on failure. Locations that overlap clip as one shape, so for them the reach is each one's radius plus the largest among them. An upload being processed when a location is saved is clipped with it too. A route that started at its first recorded point past the edge (a recording with no point in the first radius) can end beyond that reach, and then stays clipped after its location is moved or deleted until something else reprocesses it.
 - Circles are drawn only on the Privacy tab, from zoom 4, never in an export. The tab lists them newest first; on the web, opening it highlights the top one and moves the map onto it.
 - Originals stay unclipped and are in the data download (FR-1.13). A Trip copy carries the sender's clipped route (FR-13.8).

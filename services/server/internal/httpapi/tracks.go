@@ -69,8 +69,24 @@ func parseTrackFilter(q url.Values) (trackFilter, error) {
 // fits as it is). One stored jumping back across the world, before that and with no raw
 // payload to reprocess it from, spans −179.9…179.9; it's read off ST_ShiftLongitude's copy
 // instead, which moves the western hemisphere's points past 180. The shifted copy is only
-// made for a box over 180° wide, which no other track has.
-var trackBBoxColumns = shorterWay("ST_XMin") + `, ST_YMin(trajectory), ` + shorterWay("ST_XMax") + `, ST_YMax(trajectory)`
+// made for a box over 180° wide, which no other track has. A track with no route has the bbox
+// of the Private location's circle it is listed under (§7), east past 180 across the
+// antimeridian, so focusing its row flies the map there.
+var trackBBoxColumns = orCircleEdge(shorterWay("ST_XMin"), "x - dx") + `, ` + orCircleEdge(`ST_YMin(trajectory)`, "y - dy") + `, ` +
+	orCircleEdge(shorterWay("ST_XMax"), "x + dx") + `, ` + orCircleEdge(`ST_YMax(trajectory)`, "y + dy")
+
+// orCircleEdge is the route's edge, else edge of the circle hiding the track, in terms of its
+// center x, y and its radius in degrees dx, dy on ingest's sphere (111,195 m a degree). A circle
+// whose west edge would pass −180 is moved a world's width east, so only east passes 180, as a
+// route's bbox does. A location's center is within ±85° (privateLocationRequest.validate), so its
+// circle stays clear of the poles.
+func orCircleEdge(routeEdge, edge string) string {
+	return `COALESCE(` + routeEdge + `, (SELECT ` + edge + ` FROM (
+         SELECT x + CASE WHEN x - dx < -180 THEN 360 ELSE 0 END AS x, y, dx, dy FROM (
+           SELECT ST_X(z.center::geometry) AS x, ST_Y(z.center::geometry) AS y,
+                  z.radius_m / (111195 * cos(radians(ST_Y(z.center::geometry)))) AS dx, z.radius_m / 111195.0 AS dy
+           FROM privacy_zones z WHERE z.id = tracks.hidden_by) c0) c))`
+}
 
 func shorterWay(edge string) string {
 	plainWidth := `ST_XMax(trajectory) - ST_XMin(trajectory)`

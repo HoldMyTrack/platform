@@ -24,6 +24,10 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] When `MIN_ANDROID_BUILD` reaches the first build that asks for a nonce, refuse an id_token without one on `POST /v2/auth/google/token` (`IMPLEMENTATION.md` §4.9).
 
+### Private rows in camera fits
+
+- [ ] Once 0.35.0 is live on Google Play, raise `MIN_ANDROID_BUILD` to its build (`DEPLOY.md` §10): older builds frame a Private row's location circle in the opening view and the Dates flight (`SPEC.md` FR-5.8).
+
 ### After launch
 
 - [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 actions and the controller's sign-off.

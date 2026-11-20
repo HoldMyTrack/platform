@@ -179,6 +179,46 @@ func TestTripCopy(t *testing.T) {
 	}
 }
 
+// A track hidden by the sender's Private location stays behind, and nothing the recipient
+// reads lands near that location: its circle's bbox is the sender's alone.
+func TestTripCopyLeavesHiddenTracksBehind(t *testing.T) {
+	s3 := newMemS3()
+	d := newDBTestWithS3(t, s3)
+	ctx := context.Background()
+	dad, kid := d.newAccount(false), d.newAccount(false)
+	day := time.Date(2026, 5, 1, 9, 0, 0, 0, time.UTC)
+	walk := d.recorded(s3, dad, "Ridge", day, 10)
+	d.privateLocation(dad, 20, 50, 500)
+	var home string
+	if err := d.pool.QueryRow(ctx, `SELECT id FROM privacy_zones WHERE user_id = $1`, dad.id).Scan(&home); err != nil {
+		t.Fatal(err)
+	}
+	hidden := d.newTrack(dad, testTrack{trackType: "walking", startedAt: day})
+	if _, err := d.pool.Exec(ctx, `UPDATE tracks SET hidden_by = $2, raw_payload_key = 'raw/hidden.gpx' WHERE id = $1`, hidden, home); err != nil {
+		t.Fatal(err)
+	}
+	if row := d.track(dad, hidden); row.BBox == nil {
+		t.Fatalf("the sender's hidden row has no bbox: %+v", row)
+	}
+	trip := d.newTrip(dad, "Alps", walk, hidden)
+
+	d.sendAndAccept(dad, kid, trip)
+	trips := d.tripsOf(kid)
+	if len(trips) != 1 || len(trips[0].TrackIDs) != 1 || d.copiedTrack(trips[0].TrackIDs[0]).origin != walk {
+		t.Fatalf("kid's trips %+v, want Alps with Ridge alone", trips)
+	}
+	for _, row := range d.listTracks(kid) {
+		if row.BBox == nil || row.BBox[2] > 15 {
+			t.Errorf("kid's row %+v reaches past the walk, toward Dad's home", row)
+		}
+	}
+	var resp areaResponse
+	d.decode(d.do(kid, "GET", "/v2/tracks/area?bbox=19.9,49.9,20.1,50.1", nil), http.StatusOK, &resp)
+	if len(resp.Tracks) != 0 {
+		t.Errorf("kid's view of Dad's home lists %+v", resp.Tracks)
+	}
+}
+
 func TestTripCopyWaitsForAPendingEdit(t *testing.T) {
 	s3 := newMemS3()
 	d := newDBTestWithS3(t, s3)

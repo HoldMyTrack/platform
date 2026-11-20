@@ -3,6 +3,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { listQuery, tracksQuery as tracksQueryFor } from './trackQuery.ts';
 import { areaLoad } from './areaLoad.ts';
 import { flyToBBox, unionBBox } from './bbox.ts';
+import { selectionBoxes } from './cameraRules.ts';
 import { mapTapsAct } from './exportFlow.ts';
 import type { MapMode } from './mapMode.ts';
 import { setMapTapsActive } from './mapTaps.ts';
@@ -197,7 +198,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialTrack = nu
   const fitToSelection = useCallback(
     (selection: Track[]) => {
       if (!map) return;
-      const flyBounds = unionBBox(selection.flatMap((a) => (a.bbox ? [a.bbox] : [])));
+      const flyBounds = unionBBox(selectionBoxes(selection));
       if (flyBounds) flyToBBox(map, flyBounds);
     },
     [map],

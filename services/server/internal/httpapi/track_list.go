@@ -58,8 +58,9 @@ type trackRow struct {
 	DurationSeconds *int32   `json:"duration_seconds"`
 	MovingSeconds   *int32   `json:"moving_seconds"`
 	Description     *string  `json:"description"`
-	// [minLon, minLat, maxLon, maxLat] — GeoJSON's bbox ordering — or null when the row has
-	// no geometry. §3.3 allows a null trajectory, and a client must not fly the map nowhere.
+	// [minLon, minLat, maxLon, maxLat] — GeoJSON's bbox ordering. A track with no route has its
+	// Private location's circle's (trackBBoxColumns), or null while it is listed under none, and a
+	// client must not fly the map nowhere.
 	BBox []float64 `json:"bbox"`
 	// Pending is true while an Edit track reprocess (§4.7.7) is queued or running — the row's
 	// numbers and geometry are still the pre-edit ones. Edited is true once the track carries

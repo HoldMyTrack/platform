@@ -140,6 +140,8 @@ func TestMigrationRenamesStoredValues(t *testing.T) {
 		`ingest {"source": "recorded", "raw_bytes": 36, "track_type": "walking", "raw_payload_key": "raw/u/recorded/r2.json"} {"track_type":"walking","points":[]}`,
 		`ingest {"source": "recorded", "raw_payload_key": "raw/u/recorded/r3.json"}`,
 		`ingest {"source": "upload", "raw_payload_key": "raw/u/f.fit"} 0e10ff`,
+		// 0062 reprocesses every track with no route, as both of these are, to list it.
+		`reprivacy {"user_id": "00000000-0000-0000-0000-0000000000a1", "track_ids": ["00000000-0000-0000-0000-0000000000b1", "00000000-0000-0000-0000-0000000000b2"]}`,
 	}
 	for _, w := range want {
 		found := false

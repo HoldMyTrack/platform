@@ -165,7 +165,8 @@ extension MapViewController {
         renderCap()
         renderPendingNotice()
         if session.consumeFly() {
-            fly(next.map(\.id))
+            let hidden = session.panel.mapHidden
+            if let box = MapFraming.union(FitBoxes.of(next.filter { !hidden.contains($0.id) })) { fit(box, animated: true) }
         }
         if let id = focusWhenListed, next.contains(where: { $0.id == id }) {
             focusWhenListed = nil
@@ -359,7 +360,7 @@ extension MapViewController {
     func fly(_ ids: [String]) {
         let hidden = session.panel.mapHidden
         let wanted = Set(ids)
-        let boxes = tracks.filter { wanted.contains($0.id) && !hidden.contains($0.id) }.compactMap(\.bbox)
+        let boxes = FitBoxes.selection(tracks.filter { wanted.contains($0.id) && !hidden.contains($0.id) })
         guard let box = MapFraming.union(boxes) else { return }
         fit(box, animated: true)
     }
