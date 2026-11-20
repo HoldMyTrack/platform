@@ -28,7 +28,8 @@ class PhotosController(
     private val fragment: Fragment,
     private val panelState: PanelState,
     private val map: () -> MapLibreMap?,
-    private val editWindow: () -> EditTrackWindow,
+    /** The Edit window; null without the map's view. */
+    private val editWindow: () -> EditTrackWindow?,
     private val mode: () -> MapMode,
     private val tripId: () -> String?,
     private val recording: () -> Boolean,
@@ -54,7 +55,7 @@ class PhotosController(
 
     /** What's picked goes to the Photos tab to prepare and place. */
     private val picker = fragment.registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
-        if (editWindow().isOpen) editWindow().photosTab.add(uris)
+        editWindow()?.takeIf { it.isOpen }?.photosTab?.add(uris)
     }
 
     /** Binds the marker layer and the popup; [top] is how far down the map's top chrome reaches. */
@@ -102,7 +103,7 @@ class PhotosController(
      * than showing the last one's while it loads.
      */
     fun refresh(force: Boolean) {
-        val edit = editWindow()
+        val edit = editWindow() ?: return
         val single = edit.single
         val next = PhotoMarkerScope.scope(mode(), edit.isOpen, single?.id, panelState.focused, tripId())
         if (next == scope && !force) {
@@ -137,7 +138,7 @@ class PhotosController(
      *  merged in. Not while recording, while the Route tab has the map, nor for a hidden route. */
     fun render() {
         if (!::markers.isInitialized) return
-        val shown = PhotoMarkerScope.shown(scope, recording(), editWindow().showingRoute, panelState.mapHidden)
+        val shown = PhotoMarkerScope.shown(scope, recording(), editWindow()?.showingRoute == true, panelState.mapHidden)
         val overlay = overlay
         val items = if (shown) PhotoMarkerScope.markers(photos, panelState.mapHidden, overlay) else emptyList()
         if (!shown) popup.close()
