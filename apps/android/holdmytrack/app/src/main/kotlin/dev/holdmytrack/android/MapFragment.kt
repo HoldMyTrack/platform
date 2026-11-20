@@ -196,8 +196,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** What the Sync tab has the map draw. */
     private val syncCandidates = SyncCandidatesController(style = { style?.takeIf { overlaysAttached } })
 
-    /** The bottom bar's Sync came before the panel was built: it opens on Sync once it is. */
-    private var pendingSync = false
+    /** The last tab the bottom bar asked for before the panel was built, shown once it is as if
+     *  it had been there ([show]); a tab set on the map since drops it. */
+    private var pendingTab: PanelTab? = null
 
     /** Photos on the map: the scope's markers, their popup and the Photos tab's picker. */
     private val photos = PhotosController(
@@ -228,18 +229,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private val host get() = activity as? MainActivity
 
     /** The bottom bar's Trips: the panel's Trips tab. */
-    fun showTrips() {
-        views?.panel?.showTrips()
-    }
+    fun showTrips() = show(PanelTab.TRIPS)
 
     /** The bottom bar's Sync: the panel's Sync tab, in Normal mode, where the sheet is. */
-    fun showSync() {
-        val panel = views?.panel ?: run {
-            pendingSync = true
-            return
-        }
-        panel.showSync()
-    }
+    fun showSync() = show(PanelTab.SYNC)
 
     /**
      * The Privacy screen's Add a location ([PrivateLocationEditor.NEW]) or one of its rows: the
@@ -254,8 +247,21 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     /** The bottom bar's Tracks: the panel's Tracks tab, collapsed. */
-    fun showTracks() {
-        views?.panel?.showTracks()
+    fun showTracks() = show(PanelTab.TRACKS)
+
+    /** The bottom bar's [tab] on the panel ([MapChromeRules.tabRequest]), or queued until the
+     *  panel is built. */
+    private fun show(tab: PanelTab) {
+        val panel = views?.panel ?: run {
+            pendingTab = tab
+            return
+        }
+        when (MapChromeRules.tabRequest(panel.tab, tab)) {
+            PanelTab.TRACKS -> panel.showTracks()
+            PanelTab.TRIPS -> panel.showTrips()
+            PanelTab.SYNC -> panel.showSync()
+            null -> Unit
+        }
     }
 
     /** Which panel tab shows, for the bottom bar's Trips mark. Null without the view. */
@@ -480,9 +486,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             sheetChrome, edit, chrome, basemap, imagery,
         )
 
-        if (pendingSync) {
-            pendingSync = false
-            view.post { showSync() }
+        pendingTab?.let { tab ->
+            pendingTab = null
+            view.post { show(tab) }
         }
         chrome.restore(savedInstanceState)
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, sheetChrome.collapseOnBack)
@@ -665,7 +671,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private fun viewTrackOnMap(trackId: String, day: String) {
         val v = views ?: return
         pickMode(MapMode.NORMAL)
-        // The expanded sheet would stay drawn over the very map the link is meant to show.
+        // The expanded sheet would stay drawn over the very map the link is meant to show, and a
+        // tab the bar asked for before the panel was built would replace it.
+        pendingTab = null
         v.panel.showTracks()
         v.area.viewTrack(trackId, day)
     }

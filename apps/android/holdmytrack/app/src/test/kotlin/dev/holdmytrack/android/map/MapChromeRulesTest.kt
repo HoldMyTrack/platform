@@ -3,6 +3,7 @@ package dev.holdmytrack.android.map
 import dev.holdmytrack.android.panel.PanelTab
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -111,5 +112,19 @@ class MapChromeRulesTest {
         assertFalse(MapChromeRules.emptyNoticeShown(empty = true, demo = false, closed = true))
         assertFalse(MapChromeRules.emptyNoticeShown(empty = true, demo = true, closed = false))
         assertFalse(MapChromeRules.emptyNoticeShown(empty = false, demo = false, closed = false))
+    }
+
+    @Test
+    fun `the bar's tab switches the panel, except Tracks on Tracks`() {
+        assertEquals(PanelTab.TRIPS, MapChromeRules.tabRequest(PanelTab.TRACKS, PanelTab.TRIPS))
+        assertEquals(PanelTab.SYNC, MapChromeRules.tabRequest(PanelTab.SYNC, PanelTab.SYNC))
+        assertEquals(PanelTab.TRACKS, MapChromeRules.tabRequest(PanelTab.TRIPS, PanelTab.TRACKS))
+        assertNull(MapChromeRules.tabRequest(PanelTab.TRACKS, PanelTab.TRACKS))
+    }
+
+    @Test
+    fun `Trips then Tracks before the panel was built leaves a new panel on Tracks`() {
+        // Only the last ask is kept, and it meets the panel as it's built.
+        assertNull(MapChromeRules.tabRequest(PanelTab.TRACKS, PanelTab.TRACKS))
     }
 }

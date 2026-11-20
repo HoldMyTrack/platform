@@ -12,4 +12,8 @@ object PhotoRefresh {
 
     /** Whether a refresh with a view reads the photos for [next] again, [scope] being what's loaded. */
     fun fetches(next: String?, scope: String?, force: Boolean, owed: Boolean): Boolean = next != scope || force || owed
+
+    /** Whether photos fetched for the single track [startedFor] go to an Edit window showing
+     *  [nowShowing]: the same track, though the window may be another, built since. */
+    fun deliversTo(startedFor: String?, nowShowing: String?): Boolean = startedFor != null && startedFor == nowShowing
 }

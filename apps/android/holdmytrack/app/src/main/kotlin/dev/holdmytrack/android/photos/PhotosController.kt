@@ -130,13 +130,19 @@ class PhotosController(
         render()
         if (next == null) return
         val (kind, id) = next.split(':', limit = 2)
+        // Read now, with the fragment attached: the answer can land after it has left.
+        val unreachable = fragment.getString(R.string.map_unreachable)
         HoldMyTrackApi.photos(track = id.takeIf { kind == "track" }, trip = id.takeIf { kind == "trip" }) { result ->
             if (gen != generation) return@photos
             photos = result.getOrDefault(emptyList())
             loaded = true
-            error = result.exceptionOrNull()?.let { FailureText.of(it, fragment.getString(R.string.map_unreachable)) }
+            error = result.exceptionOrNull()?.let { FailureText.of(it, unreachable) }
             if (error != null) Log.w(TAG, "could not load photos", result.exceptionOrNull())
-            if (single != null && edit.single?.id == single.id) edit.setPhotos(photos, error)
+            // The map's view may be gone, or built again, since the fetch began. Without one the
+            // photos wait here for the next refresh to draw; with one, the Edit window showing now
+            // gets them.
+            val window = editWindow() ?: return@photos
+            if (PhotoRefresh.deliversTo(single?.id, window.single?.id)) window.setPhotos(photos, error)
             popup.retain(photos)
             render()
         }
