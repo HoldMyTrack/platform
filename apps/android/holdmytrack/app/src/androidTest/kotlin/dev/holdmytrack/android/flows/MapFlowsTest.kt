@@ -77,7 +77,7 @@ class MapFlowsTest {
         signIn()
         val members = listOf(account.idsByDay.getValue("2026-10-01"), account.idsByDay.getValue("2026-10-06"))
         account.createTrip(TRIP, members)
-        need(id("nav_trips")).click()
+        openTab("nav_trips")
         expandSheet()
         need(By.text(TRIP))
         expect("the Trip's two rows", count(id("track_text"), 2))
@@ -174,8 +174,7 @@ class MapFlowsTest {
             runCatching { locations.removeTestProvider(LocationManager.GPS_PROVIDER) }
         }
         need(id("panel_handle"))
-        // The tap can land while the Save screen's track is still leaving; tap until the sheet answers.
-        tapUntil({ need(id("nav_sync")) }) { device.hasObject(id("panel_handle")) }
+        openTab("nav_sync")
         expandSheet()
         // The row sits below the source notes. Half-expanded, the sheet's bottom is past the
         // screen's, so the list has nothing to scroll: the sheet is dragged up by its handle,
@@ -279,6 +278,14 @@ class MapFlowsTest {
             }
         }
         fail("tapped three times, nothing changed")
+    }
+
+    /** The bottom bar's [tab] tapped until it's the one marked and the sheet shows its title, which
+     *  only Trips and Sync have. Each tap waits for the bar to stop moving: back from the Save
+     *  screen it's still being laid out, and a tap read from those bounds lands on the record
+     *  button and starts a recording, which then hides the sheet from every flow after. */
+    private fun openTab(tab: String) {
+        tapUntil({ still(id(tab)) }) { device.hasObject(id(tab).selected(true)) && device.hasObject(id("panel_title")) }
     }
 
     /** The Tracks sheet open full height, so its rows are on screen. */
