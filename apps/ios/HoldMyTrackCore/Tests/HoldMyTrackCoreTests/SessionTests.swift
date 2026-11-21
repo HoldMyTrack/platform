@@ -43,6 +43,30 @@ struct SessionRouteTests {
         #expect(!SessionCheck.signsOut(.outdated))
     }
 
+    @Test func theCheckingNoticeWaitsForASlowCheck() {
+        #expect(SessionCheckNotice.after(.started, shown: nil) == nil)
+        #expect(SessionCheckNotice.after(.slow, shown: nil) == .checking)
+    }
+
+    @Test func aNewCheckTakesDownTheLastOnesNotice() {
+        #expect(SessionCheckNotice.after(.started, shown: .unreachable) == nil)
+        #expect(SessionCheckNotice.after(.started, shown: .checking) == nil)
+    }
+
+    @Test func aFailureShortOfA401SaysTheServerCouldntBeReached() {
+        #expect(SessionCheckNotice.after(.failed(.unreachable), shown: .checking) == .unreachable)
+        #expect(SessionCheckNotice.after(.failed(.http(status: 503, code: "unavailable", message: nil)), shown: nil) == .unreachable)
+    }
+
+    @Test func a401OrTheUpdateScreenLeavesNoNotice() {
+        #expect(SessionCheckNotice.after(.failed(.http(status: 401, code: "unauthenticated", message: nil)), shown: .checking) == nil)
+        #expect(SessionCheckNotice.after(.failed(.outdated), shown: .checking) == nil)
+    }
+
+    @Test func aLateSlowTickLeavesAFailuresNoticeUp() {
+        #expect(SessionCheckNotice.after(.slow, shown: .unreachable) == .unreachable)
+    }
+
     @Test func everyAccountHasItsOwnKeyAndTheDemoOneOfItsOwn() {
         #expect(AccountKey.of(email: " Ann@Example.com", isDemo: false) == "ann@example.com")
         #expect(AccountKey.of(email: "ann@example.com", isDemo: false) != AccountKey.of(email: "bob@example.com", isDemo: false))

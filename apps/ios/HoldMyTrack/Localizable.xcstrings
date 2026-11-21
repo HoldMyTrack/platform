@@ -859,8 +859,19 @@
         }
       }
     },
+    "Couldn't reach HoldMyTrack, so your tracks aren't on the map yet." : {
+      "comment" : "Map: the server didn't answer the check of a session kept from an earlier launch.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось связаться с HoldMyTrack, поэтому ваших треков пока нет на карте."
+          }
+        }
+      }
+    },
     "Couldn't reach HoldMyTrack. Check your connection and try again." : {
-      "comment" : "The server didn't answer a session check.",
+      "comment" : "A request the screen waited on got no answer.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
