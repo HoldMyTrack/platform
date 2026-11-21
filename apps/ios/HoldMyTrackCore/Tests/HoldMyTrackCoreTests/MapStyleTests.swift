@@ -226,10 +226,11 @@ struct MapStyleTests {
         #expect(["country", "region", "county", "city", "exact"].map { FogLevels.exploredCount(explored, level: $0) } == [3, 9, 20, 41, nil])
     }
 
-    @Test func aFailedMapSaysWhereItAskedAndWhatCameBack() {
-        #expect(MapChrome.loadFailureDetail(origin: "http://localhost:8100", error: .unreachable) == "http://localhost:8100 — no answer")
-        #expect(MapChrome.loadFailureDetail(origin: "https://holdmytrack.com", error: .http(status: 503, code: nil, message: "Down for maintenance")) == "https://holdmytrack.com — 503 Down for maintenance")
-        #expect(MapChrome.loadFailureDetail(origin: "o", error: .http(status: 500, code: nil, message: nil)) == "o — HTTP 500")
+    @Test func aFailedMapSaysWhatCameBack() {
+        #expect(MapChrome.loadFailure(.unreachable) == .noAnswer)
+        #expect(MapChrome.loadFailure(.http(status: 503, code: nil, message: "Down for maintenance")) == .status(503, message: "Down for maintenance"))
+        #expect(MapChrome.loadFailure(.http(status: 500, code: nil, message: "")) == .status(500, message: nil))
+        #expect(MapChrome.loadFailure(.unreadable) == .unreadable)
     }
 
     @Test func theCreditStaysAboveTheCollapsedSheetAtEveryDetent() {

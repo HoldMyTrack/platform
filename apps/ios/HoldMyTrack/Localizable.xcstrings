@@ -419,6 +419,17 @@
         }
       }
     },
+    "an answer the app can't read" : {
+      "comment" : "Map: the small print when the server's answer couldn't be read.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ответ, который приложение не может прочитать"
+          }
+        }
+      }
+    },
     "Any distance" : {
       "comment" : "Tracks panel: the Distance filter with no band set.",
       "localizations" : {
@@ -1955,6 +1966,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Следующая фотография"
+          }
+        }
+      }
+    },
+    "no answer" : {
+      "comment" : "Map: the small print when the server didn't answer.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "нет ответа"
           }
         }
       }

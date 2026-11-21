@@ -250,23 +250,32 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             do {
                 show(try await documents.fetch(flavor: flavor, language: language))
             } catch let error as APIError {
-                if pair == nil, error != .outdated { mapFailed(error) }
+                if pair == nil, error != .outdated { mapFailed(Self.describe(MapChrome.loadFailure(error))) }
             } catch {}
         }
     }
 
-    /// The style or its layers didn't come: what failed, in small print, and Try again (Android's
-    /// reportFailure).
-    private func mapFailed(_ error: APIError) {
-        notice(.mapFailed, String(localized: "The map couldn't load."), detail: MapChrome.loadFailureDetail(origin: flow.api.app.apiBaseURL.absoluteString, error: error),
+    /// The documents or the style didn't load: where the app asked and what came back, in small
+    /// print, and Try again (Android's reportFailure).
+    private func mapFailed(_ what: String) {
+        notice(.mapFailed, String(localized: "The map couldn't load."), detail: "\(flow.api.app.apiBaseURL.absoluteString) — \(what)",
                action: (String(localized: "Try again"), { [weak self] in
                    self?.hideNotice(.mapFailed)
                    self?.load()
                }))
     }
 
+    private static func describe(_ failure: MapChrome.LoadFailure) -> String {
+        switch failure {
+        case .status(let status, let message): message.map { "\(status) \($0)" } ?? "HTTP \(status)"
+        case .noAnswer: String(localized: "no answer", comment: "Map: the small print when the server didn't answer.")
+        case .unreadable: String(localized: "an answer the app can't read", comment: "Map: the small print when the server's answer couldn't be read.")
+        }
+    }
+
     private func show(_ pair: MapDocuments.Pair) {
         self.pair = pair
+        hideNotice(.mapFailed)
         render()
         if styleLoaded, let style = mapView.style { addBadgeImages(to: style) }
         updateRailMenus()
@@ -511,18 +520,16 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     }
 
     func mapViewDidFailLoadingMap(_ mapView: MLNMapView, withError error: Error) {
-        basemapFailed = true
-        updateBasemapNotice()
+        mapFailed(error.localizedDescription)
     }
 
     // MARK: Notices
 
     enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, capped, tour, exported, recording }
 
-    /// Shows kind's notice, or changes its text. onClose gives it a close button, which takes it
-    /// down and then calls onClose.
-    /// A notice under the top row: its text, then, as on Android, an optional line of small print
-    /// and an action button, with × when it can be closed.
+    /// Shows kind's notice under the top row, or changes its words: its text, then, as on Android,
+    /// an optional line of small print and an action button, and × when onClose is given, which
+    /// takes it down and then calls onClose.
     func notice(_ kind: Notice, _ text: String, detail: String? = nil, action: (title: String, run: () -> Void)? = nil, onClose: (() -> Void)? = nil) {
         // Shown again, it keeps its place, its buttons and VoiceOver's quiet; only the words change.
         if let shown = notices.arrangedSubviews.first(where: { $0.tag == kind.rawValue + 1 }) {
@@ -574,6 +581,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         notices.addArrangedSubview(box)
         UIAccessibility.post(notification: .announcement, argument: text)
     }
+
+    /// Whether kind's notice is up.
+    func noticeShown(_ kind: Notice) -> Bool { notices.arrangedSubviews.contains { $0.tag == kind.rawValue + 1 } }
 
     private static func labels(in view: UIView) -> [UILabel] {
         (view as? UILabel).map { [$0] } ?? view.subviews.flatMap { labels(in: $0) }

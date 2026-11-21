@@ -62,7 +62,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         map.onModePicked = { [weak self] mode in self?.tour.notice(.mode(mode)) }
         map.onMapFreed = { [weak self] in self?.tour.mapFreed() }
         map.onWaiting = { [weak trips] count in trips?.tabBarItem.badgeValue = count > 0 ? "\(count)" : nil }
-        map.onWantsSync = { [weak self, weak sync] in self?.selectedViewController = sync }
+        map.onWantsSync = { [weak self, weak sync] in
+            sync?.popToRootViewController(animated: false)
+            self?.selectedViewController = sync
+        }
         map.onWantsTrips = { [weak self, weak trips] id in
             guard let self, let trips else { return }
             trips.pendingTrip = id

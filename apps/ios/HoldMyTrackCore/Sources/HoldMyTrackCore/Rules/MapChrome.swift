@@ -77,15 +77,21 @@ public enum MapChrome {
         CreditPlace(logoX: gap, buttonX: gap + logoWidth + space, lift: (sheetShown ? collapsedSheet : 0) + gap)
     }
 
-    /// The small print under "The map couldn't load.": where the app asked, and what came back, as
-    /// Android shows its origin and MapLibre's error.
-    public static func loadFailureDetail(origin: String, error: APIError) -> String {
-        let what = switch error {
-        case .http(let status, _, let message): message.flatMap { $0.isEmpty ? nil : "\(status) \($0)" } ?? "HTTP \(status)"
-        case .unreachable: "no answer"
-        case .unreadable: "an answer the app can't read"
-        case .outdated: "HTTP 426"
+    /// What came back when the map's documents didn't, for the small print under "The map couldn't
+    /// load.": the app words each kind in the user's language, as Android shows its origin and
+    /// MapLibre's error.
+    public enum LoadFailure: Equatable, Sendable {
+        case status(Int, message: String?)
+        case noAnswer
+        case unreadable
+    }
+
+    public static func loadFailure(_ error: APIError) -> LoadFailure {
+        switch error {
+        case .http(let status, _, let message): .status(status, message: message.flatMap { $0.isEmpty ? nil : $0 })
+        case .outdated: .status(426, message: nil)
+        case .unreachable: .noAnswer
+        case .unreadable: .unreadable
         }
-        return "\(origin) — \(what)"
     }
 }
