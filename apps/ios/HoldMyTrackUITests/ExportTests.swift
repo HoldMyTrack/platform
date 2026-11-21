@@ -49,7 +49,7 @@ final class ExportTests: XCTestCase {
 
         app.buttons["exportCapture"].tap()
         // iOS asks once for adding to Photos, once the image is made.
-        let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow"]
+        let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow"].firstMatch
         if allow.waitForExistence(timeout: 60) { allow.tap() }
         XCTAssertTrue(app.otherElements["exportViewfinder"].waitForNonExistence(timeout: 30), "the image is made")
         XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 10) || app.collectionViews.firstMatch.waitForExistence(timeout: 5), "the share sheet")
