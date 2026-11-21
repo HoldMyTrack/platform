@@ -32,7 +32,9 @@ func TestAuthHandoffStartsSession(t *testing.T) {
 	}
 }
 
-func TestGoogleTokenStartsSession(t *testing.T) {
+// A token without a nonce is refused: every build MIN_ANDROID_BUILD lets in asks for one, so a
+// token without it was copied from somewhere.
+func TestGoogleTokenWithoutNonceIsRefused(t *testing.T) {
 	d := newDBTest(t)
 	key := newRSAKey(t)
 	certs := &fakeCerts{keys: map[string]*rsa.PublicKey{"k1": &key.PublicKey}}
@@ -49,12 +51,8 @@ func TestGoogleTokenStartsSession(t *testing.T) {
 		}
 	})
 	token := signedIDToken(t, key, map[string]string{"alg": "RS256", "kid": "k1"}, claims)
-	var got struct {
-		Token string `json:"session_token"`
-	}
-	d.decode(d.do(account{}, "POST", "/v2/auth/google/token", map[string]string{"id_token": token, "tz": "Europe/Berlin"}), http.StatusOK, &got)
-	if got.Token == "" {
-		t.Fatal("no session token")
+	if rec := d.do(account{}, "POST", "/v2/auth/google/token", map[string]string{"id_token": token, "tz": "Europe/Berlin"}); rec.Code != http.StatusUnauthorized {
+		t.Fatalf("a token without a nonce: status %d, want 401", rec.Code)
 	}
 }
 

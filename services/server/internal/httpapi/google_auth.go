@@ -171,12 +171,14 @@ func (s *Server) handleGoogleToken(w http.ResponseWriter, r *http.Request) {
 		fail("id_token", err)
 		return
 	}
-	// A token without a nonce comes from a build before the nonce; root ROADMAP.md has requiring it.
-	if claims.Nonce != "" {
-		if err := s.spendGoogleNonce(ctx, claims.Nonce); err != nil {
-			fail("nonce", err)
-			return
-		}
+	// Every Android build MIN_ANDROID_BUILD lets in asks for a nonce, so a token without one is a copy.
+	if claims.Nonce == "" {
+		fail("nonce", errNoGoogleNonce)
+		return
+	}
+	if err := s.spendGoogleNonce(ctx, claims.Nonce); err != nil {
+		fail("nonce", err)
+		return
 	}
 	tz, _ := normalizeTimezone(req.TZ)
 	userID, err := s.resolveVerifiedUser(ctx, "google", claims.Sub, claims.Email, claims.Name, tz)
@@ -186,6 +188,8 @@ func (s *Server) handleGoogleToken(w http.ResponseWriter, r *http.Request) {
 	}
 	s.writeSession(w, r, userID, sessionTTL, http.StatusOK)
 }
+
+var errNoGoogleNonce = errors.New("id_token carries no nonce")
 
 // googleClaims is the subset of Google's id_token payload this flow reads.
 type googleClaims struct {
