@@ -84,15 +84,12 @@ extension MapViewController {
                 updateTracksQuery()
                 followArea(always: true)
             }
-            if next == .sync {
-                syncPanel?.start()
-                sheet.setDetent(.half, animated: false)
-            } else {
-                sheet.setDetent(.collapsed, animated: false)
-            }
+            sheet.setDetent(next == .sync ? .half : .collapsed, animated: false)
         }
         applyTabMode()
         panelChanged()
+        // Once the sheet is up at half height, so the first framing clears it.
+        if next == .sync { syncPanel?.start() }
     }
 
     private func open(_ trip: String) {
@@ -440,13 +437,19 @@ extension MapViewController {
 
     // MARK: The Sync tab's lines
 
-    /// The Sync tab's rows to draw, highlight picked out in its pace bands (SyncLines).
+    /// The Sync tab's rows to draw, highlight picked out in its pace bands (SyncLines). Each
+    /// route is simplified and banded once (syncShapes), and nothing is redrawn while the same
+    /// rows and pick are.
     func drawSyncLines(_ tracks: [RecordedTrack], highlight: String?) {
-        let features = SyncLines.features(tracks, highlight: highlight)
-        let bands = SyncLines.bands(tracks, highlight: highlight)
-        guard state.geojson[SyncLines.group] != features || state.geojson[SyncLines.bandsSource] != bands else { return }
-        state.geojson[SyncLines.group] = features
-        state.geojson[SyncLines.bandsSource] = bands
+        let drawn = SyncLines.Drawn(ids: tracks.map(\.id), highlight: highlight)
+        guard drawn != syncDrawn else { return }
+        syncDrawn = drawn
+        var shapes: [String: SyncLines.Shape] = [:]
+        for track in tracks { shapes[track.id] = syncShapes[track.id].flatMap { $0.points == track.points.count ? $0 : nil } ?? SyncLines.Shape(track) }
+        syncShapes = shapes
+        let lines = tracks.compactMap { shapes[$0.id] }
+        state.geojson[SyncLines.group] = SyncLines.features(lines, highlight: highlight)
+        state.geojson[SyncLines.bandsSource] = PaceBands.features(highlight.flatMap { shapes[$0]?.metrics })
         render()
     }
 

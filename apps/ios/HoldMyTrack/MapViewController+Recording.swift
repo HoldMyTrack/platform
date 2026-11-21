@@ -25,9 +25,8 @@ extension MapViewController {
                 spotViews.popup.close()
                 photoViews.popup.close()
             }
-            // The track's photos step aside with the tracks; Spots and paths stay, as on Android,
-            // being about where the recording goes.
-            photoViews.markers.isHidden = active
+            // The track's photos step aside with the tracks (applyTabMode); Spots and paths stay,
+            // as on Android, being about where the recording goes.
             renderTopRow()
             applyTabMode()
             render()

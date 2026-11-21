@@ -45,14 +45,14 @@ struct SyncLinesTests {
 
     @Test func composedTheLinesHaveTheirGeoJSONSource() {
         var state = MapState()
-        state.geojson[SyncLines.group] = SyncLines.features([track("a", minutes: 0)], highlight: nil)
+        state.geojson[SyncLines.group] = SyncLines.features([SyncLines.Shape(track("a", minutes: 0))], highlight: nil)
         let style = JSONValue.parse(Data(#"{"version": 8, "sources": {}, "layers": [{"id": "bg", "type": "background"}]}"#.utf8))!
         let composed = MapStyle.compose(style: style, document: SyncLines.adding(to: document), state: state, apiBase: URL(string: "http://localhost")!)
         #expect(composed["sources"]?[SyncLines.group]?["data"]?["features"]?.array?.count == 1)
     }
 
     @Test func thePickedLineIsLastAndOneWithoutALineIsLeftOut() {
-        let features = SyncLines.features([track("a", minutes: 0), track("b", minutes: 60), track("dot", minutes: 120, points: 1)], highlight: "a")
+        let features = SyncLines.features([track("a", minutes: 0), track("b", minutes: 60), track("dot", minutes: 120, points: 1)].map(SyncLines.Shape.init), highlight: "a")
         let list = features["features"]?.array ?? []
         #expect(list.map { $0["properties"]?["key"]?.string } == ["b", "a"])
         #expect(list.last?["properties"]?["role"] == .string("highlight"))
@@ -91,10 +91,11 @@ struct SyncLinesTests {
         #expect(SyncSimilar.doubled([a, c], waiting: waiting) == 0, "a double left unticked isn't counted")
     }
 
-    @Test func onlyThePickedRowIsBanded() {
-        let a = track("a", minutes: 0), b = track("b", minutes: 60)
-        #expect(SyncLines.bands([a, b], highlight: nil)["features"]?.array?.isEmpty == true)
-        let banded = SyncLines.bands([a, b], highlight: "b")["features"]?.array ?? []
-        #expect(banded.contains { $0["properties"]?["band"] != nil })
+    @Test func aShapeIsTheSimplifiedRouteAndItsBands() {
+        let shape = SyncLines.Shape(track("a", minutes: 0))
+        #expect(shape.points == 3)
+        #expect(shape.drawn == track("a", minutes: 0).drawnPoints)
+        #expect(shape.metrics == track("a", minutes: 0).metrics)
+        #expect(SyncLines.Drawn(ids: ["a"], highlight: nil) != SyncLines.Drawn(ids: ["a"], highlight: "a"), "a new pick is a redraw")
     }
 }

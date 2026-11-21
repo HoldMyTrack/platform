@@ -67,6 +67,7 @@ final class SyncRowCell: UITableViewCell {
         similar.tintColor = UIColor(resource: .accent)
         similar.addAction(UIAction { [weak self] _ in self?.onSimilar?() }, for: .primaryActionTriggered)
         let hold = UILongPressGestureRecognizer(target: self, action: #selector(held(_:)))
+        hold.delegate = holdFilter
         contentView.addGestureRecognizer(hold)
 
         let text = Controls.column([title, meta, note], spacing: 2)
@@ -90,13 +91,27 @@ final class SyncRowCell: UITableViewCell {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
+    private let holdFilter = HoldFilter()
+
+    /// A hold that starts on ⓘ, Edit or Delete is the button's.
+    private final class HoldFilter: NSObject, UIGestureRecognizerDelegate {
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            var view = touch.view
+            while let v = view, v !== gestureRecognizer.view {
+                if v is UIControl { return false }
+                view = v.superview
+            }
+            return true
+        }
+    }
+
     @objc private func held(_ hold: UILongPressGestureRecognizer) {
         if hold.state == .began, tile.isEnabled { onTick?() }
     }
 
     func configure(_ row: Row) {
         contentView.backgroundColor = row.highlighted ? UIColor(resource: .surfaceTint) : .clear
-        accessibilityTraits = row.highlighted ? .selected : []
+        if row.highlighted { accessibilityTraits.insert(.selected) } else { accessibilityTraits.remove(.selected) }
         title.text = row.title
         meta.text = row.meta
         note.text = row.note

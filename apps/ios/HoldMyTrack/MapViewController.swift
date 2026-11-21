@@ -74,6 +74,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var tripsPanel: TripsPanel!
     /// The Sync tab's sheet, handed in by the tab bar, which owns the recordings it lists.
     var syncPanel: SyncPanel?
+    /// The Sync tab's routes, simplified and banded once each (SyncLines.Shape), and what was
+    /// last drawn of them.
+    var syncShapes: [String: SyncLines.Shape] = [:]
+    var syncDrawn: SyncLines.Drawn?
     var panelTab = PanelTab.tracks
     /// The list for the range or the open Trip, as the server last sent it.
     var tracks: [Track] = []
@@ -362,8 +366,11 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         modes.select(pickedMode)
         renderTopRow()
         renderLevel()
-        // The account's tracks step aside for a recording and for the Sync tab's own lines.
+        // The account's tracks step aside for a recording and for the Sync tab's own lines, and
+        // their photos with them.
         let hidden = TabMode.hiddenGroups(recording: recordingLive, syncing: panelTab == .sync)
+        photoViews.markers.isHidden = recordingLive || panelTab == .sync
+        if photoViews.markers.isHidden { photoViews.popup.close() }
         let asideChanged = hidden != state.hiddenGroups
         state.hiddenGroups = hidden
         guard shown != state.mode else {

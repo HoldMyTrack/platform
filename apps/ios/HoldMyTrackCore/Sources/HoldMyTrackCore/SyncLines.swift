@@ -50,24 +50,46 @@ public enum SyncLines {
         return document
     }
 
-    /// The lines for tracks, highlight's last so it's drawn over its neighbours; one with fewer
+    /// A recording's route as drawn: simplified and banded once, for every redraw after.
+    public struct Shape: Equatable, Sendable {
+        public let id: String
+        /// How many points the route had, so one that changed is shaped again.
+        public let points: Int
+        public let drawn: [RecordedPoint]
+        public let metrics: RouteMetrics
+
+        public init(_ track: RecordedTrack) {
+            id = track.id
+            points = track.points.count
+            drawn = track.drawnPoints
+            metrics = track.metrics(kept: drawn)
+        }
+    }
+
+    /// What was last drawn: the same rows and pick draw nothing new.
+    public struct Drawn: Equatable, Sendable {
+        public let ids: [String]
+        public let highlight: String?
+
+        public init(ids: [String], highlight: String?) {
+            self.ids = ids
+            self.highlight = highlight
+        }
+    }
+
+    /// The lines for shapes, highlight's last so it's drawn over its neighbours; one with fewer
     /// than two points has no line.
-    public static func features(_ tracks: [RecordedTrack], highlight: String?) -> JSONValue {
-        let ordered = tracks.filter { $0.id != highlight } + tracks.filter { $0.id == highlight }
-        let features: [JSONValue] = ordered.filter { $0.points.count >= 2 }.map { track -> JSONValue in
+    public static func features(_ shapes: [Shape], highlight: String?) -> JSONValue {
+        let ordered = shapes.filter { $0.id != highlight } + shapes.filter { $0.id == highlight }
+        let features: [JSONValue] = ordered.filter { $0.drawn.count >= 2 }.map { shape -> JSONValue in
             .object([
                 "type": .string("Feature"),
-                "properties": .object(["role": .string(track.id == highlight ? "highlight" : "line"), "key": .string(track.id)]),
+                "properties": .object(["role": .string(shape.id == highlight ? "highlight" : "line"), "key": .string(shape.id)]),
                 "geometry": .object(["type": .string("LineString"),
-                                     "coordinates": .array(track.drawnPoints.map { .array([.number($0.lon), .number($0.lat)]) })]),
+                                     "coordinates": .array(shape.drawn.map { .array([.number($0.lon), .number($0.lat)]) })]),
             ])
         }
         return .object(["type": .string("FeatureCollection"), "features": .array(features)])
-    }
-
-    /// The picked one's pace bands, none without one.
-    public static func bands(_ tracks: [RecordedTrack], highlight: String?) -> JSONValue {
-        PaceBands.features(tracks.first { $0.id == highlight && $0.points.count >= 2 }?.metrics)
     }
 
     /// The box around tracks' points, [west, south, east, north], for the camera; nil with none.
@@ -95,8 +117,8 @@ public enum SyncSimilar {
         let a = aEnd.timeIntervalSince(aStart), b = bEnd.timeIntervalSince(bStart)
         guard a > 0, b > 0 else { return false }
         let shared = min(aEnd, bEnd).timeIntervalSince(max(aStart, bStart))
-        // In milliseconds, as the server and Android compare, so a boundary case agrees.
-        return (shared * 1000).rounded() >= minShare * (max(a, b) * 1000).rounded()
+        // In whole milliseconds, cut as Android's Duration.toMillis cuts, so a boundary case agrees.
+        return (shared * 1000).rounded(.towardZero) >= minShare * (max(a, b) * 1000).rounded(.towardZero)
     }
 
     /// For each of tracks, by id, the others it overlaps, newest first; one that overlaps

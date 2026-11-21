@@ -95,8 +95,10 @@ extension RecordedTrack {
     /// Its pace bands, worked out on the phone as the server does a synced track's: each kept
     /// vertex's speed is the distance from the vertex before over the whole seconds between them,
     /// 0 where no second passed, and the first takes the second's. Android's SyncCandidates.metrics.
-    public var metrics: RouteMetrics {
-        let kept = drawnPoints
+    public var metrics: RouteMetrics { metrics(kept: drawnPoints) }
+
+    /// metrics over the points already kept for drawing, so a route is simplified once.
+    func metrics(kept: [RecordedPoint]) -> RouteMetrics {
         var speeds = [Double](repeating: 0, count: kept.count)
         for i in kept.indices.dropFirst() {
             let a = kept[i - 1], b = kept[i]
