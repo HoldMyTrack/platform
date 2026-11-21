@@ -152,16 +152,12 @@ Removing or renaming takes two releases: stop using it, then drop it. A migratio
 
 ## Commands
 
-`make help` lists the wrapper targets; `make test` runs every CI suite except the doc checks and the Android tests. Not wrapped:
+`make help` lists the wrapper targets. `make test` runs every CI test suite that needs only Docker, the doc checks included; `make test-android` and `make test-ios` run the apps' on the host, and `make test-all` runs all three. Not wrapped:
 
 ```bash
-scripts/check-doc-refs.sh                                         # citation check
-scripts/check-doc-style.sh                                        # writing rules a pattern can catch
 scripts/check-file-size.sh                                        # soft size warnings
 cd apps/web && npm run gen:api-types                              # after a contract change
 cd apps/web && npm run build:style                                # after a change under src/map that a served document carries
-cd apps/android/holdmytrack && ./gradlew :app:testDebugUnitTest   # Android JUnit tests
-cd apps/android/holdmytrack && ./gradlew :app:lintDebug           # Android lint, against its baseline
 ```
 
 On the host, `npm run build` must precede `verify:build`, and `npm run basemap` needs `pmtiles` on `PATH`.

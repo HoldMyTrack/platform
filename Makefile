@@ -23,7 +23,7 @@ IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17
 IOS_UI_TESTS    ?= HoldMyTrackUITests
 
 .DEFAULT_GOAL := help
-.PHONY: help up down logs shell build typecheck basemap test-go test-unit verify verify-build test e2e-stack e2e-web e2e-android e2e-ios clean
+.PHONY: help up down logs shell build typecheck basemap test-go test-unit verify verify-build doc-checks test test-android test-ios test-all e2e-stack e2e-web e2e-android e2e-ios clean
 
 help: ## List targets
 	@grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  %-14s %s\n", $$1, $$2}'
@@ -69,7 +69,24 @@ verify: ## Headless Playwright map checks against a dev server (test profile)
 verify-build: ## Build, then run the same checks against the production bundle
 	$(TEST) sh -c "npm run build && npm run verify:build"
 
-test: test-go test-unit verify verify-build ## Every CI suite except the doc-refs check and Android tests
+doc-checks: ## Document citations and the writing rules a pattern can catch
+	scripts/check-doc-refs.sh
+	scripts/check-doc-style.sh
+
+test: test-go test-unit verify verify-build doc-checks ## Every CI test suite that needs only Docker
+
+# The two below run on the host, with each app's own toolchain.
+test-android: ## Android JUnit tests and lint (JDK 17 and the Android SDK)
+	cd apps/android/holdmytrack && ./gradlew --continue :app:testDebugUnitTest :app:lintDebug
+
+test-ios: ## iOS design-file drift, package tests and the app's unit tests (Xcode; IOS_DESTINATION)
+	@command -v xcodebuild >/dev/null || { echo "test-ios needs macOS with Xcode"; exit 1; }
+	cd apps/ios && scripts/make-design.py --check
+	cd apps/ios/HoldMyTrackCore && swift test
+	cd apps/ios && xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
+	  -destination '$(IOS_DESTINATION)' -only-testing:HoldMyTrackTests
+
+test-all: test test-android test-ios ## test, test-android and test-ios
 
 # The dev stack up and answering, for the apps' flows: api and worker for the test account and
 # its uploads, web for the basemap the iOS export renders.
