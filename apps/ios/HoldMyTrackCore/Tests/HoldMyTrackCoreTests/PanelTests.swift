@@ -195,6 +195,15 @@ struct AccountTests {
 }
 
 /// Trips is Normal mode's; the Tracks tab keeps its own pick.
+struct TourCheckedTests {
+    @Test func theTourChecksItsRowsAgainOnlyWhereTheyAreStillListed() {
+        var panel = PanelState()
+        panel.setTracks(["a", "b", "c"].map { TrackSummary(id: $0, trackType: "walking", distanceMeters: 1000, isPrivate: false) })
+        panel.restoreChecked(["a", "c", "gone"])
+        #expect(panel.checked == ["a", "c"])
+    }
+}
+
 struct TabModeTests {
     @Test func tripsShowNormalWithNoToggleAndTheTracksTabGetsItsPickBack() {
         #expect(TabMode.shown(picked: .fog, onTracksTab: false) == .normal)

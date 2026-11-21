@@ -18,10 +18,11 @@ extension MapViewController {
 
     // MARK: Opening and closing
 
-    /// Opens the editor on a saved location's id, or on a new one (nil).
+    /// Opens the editor on a saved location's id, or on a new one (nil). Not while recording, which
+    /// has the map, as on Android.
     func editPrivateLocation(_ id: String?) {
         loadViewIfNeeded()
-        guard !account.isDemo else { return }
+        guard !account.isDemo, !recordingLive else { return }
         if pickedMode != .normal { pickMode(.normal) }
         closeFogPlace()
         spotViews.popup.close()

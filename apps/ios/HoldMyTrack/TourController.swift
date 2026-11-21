@@ -33,6 +33,8 @@ final class TourController {
         let mode: MapMode
         let tab: TourTab
         let sheet: SheetDetent
+        /// The rows checked when the tour started, checked again at its end.
+        var checked: Set<String> = []
 
         init(steps: [TourStep], mode: MapMode, tab: TourTab, sheet: SheetDetent) {
             self.steps = steps
@@ -118,8 +120,9 @@ final class TourController {
         guard running == nil else { return }
         closeCard()
         save(TourSeen(tour: true, cards: seen.cards))
-        host.map.uncheckForTour()
+        let checked = host.map.uncheckForTour()
         let run = Running(steps: TourSteps.of(isDemo: host.isDemo), mode: host.map.pickedMode, tab: host.tourTab, sheet: host.map.tourSheetDetent)
+        run.checked = checked
         running = run
         let view = TourOverlay(dim: true)
         view.skipButton.configuration?.title = String(localized: "tour.skip", defaultValue: "Skip", comment: "The tour: leave it.")
@@ -156,6 +159,7 @@ final class TourController {
         for (menu, open) in TourSteps.menus(step) { host.map.holdTourMenu(menu, open: open) }
         if let card = changes.card { save(TourSeen(tour: seen.tour, cards: seen.cards.union([card]))) }
         guard let step, let index else {
+            host.map.recheckAfterTour(run.checked)
             endCamera()
             overlay?.removeFromSuperview()
             overlay = nil

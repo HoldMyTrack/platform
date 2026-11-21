@@ -114,6 +114,9 @@ final class PanelSheetView: UIView, UIGestureRecognizerDelegate {
     /// The sheet's height at rest, what the camera frames above.
     var restingHeight: CGFloat { CGFloat(heights()[detent] ?? 0) }
 
+    /// The sheet's height collapsed, whatever its detent: the map's credit stays above it.
+    var collapsedHeight: CGFloat { CGFloat(heights()[.collapsed] ?? 0) }
+
     override func layoutSubviews() {
         super.layoutSubviews()
         let headHeight = measuredHead()

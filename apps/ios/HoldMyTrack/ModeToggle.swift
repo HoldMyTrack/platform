@@ -32,7 +32,8 @@ final class ModeToggle: UIView {
             config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: DesignTokens.Space.s12, bottom: 0, trailing: DesignTokens.Space.s12)
             let button = UIButton(configuration: config)
             button.accessibilityIdentifier = id
-            button.heightAnchor.constraint(equalToConstant: 48).isActive = true
+            // At least 48 points, taller when a large text size wraps the label.
+            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
             button.addAction(UIAction { [weak self] _ in self?.onPick?(mode) }, for: .primaryActionTriggered)
             buttons[mode] = button
             row.addArrangedSubview(button)

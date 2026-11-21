@@ -226,6 +226,11 @@ struct MapStyleTests {
         #expect(["country", "region", "county", "city", "exact"].map { FogLevels.exploredCount(explored, level: $0) } == [3, 9, 20, 41, nil])
     }
 
+    @Test func theCreditStaysAboveTheCollapsedSheetAtEveryDetent() {
+        #expect(MapChrome.credit(sheetShown: true, collapsedSheet: 120, logoWidth: 80, gap: 8, space: 4) == .init(logoX: 8, buttonX: 92, lift: 128))
+        #expect(MapChrome.credit(sheetShown: false, collapsedSheet: 120, logoWidth: 80, gap: 8, space: 4).lift == 8)
+    }
+
     @Test func aRailButtonIsFilledWhilePicksShowAndItsSwitchNeedsAPick() {
         #expect(MapChrome.RailLook.of(picked: 2, shown: true) == .init(count: 2, filled: true, badge: true, greyed: false, switchEnabled: true))
         #expect(MapChrome.RailLook.of(picked: 2, shown: false) == .init(count: 2, filled: false, badge: true, greyed: true, switchEnabled: true))

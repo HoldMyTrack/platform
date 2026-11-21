@@ -547,28 +547,26 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Layout
 
-    /// The base map's credit is required (root docs/IMPLEMENTATION.md §5.6): above the sheet
-    /// while it shows, the mark first and the credit's button after it.
+    /// The base map's credit, where MapChrome.credit puts it.
     private func placeAttribution() {
-        let guide = view.safeAreaLayoutGuide.layoutFrame
-        let sheetTop = sheet.isHidden ? guide.maxY : min(guide.maxY, sheet.frame.minY)
-        let above = guide.maxY - sheetTop + DesignTokens.Space.s8
-        let start = DesignTokens.Space.s8
-        mapView.logoViewMargins = CGPoint(x: start, y: above)
-        mapView.attributionButtonMargins = CGPoint(x: start + mapView.logoView.bounds.width + DesignTokens.Space.s4, y: above)
+        let place = MapChrome.credit(sheetShown: !sheet.isHidden, collapsedSheet: Double(sheet.collapsedHeight), logoWidth: Double(mapView.logoView.bounds.width), gap: Double(DesignTokens.Space.s8), space: Double(DesignTokens.Space.s4))
+        mapView.logoViewMargins = CGPoint(x: place.logoX, y: place.lift)
+        mapView.attributionButtonMargins = CGPoint(x: place.buttonX, y: place.lift)
     }
 
     private func layoutChrome() {
-        // A tap on Fog while it's on opens its level menu.
+        // A tap on Fog while it's on opens its level menu and changes nothing else, so Fog's
+        // first-time card, which says to pick a level, stays up.
         modes.onPick = { [weak self] mode in
             guard let self else { return }
-            let menu = MapChrome.fogMenuOnTap(tapped: mode, current: self.state.mode)
+            if MapChrome.fogMenuOnTap(tapped: mode, current: self.state.mode) { return self.fogLevelMenu.toggle() }
             self.pickMode(mode)
             self.onModePicked?(mode)
-            if menu { self.fogLevelMenu.toggle() }
         }
         modes.select(state.mode)
         modes.setContentHuggingPriority(.required, for: .horizontal)
+        // At a large text size the toggle gives way, so the rail keeps its place.
+        modes.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         recordingCard.onStop = { [weak self] in self?.onStopAsked?() }
         checkedExport.button.addAction(UIAction { [weak self] _ in self?.openExport() }, for: .primaryActionTriggered)
 

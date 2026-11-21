@@ -62,4 +62,18 @@ public enum MapChrome {
     public static func places(_ state: MapState, picked: Int) -> RailLook {
         .of(picked: picked, shown: state.showPlaces)
     }
+
+    /// Where the base map's credit sits (root docs/IMPLEMENTATION.md §5.6): above the collapsed
+    /// sheet while the sheet shows, whatever its detent (apps/android/docs/SPEC.md FR-2.4), else at
+    /// the bottom; the mark at the start and the credit's button after it. Offsets are from the
+    /// safe area's bottom and start.
+    public struct CreditPlace: Equatable, Sendable {
+        public let logoX: Double
+        public let buttonX: Double
+        public let lift: Double
+    }
+
+    public static func credit(sheetShown: Bool, collapsedSheet: Double, logoWidth: Double, gap: Double, space: Double) -> CreditPlace {
+        CreditPlace(logoX: gap, buttonX: gap + logoWidth + space, lift: (sheetShown ? collapsedSheet : 0) + gap)
+    }
 }

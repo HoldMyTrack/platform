@@ -135,6 +135,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         close.addAction(UIAction { [weak self] _ in self?.onEvent?(.endSelecting) }, for: .primaryActionTriggered)
         barActions.focus.configuration?.baseForegroundColor = UIColor(resource: .accent)
         let bar = UIStackView(arrangedSubviews: [close, checkAllButton, selectMenuButton, UIView()] + barActions.all)
+        for v in bar.arrangedSubviews { Self.shrinkable(v) }
         bar.alignment = .center
         bar.translatesAutoresizingMaskIntoConstraints = false
         selectionBar.addSubview(bar)
@@ -437,6 +438,17 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let row = rows[indexPath.row]
         guard !row.track.pending || row.checked else { return }
         onEvent?(row.selecting ? .toggleChecked(row.track.id) : .tapRow(row.track.id))
+    }
+
+    /// A selection bar button keeps 44 points where the row has room and gives up to 6 of them on a
+    /// 375-point phone, where eight of them and the insets don't fit.
+    private static func shrinkable(_ view: UIView) {
+        for fixed in view.constraints where fixed.firstAttribute == .width && fixed.relation == .equal && fixed.constant == 44 {
+            fixed.isActive = false
+            let preferred = view.widthAnchor.constraint(equalToConstant: 44)
+            preferred.priority = .defaultHigh
+            NSLayoutConstraint.activate([preferred, view.widthAnchor.constraint(greaterThanOrEqualToConstant: 38)])
+        }
     }
 
     @objc private func tappedList(_ tap: UITapGestureRecognizer) {

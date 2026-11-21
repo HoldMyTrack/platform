@@ -312,10 +312,20 @@ extension MapViewController {
         panelChanged()
     }
 
-    /// The tour starts with no rows checked: checked rows put the rail its steps point at away.
-    func uncheckForTour() {
-        guard session.panel.selecting else { return }
+    /// The tour runs with no rows checked, since checked rows put the rail its steps point at
+    /// away; it hands back the ones it unchecked, for recheckAfterTour.
+    func uncheckForTour() -> Set<String> {
+        let checked = session.panel.checked
+        guard !checked.isEmpty else { return [] }
         session.panel.clearChecked()
+        panelChanged()
+        return checked
+    }
+
+    /// The rows the tour unchecked, checked again as it ends.
+    func recheckAfterTour(_ ids: Set<String>) {
+        guard !ids.isEmpty else { return }
+        session.panel.restoreChecked(ids)
         panelChanged()
     }
 
