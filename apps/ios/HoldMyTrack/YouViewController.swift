@@ -47,6 +47,8 @@ final class YouViewController: UITableViewController {
     private var avatar: UIImage?
     /// Take a tour (TourController.request).
     var onTour: (() -> Void)?
+    /// Settings › Sync's Choose what to sync: the Sync tab.
+    var onOpenSync: (() -> Void)?
     /// The account's tile version as the map last read it: a sync, upload, delete or edit moves
     /// it, so the numbers are read again (YouRefresh).
     var tileVersion: () -> String = { "" }
@@ -57,11 +59,11 @@ final class YouViewController: UITableViewController {
     private var numbersTask: Task<Void, Never>?
     private var privacyTask: Task<Void, Never>?
 
-    private enum Row { case settings, profile, privacy, theme, language, tour, web, delete, signOut }
+    private enum Row { case settings, profile, sync, privacy, theme, language, tour, web, delete, signOut }
     private var sections: [[Row]] {
         [
             [.settings, .profile],
-            [.privacy],
+            [.sync, .privacy],
             [.theme, .language, .tour],
             [.web],
             [.signOut] + (account.isDemo ? [] : [.delete]),
@@ -344,6 +346,13 @@ final class YouViewController: UITableViewController {
             cell.accessoryType = .none
             cell.accessibilityIdentifier = "youProfile"
             return cell
+        case .sync:
+            config = UIListContentConfiguration.subtitleCell()
+            config.textProperties.font = Typeface.sans(DesignTokens.Text.xl)
+            config.secondaryTextProperties.color = UIColor(resource: .inkSecondary)
+            (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Sync"), UIImage(resource: .refreshCw), "youSync")
+            config.secondaryText = String(localized: "you.syncSub", defaultValue: "The record button", comment: "The You tab's Sync row: where journeys come from on iOS.")
+            config.imageProperties.tintColor = UIColor(resource: .inkSecondary)
         case .privacy:
             config = UIListContentConfiguration.subtitleCell()
             config.textProperties.font = Typeface.sans(DesignTokens.Text.xl)
@@ -442,6 +451,13 @@ final class YouViewController: UITableViewController {
         switch sections[indexPath.section][indexPath.row] {
         case .settings: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .settings), animated: true)
         case .profile: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .profile), animated: true)
+        case .sync:
+            let settings = SyncSettingsViewController()
+            settings.onOpenList = { [weak self] in
+                self?.navigationController?.popToRootViewController(animated: false)
+                self?.onOpenSync?()
+            }
+            navigationController?.pushViewController(settings, animated: true)
         case .privacy: navigationController?.pushViewController(PrivacyViewController(flow: flow, account: account), animated: true)
         // D11: the app's language is iOS's per-app setting, in the system's Settings.
         case .language: UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
@@ -456,31 +472,35 @@ final class YouViewController: UITableViewController {
 
     // MARK: Delete account (root docs/SPEC.md FR-1.12)
 
-    /// Confirmed by typing the account's email; on success the phone forgets the account and
-    /// signs out. An Apple-linked account's authorization is revoked by the server.
+    /// Android's dialog: what goes, and how to confirm, by typing the account's email. The
+    /// server judges the email; a refusal brings the dialog back with why. On success the phone
+    /// forgets the account and Sign in says it was deleted. An Apple-linked account's
+    /// authorization is revoked by the server.
     private func confirmDelete(error: String? = nil) {
-        let alert = UIAlertController(
-            title: String(localized: "Delete your account?"),
-            message: error ?? String(localized: "Your tracks, Trips, photos and settings are deleted for good. Type \(account.email) to confirm."),
-            preferredStyle: .alert
-        )
+        let hint = String(localized: "delete.hint", defaultValue: "Deletes your account and everything in it, for good: every track and the files you uploaded, your photos, Trips, Private locations and captured places, and the recordings on this phone that haven't synced. It can't be undone, and backups keep it for up to 8 weeks.",
+                          comment: "Delete account: what goes.")
+        let confirm = String(localized: "delete.confirm", defaultValue: "You'll be signed out everywhere, and everything in the account will be gone within a few minutes. To confirm, type your email address, \(account.email).",
+                             comment: "Delete account: how to confirm, with the account's email.")
+        let alert = UIAlertController(title: String(localized: "delete.title", defaultValue: "Delete account", comment: "Delete account: the dialog's title."),
+                                      message: [hint, confirm, error].compactMap { $0 }.joined(separator: "\n\n"), preferredStyle: .alert)
         var deleteAction: UIAlertAction!
-        alert.addTextField { [account] field in
-            field.placeholder = String(localized: "Email")
+        alert.addTextField { field in
+            field.placeholder = String(localized: "delete.email", defaultValue: "Email address", comment: "Delete account: the email field.")
             field.keyboardType = .emailAddress
             field.autocapitalizationType = .none
             field.autocorrectionType = .no
             field.accessibilityIdentifier = "deleteEmail"
             field.addAction(UIAction { _ in
-                deleteAction.isEnabled = AccountKey.confirms(typed: field.text ?? "", email: account.email)
+                deleteAction.isEnabled = !(field.text ?? "").trimmingCharacters(in: .whitespaces).isEmpty
             }, for: .editingChanged)
         }
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        deleteAction = UIAlertAction(title: String(localized: "Delete account"), style: .destructive) { [weak self] _ in
+        deleteAction = UIAlertAction(title: String(localized: "delete.submit", defaultValue: "Delete", comment: "Delete account: the button."), style: .destructive) { [weak self, weak alert] _ in
             guard let self else { return }
+            let typed = alert?.textFields?.first?.text ?? ""
             Task {
                 do {
-                    try await self.flow.api.deleteAccount(email: self.account.email)
+                    try await self.flow.api.deleteAccount(email: typed.trimmingCharacters(in: .whitespaces))
                     self.flow.accountDeleted()
                 } catch {
                     self.confirmDelete(error: (error as? APIError)?.serverMessage ?? String(localized: "The account couldn't be deleted. Try again."))

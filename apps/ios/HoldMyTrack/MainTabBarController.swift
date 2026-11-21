@@ -87,6 +87,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             }
         }
         home.onTour = { [weak self] in self?.tour.request() }
+        home.onOpenSync = { [weak self, weak sync] in
+            guard let self, let sync else { return }
+            sync.popToRootViewController(animated: false)
+            self.selectedViewController = sync
+        }
         home.tileVersion = { [weak map] in map?.pair?.layers.tileVersion ?? "" }
         map.onHistoryKnown = { [weak self] any in self?.tour.historyKnown(any) }
         map.onModePicked = { [weak self] mode in self?.tour.notice(.mode(mode)) }

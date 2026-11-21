@@ -28,3 +28,13 @@ struct PanelFormatTests {
         #expect(moment == "Sep 21, 2026, 2:13\u{202F}PM", "Android’s form, without iOS’s “at”")
     }
 }
+
+/// Settings › Sync's word on the record button.
+@MainActor
+struct SyncSourcesTests {
+    @Test func theRecordButtonIsAllowedOnlyWithLocationAndNotifications() {
+        #expect(SyncSources.recordingAllowed(location: true, notifications: true))
+        #expect(!SyncSources.recordingAllowed(location: true, notifications: false))
+        #expect(!SyncSources.recordingAllowed(location: false, notifications: true))
+    }
+}
