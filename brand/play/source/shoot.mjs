@@ -43,6 +43,11 @@ const SHOTS = {
     await focusTrack("Lake to Lake Trail", MAP);
     await tapView("card_focus");
     await sleep(3000);
+    // Zoom fits the track under the chrome; this brings it about a quarter level closer and
+    // right of the callouts. The pinch's real zoom falls well short of its levels (README.md).
+    await pinch(720, 380, 1.32);
+    await drag(300, 600, 220, -20);
+    await sleep(1500);
   },
   "02-fog": async (locale) => {
     await layers({ satellite: false, roads: false });
