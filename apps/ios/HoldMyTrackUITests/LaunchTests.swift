@@ -17,6 +17,12 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.secureTextFields["password"].exists)
         XCTAssertFalse(app.buttons["primary"].isEnabled, "Sign in waits for both fields")
+        XCTAssertTrue(app.buttons["showPassword"].exists, "the password's show toggle")
+        XCTAssertTrue(app.otherElements["demoOr"].exists || app.staticTexts["or"].exists, "or before the demo")
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "Sign in"
+        shot.lifetime = .keepAlways
+        add(shot)
     }
 
     @MainActor

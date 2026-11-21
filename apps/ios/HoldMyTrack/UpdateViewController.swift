@@ -14,7 +14,7 @@ final class UpdateViewController: UIViewController {
         view.accessibilityIdentifier = "update"
         var views: [UIView] = [
             Controls.title(String(localized: "Update HoldMyTrack")),
-            Controls.body(String(localized: "This version of the app is too old to use. Update it to keep using HoldMyTrack.")),
+            Controls.body(String(localized: "update.body", defaultValue: "This version of the app is too old to use. Update it to keep using HoldMyTrack. Anything waiting to sync stays on your phone until then.", comment: "The Update screen: why, and what waits.")),
         ]
         if let listing = Self.listing {
             let update = Controls.primaryButton(String(localized: "Update"), id: "updateApp")

@@ -28,7 +28,7 @@ final class VerifyEmailViewController: UIViewController, SessionCheckScreen {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .bg)
-        let hint = Controls.body(String(localized: "We sent a 6-digit code to \(email). Enter it below to unlock your account — your map starts working as soon as you do."))
+        let hint = Controls.body(String(localized: "verify.hint", defaultValue: "We sent a 6-digit code to \(email). Enter it below to unlock your account — your map and sync start working as soon as you do.", comment: "Verify your email: where the code went."))
         hint.accessibilityIdentifier = "verifyHint"
         status.isHidden = true
         status.accessibilityIdentifier = "verifyStatus"
