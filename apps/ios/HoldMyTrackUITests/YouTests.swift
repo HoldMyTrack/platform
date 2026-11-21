@@ -69,8 +69,10 @@ final class YouTests: XCTestCase {
         app.tables["you"].swipeDown()
         app.cells["youPrivacy"].tap()
         XCTAssertTrue(app.cells["downloadData"].waitForExistence(timeout: 10))
+        // What HoldMyTrack keeps sits above Your data, as on Android.
+        XCTAssertTrue(app.staticTexts["Nobody else sees your map."].exists)
         app.cells["downloadData"].tap()
-        XCTAssertTrue(app.staticTexts["exportStatus"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["requestExport"].waitForExistence(timeout: 10), "Download your data, a screen of its own")
     }
 
     /// Delete account, confirmed by the typed email, signs out; the account is gone.

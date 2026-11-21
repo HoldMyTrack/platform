@@ -254,17 +254,6 @@
         }
       }
     },
-    "A copy of your tracks, Trips, photos and settings, as zip files. We email you when it's ready; the download lasts 7 days." : {
-      "comment" : "Download your data: what the download holds.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Копия ваших треков, путешествий, фото и настроек в zip-архивах. Мы напишем, когда она будет готова; скачать её можно в течение 7 дней."
-          }
-        }
-      }
-    },
     "About" : {
       "comment" : "You tab: opens the About page.",
       "localizations" : {
@@ -294,17 +283,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить в путешествие: %@"
-          }
-        }
-      }
-    },
-    "Add a Private location" : {
-      "comment" : "Privacy: the + button.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Добавить приватное место"
           }
         }
       }
@@ -2055,6 +2033,150 @@
         }
       }
     },
+    "dataExport.again" : {
+      "comment" : "Download your data: ask for a fresh archive.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Request a new one"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запросить новый"
+          }
+        }
+      }
+    },
+    "dataExport.download" : {
+      "comment" : "Download your data: one part, of how many, and its size.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download %1$lld of %2$lld (%3$@)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скачать %1$lld из %2$lld (%3$@)"
+          }
+        }
+      }
+    },
+    "dataExport.failed" : {
+      "comment" : "Download your data: the last one failed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your last download couldn't be prepared. Please try again, and if it fails again, let us know."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подготовить архив. Попробуйте ещё раз, а если снова не получится — напишите нам."
+          }
+        }
+      }
+    },
+    "dataExport.hint" : {
+      "comment" : "Download your data: what the archive holds.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A copy of everything in your account, as zip archives: the files you uploaded or synced, every track as GPX, your photos, and your settings, Trips, Private locations and captured places."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Копия всего, что есть в вашем аккаунте, в zip-архивах: загруженные и синхронизированные файлы, все треки в виде GPX, фотографии, а также настройки, путешествия, приватные и отмеченные места."
+          }
+        }
+      }
+    },
+    "dataExport.preparing" : {
+      "comment" : "Download your data: being prepared, and the email told when it's ready.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparing your archive. It usually takes a few minutes; we'll email %@ when it's ready, and it will be here too."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готовим архив. Обычно это занимает несколько минут; когда он будет готов, мы напишем на %@, и он появится здесь."
+          }
+        }
+      }
+    },
+    "dataExport.ready" : {
+      "comment" : "Download your data: ready, its size and until when.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready, %1$@ in all. Download until %2$@:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готово, всего %1$@. Скачать можно до %2$@:"
+          }
+        }
+      }
+    },
+    "dataExport.readyNoDate" : {
+      "comment" : "Download your data: ready, and its size, the date unknown.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready, %@ in all:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готово, всего %@:"
+          }
+        }
+      }
+    },
+    "dataExport.request" : {
+      "comment" : "Download your data: ask for an archive.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Request a download"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запросить архив"
+          }
+        }
+      }
+    },
     "delete.confirm" : {
       "comment" : "Delete account: how to confirm, with the account's email.",
       "extractionState" : "manual",
@@ -2170,28 +2292,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "нет ответа"
-          }
-        }
-      }
-    },
-    "No Private locations yet. Where a track starts or ends inside one, that part is hidden everywhere, your own map included." : {
-      "comment" : "Privacy: the account has none.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Приватных мест пока нет. Если трек начинается или заканчивается внутри такого места, эта часть скрыта везде, в том числе на вашей карте."
-          }
-        }
-      }
-    },
-    "No download prepared yet." : {
-      "comment" : "Download your data: no copy was asked for.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Архив ещё не готовился."
           }
         }
       }
@@ -2581,28 +2681,6 @@
         }
       }
     },
-    "Prepare a download" : {
-      "comment" : "Download your data: asks for a copy.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Подготовить архив"
-          }
-        }
-      }
-    },
-    "Prepare a new download" : {
-      "comment" : "Download your data: asks for a fresh copy when one is ready.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Подготовить новый архив"
-          }
-        }
-      }
-    },
     "Preparing %lld of %lld…" : {
       "comment" : "Photos tab: picked photos being prepared.",
       "localizations" : {
@@ -2610,17 +2688,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подготовка %lld из %lld…"
-          }
-        }
-      }
-    },
-    "Preparing your download… It can take a few minutes." : {
-      "comment" : "Download your data: a copy is being prepared.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Готовим архив… Это может занять несколько минут."
           }
         }
       }
@@ -2742,17 +2809,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Радиус: %lld м"
-          }
-        }
-      }
-    },
-    "Ready. Save each part to Files." : {
-      "comment" : "Download your data: the copy is ready.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Готово. Сохраните каждую часть в «Файлы»."
           }
         }
       }
@@ -3501,17 +3557,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось подготовить архив."
-          }
-        }
-      }
-    },
-    "The last download couldn't be prepared. Try again." : {
-      "comment" : "Download your data: the last copy failed.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Последний архив подготовить не удалось. Попробуйте ещё раз."
           }
         }
       }
@@ -9062,6 +9107,296 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "privacy.add" : {
+      "comment" : "Privacy: add a Private location on the map.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a location on the map"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить место на карте"
+          }
+        }
+      }
+    },
+    "privacy.downloadSub" : {
+      "comment" : "Privacy: what Download your data does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A copy of everything, emailed when it's ready"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Копия всего, письмо придёт, когда она будет готова"
+          }
+        }
+      }
+    },
+    "privacy.hidden" : {
+      "comment" : "Privacy: how many tracks are wholly private.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg track lies entirely inside these locations and shows as Private."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg tracks lie entirely inside these locations and show as Private."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg трек целиком внутри этих мест и отмечен «Приватный»."
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg трека целиком внутри этих мест и отмечены «Приватный»."
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg треков целиком внутри этих мест и отмечены «Приватный»."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg трека целиком внутри этих мест и отмечены «Приватный»."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "privacy.hiddenNone" : {
+      "comment" : "Privacy: no track is wholly private.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No track lies entirely inside these locations."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ни один трек не находится целиком внутри этих мест."
+          }
+        }
+      }
+    },
+    "privacy.keepsHealth" : {
+      "comment" : "What HoldMyTrack keeps: no health data.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No heart rate or other health data is ever read or stored."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пульс и другие данные о здоровье никогда не читаются и не хранятся."
+          }
+        }
+      }
+    },
+    "privacy.keepsMap" : {
+      "comment" : "What HoldMyTrack keeps: the map is yours.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nobody else sees your map."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вашу карту не видит никто, кроме вас."
+          }
+        }
+      }
+    },
+    "privacy.keepsPhotos" : {
+      "comment" : "What HoldMyTrack keeps: photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos are kept as a resized copy, never the original."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фотографии хранятся уменьшенной копией, никогда не оригиналом."
+          }
+        }
+      }
+    },
+    "privacy.keepsTitle" : {
+      "comment" : "Privacy: the section of what's kept and what isn't.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What HoldMyTrack keeps"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Что хранит HoldMyTrack"
+          }
+        }
+      }
+    },
+    "privacy.none" : {
+      "comment" : "Privacy: no Private locations.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None yet."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пока нет."
+          }
+        }
+      }
+    },
+    "privacy.reprocess" : {
+      "comment" : "Privacy: what a change to a location does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saving a change reprocesses the tracks it touches — they show Pending until done."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранение изменения запускает повторную обработку затронутых треков — до её окончания они помечены «Ожидает»."
+          }
+        }
+      }
+    },
+    "privacy.rowMeta" : {
+      "comment" : "Privacy: a location's radius.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radius · %lld m"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Радиус · %lld м"
+          }
+        }
+      }
+    },
+    "privacy.subtitle" : {
+      "comment" : "Privacy: what a Private location does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracks never start or end inside these circles — the part inside is clipped off every track, so nobody can trace a track back to your door."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Треки никогда не начинаются и не заканчиваются внутри этих кругов — часть внутри отрезается от каждого трека, так что никто не проследит маршрут до вашей двери."
+          }
+        }
+      }
+    },
+    "privacy.yourData" : {
+      "comment" : "Privacy: the section with the download and the policy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your data"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваши данные"
           }
         }
       }

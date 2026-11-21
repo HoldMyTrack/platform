@@ -64,6 +64,7 @@ struct WireContractTests {
         try response(SyncKnownJSON.self, "/sync/known", "post")
 
         try response([PrivateLocationJSON].self, "/private-locations", "get")
+        try response(HiddenTracksJSON.self, "/private-locations/hidden", "get")
         try response(PrivateLocationJSON.self, "/private-locations", "post", 201)
         try response(PrivateLocationJSON.self, "/private-locations/{id}", "patch")
         try request(PrivateLocationInputJSON.self, "/private-locations", "post")

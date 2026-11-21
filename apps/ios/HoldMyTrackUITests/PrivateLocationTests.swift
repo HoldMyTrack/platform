@@ -17,7 +17,7 @@ final class PrivateLocationTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
 
         openPrivacy(app)
-        app.buttons["addLocation"].tap()
+        app.cells["addLocation"].tap()
         let editor = app.otherElements["locationEditor"]
         XCTAssertTrue(editor.waitForExistence(timeout: 15))
         XCTAssertFalse(app.buttons["panelHandle"].isHittable, "the card takes the sheet's place")
@@ -42,6 +42,7 @@ final class PrivateLocationTests: XCTestCase {
         openPrivacy(app)
         let row = app.cells["privateLocation"]
         XCTAssertTrue(row.waitForExistence(timeout: 10))
+        attach("Privacy")
         row.tap()
         XCTAssertTrue(editor.waitForExistence(timeout: 15))
         XCTAssertFalse(app.buttons["locationSave"].isEnabled, "nothing changed yet")
