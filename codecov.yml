@@ -37,3 +37,13 @@ fixes:
   - "github.com/HoldMyTrack/platform/services/server/::services/server/"
   - "dev/holdmytrack/android/::apps/android/holdmytrack/app/src/main/kotlin/dev/holdmytrack/android/"
   - "src/::apps/web/src/"
+
+# Not product code: dev tools, a generator and test helpers. The web's generated apiSchema.ts
+# is left out by apps/web/.c8rc.json.
+ignore:
+  - services/server/cmd/delayproxy
+  - services/server/cmd/loadtest
+  - services/server/cmd/make-testing-files
+  - services/server/internal/web/gentimezones
+  - services/server/internal/storage/storagetest
+  - services/server/internal/tilemath/tilemathtest
