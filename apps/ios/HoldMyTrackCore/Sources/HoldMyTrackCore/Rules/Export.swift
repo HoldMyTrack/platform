@@ -283,6 +283,33 @@ public enum ExportStyle {
         state.vars["fogPlace"] = nil
         return state
     }
+
+    /// The basemap's vector source in the served style.
+    public static let basemapSource = "protomaps"
+
+    /// What to leave out, in turn, when the image can't be made because a tile failed (MapLibre's
+    /// snapshotter fails the whole image on one): Satellite first, then the basemap too, each only
+    /// when the style has it. The app's own layers stay; Android leaves out each failed tile instead.
+    public static func fallbacks(_ style: JSONValue) -> [Set<String>] {
+        let sources = Set(style["sources"]?.object?.keys.map { $0 } ?? [])
+        var steps: [Set<String>] = []
+        if sources.contains(MapStyle.satelliteID) { steps.append([MapStyle.satelliteID]) }
+        if sources.contains(basemapSource) { steps.append(Set([MapStyle.satelliteID, basemapSource]).intersection(sources)) }
+        return steps
+    }
+
+    /// style without sources and every layer drawn from them.
+    public static func without(_ sources: Set<String>, in style: JSONValue) -> JSONValue {
+        guard var root = style.object, !sources.isEmpty else { return style }
+        if var all = root["sources"]?.object {
+            for id in sources { all[id] = nil }
+            root["sources"] = .object(all)
+        }
+        if let layers = root["layers"]?.array {
+            root["layers"] = .array(layers.filter { layer in layer["source"]?.string.map { !sources.contains($0) } ?? true })
+        }
+        return .object(root)
+    }
 }
 
 /// What every exported image carries in its bottom corners, the web export's `drawAttribution` and

@@ -5,16 +5,43 @@ import UIKit
 /// Draws the export's picture with MapLibre's snapshotter from the style the live map was composed
 /// from (ExportStyle), never a crop of the live map (apps/ios/docs/IMPLEMENTATION.md §3.5): the
 /// window's size in points at the live zoom and heading, at the scale that makes it the image's
-/// pixels, so labels and lines keep their on-screen proportions, only sharper.
+/// pixels, so labels and lines keep their on-screen proportions, only sharper. The snapshotter
+/// fails the whole picture on one failed tile, so a failure is drawn again without Satellite, then
+/// without the basemap too (ExportStyle.fallbacks), and the picture says what it left out.
 @MainActor
 final class ExportRenderer {
     private var snapshotter: MLNMapSnapshotter?
     private var styleFile: URL?
     private var timeout: Task<Void, Never>?
 
-    /// The picture, or why it couldn't be made; never called after cancel.
+    /// A picture, and the sources left out of it to make it.
+    struct Picture {
+        let image: UIImage
+        let leftOut: Set<String>
+    }
+
+    /// The picture, or why it couldn't be made even without Satellite and the basemap; never
+    /// called after cancel.
     func render(style: JSONValue, center: CLLocationCoordinate2D, zoom: Double, heading: Double, pitch: CGFloat, window: CGSize, pixelWidth: Int, pixelHeight: Int,
-                done: @escaping (Result<UIImage, Error>) -> Void) {
+                done: @escaping (Result<Picture, Error>) -> Void) {
+        let steps = [Set<String>()] + ExportStyle.fallbacks(style)
+        func attempt(_ index: Int) {
+            let leftOut = steps[index]
+            draw(style: ExportStyle.without(leftOut, in: style), center: center, zoom: zoom, heading: heading, pitch: pitch, window: window,
+                 pixelWidth: pixelWidth, pixelHeight: pixelHeight) { result in
+                switch result {
+                case .success(let image): done(.success(Picture(image: image, leftOut: leftOut)))
+                // A timeout is the whole export's: drawing again would only take as long.
+                case .failure(let error) where index + 1 < steps.count && (error as? ExportError) != .timedOut: attempt(index + 1)
+                case .failure(let error): done(.failure(error))
+                }
+            }
+        }
+        attempt(0)
+    }
+
+    private func draw(style: JSONValue, center: CLLocationCoordinate2D, zoom: Double, heading: Double, pitch: CGFloat, window: CGSize, pixelWidth: Int, pixelHeight: Int,
+                      done: @escaping (Result<UIImage, Error>) -> Void) {
         cancel()
         // The snapshotter loads a style by URL only.
         let file = FileManager.default.temporaryDirectory.appending(path: "export-style-\(UUID().uuidString).json")
@@ -65,7 +92,7 @@ final class ExportRenderer {
     }
 }
 
-enum ExportError: Error {
+enum ExportError: Error, Equatable {
     case timedOut, noImage
 }
 

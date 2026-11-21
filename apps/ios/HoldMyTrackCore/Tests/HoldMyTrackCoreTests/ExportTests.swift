@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import HoldMyTrackCore
@@ -159,5 +160,26 @@ struct ExportTests {
         let style = JSONValue.object(["sources": .object(["protomaps": .object(["attribution": .string("© OSM")])])])
         #expect(ImageMarks.attribution(style, source: "protomaps") == "© OSM")
         #expect(ImageMarks.attribution(style, source: "satellite") == nil)
+    }
+}
+/// The image made without a basemap or Satellite that can't be reached.
+struct ExportFallbackTests {
+    private let style = JSONValue.parse(Data(##"""
+    {"version": 8, "sources": {"protomaps": {"type": "vector"}, "satellite": {"type": "raster"}, "tracks": {"type": "vector"}},
+     "layers": [{"id": "bg", "type": "background"}, {"id": "sat", "type": "raster", "source": "satellite"},
+                {"id": "earth", "type": "fill", "source": "protomaps"}, {"id": "tracks-line", "type": "line", "source": "tracks"}]}
+    """##.utf8))!
+
+    @Test func satelliteGoesFirstThenTheBasemapToo() {
+        #expect(ExportStyle.fallbacks(style) == [["satellite"], ["satellite", "protomaps"]])
+        let plain = ExportStyle.without(["satellite"], in: style)
+        #expect(ExportStyle.fallbacks(plain) == [["protomaps"]], "no Satellite to leave out")
+    }
+
+    @Test func leavingOutASourceTakesItsLayersAndKeepsTheRest() {
+        let bare = ExportStyle.without(["satellite", "protomaps"], in: style)
+        #expect(bare["sources"]?.object?.keys.sorted() == ["tracks"])
+        #expect(bare["layers"]?.array?.compactMap { $0["id"]?.string } == ["bg", "tracks-line"], "the background and the app's own layers stay")
+        #expect(ExportStyle.without([], in: style) == style)
     }
 }

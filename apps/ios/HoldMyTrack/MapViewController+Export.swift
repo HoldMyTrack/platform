@@ -288,8 +288,8 @@ extension MapViewController {
             return ScreenPoint(id: item.id, x: p.x - box.x, y: p.y - box.y)
         }
         let placements = PhotoMarkers.layout(points, zoom: mapView.zoomLevel, activeID: shown.activeID, loneID: shown.loneID, width: box.w, height: box.h, scale: unit)
-        let credit = ImageMarks.creditText(basemap: ImageMarks.attribution(pair.style, source: Self.basemapSource),
-                                           satellite: state.satellite && !state.satelliteFailed ? ImageMarks.attribution(pair.style, source: MapStyle.satelliteID) : nil)
+        let satelliteShown = state.satellite && !state.satelliteFailed
+        let styleJSON = pair.style
         let dark = exportDark
         // The markers' colors as the screen shows them: the image is drawn off the main thread,
         // where the app's appearance isn't the current one.
@@ -303,7 +303,12 @@ extension MapViewController {
             case .failure(let error):
                 Self.log.error("export: \(String(describing: error), privacy: .public)")
                 self.failExport()
-            case .success(let picture):
+            case .success(let drawn):
+                let picture = drawn.image
+                // The credit names only what the picture drew.
+                let credit = ImageMarks.creditText(
+                    basemap: drawn.leftOut.contains(ExportStyle.basemapSource) ? nil : ImageMarks.attribution(styleJSON, source: Self.basemapSource),
+                    satellite: satelliteShown && !drawn.leftOut.contains(MapStyle.satelliteID) ? ImageMarks.attribution(styleJSON, source: MapStyle.satelliteID) : nil)
                 Task { @MainActor in
                     var markers: [ExportImage.Marker] = []
                     for placement in placements {
