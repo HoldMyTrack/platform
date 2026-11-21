@@ -60,7 +60,8 @@ final class AppFlow {
     func show() {
         switch store.route {
         case .signIn:
-            setRoot(SignInViewController(flow: self))
+            setRoot(SignInViewController(flow: self, notice: signInNotice))
+            signInNotice = nil
         case .verify:
             if let stored = store.stored { setRoot(SessionCheckMapViewController(flow: self, stored: stored)) }
             check()
@@ -197,6 +198,9 @@ final class AppFlow {
         presentOpenedFiles()
     }
 
+    /// Said once on the next Sign in, such as after Delete account.
+    private var signInNotice: String?
+
     /// The account was deleted: the phone forgets what it kept for it and signs out, with no
     /// logout request, since the server ended every session.
     func accountDeleted() {
@@ -208,6 +212,7 @@ final class AppFlow {
         }
         endSession()
         keepsRecording = false
+        signInNotice = String(localized: "account.deleted", defaultValue: "Your account was deleted. Everything in it will be gone within a few minutes.", comment: "Sign in, after Delete account.")
         show()
         keepsRecording = true
     }

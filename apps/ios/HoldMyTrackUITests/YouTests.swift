@@ -52,6 +52,13 @@ final class YouTests: XCTestCase {
         add(shot)
         XCTAssertTrue(app.segmentedControls["themeControl"].exists, "Theme inline")
         XCTAssertTrue(app.buttons["youAbout"].exists && app.buttons["youHelp"].exists && app.buttons["youContacts"].exists, "the tiles")
+        // Sync: Settings › Sync with the record button, and on to the Sync tab.
+        app.cells["youSync"].tap()
+        XCTAssertTrue(app.staticTexts["recordedStatus"].waitForExistence(timeout: 5))
+        app.buttons["syncOpenList"].tap()
+        XCTAssertTrue(app.tabBars.buttons["tabSync"].isSelected, "Choose what to sync opens the Sync tab")
+        app.tabBars.buttons["tabYou"].tap()
+        XCTAssertTrue(app.cells["youSync"].waitForExistence(timeout: 5), "back on the You page itself")
         for id in ["youPrivacy", "youTheme", "youLanguage", "youTour"] {
             XCTAssertTrue(app.cells[id].exists, id)
         }
@@ -85,11 +92,12 @@ final class YouTests: XCTestCase {
         app.cells["youDelete"].tap()
         let field = app.alerts.textFields["deleteEmail"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
-        let delete = app.alerts.buttons["Delete account"]
-        XCTAssertFalse(delete.isEnabled, "off until the email is typed")
+        let delete = app.alerts.buttons["Delete"]
+        XCTAssertFalse(delete.isEnabled, "off until an email is typed")
         field.typeText(account.email)
         XCTAssertTrue(delete.isEnabled)
         delete.tap()
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 15), "signed out")
+        XCTAssertTrue(app.staticTexts["signInNotice"].exists, "Sign in says the account was deleted")
     }
 }

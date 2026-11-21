@@ -397,6 +397,24 @@
         }
       }
     },
+    "account.deleted" : {
+      "comment" : "Sign in, after Delete account.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your account was deleted. Everything in it will be gone within a few minutes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш аккаунт удалён. Всё, что в нём было, исчезнет в течение нескольких минут."
+          }
+        }
+      }
+    },
     "an answer the app can't read" : {
       "comment" : "Map: the small print when the server's answer couldn't be read.",
       "localizations" : {
@@ -1002,17 +1020,6 @@
         }
       }
     },
-    "Delete account" : {
-      "comment" : "Delete account's confirmation: its button.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Удалить аккаунт"
-          }
-        }
-      }
-    },
     "Delete point" : {
       "comment" : "Route editor: a toggle; a tap on a point deletes it.",
       "localizations" : {
@@ -1064,17 +1071,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить путешествие"
-          }
-        }
-      }
-    },
-    "Delete your account?" : {
-      "comment" : "You tab: the delete confirmation's title.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Удалить аккаунт?"
           }
         }
       }
@@ -2055,6 +2051,96 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "На карту"
+          }
+        }
+      }
+    },
+    "delete.confirm" : {
+      "comment" : "Delete account: how to confirm, with the account's email.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You'll be signed out everywhere, and everything in the account will be gone within a few minutes. To confirm, type your email address, %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы выйдете из аккаунта на всех устройствах, а всё, что в нём, исчезнет в течение нескольких минут. Для подтверждения введите адрес своей почты — %@."
+          }
+        }
+      }
+    },
+    "delete.email" : {
+      "comment" : "Delete account: the email field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email address"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Адрес почты"
+          }
+        }
+      }
+    },
+    "delete.hint" : {
+      "comment" : "Delete account: what goes.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deletes your account and everything in it, for good: every track and the files you uploaded, your photos, Trips, Private locations and captured places, and the recordings on this phone that haven't synced. It can't be undone, and backups keep it for up to 8 weeks."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удаляет аккаунт и всё, что в нём, насовсем: все треки и загруженные файлы, фотографии, путешествия, приватные и отмеченные места, а также записи на этом телефоне, которые ещё не синхронизированы. Это нельзя отменить, а в резервных копиях данные хранятся ещё до 8 недель."
+          }
+        }
+      }
+    },
+    "delete.submit" : {
+      "comment" : "Delete account: the button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить"
+          }
+        }
+      }
+    },
+    "delete.title" : {
+      "comment" : "Delete account: the dialog's title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete account"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удаление аккаунта"
           }
         }
       }
@@ -4053,17 +4139,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Карта ещё обновляется, поэтому Туман пока может быть неполным. Он обновится сам."
-          }
-        }
-      }
-    },
-    "Your tracks, Trips, photos and settings are deleted for good. Type %@ to confirm." : {
-      "comment" : "You tab: the delete confirmation; the placeholder is the account's email.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ваши треки, путешествия, фото и настройки будут удалены навсегда. Чтобы подтвердить, введите %@."
           }
         }
       }
@@ -9963,6 +10038,24 @@
         }
       }
     },
+    "sync.openList" : {
+      "comment" : "Settings › Sync: go to the Sync tab.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose what to sync"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрать, что синхронизировать"
+          }
+        }
+      }
+    },
     "sync.processing" : {
       "comment" : "Sync: a sent row on its way to the map.",
       "extractionState" : "manual",
@@ -10013,6 +10106,96 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Записано на этом телефоне"
+          }
+        }
+      }
+    },
+    "sync.recordedAllowed" : {
+      "comment" : "Settings › Sync: the record button can record.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location and notifications allowed"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Геолокация и уведомления разрешены"
+          }
+        }
+      }
+    },
+    "sync.recordedNotYet" : {
+      "comment" : "Settings › Sync: the record button hasn't been allowed yet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location and notifications are asked for on your first recording."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Геолокация и уведомления запрашиваются при первой записи."
+          }
+        }
+      }
+    },
+    "sync.recordedRefused" : {
+      "comment" : "Settings › Sync: a permission the record button needs was refused.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location or notifications are off for HoldMyTrack. Turn them on in Settings to record."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Геолокация или уведомления для HoldMyTrack выключены. Включите их в настройках, чтобы записывать."
+          }
+        }
+      }
+    },
+    "sync.recordedSub" : {
+      "comment" : "Settings › Sync: the record button's note.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always on. Recordings wait on the Sync tab until you send them."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всегда включена. Записи ждут на вкладке «Синхронизация», пока вы их не отправите."
+          }
+        }
+      }
+    },
+    "sync.recordedTitle" : {
+      "comment" : "Settings › Sync: the record button as a source.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The record button"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кнопка записи"
           }
         }
       }
@@ -10125,6 +10308,24 @@
         }
       }
     },
+    "sync.settingsTitle" : {
+      "comment" : "Settings › Sync: the screen's title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Синхронизация"
+          }
+        }
+      }
+    },
     "sync.showHidden" : {
       "comment" : "Sync: list the hidden rows, and how many.",
       "extractionState" : "manual",
@@ -10213,6 +10414,24 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "sync.sourcesIntro" : {
+      "comment" : "Settings › Sync: what the screen is for.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where your journeys come from."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Откуда берутся ваши пути."
           }
         }
       }
@@ -11933,6 +12152,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение"
+          }
+        }
+      }
+    },
+    "you.syncSub" : {
+      "comment" : "The You tab's Sync row: where journeys come from on iOS.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The record button"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кнопка записи"
           }
         }
       }

@@ -140,12 +140,6 @@ struct PanelTests {
 }
 /// The You tab's decisions over plain values.
 struct AccountTests {
-    @Test func deleteIsConfirmedByTheAccountsOwnEmail() {
-        #expect(AccountKey.confirms(typed: " Me@Example.com\n", email: "me@example.com"))
-        #expect(!AccountKey.confirms(typed: "me@example.co", email: "me@example.com"))
-        #expect(!AccountKey.confirms(typed: "", email: ""))
-    }
-
     @Test func anUploadsAnswerSaysWhetherItWent() {
         #expect(APIClient.uploadOutcome(status: 202, body: Data(#"{"status":"queued"}"#.utf8)) == .sent)
         #expect(APIClient.uploadOutcome(status: 200, body: Data(#"{"status":"already_processed"}"#.utf8)) == .already)

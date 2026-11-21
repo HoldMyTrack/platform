@@ -32,13 +32,23 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
     private let facebook = Controls.secondaryButton(String(localized: "Continue with Facebook"), id: "facebook")
     private let demo = Controls.secondaryButton(String(localized: "Try the demo"), id: "demo")
 
-    init(flow: AppFlow) {
+    /// Said over the form once, such as "Your account was deleted…" after Delete account.
+    private let notice: String?
+
+    init(flow: AppFlow, notice: String? = nil) {
         self.flow = flow
+        self.notice = notice
         super.init(nibName: nil, bundle: nil)
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    /// The notice read out once the screen is up, after VoiceOver's own move to it.
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if let notice { UIAccessibility.post(notification: .announcement, argument: notice) }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -69,7 +79,18 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
 
         let links = UIStackView(arrangedSubviews: [forgot, UIView(), signUp])
         links.alignment = .center
-        let column = Controls.column([titleLabel, intro, email, password, errorLabel, primary, links, or, apple, google, facebook, demo])
+        var top: [UIView] = [titleLabel]
+        if let notice {
+            let label = Controls.body(notice, color: UIColor(resource: .ink))
+            label.accessibilityIdentifier = "signInNotice"
+            let box = UIStackView(arrangedSubviews: [label])
+            box.isLayoutMarginsRelativeArrangement = true
+            box.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12)
+            box.backgroundColor = UIColor(resource: .noticeBg)
+            box.layer.cornerRadius = DesignTokens.Radius.md
+            top.append(box)
+        }
+        let column = Controls.column(top + [intro, email, password, errorLabel, primary, links, or, apple, google, facebook, demo])
         column.setCustomSpacing(DesignTokens.Space.s24, after: intro)
         column.setCustomSpacing(DesignTokens.Space.s24, after: links)
         Controls.host(column, in: self)
