@@ -74,6 +74,27 @@ final class MapTests: XCTestCase {
         XCTAssertEqual(places.label, before)
     }
 
+    /// An account with nothing on the map is pointed to Sync, as on Android: the notice's Sync
+    /// opens the Sync tab.
+    @MainActor
+    func testAnEmptyMapPointsToSync() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
+        defer { account.delete() }
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        let sync = app.buttons["noticeAction"]
+        XCTAssertTrue(sync.waitForExistence(timeout: 15), "the empty map's notice offers Sync")
+        sync.tap()
+        let tab = app.tabBars.buttons["tabSync"]
+        XCTAssertTrue(tab.waitForExistence(timeout: 5))
+        let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: tab)
+        XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: 5), .completed, "Sync opens the Sync tab")
+    }
+
     /// Fog's level control over the sample tracks: its segment names the level, the menu offers Auto and
     /// each level, a picked level holds, and a tap on a place names it in a popup.
     @MainActor

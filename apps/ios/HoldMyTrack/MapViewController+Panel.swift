@@ -165,7 +165,6 @@ extension MapViewController {
         listError = nil
         session.panel.setTracks(next.map(\.summary))
         renderCap()
-        renderPendingNotice()
         if session.consumeFly() {
             let hidden = session.panel.mapHidden
             if let box = MapFraming.union(FitBoxes.of(next.filter { !hidden.contains($0.id) })) { fit(box, animated: true) }
@@ -199,14 +198,6 @@ extension MapViewController {
         refreshPhotos(force: true)
     }
 
-    private func renderPendingNotice() {
-        if !pendingIDs.isEmpty {
-            notice(.pending, String(localized: "Some tracks are being processed. They'll show on the map when they're done."))
-        } else {
-            hideNotice(.pending)
-        }
-    }
-
     /// Every 2 seconds while a row is held Pending or an edit saved here hasn't landed: the list is
     /// read again once a listed one moves, and one it doesn't show finishes by the check alone.
     /// Called again after a save, which cancels the check in flight: its answer was asked before
@@ -231,7 +222,6 @@ extension MapViewController {
             if !answer.finished.isEmpty {
                 pendingIDs.subtract(answer.finished)
                 awaiting.subtract(answer.finished)
-                renderPendingNotice()
                 reprocessFinished(answer.finished)
             }
             if answer.moved { loadList() } else { watchPending() }

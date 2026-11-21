@@ -76,4 +76,22 @@ public enum MapChrome {
     public static func credit(sheetShown: Bool, collapsedSheet: Double, logoWidth: Double, gap: Double, space: Double) -> CreditPlace {
         CreditPlace(logoX: gap, buttonX: gap + logoWidth + space, lift: (sheetShown ? collapsedSheet : 0) + gap)
     }
+
+    /// What came back when the map's documents didn't, for the small print under "The map couldn't
+    /// load.": the app words each kind in the user's language, as Android shows its origin and
+    /// MapLibre's error.
+    public enum LoadFailure: Equatable, Sendable {
+        case status(Int, message: String?)
+        case noAnswer
+        case unreadable
+    }
+
+    public static func loadFailure(_ error: APIError) -> LoadFailure {
+        switch error {
+        case .http(let status, _, let message): .status(status, message: message.flatMap { $0.isEmpty ? nil : $0 })
+        case .outdated: .status(426, message: nil)
+        case .unreachable: .noAnswer
+        case .unreadable: .unreadable
+        }
+    }
 }

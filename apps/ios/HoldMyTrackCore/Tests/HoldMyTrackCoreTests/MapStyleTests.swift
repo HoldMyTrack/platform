@@ -226,6 +226,13 @@ struct MapStyleTests {
         #expect(["country", "region", "county", "city", "exact"].map { FogLevels.exploredCount(explored, level: $0) } == [3, 9, 20, 41, nil])
     }
 
+    @Test func aFailedMapSaysWhatCameBack() {
+        #expect(MapChrome.loadFailure(.unreachable) == .noAnswer)
+        #expect(MapChrome.loadFailure(.http(status: 503, code: nil, message: "Down for maintenance")) == .status(503, message: "Down for maintenance"))
+        #expect(MapChrome.loadFailure(.http(status: 500, code: nil, message: "")) == .status(500, message: nil))
+        #expect(MapChrome.loadFailure(.unreadable) == .unreadable)
+    }
+
     @Test func theCreditStaysAboveTheCollapsedSheetAtEveryDetent() {
         #expect(MapChrome.credit(sheetShown: true, collapsedSheet: 120, logoWidth: 80, gap: 8, space: 4) == .init(logoX: 8, buttonX: 92, lift: 128))
         #expect(MapChrome.credit(sheetShown: false, collapsedSheet: 120, logoWidth: 80, gap: 8, space: 4).lift == 8)

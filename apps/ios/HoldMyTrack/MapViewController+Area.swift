@@ -11,9 +11,10 @@ extension MapViewController {
 
     /// Once per app session per account: the newest few tracks framed at zoom 12 (OpeningView),
     /// then the list asked about wherever the camera is. An account with nothing on the map gets a
-    /// pointer, the demo never; a flight already asked for (View on map) keeps its camera.
+    /// pointer, the demo never, and is asked again on every return to the map while it shows, as
+    /// on Android; a flight already asked for (View on map) keeps its camera.
     func openOnce() {
-        guard !Self.framed.contains(accountKey) else {
+        guard !Self.framed.contains(accountKey) || noticeShown(.empty) else {
             if let known = Self.hasTracks[accountKey] { onHistoryKnown?(known) }
             return
         }
@@ -35,7 +36,7 @@ extension MapViewController {
                 }
             } else if MapChrome.emptyNoticeShown(empty: true, demo: account.isDemo, closed: EmptyNoticeDismissal.closed(account: accountKey)) {
                 let account = accountKey
-                notice(.empty, String(localized: "Nothing on your map yet. Upload a GPX, FIT or TCX file from the You tab to see it here.")) {
+                notice(.empty, String(localized: "Nothing on your map yet. Record a walk with the button below."), action: (String(localized: "Sync"), { [weak self] in self?.onWantsSync?() })) {
                     EmptyNoticeDismissal.close(account: account)
                 }
             }

@@ -115,6 +115,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var onWaiting: ((Int) -> Void)?
     /// A row's Trip badge on the Tracks tab: the tab bar moves to Trips.
     var onWantsTrips: ((String) -> Void)?
+    /// The empty map's Sync: the bottom bar's Sync tab.
+    var onWantsSync: (() -> Void)?
     /// The user picked a mode on the toggle, which may earn Fog's first-time card (TourController).
     var onModePicked: ((MapMode) -> Void)?
     /// The first framing found whether the account has any track: the tour starts or is offered.
@@ -248,13 +250,32 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             do {
                 show(try await documents.fetch(flavor: flavor, language: language))
             } catch let error as APIError {
-                if pair == nil, error != .outdated { notice(.mapFailed, String(localized: "The map couldn't load.")) }
+                if pair == nil, error != .outdated { mapFailed(Self.describe(MapChrome.loadFailure(error))) }
             } catch {}
+        }
+    }
+
+    /// The documents or the style didn't load: where the app asked and what came back, in small
+    /// print, and Try again (Android's reportFailure).
+    private func mapFailed(_ what: String) {
+        notice(.mapFailed, String(localized: "The map couldn't load."), detail: "\(flow.api.app.apiBaseURL.absoluteString) — \(what)",
+               action: (String(localized: "Try again"), { [weak self] in
+                   self?.hideNotice(.mapFailed)
+                   self?.load()
+               }))
+    }
+
+    private static func describe(_ failure: MapChrome.LoadFailure) -> String {
+        switch failure {
+        case .status(let status, let message): message.map { "\(status) \($0)" } ?? "HTTP \(status)"
+        case .noAnswer: String(localized: "no answer", comment: "Map: the small print when the server didn't answer.")
+        case .unreadable: String(localized: "an answer the app can't read", comment: "Map: the small print when the server's answer couldn't be read.")
         }
     }
 
     private func show(_ pair: MapDocuments.Pair) {
         self.pair = pair
+        hideNotice(.mapFailed)
         render()
         if styleLoaded, let style = mapView.style { addBadgeImages(to: style) }
         updateRailMenus()
@@ -499,24 +520,39 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     }
 
     func mapViewDidFailLoadingMap(_ mapView: MLNMapView, withError error: Error) {
-        basemapFailed = true
-        updateBasemapNotice()
+        mapFailed(error.localizedDescription)
     }
 
     // MARK: Notices
 
-    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending, capped, tour, exported, recording }
+    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, capped, tour, exported, recording }
 
-    /// Shows kind's notice, or changes its text. onClose gives it a close button, which takes it
-    /// down and then calls onClose.
-    func notice(_ kind: Notice, _ text: String, onClose: (() -> Void)? = nil) {
+    /// Shows kind's notice under the top row, or changes its words: its text, then, as on Android,
+    /// an optional line of small print and an action button, and × when onClose is given, which
+    /// takes it down and then calls onClose.
+    func notice(_ kind: Notice, _ text: String, detail: String? = nil, action: (title: String, run: () -> Void)? = nil, onClose: (() -> Void)? = nil) {
+        // Shown again, it keeps its place, its buttons and VoiceOver's quiet; only the words change.
         if let shown = notices.arrangedSubviews.first(where: { $0.tag == kind.rawValue + 1 }) {
-            (shown as? UILabel ?? shown.subviews.compactMap { $0 as? UILabel }.first)?.text = text
+            Self.labels(in: shown).first { $0.accessibilityIdentifier == "notice" }?.text = text
+            if let detail { Self.labels(in: shown).first { $0.accessibilityIdentifier == "noticeDetail" }?.text = detail }
             return
         }
         let label = Controls.body(text, color: UIColor(resource: .ink))
         label.textAlignment = .center
         label.accessibilityIdentifier = "notice"
+        var column: [UIView] = [label]
+        if let detail {
+            let small = Controls.label(detail, font: Typeface.sans(DesignTokens.Text.xs, relativeTo: .caption2), color: UIColor(resource: .inkSecondary))
+            small.textAlignment = .center
+            small.accessibilityIdentifier = "noticeDetail"
+            column.append(small)
+        }
+        if let action {
+            let button = Controls.textButton(action.title, id: "noticeAction")
+            button.addAction(UIAction { _ in action.run() }, for: .primaryActionTriggered)
+            column.append(button)
+        }
+        let content: UIView = column.count == 1 ? label : Controls.column(column, spacing: DesignTokens.Space.s4)
         let box: UIView
         if let onClose {
             let close = Controls.iconButton(Controls.icon(UIImage(resource: .x), size: 18), label: String(localized: "Close"), id: "noticeClose")
@@ -524,12 +560,17 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                 self?.hideNotice(kind)
                 onClose()
             }, for: .primaryActionTriggered)
-            let row = UIStackView(arrangedSubviews: [label, close])
+            let row = UIStackView(arrangedSubviews: [content, close])
             row.alignment = .center
             row.spacing = DesignTokens.Space.s8
             row.isLayoutMarginsRelativeArrangement = true
             row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: DesignTokens.Space.s12, bottom: 0, trailing: DesignTokens.Space.s4)
             box = row
+        } else if column.count > 1 {
+            let wrap = UIStackView(arrangedSubviews: [content])
+            wrap.isLayoutMarginsRelativeArrangement = true
+            wrap.directionalLayoutMargins = NSDirectionalEdgeInsets(top: DesignTokens.Space.s8, leading: DesignTokens.Space.s12, bottom: DesignTokens.Space.s4, trailing: DesignTokens.Space.s12)
+            box = wrap
         } else {
             box = label
         }
@@ -539,6 +580,13 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         box.layer.masksToBounds = true
         notices.addArrangedSubview(box)
         UIAccessibility.post(notification: .announcement, argument: text)
+    }
+
+    /// Whether kind's notice is up.
+    func noticeShown(_ kind: Notice) -> Bool { notices.arrangedSubviews.contains { $0.tag == kind.rawValue + 1 } }
+
+    private static func labels(in view: UIView) -> [UILabel] {
+        (view as? UILabel).map { [$0] } ?? view.subviews.flatMap { labels(in: $0) }
     }
 
     func hideNotice(_ kind: Notice) {

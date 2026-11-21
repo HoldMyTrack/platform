@@ -419,6 +419,17 @@
         }
       }
     },
+    "an answer the app can't read" : {
+      "comment" : "Map: the small print when the server's answer couldn't be read.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ответ, который приложение не может прочитать"
+          }
+        }
+      }
+    },
     "Any distance" : {
       "comment" : "Tracks panel: the Distance filter with no band set.",
       "localizations" : {
@@ -1959,6 +1970,17 @@
         }
       }
     },
+    "no answer" : {
+      "comment" : "Map: the small print when the server didn't answer.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "нет ответа"
+          }
+        }
+      }
+    },
     "No Private locations yet. Where a track starts or ends inside one, that part is hidden everywhere, your own map included." : {
       "comment" : "Privacy: the account has none.",
       "localizations" : {
@@ -2080,13 +2102,13 @@
         }
       }
     },
-    "Nothing on your map yet. Upload a GPX, FIT or TCX file from the You tab to see it here." : {
-      "comment" : "Map notice: the account has no track with a route.",
+    "Nothing on your map yet. Record a walk with the button below." : {
+      "comment" : "Map notice: the account has no track with a route; its button opens the Sync tab.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "На карте пока ничего нет. Загрузите файл GPX, FIT или TCX на вкладке «Вы», чтобы увидеть его здесь."
+            "value" : "На карте пока ничего нет. Запишите прогулку кнопкой внизу."
           }
         }
       }
@@ -3011,17 +3033,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмечены некоторые"
-          }
-        }
-      }
-    },
-    "Some tracks are being processed. They'll show on the map when they're done." : {
-      "comment" : "Map notice: rows are Pending.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Некоторые треки обрабатываются. Они появятся на карте, когда обработка закончится."
           }
         }
       }
