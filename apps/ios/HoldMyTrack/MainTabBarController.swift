@@ -49,6 +49,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         let home = YouViewController(flow: flow, account: account)
         let you = UINavigationController(rootViewController: home)
         you.navigationBar.prefersLargeTitles = false
+        you.setNavigationBarHidden(true, animated: false)
+        you.delegate = self
         you.tabBarItem = UITabBarItem(title: String(localized: "You"), image: UIImage(resource: .user), tag: 3)
         you.tabBarItem.accessibilityIdentifier = "tabYou"
         gap.tabBarItem = UITabBarItem(title: nil, image: nil, tag: 4)
@@ -299,9 +301,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         top.present(controller, animated: true)
     }
 
-    /// The Sync tab's bar shows only over Upload and Sync history, never over its map.
+    /// The Sync and You tabs' bars show only over the pages pushed from them, never over Sync's
+    /// map or the You page, which has its own title.
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-        navigationController.setNavigationBarHidden(viewController is MapHostViewController, animated: animated)
+        navigationController.setNavigationBarHidden(viewController is MapHostViewController || viewController is YouViewController, animated: animated)
     }
 
     /// Location is off for HoldMyTrack: Settings is where it's turned on.

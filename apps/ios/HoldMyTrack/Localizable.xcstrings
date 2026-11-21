@@ -11719,6 +11719,224 @@
         }
       }
     },
+    "you.activeDays" : {
+      "comment" : "The You tab's numbers: days with a track.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active days"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активные дни"
+          }
+        }
+      }
+    },
+    "you.delete" : {
+      "comment" : "The You tab: open Delete account.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete account…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить аккаунт…"
+          }
+        }
+      }
+    },
+    "you.distance" : {
+      "comment" : "The You tab's numbers: the distance of them all.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Расстояние"
+          }
+        }
+      }
+    },
+    "you.graphLink" : {
+      "comment" : "The You tab: the link to the track graph.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track graph & trends"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "График и тренды"
+          }
+        }
+      }
+    },
+    "you.longestStreak" : {
+      "comment" : "The You tab's numbers: the most days in a row with a track.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Longest streak"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Самая долгая серия"
+          }
+        }
+      }
+    },
+    "you.privacyCount" : {
+      "comment" : "The You tab's Privacy row: how many Private locations.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg private location · your data"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg private locations · your data"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg приватное место · ваши данные"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg приватных места · ваши данные"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg приватных мест · ваши данные"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg приватного места · ваши данные"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "you.privacySub" : {
+      "comment" : "The You tab's Privacy row: what's there.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Private locations and your data"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приватные места и ваши данные"
+          }
+        }
+      }
+    },
+    "you.recentWeeks" : {
+      "comment" : "The You tab: the small grid of the last weeks' tracks, read out.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent weeks"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Последние недели"
+          }
+        }
+      }
+    },
+    "you.sectionApp" : {
+      "comment" : "The You tab: the section for this app's settings.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приложение"
+          }
+        }
+      }
+    },
     "you.tour" : {
       "comment" : "The You tab: start the tour again.",
       "extractionState" : "manual",
@@ -11733,6 +11951,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пройти тур"
+          }
+        }
+      }
+    },
+    "you.tracks" : {
+      "comment" : "The You tab's numbers: how many tracks.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracks"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Треки"
           }
         }
       }
