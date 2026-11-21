@@ -101,9 +101,23 @@ Every request `internal/httpapi`'s tests send through `dbTest.do`, `dbTest.send`
 
 ### Android verification
 
-The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and UI Automator flows over the map (`connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:8081`, on an emulator); there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and a track deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
+The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and UI Automator flows over the map (`make e2e-android`, "End-to-end suites"); there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and a track deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
 
 CI also runs `./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:optimizeReleaseResources`. Lint fails on any warning `app/lint-baseline.xml` doesn't list: fix a new one, and run `:app:updateLintBaseline` only to drop entries a fix removed. The release is compiled through R8 and resource shrinking but not packaged, since packaging needs the upload key.
+
+### End-to-end suites
+
+Each client's flows run against the dev stack, which `make e2e-stack` starts and waits for on `.env`'s `API_PORT`. A release runs its client's suite on the commit it ships (`DEPLOY.md` §10).
+
+| Client | Command | Needs | In CI |
+|---|---|---|---|
+| Web | `make e2e-web` | Docker and the basemap extract (`make basemap`) | each pull request that touches the web or the server |
+| Android | `make e2e-android` | a running emulator, JDK 17 and the Android SDK | no |
+| iOS | `make e2e-ios` | Xcode and an iPhone simulator (`IOS_DESTINATION=…` names another) | no |
+
+- The Android flows rebuild and install the debug app against `10.0.2.2:$API_PORT`; a debug build installed for other work points there afterwards.
+- `make e2e-ios` passes `HMT_API_BASE_URL` on the command line, which outranks `Config/Local.xcconfig`. Run from Xcode, the UI tests use the xcconfig's origin and skip when it doesn't answer. `IOS_UI_TESTS=HoldMyTrackUITests/LaunchTests` runs one class.
+- The iOS demo tests sign in as the demo, which the dev stack allows a few times an hour from one address; one refused with "Too many demo sessions" passes again once the hour is up. `CaptureTests` skips while the dev stack has no Spots ("Seeding a fresh database").
 
 ### CI
 

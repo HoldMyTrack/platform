@@ -18,7 +18,7 @@ The code with no UIKit in it is the `HoldMyTrackCore` package, and its tests nee
 
 A Debug build talks to `http://localhost:8080`, compose's API port on this Mac, which the simulator reaches directly. When `.env` sets another `API_PORT`, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set it there. To save the site's pages from the simulator, set it to `http://localhost:5173` (`docs/DEVELOPMENT.md`). Release always talks to `https://holdmytrack.com`. A Debug build's You tab shows the build and whether the API answers.
 
-The UI tests run against the dev stack at the same origin and skip when it doesn't answer, as on CI; `web` must be running too (`apps/ios/docs/IMPLEMENTATION.md` §3.5). The tests about the demo sign in as it, which the dev stack allows a few times an hour from one address; one refused with "Too many demo sessions" passes again once the hour is up.
+The UI tests run against the dev stack: `make e2e-ios` from the repository root (`docs/DEVELOPMENT.md`, "End-to-end suites"). Run from Xcode they reach the same origin as the app and skip when it doesn't answer; `web` must be running too (`apps/ios/docs/IMPLEMENTATION.md` §3.5).
 
 Signing for a device or an archive needs a team: copy `Config/Signing.xcconfig.example` to `Config/Signing.xcconfig`.
 
