@@ -3,7 +3,7 @@
 | | |
 | :-- | :-- |
 | **Status** | Current: the app as built |
-| **Last updated** | 2026-11-08 |
+| **Last updated** | 2026-11-20 |
 | **Related documents** | `docs/SPEC.md` (the server and web behavior this app shares), `apps/ios/docs/ARCHITECTURE.md` (the app's shape and stack), `apps/ios/docs/IMPLEMENTATION.md` (how it's built), `apps/ios/docs/ROADMAP.md` (the plan) |
 
 ## 1. Introduction
@@ -84,10 +84,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 - The image is saved to Photos, which the app may only add to, and offered to the share sheet; with Photos refused, only to the share sheet.
 - A basemap or Satellite that can't be reached fails the image, where Android leaves out the tiles it couldn't load.
-
-### FR-2.12 Tour
-
-- Its steps are Android's, with Places part of the Layers step.
 
 ## 5. FR-3 — Sync and Imports
 

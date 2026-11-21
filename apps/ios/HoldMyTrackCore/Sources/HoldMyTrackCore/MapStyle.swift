@@ -14,8 +14,14 @@ public struct LayersDocument: Equatable, Sendable {
         /// By id, as the document gives them; a vector source's `tiles` is a path on the API.
         public let sources: [String: JSONValue]
         public let layers: [JSONValue]
-        /// By entry, the color the Layers menu or a card shows for it.
-        public let legend: [String: String]
+        /// By entry, the line the Layers menu or a card shows for it.
+        public let legend: [String: Legend]
+    }
+
+    /// A legend line: its color, and its dash in line widths, nil for a solid line.
+    public struct Legend: Equatable, Sendable {
+        public let color: String
+        public let dash: [Double]?
     }
 
     public let styleBuild: String
@@ -44,7 +50,9 @@ public struct LayersDocument: Equatable, Sendable {
                 lifts: g["lifts"]?.array?.compactMap(\.string) ?? [],
                 sources: g["sources"]?.object ?? [:],
                 layers: layers,
-                legend: (g["legend"]?.object ?? [:]).compactMapValues { $0["color"]?.string }
+                legend: (g["legend"]?.object ?? [:]).compactMapValues { entry in
+                    entry["color"]?.string.map { Legend(color: $0, dash: entry["dash"]?.array?.compactMap(\.number)) }
+                }
             ))
         }
         self.groups = parsed
@@ -83,6 +91,8 @@ public struct MapState: Equatable, Sendable {
     public var satelliteFailed = false
     public var roads = true
     public var showLayers = true
+    /// The Places menu's switch, over the spots group; Show layers covers the other switches.
+    public var showPlaces = true
     public var toggles: [String: Bool] = [:]
     /// By var name, the value bound in place of the document's default.
     public var vars: [String: JSONValue] = [:]
@@ -196,7 +206,7 @@ public enum MapStyle {
             // switch and the hidden groups decide, as on Android.
             let base = (view?["layout"]?[id]?["visibility"]?.string ?? "visible") == "visible"
             let toggle = spec["metadata"]?[toggleKey]?.string
-            let switched = toggle.map { state.showLayers && state.toggles[$0] == true } ?? true
+            let switched = toggle.map { ($0 == Spots.group ? state.showPlaces : state.showLayers) && state.toggles[$0] == true } ?? true
             let shown = base && switched && !state.hiddenGroups.contains(group.id)
             set(&layers, id, "layout", "visibility", .string(shown ? "visible" : "none"))
 

@@ -114,6 +114,11 @@ final class RecordingTests: XCTestCase {
             record.tap()
             let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow While Using App"]
             if allow.waitForExistence(timeout: 3) { allow.tap() }
+            // A first start also asks for notifications; left up, iOS's prompt would hide the
+            // leftover's after the relaunch.
+            let notifications = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts
+                .matching(NSPredicate(format: "label CONTAINS 'Notifications'")).firstMatch
+            if notifications.waitForExistence(timeout: 3) { notifications.buttons["Allow"].tap() }
             XCTAssertTrue(walkToAFix(status), "a fix")
         }
         func relaunch() -> XCUIElement {

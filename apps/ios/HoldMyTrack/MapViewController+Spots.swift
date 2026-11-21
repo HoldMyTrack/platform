@@ -8,7 +8,7 @@ import UIKit
 /// is the document's (Spots.apply).
 extension MapViewController {
     /// The categories drawn: the picks, while Show layers is on.
-    var shownSpotCategories: [SpotCategory] { state.showLayers ? spots.categories : [] }
+    var shownSpotCategories: [SpotCategory] { state.showPlaces ? spots.categories : [] }
 
     /// The picks, the captures and the switch into the style, and everything that follows them.
     func applySpots() {
@@ -18,28 +18,6 @@ extension MapViewController {
         }
         render()
         renderInArea()
-    }
-
-    /// The Layers menu's Points of interest. A pick turns Show layers back on, so it shows.
-    func spotsMenu(_ refresh: @escaping () -> Void) -> UIMenu {
-        let items = SpotCategory.allCases.map { category in
-            UIAction(title: Self.menuLabel(category), image: Self.icon(category), state: spots.categories.contains(category) ? .on : .off) { [weak self] _ in
-                guard let self else { return }
-                if let at = self.spots.categories.firstIndex(of: category) {
-                    self.spots.categories.remove(at: at)
-                    // Unticking the place's category ends its capture.
-                    if self.capturing.spot?.category == category.rawValue { self.capturing.stop() }
-                } else {
-                    self.spots.categories = SpotCategory.allCases.filter { self.spots.categories.contains($0) || $0 == category }
-                    self.state.showLayers = true
-                }
-                MapPreferences.save(self.state, mode: self.pickedMode)
-                MapPreferences.saveSpots(self.spots.categories)
-                self.applySpots()
-                refresh()
-            }
-        }
-        return UIMenu(title: String(localized: "Points of interest"), options: .displayInline, children: items)
     }
 
     /// Every badge the layers document names, drawn on each style load, which drops the images

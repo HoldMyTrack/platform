@@ -31,8 +31,9 @@ extension MapViewController {
         return switch target {
         case .sheet: [sheet]
         case .dates: [tracksPanel.datesButton]
-        case .layers: [layersButton]
-        case .export: [export.button]
+        case .layers: [rail.layers] + [layersMenu.content].compactMap { $0 }
+        case .places: [rail.places] + [placesMenu.content].compactMap { $0 }
+        case .export: [rail.export]
         case .modes: [modes]
         case .fogLevel: fogViews.menuButton.isHidden ? [modes] : [fogViews.menuButton]
         case .page, .youTour, .record: []
