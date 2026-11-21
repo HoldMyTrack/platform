@@ -57,9 +57,32 @@ struct SyncListTests {
         #expect(!SyncList.of([], hidden: [], showHidden: false, types: [], ticked: []).allTicked([]), "nothing to tick reads Select all")
     }
 
+    @Test func aRowBeingSentIsNeitherTickedEditedNorSwipedAndNoRowIsSwipedMeanwhile() {
+        let list = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: ["new", "mid"], inFlight: ["new", "mid"])
+        #expect(list.tickable.map(\.id) == ["old"], "Select all leaves the send alone")
+        #expect(list.sendable.isEmpty)
+        #expect(!list.canTick(walks[1]))
+        #expect(!list.canEdit(walks[1]))
+        #expect(list.canEdit(walks[0]), "a row outside the send is still edited")
+        #expect(!list.canSwipe(walks[0]))
+        let idle = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: [])
+        #expect(idle.canSwipe(walks[0]))
+        #expect(!idle.canSwipe(walks[3]), "not one on its way")
+        #expect(!idle.canEdit(walks[3]))
+    }
+
+    @Test func theDemoTicksNothing() {
+        let list = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: [], isDemo: true)
+        #expect(list.tickable.isEmpty)
+        #expect(!list.canTick(walks[0]))
+        #expect(list.toggleAll([]).isEmpty)
+    }
+
     @Test func aSwipeHidesAndASecondBringsItBackAndALeftRecordingIsForgotten() {
         #expect(SyncHidden.swiped("a", in: []) == ["a"])
         #expect(SyncHidden.swiped("a", in: ["a"]).isEmpty)
+        #expect(SyncHidden.setting("a", hidden: false, in: ["a"]).isEmpty, "Undo puts back what was, whatever happened since")
+        #expect(SyncHidden.setting("a", hidden: true, in: ["a"]) == ["a"])
         #expect(SyncHidden.pruned(["a", "gone"], present: [track("a", hours: 0)]) == ["a"])
     }
 }

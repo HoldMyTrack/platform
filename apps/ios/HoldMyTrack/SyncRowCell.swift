@@ -18,6 +18,8 @@ final class SyncRowCell: UITableViewCell {
         let ticked: Bool
         let hidden: Bool
         let tickable: Bool
+        /// Edit and Delete: on the phone and not being sent (SyncList.canEdit).
+        let editable: Bool
     }
 
     var onTick: (() -> Void)?
@@ -96,11 +98,9 @@ final class SyncRowCell: UITableViewCell {
             : String(localized: "sync.tickRow", defaultValue: "Tick \(row.title)", comment: "Sync: a row's tick, read out.")
         tile.accessibilityTraits = row.ticked ? [.button, .selected] : .button
 
-        // Edit and Delete: a recording still on the phone, named per row, since VoiceOver reads
-        // each control on its own.
-        let editable = !row.processing
-        edit.isHidden = !editable
-        delete.isHidden = !editable
+        // Named per row, since VoiceOver reads each control on its own.
+        edit.isHidden = !row.editable
+        delete.isHidden = !row.editable
         edit.accessibilityLabel = String(localized: "sync.editRow", defaultValue: "Edit \(row.title)", comment: "Sync: a recording's Edit, read out with its title.")
         delete.accessibilityLabel = String(localized: "sync.deleteRow", defaultValue: "Delete \(row.title)", comment: "Sync: a recording's Delete, read out with its title.")
     }

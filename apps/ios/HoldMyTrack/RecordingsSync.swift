@@ -17,7 +17,9 @@ final class RecordingsSync {
     private var pollGeneration = 0
     /// The signed-in screen went: nothing more is sent, written or asked.
     private var stopped = false
-    private(set) var sending = false
+    /// The recordings the running send is sending, which the ticks don't change; empty between sends.
+    private(set) var inFlight: Set<String> = []
+    var sending: Bool { !inFlight.isEmpty }
     /// The rows ticked to send; nothing starts ticked.
     var ticked: Set<String> = []
     /// What the last send did, said over the list until the next one.
@@ -85,7 +87,7 @@ final class RecordingsSync {
     }
 
     /// Whether id is being sent now: Edit and Delete wait for the send.
-    func isSending(_ id: String) -> Bool { sending && ticked.contains(id) }
+    func isSending(_ id: String) -> Bool { inFlight.contains(id) }
 
     func delete(_ id: String) {
         guard !isSending(id) else { return }
@@ -98,7 +100,7 @@ final class RecordingsSync {
     /// ticked.
     func send(_ tracks: [RecordedTrack]) async {
         guard !sending, !stopped, !isDemo, !tracks.isEmpty else { return }
-        sending = true
+        inFlight = Set(tracks.map(\.id))
         report = Report()
         changed()
         for track in tracks {
@@ -129,7 +131,7 @@ final class RecordingsSync {
             }
             changed()
         }
-        sending = false
+        inFlight = []
         changed()
         follow()
     }

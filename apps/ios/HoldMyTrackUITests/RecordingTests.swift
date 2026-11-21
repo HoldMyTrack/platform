@@ -95,6 +95,13 @@ final class RecordingTests: XCTestCase {
         app.buttons["Undo"].tap()
         XCTAssertTrue(row.waitForExistence(timeout: 5), "back on the list")
 
+        // Ticks don't outlast the tab: back from You, nothing is ticked.
+        app.buttons["syncSelectAll"].tap()
+        XCTAssertEqual(app.buttons["syncSend"].label, "Sync 1")
+        app.tabBars.buttons["tabYou"].tap()
+        app.tabBars.buttons["tabSync"].tap()
+        XCTAssertEqual(app.buttons["syncSend"].label, "Sync", "a fresh tab ticks nothing")
+
         // Select all ticks it; sent, it's on its way, then on the map and off the phone.
         app.buttons["syncSelectAll"].tap()
         XCTAssertEqual(app.buttons["syncSend"].label, "Sync 1")

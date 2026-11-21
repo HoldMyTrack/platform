@@ -57,11 +57,15 @@ extension MapViewController {
 
     // MARK: Tabs
 
-    /// The tab bar's Tracks or Trips brought the map forward.
-    func show(_ next: PanelTab, trip: String? = nil) {
+    /// The tab bar's Tracks, Trips or Sync brought the map forward. fresh is false for a return
+    /// from a screen pushed over the map, such as Upload, which keeps the Sync tab's ticks.
+    func show(_ next: PanelTab, trip: String? = nil, fresh: Bool = true) {
         loadViewIfNeeded()
         if next == panelTab {
             if let trip { open(trip) }
+            if next == .sync {
+                if fresh { syncPanel?.start() } else { syncPanel?.render() }
+            }
             return
         }
         let left = panelTab
@@ -534,6 +538,8 @@ final class MapHostViewController: UIViewController {
     private let panelTab: PanelTab
     /// A Trip to open when this host next shows.
     var pendingTrip: String?
+    /// A screen was pushed over this one: its return isn't a fresh showing of the tab.
+    private var covered = false
 
     init(map: MapViewController, tab: PanelTab) {
         self.map = map
@@ -561,7 +567,13 @@ final class MapHostViewController: UIViewController {
             view.addSubview(map.view)
             map.didMove(toParent: self)
         }
-        map.show(panelTab, trip: pendingTrip)
+        map.show(panelTab, trip: pendingTrip, fresh: !covered)
         pendingTrip = nil
+        covered = false
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        covered = navigationController.map { $0.topViewController !== self } ?? false
     }
 }

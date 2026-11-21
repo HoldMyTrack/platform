@@ -39,6 +39,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var list = SyncList.of([], hidden: [], showHidden: false, types: [], ticked: [])
     /// The hidden rows as last read, so a render reads the phone's list once.
     private var hidden: Set<String> = []
+    /// The types last asked about, so a render asks again only when the list's types change.
+    private var describedTypes: Set<String>?
 
     private enum Item {
         case notice(String, id: String, failed: Bool)
@@ -92,9 +94,11 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     // MARK: Showing
 
-    /// The tab showed: nothing ticked, every type, hidden rows put away.
+    /// The tab showed, from another tab or a launch: nothing ticked, every type, hidden rows put
+    /// away. A send running keeps its rows (RecordingsSync.inFlight).
     func start() {
         showing = true
+        describedTypes = nil
         recordings.ticked = []
         types = []
         showHidden = false
@@ -124,10 +128,15 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     func render() {
         guard showing else { return }
         let all = recordings.all
-        TrackTypes.shared.refresh(all.map(\.type), api: api)
+        let listedTypes = Set(all.map(\.type))
+        if listedTypes != describedTypes {
+            describedTypes = listedTypes
+            TrackTypes.shared.refresh(Array(listedTypes), api: api)
+        }
         hidden = recordings.hidden
         recordings.ticked = Set(all.filter { !$0.sent }.map(\.id)).intersection(recordings.ticked)
-        list = SyncList.of(all, hidden: hidden, showHidden: showHidden, types: types, ticked: recordings.ticked)
+        list = SyncList.of(all, hidden: hidden, showHidden: showHidden, types: types, ticked: recordings.ticked,
+                           isDemo: account.isDemo, inFlight: recordings.inFlight)
         types = list.pickedTypes(types)
 
         var items: [Item] = []
@@ -212,7 +221,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             id: track.id, title: Self.title(track), meta: meta,
             note: track.sent ? String(localized: "sync.processing", defaultValue: "Adding to your map…", comment: "Sync: a sent row on its way to the map.") : nil,
             processing: track.sent, kind: TrackTypes.shared.kind(track.type), ticked: recordings.ticked.contains(track.id),
-            hidden: hidden, tickable: !account.isDemo && !hidden && !track.sent && !recordings.sending
+            hidden: hidden, tickable: list.canTick(track), editable: list.canEdit(track)
         )
     }
 
@@ -227,7 +236,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     private func toggle(_ track: RecordedTrack) {
-        guard row(track).tickable else { return }
+        guard list.canTick(track) else { return }
         if recordings.ticked.contains(track.id) { recordings.ticked.remove(track.id) } else { recordings.ticked.insert(track.id) }
         render()
     }
@@ -247,7 +256,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             : String(localized: "sync.hidden", defaultValue: "Hidden — it won't be offered again", comment: "Sync: a row swiped aside.")
         onEvent?(.hid(text, undo: { [weak self] in
             guard let self else { return }
-            self.recordings.hidden = SyncHidden.swiped(track.id, in: self.recordings.hidden)
+            self.recordings.hidden = SyncHidden.setting(track.id, hidden: wasHidden, in: self.recordings.hidden)
             self.render()
         }))
     }
@@ -413,7 +422,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         switch items[indexPath.row] {
-        // The row's line on the map comes with the dashed candidates (IOS_PLAN.md PR 4b); a tap ticks it meanwhile.
+        // The recordings aren't drawn on the map, so a tap ticks the row (apps/ios/docs/SPEC.md FR-5.2).
         case .row(let track): toggle(track)
         case .showHidden:
             showHidden.toggle()
@@ -435,7 +444,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     private func swipe(_ indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        guard case .row(let track) = items[indexPath.row], !track.sent, !recordings.sending else { return nil }
+        guard case .row(let track) = items[indexPath.row], list.canSwipe(track) else { return nil }
         let hidden = hidden.contains(track.id)
         let action = UIContextualAction(style: .normal, title: hidden
             ? String(localized: "sync.unhide", defaultValue: "Show", comment: "Sync: a hidden row's swipe, bringing it back.")
