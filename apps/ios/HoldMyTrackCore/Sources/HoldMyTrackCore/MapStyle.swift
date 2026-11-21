@@ -32,7 +32,7 @@ public struct LayersDocument: Equatable, Sendable {
     public let vars: [String: JSONValue]
     /// `plain` and `satellite`, each by mode, then `layout` or `paint`, then layer id.
     public let views: JSONValue
-    public let groups: [Group]
+    public internal(set) var groups: [Group]
 
     public init?(_ json: JSONValue) {
         guard let groups = json["groups"]?.array, let views = json["views"] else { return nil }
@@ -77,8 +77,9 @@ public enum TabMode {
         onTracksTab && !recording ? picked : .normal
     }
 
-    /// The groups a recording hides: every track and the focused one's pace bands.
-    public static func hiddenGroups(recording: Bool) -> Set<String> { recording ? ["tracks", "route-bands"] : [] }
+    /// The groups a recording or the Sync tab hides: every track and the focused one's pace bands.
+    /// The Sync tab's own lines (SyncLines) are drawn instead.
+    public static func hiddenGroups(recording: Bool, syncing: Bool = false) -> Set<String> { recording || syncing ? ["tracks", "route-bands"] : [] }
 }
 
 /// What the app decides about the map; the rest is the documents'.

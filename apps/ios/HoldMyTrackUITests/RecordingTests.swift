@@ -85,6 +85,10 @@ final class RecordingTests: XCTestCase {
         let row = app.cells.matching(identifier: "recordingRow").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         XCTAssertTrue(row.staticTexts["Test walk"].exists, "listed by its name")
+        // A tap picks it out on the list and the map, ticking nothing.
+        row.staticTexts["Test walk"].tap()
+        XCTAssertTrue(row.wait(for: NSPredicate(format: "isSelected == true"), timeout: 5), "picked out")
+        XCTAssertEqual(app.buttons["syncSend"].label, "Sync")
         attach("Sync")
 
         // A swipe hides it, with Undo, which puts it back.

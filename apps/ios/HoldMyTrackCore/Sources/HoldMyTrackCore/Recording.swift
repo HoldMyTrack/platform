@@ -226,7 +226,8 @@ public struct RecordedTrack: Codable, Equatable, Sendable {
 
 /// Stopped recordings on the phone, each account's in a folder of its own (apps/android/docs/SPEC.md
 /// FR-5.3), so two accounts on one phone never see each other's, with the account's default type
-/// beside them. A file per recording. Nothing here goes into a device backup.
+/// and its hidden Sync rows beside them. A file per recording. Nothing here goes into a device
+/// backup.
 public struct RecordingStore: Sendable {
     let root: URL
 
@@ -277,9 +278,25 @@ public struct RecordingStore: Sendable {
         try? type.write(to: folder.appending(path: "type"), atomically: true, encoding: .utf8)
     }
 
-    /// One recording, gone for good: the phone's copy is the only one until it's on the map.
+    /// One recording, gone for good: the phone's copy is the only one until it's on the map. A
+    /// hidden one is forgotten with it, deleted or landed.
     public func delete(id: String, account: String) {
         try? FileManager.default.removeItem(at: folder(account: account).appending(path: "\(id).json"))
+        let hidden = hidden(account: account)
+        if hidden.contains(id) { setHidden(hidden.subtracting([id]), account: account) }
+    }
+
+    /// The Sync rows swiped aside (apps/android/docs/SPEC.md FR-3.5), by recording id. Only a
+    /// delete prunes it: a list that failed to read never empties it.
+    public func hidden(account: String) -> Set<String> {
+        guard let data = try? Data(contentsOf: folder(account: account).appending(path: "hidden")),
+              let ids = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+        return Set(ids)
+    }
+
+    public func setHidden(_ ids: Set<String>, account: String) {
+        guard let folder = try? made(account), let data = try? JSONEncoder().encode(ids.sorted()) else { return }
+        try? data.write(to: folder.appending(path: "hidden"), options: .atomic)
     }
 
     /// Everything kept for an account, as Delete account leaves nothing on the phone.

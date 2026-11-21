@@ -5,7 +5,7 @@ import HoldMyTrackCore
 /// Sync tab lists, the ticked ones sent one at a time under `recorded`, and each one the server
 /// took asked about every 2 seconds, on any tab, until it lands, when it leaves the phone, or its
 /// ingest fails, when it's listed again. The tab bar owns it, so the follow-up outlives the tab.
-/// The rows swiped aside are kept here too, per account (SyncHidden).
+/// The rows swiped aside are kept beside the recordings (RecordingStore.hidden).
 @MainActor
 final class RecordingsSync {
     private let api: APIClient
@@ -52,22 +52,11 @@ final class RecordingsSync {
     var all: [RecordedTrack] { store.list(account: account) }
     var awaited: Int { all.filter(\.sent).count }
 
-    /// The rows swiped aside, kept on the phone for this account; one that left the phone is
-    /// forgotten as it's read.
+    /// The rows swiped aside, kept in the account's recordings folder (RecordingStore.hidden).
     var hidden: Set<String> {
-        get {
-            let kept = Set(UserDefaults.standard.stringArray(forKey: Self.hiddenKey(account)) ?? [])
-            let present = SyncHidden.pruned(kept, present: all)
-            if present != kept { UserDefaults.standard.set(Array(present), forKey: Self.hiddenKey(account)) }
-            return present
-        }
-        set { UserDefaults.standard.set(Array(newValue), forKey: Self.hiddenKey(account)) }
+        get { store.hidden(account: account) }
+        set { store.setHidden(newValue, account: account) }
     }
-
-    private static func hiddenKey(_ account: String) -> String { "sync.hidden.\(account)" }
-
-    /// A deleted account's hidden rows go with it.
-    static func forget(account: String) { UserDefaults.standard.removeObject(forKey: hiddenKey(account)) }
 
     /// The sent recordings whose ingest failed since last asked.
     func takeFailed() -> [RecordedTrack] {

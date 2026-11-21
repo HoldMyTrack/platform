@@ -29,7 +29,6 @@ extension MapViewController {
             // being about where the recording goes.
             photoViews.markers.isHidden = active
             renderTopRow()
-            state.hiddenGroups = TabMode.hiddenGroups(recording: active)
             applyTabMode()
             render()
             renderPanel()
