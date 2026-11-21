@@ -107,15 +107,16 @@ CI also runs `./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:
 
 ### End-to-end suites
 
-Each client's flows run against the dev stack, which `make e2e-stack` starts and waits for on `.env`'s `API_PORT`. A release runs its client's suite on the commit it ships (`DEPLOY.md` §10).
+Each client's flows run against the dev stack, which `make e2e-stack` rebuilds from the checkout it runs in, starts and waits for on `.env`'s `API_PORT`. The rebuild applies that checkout's migrations to the dev database, and the stack keeps running that checkout's code after the run. Every checkout shares the one compose project, so a new worktree needs the main checkout's `.env` and any `compose.override.yaml` copied in; without `.env` the target stops. A release runs its client's suite on the commit it ships (`DEPLOY.md` §10).
 
 | Client | Command | Needs | In CI |
 |---|---|---|---|
 | Web | `make e2e-web` | Docker and the basemap extract (`make basemap`) | each pull request that touches the web or the server |
-| Android | `make e2e-android` | a running emulator, JDK 17 and the Android SDK | no |
+| Android | `make e2e-android` | an Android emulator image (AVD), JDK 17 and the Android SDK | no |
 | iOS | `make e2e-ios` | Xcode and an iPhone simulator (`IOS_DESTINATION=…` names another) | no |
 
 - The Android flows rebuild and install the debug app against `10.0.2.2:$API_PORT`; a debug build installed for other work points there afterwards.
+- With no device attached, `make e2e-android` starts the AVD headless and shuts it down after the run, saving no snapshot; `ANDROID_AVD=<name>` picks one when there are several. An emulator already running is used and left running.
 - Both APKs stay installed after a run, so the emulator keeps its recordings: the store tests open a throwaway database file each, and the flows only sign out whoever was signed in. `make test-android-device ANDROID_TESTS=dev.holdmytrack.android.recording.db.RecordingStoresTest` runs the store tests without the dev stack.
 - `make e2e-ios` passes `HMT_API_BASE_URL` on the command line, which outranks `Config/Local.xcconfig`. Run from Xcode, the UI tests use the xcconfig's origin and skip when it doesn't answer. `IOS_UI_TESTS=HoldMyTrackUITests/LaunchTests` runs one class.
 - The iOS demo tests sign in as the demo, which the dev stack allows a few times an hour from one address; one refused with "Too many demo sessions" passes again once the hour is up. `CaptureTests` skips while the dev stack has no Spots ("Seeding a fresh database").

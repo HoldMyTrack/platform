@@ -91,9 +91,12 @@ test-ios: ## iOS design-file drift, package tests and the app's unit tests (Xcod
 test-all: test test-android test-ios ## test, test-android and test-ios
 
 # The dev stack up and answering, for the apps' flows: api and worker for the test account and
-# its uploads, web for the basemap the iOS export renders.
+# its uploads, web for the basemap the iOS export renders. --build, so the flows run against this
+# checkout's server rather than whichever image was built last. Every checkout shares the one
+# compose project, so a checkout without .env (a new worktree) would rebuild it with defaults.
 e2e-stack:
-	$(COMPOSE) up -d
+	@test -f .env || { echo "e2e-stack: no .env here; copy it (and any compose.override.yaml) from your main checkout"; exit 1; }
+	$(COMPOSE) up -d --build
 	curl -sf -o /dev/null --retry 60 --retry-delay 2 --retry-all-errors http://localhost:$(API_PORT)/healthz
 	curl -sf -o /dev/null --retry 60 --retry-delay 2 --retry-all-errors http://localhost:5173/
 
@@ -101,15 +104,15 @@ e2e-web: verify verify-build ## Web end-to-end: the Playwright map checks, dev s
 
 e2e-android: e2e-stack test-android-device ## Android instrumented tests with the dev stack: the UI Automator flows and the recording stores
 
+# with-android-emulator.sh starts an emulator when no device is attached, and stops it after.
 # The emulator reaches the host's API at 10.0.2.2; -P rebuilds the debug app against it. Gradle
 # uninstalls both APKs after a run, and the app's data with them, unless told to leave them.
 # Gradle passes when the APK fails to install and no test runs, so the result files are read:
 # at least one test per device, none failed.
 ANDROID_TEST_RESULTS := apps/android/holdmytrack/app/build/outputs/androidTest-results/connected/debug
-test-android-device: ## Android instrumented tests on a running emulator, no dev stack: the flows need e2e-android (ANDROID_TESTS narrows)
-	@adb devices | grep -q 'device$$' || { echo "no emulator: start one (Android Studio's Device Manager, or emulator -avd <name>)"; exit 1; }
+test-android-device: ## Android instrumented tests on an emulator, no dev stack: the flows need e2e-android (ANDROID_TESTS narrows, ANDROID_AVD picks the AVD)
 	rm -rf $(ANDROID_TEST_RESULTS)
-	cd apps/android/holdmytrack && ./gradlew :app:connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:$(API_PORT) \
+	cd apps/android/holdmytrack && ../../../scripts/with-android-emulator.sh ./gradlew :app:connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:$(API_PORT) \
 	  -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true \
 	  $(if $(ANDROID_TESTS),-Pandroid.testInstrumentationRunnerArguments.class=$(ANDROID_TESTS))
 	@for f in $(ANDROID_TEST_RESULTS)/TEST-*.xml; do \
