@@ -278,7 +278,10 @@ extension MapViewController {
         let box = finder.box
         let size = export.choice.outputSize(windowW: box.w, windowH: box.h)
         let unit = Double(size.width) / box.w
-        let style = MapStyle.compose(style: pair.style, document: pair.layers, state: ExportStyle.state(state), apiBase: flow.api.app.apiBaseURL)
+        let steps = ExportStyle.steps(style: pair.style, document: pair.layers, state: state, apiBase: flow.api.app.apiBaseURL)
+        let darkFlavor = traitCollection.userInterfaceStyle == .dark
+        let statsRequest = ExportStats.request(show: ExportState.showStats, checked: session.panel.checked, tripID: session.tripID,
+                                               width: finder.imageSize.width, height: finder.imageSize.height, dark: exportDark)
         let centre = mapView.convert(CGPoint(x: box.centerX, y: box.centerY), toCoordinateFrom: view)
         // The markers where the screen shows them, from the window's corner; the image draws the
         // same extent at the same zoom, only at unit pixels per point.
@@ -288,23 +291,33 @@ extension MapViewController {
             return ScreenPoint(id: item.id, x: p.x - box.x, y: p.y - box.y)
         }
         let placements = PhotoMarkers.layout(points, zoom: mapView.zoomLevel, activeID: shown.activeID, loneID: shown.loneID, width: box.w, height: box.h, scale: unit)
-        let credit = ImageMarks.creditText(basemap: ImageMarks.attribution(pair.style, source: Self.basemapSource),
-                                           satellite: state.satellite && !state.satelliteFailed ? ImageMarks.attribution(pair.style, source: MapStyle.satelliteID) : nil)
-        let dark = exportDark
+        let styleJSON = pair.style
         // The markers' colors as the screen shows them: the image is drawn off the main thread,
         // where the app's appearance isn't the current one.
         let traits = traitCollection
         let images = photoViews.markers.images
         let byID = Dictionary(shown.items.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        export.renderer.render(style: style, center: centre, zoom: mapView.zoomLevel, heading: mapView.direction, pitch: mapView.camera.pitch,
+        export.renderer.render(steps: steps, center: centre, zoom: mapView.zoomLevel, heading: mapView.direction, pitch: mapView.camera.pitch,
                                window: CGSize(width: box.w, height: box.h), pixelWidth: size.width, pixelHeight: size.height) { [weak self] result in
             guard let self, self.export.capture == capture else { return }
             switch result {
             case .failure(let error):
                 Self.log.error("export: \(String(describing: error), privacy: .public)")
                 self.failExport()
-            case .success(let picture):
+            case .success(let drawn):
+                let picture = drawn.image
+                // The credit names only what the picture drew, and the marks and the card take the
+                // look it drew in: a step without Satellite is in the map's own flavor.
+                let credit = ImageMarks.creditText(
+                    basemap: drawn.step.leftOut.contains(ExportStyle.basemapSource) ? nil : ImageMarks.attribution(styleJSON, source: ExportStyle.basemapSource),
+                    satellite: drawn.step.satellite ? ImageMarks.attribution(styleJSON, source: MapStyle.satelliteID) : nil)
+                let dark = ExportStats.dark(darkFlavor: darkFlavor, satellite: drawn.step.satellite, satelliteFailed: false)
                 Task { @MainActor in
+                    var card = card
+                    if card != nil, let request = statsRequest, request.dark != dark {
+                        let redrawn = ExportStats.Request(trackIDs: request.trackIDs, width: request.width, height: request.height, dark: dark)
+                        if let data = (try? await self.flow.api.statsCard(redrawn)) ?? nil, let image = UIImage(data: data) { card = image }
+                    }
                     var markers: [ExportImage.Marker] = []
                     for placement in placements {
                         let path = byID[placement.ids[0]]?.thumbPath
@@ -326,7 +339,6 @@ extension MapViewController {
         }
     }
 
-    private static let basemapSource = "protomaps"
     private static let log = Logger(subsystem: "dev.holdmytrack.ios", category: "export")
 
     /// A marker's thumbnail, cached or fetched; nil draws its frame empty.

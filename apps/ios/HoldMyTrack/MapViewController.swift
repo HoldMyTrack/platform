@@ -510,13 +510,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     /// The style's basemap source, whose tiles alone say whether the basemap is reachable: the
     /// map as a whole never finishes rendering while another source's tiles fail.
-    private static let basemapSource = "protomaps"
 
     /// Called off the main thread for every tile of every source: the basemap's and the
     /// imagery's arrivals and failures.
     nonisolated func mapView(_ mapView: MLNMapView, tileDidTriggerAction operation: MLNTileOperation, x: Int, y: Int, z: Int,
                              wrap: Int, overscaledZ: Int, sourceID: String) {
-        guard sourceID == Self.basemapSource || sourceID == MapStyle.satelliteID else { return }
+        guard sourceID == ExportStyle.basemapSource || sourceID == MapStyle.satelliteID else { return }
         let loaded: Bool
         switch operation {
         case .loadFromNetwork, .loadFromCache: loaded = true

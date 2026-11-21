@@ -72,7 +72,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 ### FR-2.11 Map image export
 
 - The image is saved to Photos, which the app may only add to, and offered to the share sheet; with Photos refused, only to the share sheet.
-- A basemap or Satellite that can't be reached fails the image, where Android leaves out the tiles it couldn't load.
+- A basemap or Satellite with a tile that can't be reached is left out of the image whole, and out of its credit, where Android leaves out only the tiles it couldn't load.
 
 ## 5. FR-3 — Sync and Imports
 

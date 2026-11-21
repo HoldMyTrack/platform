@@ -5,16 +5,46 @@ import UIKit
 /// Draws the export's picture with MapLibre's snapshotter from the style the live map was composed
 /// from (ExportStyle), never a crop of the live map (apps/ios/docs/IMPLEMENTATION.md §3.5): the
 /// window's size in points at the live zoom and heading, at the scale that makes it the image's
-/// pixels, so labels and lines keep their on-screen proportions, only sharper.
+/// pixels, so labels and lines keep their on-screen proportions, only sharper. The snapshotter
+/// fails the whole picture on one failed tile, and a hung one only times out, so each failure or
+/// timeout tries the next of ExportStyle.steps, each with a time of its own, and the picture says
+/// which step drew it.
 @MainActor
 final class ExportRenderer {
     private var snapshotter: MLNMapSnapshotter?
     private var styleFile: URL?
     private var timeout: Task<Void, Never>?
 
-    /// The picture, or why it couldn't be made; never called after cancel.
-    func render(style: JSONValue, center: CLLocationCoordinate2D, zoom: Double, heading: Double, pitch: CGFloat, window: CGSize, pixelWidth: Int, pixelHeight: Int,
-                done: @escaping (Result<UIImage, Error>) -> Void) {
+    /// A picture, and the step that drew it.
+    struct Picture {
+        let image: UIImage
+        let step: ExportStyle.Step
+    }
+
+    /// The picture from the first of steps that draws, or the last one's error; never called
+    /// after cancel. stepTime overrides each step's time, for tests.
+    func render(steps: [ExportStyle.Step], center: CLLocationCoordinate2D, zoom: Double, heading: Double, pitch: CGFloat, window: CGSize, pixelWidth: Int, pixelHeight: Int,
+                stepTime: Double? = nil, done: @escaping (Result<Picture, Error>) -> Void) {
+        // Generous, but each step its own share: every tile comes from nothing, and a bigger image
+        // takes longer to draw.
+        let seconds = stepTime ?? 15 + Double(pixelWidth * pixelHeight) / 1_000_000 * 8
+        func attempt(_ index: Int) {
+            let step = steps[index]
+            draw(style: step.style, center: center, zoom: zoom, heading: heading, pitch: pitch, window: window,
+                 pixelWidth: pixelWidth, pixelHeight: pixelHeight, seconds: seconds) { result in
+                switch result {
+                case .success(let image): done(.success(Picture(image: image, step: step)))
+                case .failure where index + 1 < steps.count: attempt(index + 1)
+                case .failure(let error): done(.failure(error))
+                }
+            }
+        }
+        guard !steps.isEmpty else { return done(.failure(ExportError.noImage)) }
+        attempt(0)
+    }
+
+    private func draw(style: JSONValue, center: CLLocationCoordinate2D, zoom: Double, heading: Double, pitch: CGFloat, window: CGSize, pixelWidth: Int, pixelHeight: Int,
+                      seconds: Double, done: @escaping (Result<UIImage, Error>) -> Void) {
         cancel()
         // The snapshotter loads a style by URL only.
         let file = FileManager.default.temporaryDirectory.appending(path: "export-style-\(UUID().uuidString).json")
@@ -38,8 +68,6 @@ final class ExportRenderer {
             self.cancel()
             done(result)
         }
-        // Generous: every tile comes from nothing, and a bigger image takes longer to draw.
-        let seconds = 30 + Double(pixelWidth * pixelHeight) / 1_000_000 * 15
         timeout = Task { @MainActor in
             try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled else { return }

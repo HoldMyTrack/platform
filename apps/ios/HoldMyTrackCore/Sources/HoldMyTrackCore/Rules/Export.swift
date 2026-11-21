@@ -283,6 +283,50 @@ public enum ExportStyle {
         state.vars["fogPlace"] = nil
         return state
     }
+
+    /// The basemap's vector source in the served style.
+    public static let basemapSource = "protomaps"
+
+    /// One way to draw the image: the style, what it leaves out, and whether it draws Satellite.
+    public struct Step: Equatable, Sendable {
+        public let style: JSONValue
+        public let leftOut: Set<String>
+        public let satellite: Bool
+    }
+
+    /// The ways to draw the image, tried in turn when one fails (MapLibre's snapshotter fails the
+    /// whole image on one tile it can't fetch, and can't say which): the map as shown; the same
+    /// again, for a one-off failure; with Satellite off, composed afresh so the basemap looks as it
+    /// does then, only while Satellite shows; and without the basemap too, the app's own layers
+    /// kept. Android leaves out each failed tile instead.
+    public static func steps(style: JSONValue, document: LayersDocument, state: MapState, apiBase: URL) -> [Step] {
+        let live = self.state(state)
+        let shown = live.satellite && !live.satelliteFailed && MapStyle.hasSatellite(style)
+        let full = MapStyle.compose(style: style, document: document, state: live, apiBase: apiBase)
+        var plain = live
+        plain.satellite = false
+        let noSatellite = shown ? MapStyle.compose(style: style, document: document, state: plain, apiBase: apiBase) : full
+        var steps = [Step(style: full, leftOut: [], satellite: shown), Step(style: full, leftOut: [], satellite: shown)]
+        if shown { steps.append(Step(style: noSatellite, leftOut: [MapStyle.satelliteID], satellite: false)) }
+        if noSatellite["sources"]?[basemapSource] != nil {
+            // The imagery's source goes too, drawn or not, so nothing of it can fail this last step.
+            steps.append(Step(style: without([basemapSource, MapStyle.satelliteID], in: noSatellite), leftOut: shown ? [MapStyle.satelliteID, basemapSource] : [basemapSource], satellite: false))
+        }
+        return steps
+    }
+
+    /// style without sources and every layer drawn from them.
+    public static func without(_ sources: Set<String>, in style: JSONValue) -> JSONValue {
+        guard var root = style.object, !sources.isEmpty else { return style }
+        if var all = root["sources"]?.object {
+            for id in sources { all[id] = nil }
+            root["sources"] = .object(all)
+        }
+        if let layers = root["layers"]?.array {
+            root["layers"] = .array(layers.filter { layer in layer["source"]?.string.map { !sources.contains($0) } ?? true })
+        }
+        return .object(root)
+    }
 }
 
 /// What every exported image carries in its bottom corners, the web export's `drawAttribution` and
