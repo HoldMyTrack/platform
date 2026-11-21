@@ -277,6 +277,8 @@ extension MapViewController {
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
         sheet.isHidden = state.mode != .normal || privateLocations.open || recordingLive
         sheet.setNeedsLayout()
+        // The map's credit sits above the sheet (placeAttribution), and the row's controls follow it.
+        view.setNeedsLayout()
         renderTopRow()
     }
 
@@ -307,6 +309,13 @@ extension MapViewController {
             onWantsTrips?(id)
             return
         }
+        panelChanged()
+    }
+
+    /// The tour starts with no rows checked: checked rows put the rail its steps point at away.
+    func uncheckForTour() {
+        guard session.panel.selecting else { return }
+        session.panel.clearChecked()
         panelChanged()
     }
 

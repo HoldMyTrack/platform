@@ -133,7 +133,6 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         // checked group, Zoom in the accent: Android's selection bar.
         let close = Controls.iconButton(UIImage(resource: .x), label: String(localized: "Uncheck all"), id: "endSelecting")
         close.addAction(UIAction { [weak self] _ in self?.onEvent?(.endSelecting) }, for: .primaryActionTriggered)
-        selectMenuButton.widthAnchor.constraint(equalToConstant: 28).isActive = true
         barActions.focus.configuration?.baseForegroundColor = UIColor(resource: .accent)
         let bar = UIStackView(arrangedSubviews: [close, checkAllButton, selectMenuButton, UIView()] + barActions.all)
         bar.alignment = .center

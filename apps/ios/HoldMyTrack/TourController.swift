@@ -118,6 +118,7 @@ final class TourController {
         guard running == nil else { return }
         closeCard()
         save(TourSeen(tour: true, cards: seen.cards))
+        host.map.uncheckForTour()
         let run = Running(steps: TourSteps.of(isDemo: host.isDemo), mode: host.map.pickedMode, tab: host.tourTab, sheet: host.map.tourSheetDetent)
         running = run
         let view = TourOverlay(dim: true)

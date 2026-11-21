@@ -27,7 +27,9 @@ extension MapViewController {
         rail.view.isHidden = !MapChrome.railShown(editing: editing, selectionShown: selecting)
         rail.locate.isHidden = recordingLive
         rail.export.isHidden = recordingLive
-        checkedExport.isHidden = !MapChrome.checkedExportShown(editing: editing, selectionShown: selecting, recording: recordingLive)
+        underBar.isHidden = !MapChrome.checkedExportShown(editing: editing, selectionShown: selecting, recording: recordingLive)
+        // The sheet's room and the credit follow the row's height (viewDidLayoutSubviews).
+        view.setNeedsLayout()
         if rail.view.isHidden { dismissMenus() }
         if modes.isHidden { fogLevelMenu.dismissUsers() }
         onBottomBar?(MapChrome.bottomBarShown(editOpen: editOpen, privacyEditing: privateLocations.open, exportOpen: exportOpen))

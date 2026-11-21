@@ -8,6 +8,8 @@ final class ModeToggle: UIView {
     var onPick: ((MapMode) -> Void)?
     private var buttons: [MapMode: UIButton] = [:]
     private(set) var mode = MapMode.normal
+    /// Fog's label as last set, drawn again at a new text size.
+    private var fog = (text: String(localized: "Fog"), locked: false, menu: false, spoken: String(localized: "Fog"))
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -35,8 +37,8 @@ final class ModeToggle: UIView {
             buttons[mode] = button
             row.addArrangedSubview(button)
         }
-        setTitle(.normal, plain: String(localized: "Normal"))
-        setTitle(.fog, plain: String(localized: "Fog"))
+        setTitles()
+        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (self: Self, _) in self.setTitles() }
         let inset = DesignTokens.Space.s4
         NSLayoutConstraint.activate([
             row.topAnchor.constraint(equalTo: topAnchor, constant: inset),
@@ -50,8 +52,12 @@ final class ModeToggle: UIView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    /// The button the level menu hangs from.
-    var fogButton: UIButton { buttons[.fog]! }
+    private var fogButton: UIButton { buttons[.fog]! }
+
+    private func setTitles() {
+        setTitle(.normal, plain: String(localized: "Normal"))
+        setFogTitle(fog.text, locked: fog.locked, menu: fog.menu, spoken: fog.spoken)
+    }
 
     /// Fills mode's button, as one choice of two.
     func select(_ mode: MapMode) {
@@ -67,6 +73,7 @@ final class ModeToggle: UIView {
     /// Fog's label: "Fog" while it's off, else "Fog · City" with a lock while one holds and the
     /// chevron saying it opens a menu; spoken as said.
     func setFogTitle(_ text: String, locked: Bool, menu: Bool, spoken: String) {
+        fog = (text, locked, menu, spoken)
         guard menu else { return setTitle(.fog, plain: text) }
         let font = Self.font
         let line = NSMutableAttributedString(string: text, attributes: [.font: font])

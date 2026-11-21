@@ -74,8 +74,6 @@ public enum TabMode {
         onTracksTab && !recording ? picked : .normal
     }
 
-    public static func toggleShown(onTracksTab: Bool, recording: Bool = false) -> Bool { onTracksTab && !recording }
-
     /// The groups a recording hides: every track and the focused one's pace bands.
     public static func hiddenGroups(recording: Bool) -> Set<String> { recording ? ["tracks", "route-bands"] : [] }
 }

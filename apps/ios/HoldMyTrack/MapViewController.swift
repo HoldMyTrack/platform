@@ -38,14 +38,16 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Layers waits for the layers document, which gives it Satellite and the swatches.
     lazy var layersMenu = MapMenuPopup(host: view, anchor: rail.layers, canOpen: { [unowned self] in self.pair != nil }) { [unowned self] in self.layersContent() }
     lazy var placesMenu = MapMenuPopup(host: view, anchor: rail.places) { [unowned self] in self.placesContent() }
-    /// Fog's level menu hangs from the toggle, lined up with its start, once the document has levels.
+    /// Fog's level menu, under the toggle and lined up with its start, once the document has levels.
     lazy var fogLevelMenu = MapMenuPopup(host: view, anchor: modes, alignStart: true, canOpen: { [unowned self] in
         self.state.mode == .fog && !self.levels.isEmpty && !self.modes.isHidden
     }) { [unowned self] in self.fogLevelContent() }
     /// The controls along the top: the mode toggle and the rail, then the notices under them.
     let chromeColumn = PassThroughStackView()
-    /// The toggle beside the rail, whose bottom the sheet and popups stay under.
+    /// The toggle beside the rail.
     let topRow = PassThroughStackView()
+    /// Under the top row, the camera while rows are checked.
+    let underBar = PassThroughStackView()
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
     private let location = CLLocationManager()
     let modesRow = PassThroughStackView()
@@ -209,7 +211,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let guide = view.safeAreaLayoutGuide.layoutFrame
-        sheet.setRoom(container: guide.height, topInset: topRow.convert(topRow.bounds, to: view).maxY - guide.minY + DesignTokens.Space.s8)
+        sheet.setRoom(container: guide.height, topInset: chromeBottom - guide.minY)
         layersMenu.place()
         placesMenu.place()
         fogLevelMenu.place()
@@ -305,8 +307,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         addPrivateLocations(to: style)
     }
 
-    /// How far down the controls over the map reach: a popup goes under its place above it.
-    var chromeBottom: CGFloat { topRow.convert(topRow.bounds, to: view).maxY + DesignTokens.Space.s8 }
+    /// How far down the controls over the map reach, the camera under the selection bar included:
+    /// the sheet stops under them, and a popup goes under its place above it.
+    var chromeBottom: CGFloat {
+        let lowest = underBar.isHidden ? topRow : underBar
+        return lowest.convert(lowest.bounds, to: view).maxY + DesignTokens.Space.s8
+    }
 
     /// The tracks' lines a tap is asked about (TrackTap).
     var trackLayers: Set<String> { pair.map { TrackTap.layerIDs($0.layers) } ?? [] }
@@ -593,8 +599,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         for v in [start, rail.view] { topRow.addArrangedSubview(v) }
         topRow.spacing = DesignTokens.Space.s8
         topRow.alignment = .top
-        let underBar = PassThroughStackView(arrangedSubviews: [UIView(), checkedExport])
-        underBar.arrangedSubviews[0].isUserInteractionEnabled = false
+        let gap = UIView()
+        gap.isUserInteractionEnabled = false
+        for v in [gap, checkedExport] { underBar.addArrangedSubview(v) }
+        underBar.isHidden = true
         for v in [topRow, underBar, capturing.banner, notices] { chromeColumn.addArrangedSubview(v) }
         chromeColumn.axis = .vertical
         chromeColumn.spacing = DesignTokens.Space.s8
