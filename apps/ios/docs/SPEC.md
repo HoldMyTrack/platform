@@ -3,7 +3,7 @@
 | | |
 | :-- | :-- |
 | **Status** | Current: the app as built |
-| **Last updated** | 2026-11-20 |
+| **Last updated** | 2026-11-21 |
 | **Related documents** | `docs/SPEC.md` (the server and web behavior this app shares), `apps/ios/docs/ARCHITECTURE.md` (the app's shape and stack), `apps/ios/docs/IMPLEMENTATION.md` (how it's built), `apps/ios/docs/ROADMAP.md` (the plan) |
 
 ## 1. Introduction
@@ -28,7 +28,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 ### FR-1.2 Session persistence and re-verification
 
 - The token is kept in the Keychain, on this iPhone only. A reinstall starts signed out, though the Keychain outlives an uninstall.
-- A failed check shows why, with Try again and Sign out; returning to the app checks again.
+- The map's unreachable notice offers Sign out beside Try again, since the tab bar waits for the check.
 
 ### FR-1.5 Settings
 

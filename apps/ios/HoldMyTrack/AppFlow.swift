@@ -62,7 +62,7 @@ final class AppFlow {
         case .signIn:
             setRoot(SignInViewController(flow: self))
         case .verify:
-            setRoot(CheckingViewController(flow: self))
+            if let stored = store.stored { setRoot(SessionCheckMapViewController(flow: self, stored: stored)) }
             check()
         case .verifyEmail:
             if let account = store.confirmed { setRoot(VerifyEmailViewController(flow: self, email: account.email)) }
@@ -97,6 +97,7 @@ final class AppFlow {
         guard !checking, store.stored != nil else { return nil }
         checking = true
         defer { checking = false }
+        (window.rootViewController as? SessionCheckScreen)?.checkStarted()
         let before = store.route
         do {
             store.confirm(try await api.me())
@@ -111,6 +112,7 @@ final class AppFlow {
             }
             return error
         } catch {
+            (window.rootViewController as? SessionCheckScreen)?.checkFailed(.unreachable)
             return .unreachable
         }
     }
@@ -214,5 +216,17 @@ final class AppFlow {
 /// A screen that shows why a session check failed and offers Try again.
 @MainActor
 protocol SessionCheckScreen: AnyObject {
+    func checkStarted()
     func checkFailed(_ error: APIError)
+}
+
+extension SessionCheckScreen {
+    func checkStarted() {}
+}
+
+extension APIError {
+    /// What a failed request says on a screen: the server's own message when it sent one.
+    var shownMessage: String {
+        serverMessage ?? String(localized: "Couldn't reach HoldMyTrack. Check your connection and try again.")
+    }
 }

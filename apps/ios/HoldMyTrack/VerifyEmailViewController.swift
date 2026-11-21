@@ -43,7 +43,7 @@ final class VerifyEmailViewController: UIViewController, SessionCheckScreen {
     }
 
     func checkFailed(_ error: APIError) {
-        show(CheckingViewController.describe(error))
+        show(error.shownMessage)
     }
 
     private func show(_ message: String) {
@@ -66,7 +66,7 @@ final class VerifyEmailViewController: UIViewController, SessionCheckScreen {
                     if SessionCheck.signsOut(error) {
                         flow.sessionEnded()
                     } else if error != .outdated {
-                        show(error.serverMessage ?? CheckingViewController.describe(error))
+                        show(error.shownMessage)
                     }
                 } catch {}
             case .check:
@@ -85,7 +85,7 @@ final class VerifyEmailViewController: UIViewController, SessionCheckScreen {
             do {
                 show(try await flow.api.resendVerification())
             } catch let error as APIError {
-                if error != .outdated { show(CheckingViewController.describe(error)) }
+                if error != .outdated { show(error.shownMessage) }
             } catch {}
         }
     }

@@ -321,6 +321,18 @@ struct MapStyleTests {
         #expect(layer(compose(state), "roads_major")?["layout"]?["visibility"] == .string("none"))
     }
 
+    @Test func theBasemapAloneKeepsSatelliteAndRoadsAndNoneOfTheAccountsLayers() {
+        var state = MapState()
+        state.satellite = true
+        state.roads = false
+        let basemap = MapStyle.basemap(style: style, state: state)
+        #expect(ids(basemap) == ids(style))
+        #expect(basemap["sources"]?.object?.keys.sorted() == ["protomaps", "satellite"])
+        #expect(layer(basemap, "satellite")?["layout"]?["visibility"] == .string("visible"))
+        #expect(layer(basemap, "earth")?["layout"]?["visibility"] == .string("none"))
+        #expect(layer(basemap, "roads_major")?["layout"]?["visibility"] == .string("none"))
+    }
+
     @Test func theStylesBuildIsReadFromItsMetadata() {
         #expect(MapStyle.build(ofStyle: style) == "b1")
         #expect(MapStyle.hasSatellite(style))
