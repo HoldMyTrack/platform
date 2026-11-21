@@ -20,10 +20,6 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] When `MIN_ANDROID_BUILD` reaches a build whose "check your email" screen takes the code, make the email code-only: drop its link, the `/verify` page and its Confirm button, the Facebook round trip from that page, and `POST /v2/auth/verify-email` (`IMPLEMENTATION.md` §4.9).
 
-### Private rows in camera fits
-
-- [ ] Once 0.35.0 is live on Google Play, raise `MIN_ANDROID_BUILD` to its build (`DEPLOY.md` §10): older builds frame a Private row's location circle in the opening view and the Dates flight (`SPEC.md` FR-5.8).
-
 ### After launch
 
 - [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 actions and the controller's sign-off.
