@@ -1,8 +1,14 @@
 import UIKit
 
 /// The map's notices under its top row, one per id: its text, then, as on Android, an optional
-/// line of small print and an action button, and × when onClose is given.
+/// line of small print and action buttons in a row, and × when onClose is given.
 final class MapNotices: UIStackView {
+    struct Action {
+        let title: String
+        let id: String
+        let run: () -> Void
+    }
+
     init() {
         super.init(frame: .zero)
         axis = .vertical
@@ -13,7 +19,7 @@ final class MapNotices: UIStackView {
     required init(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
     /// Shows id's notice, or changes its words; × takes it down and then calls onClose.
-    func show(_ id: Int, _ text: String, detail: String? = nil, action: (title: String, run: () -> Void)? = nil, onClose: (() -> Void)? = nil) {
+    func show(_ id: Int, _ text: String, detail: String? = nil, actions: [Action] = [], onClose: (() -> Void)? = nil) {
         // Shown again, it keeps its place, its buttons and VoiceOver's quiet; only the words change.
         if let shown = box(id) {
             Self.labels(in: shown).first { $0.accessibilityIdentifier == "notice" }?.text = text
@@ -30,10 +36,20 @@ final class MapNotices: UIStackView {
             small.accessibilityIdentifier = "noticeDetail"
             column.append(small)
         }
-        if let action {
-            let button = Controls.textButton(action.title, id: "noticeAction")
+        let buttons = actions.map { action in
+            let button = Controls.textButton(action.title, id: action.id)
             button.addAction(UIAction { _ in action.run() }, for: .primaryActionTriggered)
-            column.append(button)
+            return button
+        }
+        if buttons.count == 1 {
+            column += buttons
+        } else if buttons.count > 1 {
+            let row = UIStackView(arrangedSubviews: buttons)
+            row.spacing = DesignTokens.Space.s16
+            let centered = UIStackView(arrangedSubviews: [row])
+            centered.axis = .vertical
+            centered.alignment = .center
+            column.append(centered)
         }
         let content: UIView = column.count == 1 ? label : Controls.column(column, spacing: DesignTokens.Space.s4)
         let box: UIView

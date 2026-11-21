@@ -28,6 +28,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 ### FR-1.2 Session persistence and re-verification
 
 - The token is kept in the Keychain, on this iPhone only. A reinstall starts signed out, though the Keychain outlives an uninstall.
+- The map's unreachable notice offers Sign out beside Try again, since the tab bar waits for the check.
 
 ### FR-1.5 Settings
 

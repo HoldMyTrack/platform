@@ -58,6 +58,9 @@ public struct LayersDocument: Equatable, Sendable {
         self.groups = parsed
     }
 
+    /// No layers and no views: what basemap composes with.
+    static let basemapOnly = LayersDocument(.object(["groups": .array([]), "views": .object([:])]))!
+
     /// Each layer id of placement in paint order, the basemap layers groups lift included.
     func order(_ groups: [Group], _ placement: Placement) -> [String] {
         groups.filter { $0.placement == placement }.flatMap { $0.lifts + $0.layers.compactMap { $0["id"]?.string } }
@@ -177,6 +180,12 @@ public enum MapStyle {
         root["sources"] = .object(sources)
         root["layers"] = .array(ids.compactMap { layers[$0] })
         return .object(root)
+    }
+
+    /// The style alone, before the layers document can be fetched (a session not yet confirmed):
+    /// state's Satellite and Roads applied as compose applies them, and none of the account's layers.
+    public static func basemap(style: JSONValue, state: MapState) -> JSONValue {
+        compose(style: style, document: .basemapOnly, state: state, apiBase: URL(string: "http://localhost")!)
     }
 
     // MARK: Applying the state

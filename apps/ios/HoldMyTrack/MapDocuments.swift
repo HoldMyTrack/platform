@@ -47,6 +47,19 @@ struct MapDocuments {
         return Pair(style: style, layers: layers)
     }
 
+    /// The style kept from an earlier fetch, for a map that can't ask for the layers document yet.
+    func keptStyle(flavor: String, language: String) -> JSONValue? {
+        read(styleName(flavor, language)).flatMap(JSONValue.parse)
+    }
+
+    /// The style alone, revalidated against the kept one: it needs no session, unlike the layers
+    /// document.
+    func fetchStyle(flavor: String, language: String) async throws -> JSONValue {
+        let data = try await refreshed(styleName(flavor, language)) { try await api.mapStyle(flavor: flavor, language: language, etag: $0) }
+        guard let style = JSONValue.parse(data) else { throw APIError.unreadable }
+        return style
+    }
+
     /// Both documents, fetched in parallel and revalidated against the kept ones; the style is
     /// fetched again whole when the two come from different builds.
     func fetch(flavor: String, language: String) async throws -> Pair {

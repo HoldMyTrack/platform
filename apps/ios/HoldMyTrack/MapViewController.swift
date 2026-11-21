@@ -529,7 +529,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     /// Shows kind's notice under the top row, or changes its words (MapNotices.show).
     func notice(_ kind: Notice, _ text: String, detail: String? = nil, action: (title: String, run: () -> Void)? = nil, onClose: (() -> Void)? = nil) {
-        notices.show(kind.rawValue, text, detail: detail, action: action, onClose: onClose)
+        notices.show(kind.rawValue, text, detail: detail, actions: action.map { [MapNotices.Action(title: $0.title, id: "noticeAction", run: $0.run)] } ?? [], onClose: onClose)
     }
 
     /// Whether kind's notice is up.

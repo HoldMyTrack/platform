@@ -83,6 +83,36 @@ public enum SessionCheck {
     }
 }
 
+/// The notice the map shows while a kept session is checked (apps/android/docs/SPEC.md FR-1.2):
+/// none while a check is young, "Checking your session…" once it runs past checkingDelay, and
+/// the unreachable notice, with Try again and Sign out, when it fails short of a 401 or the
+/// Update screen.
+public enum SessionCheckNotice: Equatable, Sendable {
+    case checking
+    case unreachable
+
+    public enum Event: Equatable, Sendable {
+        /// A check started: a notice from the last one goes.
+        case started
+        /// The check ran past checkingDelay without an answer.
+        case slow
+        /// The check failed with this error.
+        case failed(APIError)
+    }
+
+    /// How long a check runs before its notice shows, so a fast one doesn't flash it.
+    public static let checkingDelay: Duration = .milliseconds(600)
+
+    /// The notice after event, given the one shown.
+    public static func after(_ event: Event, shown: SessionCheckNotice?) -> SessionCheckNotice? {
+        switch event {
+        case .started: nil
+        case .slow: shown ?? .checking
+        case .failed(let error): SessionCheck.signsOut(error) || error == .outdated ? nil : .unreachable
+        }
+    }
+}
+
 /// The key everything the phone keeps per account goes under (apps/android/docs/SPEC.md FR-5.3):
 /// the account's email as the server spells it, lowercased, with the demo account's own key.
 public enum AccountKey {
