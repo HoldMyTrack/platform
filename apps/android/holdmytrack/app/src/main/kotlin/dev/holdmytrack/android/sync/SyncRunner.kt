@@ -7,6 +7,7 @@ import androidx.health.connect.client.records.ExerciseRoute
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
+import dev.holdmytrack.android.net.SyncResult
 import dev.holdmytrack.android.net.SyncTrackJson
 import dev.holdmytrack.android.net.SyncPointJson
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
@@ -46,13 +47,50 @@ data class SyncReport(
  * read again here, by its id, as the run reaches it ([SyncCandidates.reread]) — and the tab
  * cancels a run when it leaves.
  */
-class SyncRunner(
-    private val store: RecordedTrackStore,
-    /** For the reasons a run reports — the refusals and why it stopped — in the app's language. */
-    private val res: Resources,
-    /** Reads a kept row's route again; null when Health Connect can't be read. */
-    private val healthConnect: HealthConnectClient?,
+class SyncRunner internal constructor(
+    /** `POST /v2/sync/tracks`: the server's verdicts, or an [IOException] for a request that failed. */
+    private val post: suspend (tracks: List<SyncTrackJson>, source: String) -> List<SyncResult>,
+    /** Marks the recording with this external id sent ([RecordedTrackStore.markSent]). */
+    private val markSent: suspend (externalId: String) -> Unit,
+    private val text: Text,
+    /** Reads a kept row's route again by its external id; null when Health Connect can't be read. */
+    private val reread: suspend (externalId: String) -> SyncCandidates.Reread?,
 ) {
+    constructor(
+        store: RecordedTrackStore,
+        res: Resources,
+        healthConnect: HealthConnectClient?,
+    ) : this(
+        post = { tracks, source ->
+            try {
+                HoldMyTrackApi.syncTracks(tracks, source)
+            } catch (e: IOException) {
+                Log.w(TAG, "sync batch failed", e)
+                throw e
+            }
+        },
+        markSent = store::markSent,
+        text = ResourceText(res),
+        reread = { id -> healthConnect?.let { SyncCandidates.reread(it, id) } },
+    )
+
+    /** The reasons a run reports, the refusals and why it stopped, in the app's language. */
+    internal interface Text {
+        fun tooManyPoints(points: Int): String
+        fun gone(): String
+        fun routeUnreadable(): String
+        fun requestFailed(): String
+        fun noReport(status: String): String
+    }
+
+    private class ResourceText(private val res: Resources) : Text {
+        override fun tooManyPoints(points: Int) = res.getQuantityString(R.plurals.sync_refusal_too_many_points, points, points)
+        override fun gone() = res.getString(R.string.sync_refusal_gone)
+        override fun routeUnreadable() = res.getString(R.string.sync_refusal_route)
+        override fun requestFailed() = res.getString(R.string.sync_request_failed)
+        override fun noReport(status: String) = res.getString(R.string.sync_no_report, status)
+    }
+
     private val landed = mutableSetOf<String>()
     private var synced = 0
     private var alreadyPresent = 0
@@ -77,8 +115,7 @@ class SyncRunner(
         for (ticked in sessions) {
             val candidate = withRoute(ticked) ?: continue
             if (SyncBatcher.tooLarge(candidate.pointCount)) {
-                val refusal = res.getQuantityString(R.plurals.sync_refusal_too_many_points, candidate.pointCount, candidate.pointCount)
-                rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, refusal)
+                rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, text.tooManyPoints(candidate.pointCount))
                 continue
             }
             val full = batches.add(candidate, candidate.pointCount) ?: continue
@@ -94,12 +131,12 @@ class SyncRunner(
      *  kept from an earlier one. Null, with the reason among the refusals, when it can't be. */
     private suspend fun withRoute(candidate: Candidate): Candidate? {
         if (candidate.origin != null) return candidate
-        val reason = when (val again = healthConnect?.let { SyncCandidates.reread(it, candidate.externalId) }) {
+        val reason = when (val again = reread(candidate.externalId)) {
             is SyncCandidates.Reread.Found -> return candidate.copy(origin = again.origin, pointCount = again.origin.route.size)
-            SyncCandidates.Reread.Gone -> R.string.sync_refusal_gone
-            SyncCandidates.Reread.Refused, null -> R.string.sync_refusal_route
+            SyncCandidates.Reread.Gone -> text.gone()
+            SyncCandidates.Reread.Refused, null -> text.routeUnreadable()
         }
-        rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, res.getString(reason))
+        rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, reason)
         return null
     }
 
@@ -109,7 +146,7 @@ class SyncRunner(
         for (candidate in recordings) {
             flush(listOf(candidate), HoldMyTrackApi.SOURCE_RECORDED, report = false)?.let { return it }
             if (candidate.key in landed) {
-                store.markSent(candidate.externalId)
+                markSent(candidate.externalId)
                 onLanded(listOf(candidate))
             }
             onProgress(landed.size)
@@ -125,10 +162,9 @@ class SyncRunner(
     private suspend fun flush(batch: List<Candidate>, source: String, report: Boolean = true): String? {
         if (batch.isEmpty()) return null
         val results = try {
-            HoldMyTrackApi.syncTracks(batch.map { prepare(it) }, source)
+            post(batch.map { prepare(it) }, source)
         } catch (e: IOException) {
-            Log.w(TAG, "sync batch failed", e)
-            return FailureText.of(e, res.getString(R.string.sync_request_failed))
+            return FailureText.of(e, text.requestFailed())
         }
         val verdicts = SyncVerdicts.of(batch, results)
         synced += verdicts.enqueued.size
@@ -136,7 +172,7 @@ class SyncRunner(
         val now = verdicts.enqueued + verdicts.alreadyPresent
         landed += now.map { it.key }
         for ((candidate, result) in verdicts.refused) {
-            val reason = result?.error?.ifBlank { null } ?: res.getString(R.string.sync_no_report, result?.status ?: "missing")
+            val reason = result?.error?.ifBlank { null } ?: text.noReport(result?.status ?: "missing")
             rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, reason)
         }
         if (report && now.isNotEmpty()) onLanded(now)
