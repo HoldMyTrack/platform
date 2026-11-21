@@ -196,6 +196,12 @@ struct MapStyleTests {
         #expect(!MapChrome.emptyNoticeShown(empty: false, demo: false, closed: false))
     }
 
+    @Test func theAreasNoticesStepAsideWhileRecordingAndOnTheSyncTab() {
+        #expect(MapChrome.areaNoticesShown(recording: false, onSync: false))
+        #expect(!MapChrome.areaNoticesShown(recording: true, onSync: false))
+        #expect(!MapChrome.areaNoticesShown(recording: false, onSync: true))
+    }
+
     @Test func aLockedLevelDrawsAtEveryZoomAndTheOthersAtNone() throws {
         #expect(layer(compose(), "region-fog-fill")?["minzoom"] == .number(4), "unlocked, each layer keeps its band")
         var state = MapState()

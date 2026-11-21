@@ -22,7 +22,7 @@ final class YouTests: XCTestCase {
         Thread.sleep(forTimeInterval: 4)
         XCTAssertEqual(try account.trackCount(), 0, "nothing is sent unasked")
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        app.cells["youUpload"].tap()
+        app.cells["syncUpload"].tap()
         XCTAssertTrue(app.staticTexts["sharedFiles"].waitForExistence(timeout: 5), "still listed after leaving Upload")
         app.buttons["uploadShared"].tap()
         XCTAssertFalse(app.buttons["uploadShared"].isHittable, "the list empties")
@@ -42,7 +42,7 @@ final class YouTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         app.tabBars.buttons["tabYou"].tap()
         XCTAssertTrue(app.staticTexts["account"].waitForExistence(timeout: 10))
-        for id in ["youUpload", "youPrivacy", "youTheme", "youLanguage", "youAbout", "youDelete", "signOut"] {
+        for id in ["youPrivacy", "youTheme", "youLanguage", "youAbout", "youDelete", "signOut"] {
             XCTAssertTrue(app.cells[id].exists, id)
         }
         app.cells["youPrivacy"].tap()

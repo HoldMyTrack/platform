@@ -5,6 +5,7 @@ import HoldMyTrackCore
 /// Sync tab lists, the ticked ones sent one at a time under `recorded`, and each one the server
 /// took asked about every 2 seconds, on any tab, until it lands, when it leaves the phone, or its
 /// ingest fails, when it's listed again. The tab bar owns it, so the follow-up outlives the tab.
+/// The rows swiped aside are kept here too, per account (SyncHidden).
 @MainActor
 final class RecordingsSync {
     private let api: APIClient
@@ -19,8 +20,18 @@ final class RecordingsSync {
     private(set) var sending = false
     /// The rows ticked to send; nothing starts ticked.
     var ticked: Set<String> = []
-    /// Why each refused recording wasn't taken, shown on its row, which stays ticked.
-    private(set) var refusals: [String: RecordingSync.Refusal] = [:]
+    /// What the last send did, said over the list until the next one.
+    private(set) var report: Report?
+    /// Sent recordings whose ingest failed since the tab last asked (takeFailed).
+    private var failed: [RecordedTrack] = []
+
+    /// What a send did: how many the server took, each refused with why (they stay ticked), and
+    /// why it stopped early, if it did.
+    struct Report {
+        var sent = 0
+        var refused: [(track: RecordedTrack, refusal: RecordingSync.Refusal)] = []
+        var stopped: APIError?
+    }
 
     static let changed = Notification.Name("RecordingsSync.changed")
     /// A recording landed: the map reads its list and tiles again.
@@ -37,8 +48,30 @@ final class RecordingsSync {
     }
 
     var all: [RecordedTrack] { store.list(account: account) }
-    var listed: [RecordedTrack] { RecordingSync.listed(all) }
     var awaited: Int { all.filter(\.sent).count }
+
+    /// The rows swiped aside, kept on the phone for this account; one that left the phone is
+    /// forgotten as it's read.
+    var hidden: Set<String> {
+        get {
+            let kept = Set(UserDefaults.standard.stringArray(forKey: Self.hiddenKey(account)) ?? [])
+            let present = SyncHidden.pruned(kept, present: all)
+            if present != kept { UserDefaults.standard.set(Array(present), forKey: Self.hiddenKey(account)) }
+            return present
+        }
+        set { UserDefaults.standard.set(Array(newValue), forKey: Self.hiddenKey(account)) }
+    }
+
+    private static func hiddenKey(_ account: String) -> String { "sync.hidden.\(account)" }
+
+    /// A deleted account's hidden rows go with it.
+    static func forget(account: String) { UserDefaults.standard.removeObject(forKey: hiddenKey(account)) }
+
+    /// The sent recordings whose ingest failed since last asked.
+    func takeFailed() -> [RecordedTrack] {
+        defer { failed = [] }
+        return failed
+    }
 
     /// Edit's name, description and type, written onto the stored recording as it is now: one
     /// that landed meanwhile isn't written back, and one sent meanwhile stays sent.
@@ -58,19 +91,20 @@ final class RecordingsSync {
         guard !isSending(id) else { return }
         store.delete(id: id, account: account)
         ticked.remove(id)
-        refusals[id] = nil
         changed()
     }
 
-    /// The ticked rows, one recording at a time; a run cut short leaves the rest ticked.
-    func send() async {
-        guard !sending, !stopped, RecordingSync.canSend(ticked: ticked, isDemo: isDemo) else { return }
+    /// tracks, the rows ticked and shown, one recording at a time; a run cut short leaves the rest
+    /// ticked.
+    func send(_ tracks: [RecordedTrack]) async {
+        guard !sending, !stopped, !isDemo, !tracks.isEmpty else { return }
         sending = true
+        report = Report()
         changed()
-        for track in listed where ticked.contains(track.id) {
+        for track in tracks {
             if stopped { break }
             if let refusal = RecordingSync.refusal(track) {
-                refusals[track.id] = refusal
+                report?.refused.append((track, refusal))
                 continue
             }
             do {
@@ -78,7 +112,7 @@ final class RecordingsSync {
                 // Signed out meanwhile: the account's folder may be gone, and stays gone.
                 if stopped { break }
                 if let refusal {
-                    refusals[track.id] = refusal
+                    report?.refused.append((track, refusal))
                 } else {
                     // The stored copy as it is now, so nothing written meanwhile is lost.
                     if var sent = all.first(where: { $0.id == track.id }) {
@@ -86,10 +120,11 @@ final class RecordingsSync {
                         try? store.save(sent, account: account)
                     }
                     ticked.remove(track.id)
-                    refusals[track.id] = nil
+                    report?.sent += 1
                 }
             } catch {
                 // Unreachable or refused as a whole: what wasn't confirmed stays ticked.
+                report?.stopped = (error as? APIError) ?? .unreachable
                 break
             }
             changed()
@@ -130,6 +165,7 @@ final class RecordingsSync {
                 var back = track
                 back.sent = false
                 try? store.save(back, account: account)
+                self.failed.append(back)
                 failed = true
             }
         }

@@ -21,6 +21,10 @@ public enum MapChrome {
         empty && !demo && !closed
     }
 
+    /// Whether the empty and capped notices show: they step aside while recording and on the Sync
+    /// tab, whose lists aren't the area's; failures stay up.
+    public static func areaNoticesShown(recording: Bool, onSync: Bool) -> Bool { !recording && !onSync }
+
     /// The Layers button: Roads and each path picked; places have their own button.
     public static func layers(_ state: MapState) -> RailLook {
         let picked = (state.roads ? 1 : 0) + state.toggles.filter { $0.key != Spots.group && $0.value }.count

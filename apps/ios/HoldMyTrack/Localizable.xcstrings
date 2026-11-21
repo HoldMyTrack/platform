@@ -9445,20 +9445,110 @@
         }
       }
     },
-    "sync.empty" : {
-      "comment" : "Sync: no recordings.",
+    "sync.deleteMessage" : {
+      "comment" : "Sync: deleting a recording, why it asks.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nothing recorded on this phone. The record button on the tab bar records a track."
+            "value" : "It hasn't been synced, so this is the only copy. This can't be undone."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "На этом телефоне нет записей. Кнопка записи на панели вкладок записывает трек."
+            "value" : "Она не синхронизирована, так что это единственная копия. Это нельзя отменить."
+          }
+        }
+      }
+    },
+    "sync.deleteRow" : {
+      "comment" : "Sync: a recording's Delete, read out with its title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить: %@"
+          }
+        }
+      }
+    },
+    "sync.deleteTitle" : {
+      "comment" : "Sync: deleting a recording, the question.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this recording?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить эту запись?"
+          }
+        }
+      }
+    },
+    "sync.demo" : {
+      "comment" : "Sync: the demo account can't send.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The demo account is read-only — it can't add, edit, or delete tracks. Create an account to sync your own data."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Демо-аккаунт только для просмотра — в нём нельзя добавлять, изменять и удалять треки. Создайте аккаунт, чтобы синхронизировать свои данные."
+          }
+        }
+      }
+    },
+    "sync.dontShowHidden" : {
+      "comment" : "Sync: put the hidden rows away.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't show hidden"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не показывать скрытые"
+          }
+        }
+      }
+    },
+    "sync.editRow" : {
+      "comment" : "Sync: a recording's Edit, read out with its title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить: %@"
           }
         }
       }
@@ -9481,26 +9571,134 @@
         }
       }
     },
-    "sync.onTheirWay" : {
-      "comment" : "Sync: recordings the server took, still processing, written as label: N.",
+    "sync.hidden" : {
+      "comment" : "Sync: a row swiped aside.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Being added to your map: %lld"
+            "value" : "Hidden — it won't be offered again"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавляются на карту: %lld"
+            "value" : "Скрыто — больше не будет предлагаться"
           }
         }
       }
     },
-    "sync.onThisPhone" : {
-      "comment" : "Sync: the heading over the recordings.",
+    "sync.hide" : {
+      "comment" : "Sync: a row's swipe, hiding it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрыть"
+          }
+        }
+      }
+    },
+    "sync.historySub" : {
+      "comment" : "Sync: what Sync history shows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every import and how it went"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все импорты и чем они закончились"
+          }
+        }
+      }
+    },
+    "sync.listEmpty" : {
+      "comment" : "Sync: nothing on the phone to send.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing waiting. Recordings from the record button show up here."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ничего не ждёт. Записи с кнопки записи появятся здесь."
+          }
+        }
+      }
+    },
+    "sync.now" : {
+      "comment" : "Sync: send, with nothing ticked.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить"
+          }
+        }
+      }
+    },
+    "sync.processing" : {
+      "comment" : "Sync: a sent row on its way to the map.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adding to your map…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавляется на карту…"
+          }
+        }
+      }
+    },
+    "sync.progress" : {
+      "comment" : "Sync: a send in progress, how many so far of how many.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent %1$lld of %2$lld…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправлено %1$lld из %2$lld…"
+          }
+        }
+      }
+    },
+    "sync.recorded" : {
+      "comment" : "Sync: where a row comes from.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -9524,25 +9722,97 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Not sent."
+            "value" : "not sent"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не отправлено."
+            "value" : "не отправлено"
           }
         }
       }
     },
-    "sync.send" : {
-      "comment" : "Sync: send the ticked recordings, and how many.",
+    "sync.rejected" : {
+      "comment" : "Sync: a row the server refused, its start, type and why.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Send %lld"
+            "value" : "Rejected: %1$@ %2$@ — %3$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отклонено: %1$@ %2$@ — %3$@"
+          }
+        }
+      }
+    },
+    "sync.rowFailed" : {
+      "comment" : "Sync: a sent recording's ingest failed; its start and type.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't add %1$@ %2$@ — Sync history says why. It's back on the list."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось добавить %1$@ %2$@ — причина в истории синхронизации. Тренировка снова в списке."
+          }
+        }
+      }
+    },
+    "sync.selectAll" : {
+      "comment" : "Sync: tick every row shown.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select all"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрать все"
+          }
+        }
+      }
+    },
+    "sync.selectNone" : {
+      "comment" : "Sync: untick every row shown.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select none"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снять все"
+          }
+        }
+      }
+    },
+    "sync.send" : {
+      "comment" : "Sync: send the ticked rows, and how many.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync %lld"
           }
         },
         "ru" : {
@@ -9553,56 +9823,292 @@
         }
       }
     },
-    "sync.sending" : {
-      "comment" : "Sync: recordings being sent.",
+    "sync.showHidden" : {
+      "comment" : "Sync: list the hidden rows, and how many.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sending…"
+            "value" : "Show hidden (%lld)"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отправка…"
+            "value" : "Показать скрытые (%lld)"
           }
         }
       }
     },
-    "sync.tick" : {
-      "comment" : "Sync: a recording's tick box, ticked to send it.",
+    "sync.stopped" : {
+      "comment" : "Sync: a send cut short, and why.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Send"
+            "value" : "Stopped early. %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отправить"
+            "value" : "Остановлено досрочно. %@"
+          }
+        }
+      }
+    },
+    "sync.summary" : {
+      "comment" : "Sync: how many the last send took.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@summary@"
+          },
+          "substitutions" : {
+            "summary" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Sent %arg track. It stays listed until it's on your map."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Sent %arg tracks. They stay listed until they're on your map."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@summary@"
+          },
+          "substitutions" : {
+            "summary" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Отправлено: %arg. Тренировки остаются в списке, пока не появятся на карте."
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Отправлено: %arg. Тренировки остаются в списке, пока не появятся на карте."
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Отправлено: %arg. Тренировки остаются в списке, пока не появятся на карте."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Отправлено: %arg. Тренировки остаются в списке, пока не появятся на карте."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sync.tickRow" : {
+      "comment" : "Sync: a row's tick, read out.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tick %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отметить: %@"
+          }
+        }
+      }
+    },
+    "sync.ticked" : {
+      "comment" : "Sync: how many rows are ticked, of how many can be, and their distance.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld ticked · %3$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отмечено %1$lld из %2$lld · %3$@"
           }
         }
       }
     },
     "sync.tooManyPoints" : {
-      "comment" : "Sync: a recording too long to send, and the limit.",
+      "comment" : "Sync: why a recording wasn't sent: too long, and the limit.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Not sent: over %lld points."
+            "value" : "over %lld points"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не отправлено: больше %lld точек."
+            "value" : "больше %lld точек"
+          }
+        }
+      }
+    },
+    "sync.types" : {
+      "comment" : "Sync: the type chips, read out.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track types"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Типы треков"
+          }
+        }
+      }
+    },
+    "sync.undo" : {
+      "comment" : "Sync: put a hidden row back, or hide it again.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отменить"
+          }
+        }
+      }
+    },
+    "sync.unhidden" : {
+      "comment" : "Sync: a hidden row swiped back.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back on the list"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снова в списке"
+          }
+        }
+      }
+    },
+    "sync.unhide" : {
+      "comment" : "Sync: a hidden row's swipe, bringing it back.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать"
+          }
+        }
+      }
+    },
+    "sync.untickRow" : {
+      "comment" : "Sync: a ticked row's tick, read out.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untick %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снять отметку: %@"
+          }
+        }
+      }
+    },
+    "sync.uploadSub" : {
+      "comment" : "Sync: what Upload takes.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPX, FIT or TCX files"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Файлы GPX, FIT или TCX"
+          }
+        }
+      }
+    },
+    "sync.uploadTitle" : {
+      "comment" : "Sync: the Upload tile.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload files"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Файлы"
           }
         }
       }

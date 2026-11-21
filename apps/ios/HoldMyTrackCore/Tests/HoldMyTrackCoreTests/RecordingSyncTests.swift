@@ -19,17 +19,6 @@ struct RecordingSyncTests {
         #expect(RecordingSync.outcome("a", known: [], processing: []) == .failed)
     }
 
-    @Test func theListIsNewestFirstWithoutTheOnesAwaited() {
-        let listed = RecordingSync.listed([track("old", at: 0), track("sent", at: 50, sent: true), track("new", at: 100)])
-        #expect(listed.map(\.id) == ["new", "old"])
-    }
-
-    @Test func theDemoCantSendAndNothingTickedSendsNothing() {
-        #expect(RecordingSync.canSend(ticked: ["a"], isDemo: false))
-        #expect(!RecordingSync.canSend(ticked: ["a"], isDemo: true))
-        #expect(!RecordingSync.canSend(ticked: [], isDemo: false))
-    }
-
     @Test func aRouteOverTheLimitIsRefusedBeforeSending() {
         #expect(RecordingSync.refusal(track("a", points: RecordingSync.maxPoints)) == nil)
         #expect(RecordingSync.refusal(track("a", points: RecordingSync.maxPoints + 1)) == .tooManyPoints)

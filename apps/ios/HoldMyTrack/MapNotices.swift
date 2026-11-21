@@ -74,14 +74,20 @@ final class MapNotices: UIStackView {
             box = label
         }
         box.tag = id + 1
+        box.isHidden = aside.contains(id)
         box.backgroundColor = UIColor(resource: .noticeBg)
         box.layer.cornerRadius = DesignTokens.Radius.md
         box.layer.masksToBounds = true
         addArrangedSubview(box)
-        UIAccessibility.post(notification: .announcement, argument: text)
+        if !box.isHidden { UIAccessibility.post(notification: .announcement, argument: text) }
     }
 
     func shown(_ id: Int) -> Bool { box(id) != nil }
+
+    /// Notices kept but stepping aside, shown again once they leave the set.
+    var aside: Set<Int> = [] {
+        didSet { for view in arrangedSubviews { view.isHidden = aside.contains(view.tag - 1) } }
+    }
 
     func hide(_ id: Int) {
         box(id)?.removeFromSuperview()

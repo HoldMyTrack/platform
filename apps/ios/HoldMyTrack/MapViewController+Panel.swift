@@ -2,8 +2,9 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The sheet's tabs: the tab bar's Tracks shows Tracks, its Trips the Trips tab.
-enum PanelTab { case tracks, trips }
+/// The sheet's tabs: the tab bar's Tracks shows Tracks, its Trips the Trips tab, its Sync the
+/// Sync tab.
+enum PanelTab { case tracks, trips, sync }
 
 /// The sheet over the map (apps/android/docs/SPEC.md FR-2.7): the list for the range or the open
 /// Trip, the selection bound into the map's `focused` and `hidden` vars, Pending watched, and the
@@ -22,10 +23,10 @@ extension MapViewController {
             }, added: { [weak self] trip, created in self?.addedToTrip(trip, created: created) })
         }
 
-        for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
+        for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head, syncPanel?.head].compactMap({ $0 }) as [UIView] { sheet.head.addArrangedSubview(v) }
         // In the mode toggle's place while rows are checked (MapViewController+TopRow).
         modesRow.insertArrangedSubview(tracksPanel.selectionBar, at: 1)
-        for v in [tracksPanel.content, tripsPanel.content] {
+        for v in [tracksPanel.content, tripsPanel.content, syncPanel?.content].compactMap({ $0 }) {
             v.translatesAutoresizingMaskIntoConstraints = false
             sheet.content.addSubview(v)
             NSLayoutConstraint.activate([
@@ -63,12 +64,15 @@ extension MapViewController {
             if let trip { open(trip) }
             return
         }
+        let left = panelTab
         panelTab = next
-        if next == .trips {
+        if left == .sync { syncPanel?.stop() }
+        switch next {
+        case .trips:
             tripsPanel.start()
             sheet.setDetent(.half, animated: false)
             if let trip { open(trip) }
-        } else {
+        case .tracks, .sync:
             tripsPanel.stop()
             if session.tripID != nil {
                 session.exitTrip()
@@ -76,7 +80,12 @@ extension MapViewController {
                 updateTracksQuery()
                 followArea(always: true)
             }
-            sheet.setDetent(.collapsed, animated: false)
+            if next == .sync {
+                syncPanel?.start()
+                sheet.setDetent(.half, animated: false)
+            } else {
+                sheet.setDetent(.collapsed, animated: false)
+            }
         }
         applyTabMode()
         panelChanged()
@@ -261,9 +270,12 @@ extension MapViewController {
         let card = tracksTab && tracksPanel.showsCard
         tracksPanel.summary.isHidden = !tracksTab || card
         tracksPanel.card.isHidden = !card
-        tripsPanel.head.isHidden = tracksTab
+        tripsPanel.head.isHidden = panelTab != .trips
         tracksPanel.content.isHidden = !tracksTab
-        tripsPanel.content.isHidden = tracksTab
+        tripsPanel.content.isHidden = panelTab != .trips
+        syncPanel?.head.isHidden = panelTab != .sync
+        syncPanel?.content.isHidden = panelTab != .sync
+        notices.aside = MapChrome.areaNoticesShown(recording: recordingLive, onSync: panelTab == .sync) ? [] : [Notice.empty.rawValue, Notice.capped.rawValue]
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
         sheet.isHidden = state.mode != .normal || privateLocations.open || recordingLive
         sheet.setNeedsLayout()
@@ -393,7 +405,8 @@ extension MapViewController {
             _ = tapFogPlace(at: tap.location(in: mapView))
             return
         }
-        guard state.mode == .normal, !sheet.isHidden || panelTab == .trips else { return }
+        // The Sync tab's sheet lists what isn't on the map yet: the map's tracks aren't picked from it.
+        guard state.mode == .normal, panelTab != .sync, !sheet.isHidden || panelTab == .trips else { return }
         let point = tap.location(in: mapView)
         let r = TrackTap.radius
         let rect = CGRect(x: point.x - r, y: point.y - r, width: 2 * r, height: 2 * r)
@@ -514,8 +527,8 @@ extension MapViewController {
     }
 }
 
-/// The tab bar's Tracks or Trips: both are the one map screen, moved into whichever of the two
-/// shows, so the camera, range and selection are as they were (apps/android/docs/SPEC.md FR-2.9).
+/// The tab bar's Tracks, Trips or Sync: all are the one map screen, moved into whichever shows,
+/// so the camera, range and selection are as they were (apps/android/docs/SPEC.md FR-2.9).
 final class MapHostViewController: UIViewController {
     private let map: MapViewController
     private let panelTab: PanelTab

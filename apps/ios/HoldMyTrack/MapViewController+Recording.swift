@@ -51,11 +51,15 @@ extension MapViewController {
         }
     }
 
-    /// A recording's message over the map, for a few seconds: the last one replaces the one before.
-    func say(_ text: String) {
+    /// A message over the map for a few seconds, with an action such as Undo: the last one
+    /// replaces the one before.
+    func say(_ text: String, action: (title: String, run: () -> Void)? = nil) {
         loadViewIfNeeded()
         hideNotice(.recording)
-        notice(.recording, text)
+        notice(.recording, text, action: action.map { action in (action.title, { [weak self] in
+            self?.hideNotice(.recording)
+            action.run()
+        }) })
         recordingNoticeShown += 1
         let shown = recordingNoticeShown
         Task { @MainActor [weak self] in

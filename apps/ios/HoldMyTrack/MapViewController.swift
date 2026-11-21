@@ -48,7 +48,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let topRow = PassThroughStackView()
     /// Under the top row, the camera while rows are checked.
     let underBar = PassThroughStackView()
-    private let notices = MapNotices()
+    let notices = MapNotices()
     private let location = CLLocationManager()
     let modesRow = PassThroughStackView()
     /// Takes the row's room while the toggle is hidden, so the rail keeps its place.
@@ -72,6 +72,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let sheet = PanelSheetView()
     var tracksPanel: TracksPanel!
     var tripsPanel: TripsPanel!
+    /// The Sync tab's sheet, handed in by the tab bar, which owns the recordings it lists.
+    var syncPanel: SyncPanel?
     var panelTab = PanelTab.tracks
     /// The list for the range or the open Trip, as the server last sent it.
     var tracks: [Track] = []
