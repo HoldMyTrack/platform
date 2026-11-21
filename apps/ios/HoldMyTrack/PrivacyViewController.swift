@@ -47,6 +47,8 @@ final class PrivacyViewController: UITableViewController {
             subtitle.trailingAnchor.constraint(equalTo: box.layoutMarginsGuide.trailingAnchor, constant: -DesignTokens.Space.s8),
         ])
         tableView.tableHeaderView = box
+        // The circle previews are drawn in this appearance's colours: drawn again on a change.
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.tableView.reloadData() }
     }
 
     override func viewDidLayoutSubviews() {
@@ -72,6 +74,8 @@ final class PrivacyViewController: UITableViewController {
             } catch {
                 note = ((error as? APIError)?.serverMessage ?? String(localized: "Private locations couldn't load."), true)
             }
+            // The last visit's count could be wrong for the locations just read.
+            hidden = nil
             tableView.reloadData()
             // Only a line of context: the screen works without it.
             hidden = locations.isEmpty ? nil : try? await flow.api.hiddenTrackCount()
@@ -82,7 +86,7 @@ final class PrivacyViewController: UITableViewController {
     private func rows(_ section: Section) -> [Row] {
         switch section {
         case .locations:
-            return locations.map(Row.location) + (note.map { [Row.note($0.text, failed: $0.failed)] } ?? []) + (account.isDemo ? [] : [.add])
+            return locations.map(Row.location) + (note.map { [Row.note($0.text, failed: $0.failed)] } ?? []) + (PrivacyScreen.offersAdd(demo: account.isDemo) ? [.add] : [])
         case .keeps:
             return [
                 .keep(String(localized: "privacy.keepsMap", defaultValue: "Nobody else sees your map.", comment: "What HoldMyTrack keeps: the map is yours."), .eyeOff),
@@ -90,7 +94,7 @@ final class PrivacyViewController: UITableViewController {
                 .keep(String(localized: "privacy.keepsPhotos", defaultValue: "Photos are kept as a resized copy, never the original.", comment: "What HoldMyTrack keeps: photos."), .camera),
             ]
         case .data:
-            return (account.isDemo ? [] : [.download]) + [.policy]
+            return (PrivacyScreen.offersDownload(demo: account.isDemo) ? [.download] : []) + [.policy]
         }
     }
 
@@ -106,14 +110,15 @@ final class PrivacyViewController: UITableViewController {
 
     /// Under the locations: how many tracks they hide entirely, and that a change reprocesses.
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        guard Section(rawValue: section) == .locations, !locations.isEmpty else { return nil }
+        guard Section(rawValue: section) == .locations,
+              let footer = PrivacyScreen.footer(locations: locations.count, hidden: hidden, demo: account.isDemo) else { return nil }
         var lines: [String] = []
-        if let hidden {
+        if let hidden = footer.hidden {
             lines.append(hidden == 0
                 ? String(localized: "privacy.hiddenNone", defaultValue: "No track lies entirely inside these locations.", comment: "Privacy: no track is wholly private.")
                 : String(localized: "privacy.hidden", defaultValue: "\(hidden) tracks lie entirely inside these locations and show as Private.", comment: "Privacy: how many tracks are wholly private."))
         }
-        if !account.isDemo {
+        if footer.reprocess {
             lines.append(String(localized: "privacy.reprocess", defaultValue: "Saving a change reprocesses the tracks it touches — they show Pending until done.", comment: "Privacy: what a change to a location does."))
         }
         return lines.isEmpty ? nil : lines.joined(separator: "\n\n")
@@ -217,6 +222,8 @@ enum CirclePreviewView {
             purple.setStroke()
             circle.lineWidth = 1.5
             circle.stroke()
+            // The centre, solid, as Android's.
+            purple.setFill()
             UIBezierPath(arcCenter: CGPoint(x: side / 2, y: side / 2), radius: 2.5, startAngle: 0, endAngle: 2 * .pi, clockwise: true).fill()
         }.withRenderingMode(.alwaysOriginal)
     }
@@ -230,7 +237,7 @@ final class DataExportViewController: UIViewController {
     /// Where the server emails that the archive is ready.
     private let email: String
     private let status = Controls.body(color: UIColor(resource: .ink))
-    private let request = Controls.primaryButton(String(localized: "export.request", defaultValue: "Request a download", comment: "Download your data: ask for an archive."), id: "requestExport")
+    private let request = Controls.primaryButton(String(localized: "dataExport.request", defaultValue: "Request a download", comment: "Download your data: ask for an archive."), id: "requestExport")
     private let parts = Controls.column([], spacing: DesignTokens.Space.s8)
     private var poll: Task<Void, Never>?
 
@@ -248,7 +255,7 @@ final class DataExportViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .bg)
         status.accessibilityIdentifier = "exportStatus"
-        let about = Controls.body(String(localized: "export.hint", defaultValue: "A copy of everything in your account, as zip archives: the files you uploaded or synced, every track as GPX, your photos, and your settings, Trips, Private locations and captured places.",
+        let about = Controls.body(String(localized: "dataExport.hint", defaultValue: "A copy of everything in your account, as zip archives: the files you uploaded or synced, every track as GPX, your photos, and your settings, Trips, Private locations and captured places.",
                                          comment: "Download your data: what the archive holds."))
         request.addAction(UIAction { [weak self] _ in self?.ask() }, for: .primaryActionTriggered)
         Controls.host(Controls.column([about, status, request, parts]), in: self)
@@ -269,7 +276,7 @@ final class DataExportViewController: UIViewController {
         poll = Task {
             while !Task.isCancelled {
                 guard let export = try? await api.exportStatus() else {
-                    status.text = String(localized: "The server couldn't be reached.")
+                    showError(String(localized: "The server couldn't be reached."))
                     return
                 }
                 show(export)
@@ -287,33 +294,45 @@ final class DataExportViewController: UIViewController {
                 show(try await api.requestExport())
                 check()
             } catch {
-                status.text = (error as? APIError)?.serverMessage ?? String(localized: "The download couldn't be prepared.")
+                showError((error as? APIError)?.serverMessage ?? String(localized: "The download couldn't be prepared."))
             }
         }
     }
 
+    /// An error, shown even when no archive's state had a line.
+    private func showError(_ text: String) {
+        status.text = text
+        status.textColor = UIColor(resource: .danger)
+        status.isHidden = false
+    }
+
+    private static func size(_ bytes: Int) -> String { ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file) }
+
     private func show(_ export: ExportStatus) {
         status.textColor = UIColor(resource: export.state == .failed ? .danger : .ink)
-        let total = ByteCountFormatter.string(fromByteCount: Int64(export.parts.reduce(0) { $0 + $1.size }), countStyle: .file)
-        let until = export.expiresAt.flatMap { ISO8601DateFormatter().date(from: $0) }?.formatted(date: .abbreviated, time: .omitted) ?? ""
-        status.text = switch export.state {
+        status.text = switch DataExportText.status(export) {
         case .none: ""
-        case .preparing: String(localized: "export.preparing", defaultValue: "Preparing your archive. It usually takes a few minutes; we'll email \(email) when it's ready, and it will be here too.", comment: "Download your data: being prepared, and the email told when it's ready.")
-        case .ready: String(localized: "export.ready", defaultValue: "Ready, \(total) in all. Download until \(until):", comment: "Download your data: ready, its size and until when.")
-        case .failed: String(localized: "export.failed", defaultValue: "Your last download couldn't be prepared. Please try again, and if it fails again, let us know.", comment: "Download your data: the last one failed.")
+        case .preparing: String(localized: "dataExport.preparing", defaultValue: "Preparing your archive. It usually takes a few minutes; we'll email \(email) when it's ready, and it will be here too.", comment: "Download your data: being prepared, and the email told when it's ready.")
+        case .ready(let bytes, let until):
+            if let until {
+                String(localized: "dataExport.ready", defaultValue: "Ready, \(Self.size(bytes)) in all. Download until \(until.formatted(date: .abbreviated, time: .omitted)):", comment: "Download your data: ready, its size and until when.")
+            } else {
+                String(localized: "dataExport.readyNoDate", defaultValue: "Ready, \(Self.size(bytes)) in all:", comment: "Download your data: ready, and its size, the date unknown.")
+            }
+        case .failed: String(localized: "dataExport.failed", defaultValue: "Your last download couldn't be prepared. Please try again, and if it fails again, let us know.", comment: "Download your data: the last one failed.")
         }
-        status.isHidden = export.state == .none
-        request.isHidden = export.state == .preparing
+        status.isHidden = status.text?.isEmpty ?? true
+        request.isHidden = !DataExportText.offersRequest(export.state)
         var config = request.configuration
-        config?.title = export.state == .ready
-            ? String(localized: "export.again", defaultValue: "Request a new one", comment: "Download your data: ask for a fresh archive.")
-            : String(localized: "export.request", defaultValue: "Request a download", comment: "Download your data: ask for an archive.")
+        config?.title = DataExportText.requestsAgain(export.state)
+            ? String(localized: "dataExport.again", defaultValue: "Request a new one", comment: "Download your data: ask for a fresh archive.")
+            : String(localized: "dataExport.request", defaultValue: "Request a download", comment: "Download your data: ask for an archive.")
         request.configuration = config
         parts.arrangedSubviews.forEach { $0.removeFromSuperview() }
         guard export.state == .ready else { return }
         for part in export.parts {
             let size = ByteCountFormatter.string(fromByteCount: Int64(part.size), countStyle: .file)
-            let button = Controls.secondaryButton(String(localized: "export.download", defaultValue: "Download \(part.n) of \(export.parts.count) (\(size))", comment: "Download your data: one part, of how many, and its size."),
+            let button = Controls.secondaryButton(String(localized: "dataExport.download", defaultValue: "Download \(part.n) of \(export.parts.count) (\(size))", comment: "Download your data: one part, of how many, and its size."),
                                                   id: "exportPart", icon: UIImage(resource: .download))
             button.addAction(UIAction { [weak self] _ in self?.save(part, from: button) }, for: .primaryActionTriggered)
             parts.addArrangedSubview(button)

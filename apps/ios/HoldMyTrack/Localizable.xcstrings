@@ -2033,6 +2033,150 @@
         }
       }
     },
+    "dataExport.again" : {
+      "comment" : "Download your data: ask for a fresh archive.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Request a new one"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запросить новый"
+          }
+        }
+      }
+    },
+    "dataExport.download" : {
+      "comment" : "Download your data: one part, of how many, and its size.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download %1$lld of %2$lld (%3$@)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скачать %1$lld из %2$lld (%3$@)"
+          }
+        }
+      }
+    },
+    "dataExport.failed" : {
+      "comment" : "Download your data: the last one failed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your last download couldn't be prepared. Please try again, and if it fails again, let us know."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подготовить архив. Попробуйте ещё раз, а если снова не получится — напишите нам."
+          }
+        }
+      }
+    },
+    "dataExport.hint" : {
+      "comment" : "Download your data: what the archive holds.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A copy of everything in your account, as zip archives: the files you uploaded or synced, every track as GPX, your photos, and your settings, Trips, Private locations and captured places."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Копия всего, что есть в вашем аккаунте, в zip-архивах: загруженные и синхронизированные файлы, все треки в виде GPX, фотографии, а также настройки, путешествия, приватные и отмеченные места."
+          }
+        }
+      }
+    },
+    "dataExport.preparing" : {
+      "comment" : "Download your data: being prepared, and the email told when it's ready.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparing your archive. It usually takes a few minutes; we'll email %@ when it's ready, and it will be here too."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готовим архив. Обычно это занимает несколько минут; когда он будет готов, мы напишем на %@, и он появится здесь."
+          }
+        }
+      }
+    },
+    "dataExport.ready" : {
+      "comment" : "Download your data: ready, its size and until when.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready, %1$@ in all. Download until %2$@:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готово, всего %1$@. Скачать можно до %2$@:"
+          }
+        }
+      }
+    },
+    "dataExport.readyNoDate" : {
+      "comment" : "Download your data: ready, and its size, the date unknown.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready, %@ in all:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готово, всего %@:"
+          }
+        }
+      }
+    },
+    "dataExport.request" : {
+      "comment" : "Download your data: ask for an archive.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Request a download"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запросить архив"
+          }
+        }
+      }
+    },
     "delete.confirm" : {
       "comment" : "Delete account: how to confirm, with the account's email.",
       "extractionState" : "manual",
@@ -2137,114 +2281,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "При редактировании нескольких треков меняются тип и путешествия — название и описание у каждого трека свои."
-          }
-        }
-      }
-    },
-    "export.again" : {
-      "comment" : "Download your data: ask for a fresh archive.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Request a new one"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Запросить новый"
-          }
-        }
-      }
-    },
-    "export.download" : {
-      "comment" : "Download your data: one part, of how many, and its size.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Download %1$lld of %2$lld (%3$@)"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скачать %1$lld из %2$lld (%3$@)"
-          }
-        }
-      }
-    },
-    "export.hint" : {
-      "comment" : "Download your data: what the archive holds.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A copy of everything in your account, as zip archives: the files you uploaded or synced, every track as GPX, your photos, and your settings, Trips, Private locations and captured places."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Копия всего, что есть в вашем аккаунте, в zip-архивах: загруженные и синхронизированные файлы, все треки в виде GPX, фотографии, а также настройки, путешествия, приватные и отмеченные места."
-          }
-        }
-      }
-    },
-    "export.preparing" : {
-      "comment" : "Download your data: being prepared, and the email told when it's ready.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preparing your archive. It usually takes a few minutes; we'll email %@ when it's ready, and it will be here too."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Готовим архив. Обычно это занимает несколько минут; когда он будет готов, мы напишем на %@, и он появится здесь."
-          }
-        }
-      }
-    },
-    "export.ready" : {
-      "comment" : "Download your data: ready, its size and until when.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ready, %1$@ in all. Download until %2$@:"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Готово, всего %1$@. Скачать можно до %2$@:"
-          }
-        }
-      }
-    },
-    "export.request" : {
-      "comment" : "Download your data: ask for an archive.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Request a download"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Запросить архив"
           }
         }
       }
@@ -4330,19 +4366,19 @@
       }
     },
     "export.failed" : {
-      "comment" : "Download your data: the last one failed.",
+      "comment" : "Map image export: Capture failed.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your last download couldn't be prepared. Please try again, and if it fails again, let us know."
+            "value" : "Couldn't create the image. Please try again."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось подготовить архив. Попробуйте ещё раз, а если снова не получится — напишите нам."
+            "value" : "Не удалось создать изображение. Попробуйте ещё раз."
           }
         }
       }
