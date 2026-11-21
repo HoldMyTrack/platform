@@ -33,9 +33,10 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     /// The Dates filter (root docs/SPEC.md FR-5.12), its sheet the map's (DatesViewController).
     let datesButton = UIButton(type: .system)
     private let resetButton = Controls.textButton(String(localized: "Reset filters"), id: "resetFilters")
-    private let selectionBar = UIStackView()
+    /// While rows are checked, the map shows it in the mode toggle's place (MapViewController+TopRow).
+    let selectionBar = UIView()
     private let checkAllButton = UIButton(type: .system)
-    private let selectMenuButton = Controls.iconButton(UIImage(resource: .chevronDown), label: String(localized: "Select"), id: "selectMenu")
+    private let selectMenuButton = Controls.iconButton(Controls.icon(UIImage(resource: .chevronDown), size: 14), label: String(localized: "Check"), id: "selectMenu")
 
     private struct ActionButtons {
         let visibility: UIButton, edit: UIButton, addToTrip: UIButton, delete: UIButton, focus: UIButton
@@ -128,11 +129,30 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             self.onEvent?(all == .all ? .checkNone : .checkAll)
         }, for: .primaryActionTriggered)
         selectMenuButton.showsMenuAsPrimaryAction = true
-        let close = Controls.iconButton(UIImage(resource: .x), label: String(localized: "Stop selecting"), id: "endSelecting")
+        // ×, which unchecks every row, the check box and its menu, then the actions over the
+        // checked group, Zoom in the accent: Android's selection bar.
+        let close = Controls.iconButton(UIImage(resource: .x), label: String(localized: "Uncheck all"), id: "endSelecting")
         close.addAction(UIAction { [weak self] _ in self?.onEvent?(.endSelecting) }, for: .primaryActionTriggered)
-        for v in [checkAllButton, selectMenuButton, UIView()] + barActions.all + [close] as [UIView] { selectionBar.addArrangedSubview(v) }
-        selectionBar.alignment = .center
+        selectMenuButton.widthAnchor.constraint(equalToConstant: 28).isActive = true
+        barActions.focus.configuration?.baseForegroundColor = UIColor(resource: .accent)
+        let bar = UIStackView(arrangedSubviews: [close, checkAllButton, selectMenuButton, UIView()] + barActions.all)
+        bar.alignment = .center
+        bar.translatesAutoresizingMaskIntoConstraints = false
+        selectionBar.addSubview(bar)
+        selectionBar.backgroundColor = UIColor(resource: .surface)
+        selectionBar.layer.cornerRadius = DesignTokens.Radius.md
+        selectionBar.layer.shadowColor = UIColor.black.cgColor
+        selectionBar.layer.shadowOpacity = 0.15
+        selectionBar.layer.shadowRadius = 2
+        selectionBar.layer.shadowOffset = CGSize(width: 0, height: 1)
         selectionBar.accessibilityIdentifier = "selectionBar"
+        let inset = DesignTokens.Space.s4
+        NSLayoutConstraint.activate([
+            bar.topAnchor.constraint(equalTo: selectionBar.topAnchor, constant: inset),
+            bar.bottomAnchor.constraint(equalTo: selectionBar.bottomAnchor, constant: -inset),
+            bar.leadingAnchor.constraint(equalTo: selectionBar.leadingAnchor, constant: inset),
+            bar.trailingAnchor.constraint(equalTo: selectionBar.trailingAnchor, constant: -inset),
+        ])
 
         table.dataSource = self
         table.delegate = self
@@ -147,7 +167,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         note.textAlignment = .center
         note.accessibilityIdentifier = "panelNote"
 
-        let top = Controls.column([filters, selectionBar], spacing: DesignTokens.Space.s4)
+        let top = Controls.column([filters], spacing: DesignTokens.Space.s4)
         for v in [top, progress, table, footer, note] as [UIView] {
             v.translatesAutoresizingMaskIntoConstraints = false
             content.addSubview(v)
@@ -305,14 +325,13 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     private func renderToolbar() {
-        selectionBar.isHidden = !state.selecting
         let listed = state.listed
         let all = ToolbarRules.checkAll(listed: listed.count, checked: listed.filter { state.checked.contains($0.id) }.count)
         var config = checkAllButton.configuration ?? .plain()
         config.image = UIImage(resource: all == .all ? .check : all == .some ? .square : .square)
         config.baseForegroundColor = UIColor(resource: all == .none ? .inkSecondary : .accent)
         checkAllButton.configuration = config
-        checkAllButton.accessibilityLabel = all == .all ? String(localized: "Uncheck all") : String(localized: "Check all")
+        checkAllButton.accessibilityLabel = all == .all ? String(localized: "Uncheck all tracks") : String(localized: "Check all tracks")
         checkAllButton.accessibilityValue = all == .some ? String(localized: "Some checked") : nil
         checkAllButton.isEnabled = !listed.isEmpty
         selectMenuButton.menu = UIMenu(children: [

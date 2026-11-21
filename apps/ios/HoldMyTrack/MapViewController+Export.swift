@@ -25,10 +25,11 @@ extension MapViewController {
         let finder = ExportViewfinderView(frame: view.bounds)
         finder.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         export.view = finder
+        renderTopRow()
         // The chrome would sit inside the picture. Faded out and left alone rather than hidden: the
         // map's renders set isHidden as they go (Fog's level button on every camera move, the
         // sheet on a panel change) and would bring it back over the viewfinder.
-        let covers: [UIView] = [chromeColumn, sheet, fogViews.menuButton, mapView.attributionButton].compactMap { $0 }
+        let covers: [UIView] = [chromeColumn, sheet, mapView.logoView, mapView.attributionButton]
         export.covered = covers
         for cover in covers {
             cover.alpha = 0
@@ -69,6 +70,7 @@ extension MapViewController {
             cover.accessibilityElementsHidden = false
         }
         export.covered = []
+        renderTopRow()
     }
 
     /// A turned phone refits the window in its shape; called on every layout.

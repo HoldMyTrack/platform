@@ -15,8 +15,6 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     /// The recordings on the phone and their sending, followed on every tab.
     private let recordings: RecordingsSync
     private let recordButton = RecordButton()
-    private let recordStatus = Controls.label("", font: Typeface.sans(DesignTokens.Text.md, weight: DesignTokens.Weight.semibold), color: UIColor(resource: .ink))
-    private var holdingToStop = false
     /// Whether the leftover check has run for this screen, once on its first appearance.
     private var leftoverChecked = false
     /// The Live Activity's Stop question while it's up, taken down when the recording ends otherwise.
@@ -149,13 +147,6 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     // MARK: Recording
 
     private func setUpRecording() {
-        recordStatus.textAlignment = .center
-        recordStatus.backgroundColor = UIColor(resource: .surface)
-        recordStatus.layer.cornerRadius = DesignTokens.Radius.md
-        recordStatus.layer.masksToBounds = true
-        recordStatus.accessibilityIdentifier = "recordStatus"
-        recordStatus.isHidden = true
-        view.addSubview(recordStatus)
         view.addSubview(recordButton)
         recordButton.onTap = { [weak self] in
             guard let self else { return }
@@ -167,9 +158,15 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             if RecordingStatus.showsMap(stopping: true, state: self.recorder.state) { self.showMap() }
             self.recorder.stop()
         }
+        // The hold's countdown shows in the status too, where the finger can't hide it.
         recordButton.onHolding = { [weak self] holding in
-            self?.holdingToStop = holding
-            self?.renderRecordingStatus()
+            self?.map.showRecordingHold(holding ? Recording.holdToStop - RecordButton.holdDelay : nil)
+        }
+        map.onStopAsked = { [weak self] in self?.askToStop() }
+        // An editor or the export over the map has the screen: no tab or recording starts under it.
+        map.onBottomBar = { [weak self] shown in
+            self?.tabBar.isHidden = !shown
+            self?.recordButton.isHidden = !shown
         }
         recorder.format = PanelFormat(account: account)
         recorder.onChange = { [weak self] in self?.renderRecording() }
@@ -193,9 +190,6 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         let items = bar.height - tabBar.safeAreaInsets.bottom
         let side = RecordButton.side
         recordButton.frame = CGRect(x: bar.midX - side / 2, y: bar.minY + items / 2 - side / 2, width: side, height: side)
-        let fit = recordStatus.sizeThatFits(CGSize(width: view.bounds.width - 2 * DesignTokens.Space.s16, height: .greatestFiniteMagnitude))
-        let width = min(fit.width, view.bounds.width - 2 * DesignTokens.Space.s16), height = max(fit.height + DesignTokens.Space.s8, 28)
-        recordStatus.frame = CGRect(x: bar.midX - width / 2, y: recordButton.frame.minY - DesignTokens.Space.s8 - height, width: width, height: height)
     }
 
     /// The recording's state or fixes changed: the button, the status and the map.
@@ -209,12 +203,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         map.showRecording(active: recorder.state != .idle, points: recorder.recording.points)
     }
 
-    /// The status line alone, every second of the clock.
+    /// The status over the map alone, every second of the clock.
     private func renderRecordingStatus() {
-        let status = recorder.status(format: PanelFormat(account: account), holding: holdingToStop, at: Date())
-        recordStatus.text = status.map { "  \($0)  " }
-        recordStatus.isHidden = status == nil
-        view.setNeedsLayout()
+        guard let status = recorder.status(format: PanelFormat(account: account), at: Date()) else { return }
+        map.showRecordingStatus(clock: status.clock, detail: status.detail, paused: status.paused)
     }
 
     /// The Tracks tab, where the recording is drawn and its outcome said.
@@ -223,8 +215,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         selectedViewController = mapHost
     }
 
-    /// The Live Activity's Stop opened the app: it asks first, since a tap on the Lock Screen is
-    /// easy to make by mistake.
+    /// The status's Stop over the map, or the Live Activity's: it asks first, since a tap in
+    /// either is easy to make by mistake.
     func askToStop() {
         // One question at a time: a second tap on the Lock Screen's Stop finds it up.
         guard recorder.state != .idle, stopAlert == nil else { return }

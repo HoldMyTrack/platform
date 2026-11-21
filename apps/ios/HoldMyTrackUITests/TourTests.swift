@@ -25,7 +25,7 @@ final class TourTests: XCTestCase {
         next.tap()
         XCTAssertTrue(app.otherElements["tourCard"].waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.tabBars.buttons.element(boundBy: 0).isSelected, "the Tracks tab comes back")
-        XCTAssertTrue(app.segmentedControls["modes"].buttons.element(boundBy: 0).isSelected, "Normal comes back")
+        XCTAssertTrue(app.buttons["modeNormal"].isSelected, "Normal comes back")
 
         app.tabBars.buttons["tabYou"].tap()
         app.cells["youTour"].tap()
@@ -50,20 +50,20 @@ final class TourTests: XCTestCase {
         XCTAssertTrue(title.waitForExistence(timeout: 20), "the offer")
         XCTAssertEqual(title.label, "New here?")
         // A pick meanwhile leaves the offer up until it's answered.
-        let fog = app.segmentedControls["modes"].buttons.element(boundBy: 1)
+        let fog = app.buttons["modeFog"]
         fog.tap()
         XCTAssertEqual(title.label, "New here?")
         app.buttons["tourSkip"].tap()
         XCTAssertTrue(title.waitForNonExistence(timeout: 5))
 
-        app.segmentedControls["modes"].buttons.element(boundBy: 0).tap()
+        app.buttons["modeNormal"].tap()
         fog.tap()
         XCTAssertTrue(title.waitForExistence(timeout: 5), "Fog's card")
         XCTAssertEqual(title.label, "Fog of War")
         attach("Fog card")
         app.buttons["tourNext"].tap()
         XCTAssertTrue(title.waitForNonExistence(timeout: 5))
-        app.segmentedControls["modes"].buttons.element(boundBy: 0).tap()
+        app.buttons["modeNormal"].tap()
         fog.tap()
         XCTAssertFalse(title.waitForExistence(timeout: 2), "a card shows once")
 

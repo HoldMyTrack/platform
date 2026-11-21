@@ -21,14 +21,15 @@ final class ExportTests: XCTestCase {
         let size = app.staticTexts["exportSize"]
         XCTAssertTrue(size.waitForExistence(timeout: 5))
         XCTAssertTrue(size.label.hasPrefix("1920 × ") || size.label.hasSuffix(" × 1920"), size.label)
-        let modes = app.segmentedControls["modes"]
+        let modes = app.otherElements["modes"]
         XCTAssertFalse(modes.exists && modes.isHittable, "the chrome steps aside")
+        XCTAssertFalse(app.tabBars.firstMatch.isHittable, "no tab starts under the viewfinder")
         // Nothing checked: Show stats says why it can't, under the window.
         app.buttons["exportStats"].tap()
         XCTAssertTrue(app.staticTexts["exportError"].waitForExistence(timeout: 3))
         XCTAssertEqual(app.staticTexts["exportError"].label, "Check tracks to show their stats.")
         app.buttons["exportClose"].tap()
-        XCTAssertTrue(app.segmentedControls["modes"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["modes"].waitForExistence(timeout: 5))
         XCTAssertFalse(size.exists)
 
         // With tracks checked, Show stats previews the server's card in the window.
@@ -37,7 +38,11 @@ final class ExportTests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.buttons["rowTile"].tap()
         app.buttons["panelHandle"].tap()
-        export.tap()
+        // Checked rows take the top row: the rail steps aside, and the camera comes under the bar.
+        XCTAssertFalse(export.isHittable)
+        let checkedExport = app.buttons["checkedExport"]
+        XCTAssertTrue(checkedExport.waitForExistence(timeout: 5))
+        checkedExport.tap()
         // Show stats is kept on the phone, so an earlier run may have left it ticked.
         let stats = app.buttons["exportStats"]
         if !stats.isSelected { stats.tap() }

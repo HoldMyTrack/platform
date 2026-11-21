@@ -28,7 +28,7 @@ extension MapViewController {
             // The track's photos step aside with the tracks; Spots and paths stay, as on Android,
             // being about where the recording goes.
             photoViews.markers.isHidden = active
-            renderRail()
+            renderTopRow()
             state.hiddenGroups = TabMode.hiddenGroups(recording: active)
             applyTabMode()
             render()

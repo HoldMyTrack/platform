@@ -23,6 +23,8 @@ extension MapViewController {
         }
 
         for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
+        // In the mode toggle's place while rows are checked (MapViewController+TopRow).
+        modesRow.insertArrangedSubview(tracksPanel.selectionBar, at: 1)
         for v in [tracksPanel.content, tripsPanel.content] {
             v.translatesAutoresizingMaskIntoConstraints = false
             sheet.content.addSubview(v)
@@ -275,7 +277,7 @@ extension MapViewController {
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
         sheet.isHidden = state.mode != .normal || privateLocations.open || recordingLive
         sheet.setNeedsLayout()
-        renderRail()
+        renderTopRow()
     }
 
     // MARK: Events

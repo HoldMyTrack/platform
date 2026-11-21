@@ -17,7 +17,17 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Made in viewDidLoad at the view's size: started at a zero frame, MapLibre keeps drawing
     /// into a quarter of the screen after it grows.
     var mapView: MLNMapView!
-    let modes = UISegmentedControl()
+    let modes = ModeToggle()
+    /// While recording, its status in the toggle's place (MapViewController+TopRow).
+    let recordingCard = RecordingCard()
+    /// The export under the selection bar while rows are checked and the rail is away.
+    lazy var checkedExport = RailItem(UIButton(type: .system), icon: UIImage(resource: .camera),
+                                      label: String(localized: "export.open", defaultValue: "Export map image", comment: "The map's camera button: open the image export."),
+                                      id: "checkedExport")
+    /// Whether the tab bar and the record button show (MapChrome.bottomBarShown).
+    var onBottomBar: ((Bool) -> Void)?
+    /// The recording status's Stop: the tab bar asks first.
+    var onStopAsked: (() -> Void)?
     let layersButton = UIButton(type: .system)
     let placesButton = UIButton(type: .system)
     /// Satellite's watch (MapViewController+Chrome).
@@ -28,6 +38,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Layers waits for the layers document, which gives it Satellite and the swatches.
     lazy var layersMenu = MapMenuPopup(host: view, anchor: rail.layers, canOpen: { [unowned self] in self.pair != nil }) { [unowned self] in self.layersContent() }
     lazy var placesMenu = MapMenuPopup(host: view, anchor: rail.places) { [unowned self] in self.placesContent() }
+    /// Fog's level menu hangs from the toggle, lined up with its start, once the document has levels.
+    lazy var fogLevelMenu = MapMenuPopup(host: view, anchor: modes, alignStart: true, canOpen: { [unowned self] in
+        self.state.mode == .fog && !self.levels.isEmpty && !self.modes.isHidden
+    }) { [unowned self] in self.fogLevelContent() }
     /// The controls along the top: the mode toggle and the rail, then the notices under them.
     let chromeColumn = PassThroughStackView()
     /// The toggle beside the rail, whose bottom the sheet and popups stay under.
@@ -36,7 +50,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     private let location = CLLocationManager()
     let modesRow = PassThroughStackView()
     /// Takes the row's room while the toggle is hidden, so the rail keeps its place.
-    private let modesSpacer = UIView()
+    let modesSpacer = UIView()
 
     var session = MapSession()
 
@@ -70,7 +84,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var tracksVersion = 0
     var editOpen = false {
         didSet {
-            renderRail()
+            renderTopRow()
             if oldValue && !tourBlocked { onMapFreed?() }
         }
     }
@@ -158,8 +172,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         mapView.delegate = self
         mapView.styleJSON = Self.emptyStyle
         mapView.setCenter(CLLocationCoordinate2D(latitude: 20, longitude: 0), zoomLevel: 1, animated: false)
-        mapView.logoView.isHidden = true
-        mapView.attributionButton.isHidden = false
+        // MapLibre's mark and its credit at the bottom start, as on Android (placeAttribution).
+        mapView.logoViewPosition = .bottomLeft
+        mapView.attributionButtonPosition = .bottomLeft
         mapView.accessibilityIdentifier = "map"
         view.addSubview(mapView)
         layoutChrome()
@@ -197,6 +212,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         sheet.setRoom(container: guide.height, topInset: topRow.convert(topRow.bounds, to: view).maxY - guide.minY + DesignTokens.Space.s8)
         layersMenu.place()
         placesMenu.place()
+        fogLevelMenu.place()
+        placeAttribution()
         layoutExport()
     }
 
@@ -312,10 +329,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         let onTracks = panelTab == .tracks
         // The editor is the Tracks tab's, in Normal.
         if !onTracks || pickedMode != .normal { closePrivateEditor() }
-        modes.isHidden = !TabMode.toggleShown(onTracksTab: onTracks, recording: recordingLive)
-        modesSpacer.isHidden = !modes.isHidden
         let shown = TabMode.shown(picked: pickedMode, onTracksTab: onTracks, recording: recordingLive)
-        modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: pickedMode) ?? 0
+        modes.select(pickedMode)
+        renderTopRow()
         renderLevel()
         guard shown != state.mode else { return }
         state.mode = shown
@@ -525,20 +541,30 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Layout
 
+    /// The base map's credit is required (root docs/IMPLEMENTATION.md §5.6): above the sheet
+    /// while it shows, the mark first and the credit's button after it.
+    private func placeAttribution() {
+        let guide = view.safeAreaLayoutGuide.layoutFrame
+        let sheetTop = sheet.isHidden ? guide.maxY : min(guide.maxY, sheet.frame.minY)
+        let above = guide.maxY - sheetTop + DesignTokens.Space.s8
+        let start = DesignTokens.Space.s8
+        mapView.logoViewMargins = CGPoint(x: start, y: above)
+        mapView.attributionButtonMargins = CGPoint(x: start + mapView.logoView.bounds.width + DesignTokens.Space.s4, y: above)
+    }
+
     private func layoutChrome() {
-        for (index, mode) in MapMode.allCases.enumerated() {
-            let title = switch mode {
-            case .normal: String(localized: "Normal")
-            case .fog: String(localized: "Fog")
-            }
-            modes.insertSegment(action: UIAction(title: title) { [weak self] _ in
-                self?.pickMode(mode)
-                self?.onModePicked?(mode)
-            }, at: index, animated: false)
+        // A tap on Fog while it's on opens its level menu.
+        modes.onPick = { [weak self] mode in
+            guard let self else { return }
+            let menu = MapChrome.fogMenuOnTap(tapped: mode, current: self.state.mode)
+            self.pickMode(mode)
+            self.onModePicked?(mode)
+            if menu { self.fogLevelMenu.toggle() }
         }
-        modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: state.mode) ?? 0
-        modes.backgroundColor = UIColor(resource: .surface)
-        modes.accessibilityIdentifier = "modes"
+        modes.select(state.mode)
+        modes.setContentHuggingPriority(.required, for: .horizontal)
+        recordingCard.onStop = { [weak self] in self?.onStopAsked?() }
+        checkedExport.button.addAction(UIAction { [weak self] _ in self?.openExport() }, for: .primaryActionTriggered)
 
         locateButton.addAction(UIAction { [weak self] _ in self?.locate() }, for: .primaryActionTriggered)
         layersButton.addAction(UIAction { [weak self] _ in self?.layersMenu.open() }, for: .primaryActionTriggered)
@@ -547,7 +573,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
         modesSpacer.isHidden = true
         modesSpacer.isUserInteractionEnabled = false
-        for v in [modes, modesSpacer] { modesRow.addArrangedSubview(v) }
+        // The selection bar joins them with the panel (buildPanel).
+        for v in [modes, recordingCard, modesSpacer] { modesRow.addArrangedSubview(v) }
+        modesRow.alignment = .center
         let inArea = PassThroughStackView(arrangedSubviews: [spotViews.inArea])
         inArea.axis = .vertical
         inArea.alignment = .center
@@ -561,10 +589,15 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         start.axis = .vertical
         start.spacing = DesignTokens.Space.s8
         rail.layOut(landscape: view.bounds.width > view.bounds.height)
+        // The start takes the row's room; the rail keeps to its buttons.
+        start.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        rail.view.setContentHuggingPriority(.required, for: .horizontal)
         for v in [start, rail.view] { topRow.addArrangedSubview(v) }
         topRow.spacing = DesignTokens.Space.s8
         topRow.alignment = .top
-        for v in [topRow, capturing.banner, notices] { chromeColumn.addArrangedSubview(v) }
+        let underBar = PassThroughStackView(arrangedSubviews: [UIView(), checkedExport])
+        underBar.arrangedSubviews[0].isUserInteractionEnabled = false
+        for v in [topRow, underBar, capturing.banner, notices] { chromeColumn.addArrangedSubview(v) }
         chromeColumn.axis = .vertical
         chromeColumn.spacing = DesignTokens.Space.s8
         let column = chromeColumn
@@ -581,7 +614,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         }
         setUpFogControl()
         setUpExport()
-        renderRail()
+        renderTopRow()
         bindPrivateEditor()
         // Over the sheet: opened low on the map, the photo popup runs past the sheet's edge.
         view.addSubview(photoViews.popup)

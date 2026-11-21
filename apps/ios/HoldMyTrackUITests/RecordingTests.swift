@@ -21,7 +21,7 @@ final class RecordingTests: XCTestCase {
     /// Walks until status counts a fix, for at most 30 seconds.
     @MainActor
     private func walkToAFix(_ status: XCUIElement) -> Bool {
-        let counting = NSPredicate(format: "SELF MATCHES %@", ".*[0-9]:[0-9]{2}:[0-9]{2} · .*")
+        let counting = NSPredicate(format: "SELF MATCHES %@", ".*[0-9]:[0-9]{2}:[0-9]{2} · [0-9].*")
         for _ in 0..<15 {
             walk(for: 2)
             if status.exists, counting.evaluate(with: status.label) { return true }
@@ -50,7 +50,7 @@ final class RecordingTests: XCTestCase {
         let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow While Using App"]
         if allow.waitForExistence(timeout: 5) { allow.tap() }
         XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))
-        XCTAssertFalse(app.segmentedControls["modes"].exists, "the map shows only the recording")
+        XCTAssertFalse(app.otherElements["modes"].exists, "the map shows only the recording")
 
         let status = app.staticTexts["recordStatus"]
         XCTAssertTrue(walkToAFix(status), "a fix: the clock and the distance")
@@ -68,7 +68,7 @@ final class RecordingTests: XCTestCase {
         record.press(forDuration: 2.6)
         XCTAssertTrue(record.waitForLabel("Start recording", timeout: 5))
         XCTAssertTrue(app.staticTexts["Too short — not saved."].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.segmentedControls["modes"].waitForExistence(timeout: 5), "the map comes back")
+        XCTAssertTrue(app.otherElements["modes"].waitForExistence(timeout: 5), "the map comes back")
 
         record.tap()
         XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))

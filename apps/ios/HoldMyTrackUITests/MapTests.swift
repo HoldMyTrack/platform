@@ -13,16 +13,16 @@ final class MapTests: XCTestCase {
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
-        let modes = app.segmentedControls["modes"]
+        let modes = app.otherElements["modes"]
         XCTAssertTrue(modes.exists)
         // The rail down the right edge, top to bottom.
         let rail = ["layers", "places", "locate", "export"].map { app.buttons[$0] }
         XCTAssertTrue(rail.allSatisfy(\.exists))
         XCTAssertEqual(rail.map(\.frame.minY), rail.map(\.frame.minY).sorted(), "Layers, Places, Find my location, export")
-        modes.buttons.element(boundBy: 1).tap()
-        XCTAssertTrue(modes.buttons.element(boundBy: 1).isSelected)
+        app.buttons["modeFog"].tap()
+        XCTAssertTrue(app.buttons["modeFog"].isSelected)
         attach("Fog")
-        modes.buttons.element(boundBy: 0).tap()
+        app.buttons["modeNormal"].tap()
         // Dates: picking a day in To's calendar sets the button, and Clear dates puts it back.
         app.buttons["panelHandle"].tap()
         let dates = app.buttons["datesFilter"]
@@ -86,11 +86,13 @@ final class MapTests: XCTestCase {
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
-        app.segmentedControls["modes"].buttons.element(boundBy: 1).tap()
-        let level = app.buttons["fogLevel"]
-        XCTAssertTrue(level.waitForExistence(timeout: 10))
+        // Fog names its level once the layers document has them; a tap on it while it's on opens the menu.
+        let level = app.buttons["modeFog"]
         level.tap()
-        // A menu item reads its subtitle after its title.
+        let named = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS ' · '"), object: level)
+        XCTAssertEqual(XCTWaiter().wait(for: [named], timeout: 10), .completed, level.label)
+        level.tap()
+        // A row reads its count after its name.
         func item(_ title: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch }
         let auto = item("Auto")
         XCTAssertTrue(auto.waitForExistence(timeout: 10))

@@ -27,7 +27,7 @@ final class PrivateLocationTests: XCTestCase {
         app.sliders["locationRadius"].adjust(toNormalizedSliderPosition: 0.2)
         // The handle sits in the middle of the map left showing; dragging it moves the circle.
         let map = app.otherElements["map"]
-        let top = app.segmentedControls["modes"].frame.maxY, bottom = editor.frame.minY
+        let top = app.otherElements["modes"].frame.maxY, bottom = editor.frame.minY
         let handle = map.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: map.frame.midX, dy: (top + bottom) / 2))
         handle.press(forDuration: 0.1, thenDragTo: handle.withOffset(CGVector(dx: 40, dy: 30)))
         attach("New Private location")

@@ -23,6 +23,8 @@ final class RecordButton: UIControl {
     private var pressedAt: CFTimeInterval?
     private var holdTimer: Timer?
     private static let tapLimit: CFTimeInterval = 0.4
+    /// How long a press waits before it's a hold, which then runs to Recording.holdToStop.
+    static var holdDelay: TimeInterval { tapLimit }
     static let side: CGFloat = 60
 
     override init(frame: CGRect) {

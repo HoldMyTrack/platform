@@ -34,8 +34,7 @@ extension MapViewController {
         case .layers: [rail.layers] + [layersMenu.content].compactMap { $0 }
         case .places: [rail.places] + [placesMenu.content].compactMap { $0 }
         case .export: [rail.export]
-        case .modes: [modes]
-        case .fogLevel: fogViews.menuButton.isHidden ? [modes] : [fogViews.menuButton]
+        case .modes, .fogLevel: [modes] + [fogLevelMenu.content].compactMap { $0 }
         case .page, .youTour, .record: []
         }
     }
