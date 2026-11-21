@@ -96,6 +96,7 @@ final class RecordingsSync {
             if stopped { break }
             if let refusal = RecordingSync.refusal(track) {
                 report?.refused.append((track, refusal))
+                changed()
                 continue
             }
             do {

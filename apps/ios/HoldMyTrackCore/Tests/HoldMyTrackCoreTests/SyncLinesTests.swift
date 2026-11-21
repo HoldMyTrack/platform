@@ -21,32 +21,38 @@ struct SyncLinesTests {
         {"id": "tracks-line", "type": "line", "source": "tracks", "minzoom": 4, "metadata": {"holdmytrack:role": "track"},
          "paint": {"line-color": "#b07e2e", "line-width": 2.5}},
         {"id": "tracks-focused", "type": "line", "source": "tracks", "minzoom": 4, "metadata": {"holdmytrack:role": "focused"},
-         "paint": {"line-color": "#b07e2e", "line-width": 4.5}}]}]}
+         "paint": {"line-color": "#b07e2e", "line-width": 4.5}}]},
+      {"id": "route-bands", "layers": [
+        {"id": "route-bands-line", "type": "line", "source": "route-bands", "filter": ["has", "band"], "metadata": {"holdmytrack:role": "pace-bands"},
+         "paint": {"line-width": 6}}]}]}
     """.utf8))!)!
 
     @Test func theGroupIsDashedInTheTracksColorWithTheFocusedLookForThePickedOne() throws {
         let added = SyncLines.adding(to: document)
         let group = try #require(added.groups.last)
         #expect(group.id == SyncLines.group)
-        #expect(group.layers.map { $0["id"]?.string } == ["sync-candidates-halo", "sync-candidates-line", "sync-candidates-highlight"])
+        #expect(group.layers.map { $0["id"]?.string } == ["sync-candidates-halo", "sync-candidates-line", "sync-candidates-highlight", "sync-candidates-bands"])
+        #expect(group.layers[3]["source"] == .string(SyncLines.bandsSource))
+        #expect(group.layers[3]["filter"] == .array([.string("has"), .string("band")]), "only the runs, not the arrows' route")
         #expect(group.layers[0]["paint"]?["line-width"] == .number(7.5), "the halo is the casing")
         #expect(group.layers[1]["paint"]?["line-color"] == .string("#b07e2e"))
         #expect(group.layers[1]["paint"]?["line-dasharray"] != nil)
         #expect(group.layers[2]["paint"]?["line-width"] == .number(4.5), "the picked one is the focused line")
         #expect(group.layers.allSatisfy { $0["minzoom"] == .number(4) }, "from the zoom tracks start at")
+        #expect(group.sources.keys.sorted() == [SyncLines.group, SyncLines.bandsSource])
         #expect(SyncLines.adding(to: added).groups.count == added.groups.count, "added once")
     }
 
     @Test func composedTheLinesHaveTheirGeoJSONSource() {
         var state = MapState()
-        state.geojson[SyncLines.group] = SyncLines.features([track("a", minutes: 0)], highlight: nil)
+        state.geojson[SyncLines.group] = SyncLines.features([SyncLines.Shape(track("a", minutes: 0))], highlight: nil)
         let style = JSONValue.parse(Data(#"{"version": 8, "sources": {}, "layers": [{"id": "bg", "type": "background"}]}"#.utf8))!
         let composed = MapStyle.compose(style: style, document: SyncLines.adding(to: document), state: state, apiBase: URL(string: "http://localhost")!)
         #expect(composed["sources"]?[SyncLines.group]?["data"]?["features"]?.array?.count == 1)
     }
 
     @Test func thePickedLineIsLastAndOneWithoutALineIsLeftOut() {
-        let features = SyncLines.features([track("a", minutes: 0), track("b", minutes: 60), track("dot", minutes: 120, points: 1)], highlight: "a")
+        let features = SyncLines.features([track("a", minutes: 0), track("b", minutes: 60), track("dot", minutes: 120, points: 1)].map(SyncLines.Shape.init), highlight: "a")
         let list = features["features"]?.array ?? []
         #expect(list.map { $0["properties"]?["key"]?.string } == ["b", "a"])
         #expect(list.last?["properties"]?["role"] == .string("highlight"))
@@ -83,5 +89,13 @@ struct SyncLinesTests {
         #expect(SyncSimilar.count(sent, waiting: waiting, onMap: true) == 0, "none for one on its way")
         #expect(SyncSimilar.doubled([a, b, c], waiting: waiting) == 2)
         #expect(SyncSimilar.doubled([a, c], waiting: waiting) == 0, "a double left unticked isn't counted")
+    }
+
+    @Test func aShapeIsTheSimplifiedRouteAndItsBands() {
+        let shape = SyncLines.Shape(track("a", minutes: 0))
+        #expect(shape.points == 3)
+        #expect(shape.drawn == track("a", minutes: 0).drawnPoints)
+        #expect(shape.metrics == track("a", minutes: 0).metrics)
+        #expect(SyncLines.Drawn(ids: ["a"], highlight: nil) != SyncLines.Drawn(ids: ["a"], highlight: "a"), "a new pick is a redraw")
     }
 }

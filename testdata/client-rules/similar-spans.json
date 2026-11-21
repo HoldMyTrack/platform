@@ -1,6 +1,6 @@
 {
   "rule": "similarSpans",
-  "description": "Whether two tracks waiting on the Sync tab cover the same stretch of time (docs/SPEC.md FR-3.5): they share at least 0.8 of the longer one's duration, the server's overlapMatches (services/server/internal/ingest/overlap.go). Measuring against the longer one keeps a short walk inside a long hike apart. start and end are epoch milliseconds.",
+  "description": "Whether two tracks waiting on the Sync tab cover the same stretch of time (docs/SPEC.md FR-3.5): they share at least 0.8 of the longer one's duration, the server's overlapMatches (services/server/internal/ingest/overlap.go). Measuring against the longer one keeps a short walk inside a long hike apart. start and end are epoch milliseconds, maybe fractional; each span is cut to whole milliseconds, as the server and Android measure, before the shares are compared.",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "the same span", "input": { "a": { "start": 0, "end": 3600000 }, "b": { "start": 0, "end": 3600000 } }, "expected": true },
@@ -9,6 +9,7 @@
     { "name": "just under 0.8 of the longer", "input": { "a": { "start": 0, "end": 1000000 }, "b": { "start": 200001, "end": 1000000 } }, "expected": false },
     { "name": "a short walk inside a long hike", "input": { "a": { "start": 0, "end": 36000000 }, "b": { "start": 3600000, "end": 7200000 } }, "expected": false },
     { "name": "back to back", "input": { "a": { "start": 0, "end": 3600000 }, "b": { "start": 3600000, "end": 7200000 } }, "expected": false },
+    { "name": "a fraction of a millisecond short counts as the whole millisecond short", "input": { "a": { "start": 0, "end": 1000 }, "b": { "start": 200.0004, "end": 1000 } }, "expected": false },
     { "name": "a span with no duration", "input": { "a": { "start": 0, "end": 0 }, "b": { "start": 0, "end": 3600000 } }, "expected": false }
   ]
 }

@@ -22,6 +22,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         case frame([Double])
         /// The account's track a row overlaps, opened on the Tracks tab on its day.
         case openOnMap(TrackOverlap)
+        /// A message over the map.
+        case say(String)
     }
 
     var onEvent: ((Event) -> Void)?
@@ -119,6 +121,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         describedTypes = nil
         highlight = nil
         framed = false
+        // The account's tracks may have changed since: an answer is asked for again, not kept.
+        overlaps = [:]
         overlapsAsked = nil
         recordings.ticked = []
         types = []
@@ -206,6 +210,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             guard !Task.isCancelled, let self else { return }
             guard let answer else {
                 self.overlapsAsked = nil
+                self.overlaps = [:]
+                self.table.reloadData()
                 return
             }
             self.overlaps = answer
@@ -365,7 +371,11 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             : String(localized: "sync.hidden", defaultValue: "Hidden — it won't be offered again", comment: "Sync: a row swiped aside.")
         onEvent?(.hid(text, undo: { [weak self] in
             // A send started since: its rows stay as they are, as a swipe would leave them.
-            guard let self, !self.recordings.sending else { return }
+            guard let self else { return }
+            guard !self.recordings.sending else {
+                self.onEvent?(.say(String(localized: "sync.undoWhileSending", defaultValue: "Can't undo while tracks are being sent.", comment: "Sync: Undo tapped during a send.")))
+                return
+            }
             self.recordings.hidden = SyncHidden.setting(track.id, hidden: wasHidden, in: self.recordings.hidden)
             self.render()
         }))

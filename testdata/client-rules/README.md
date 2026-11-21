@@ -23,7 +23,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `pendingBatches` | `ids`, `size` | the ids in consecutive batches of at most `size` |
 | `deleteDone` | `status` (a DELETE's HTTP status) | boolean |
 | `verifyAction` | `typed` (the code field's text) | `"check"` or `{ submit }` |
-| `similarSpans` | `a`, `b` (`{ start, end }`, epoch ms) | boolean |
+| `similarSpans` | `a`, `b` (`{ start, end }`, epoch ms, maybe fractional) | boolean |
 | `uploadPlan` | `files` (`{ name, size }`, size -1 when unknown) | `{ send, refusals }`, each refusal `{ kind, name }` or `{ kind: "tooMany", count }` |
 | `toolbarTarget` | `checked` (ids), `focused` | ids |
 | `statsOffered` | `checked` (ids), `tripId` | boolean |

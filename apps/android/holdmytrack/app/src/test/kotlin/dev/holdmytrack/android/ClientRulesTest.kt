@@ -190,7 +190,7 @@ class ClientRulesTest {
             ids(PrivateLocationsOverlay.drawOrder(input.strings("saved").map(circle), input.string("editing")?.let(circle)).map { it.id!! }, sort = false)
         },
         "similarSpans" to { input ->
-            fun at(span: String, end: String) = Instant.ofEpochMilli(input[span]!!.jsonObject[end]!!.jsonPrimitive.long)
+            fun at(span: String, end: String) = Instant.EPOCH.plusNanos(Math.round(input[span]!!.jsonObject[end]!!.jsonPrimitive.double * 1_000_000))
             JsonPrimitive(Similar.overlaps(at("a", "start"), at("a", "end"), at("b", "start"), at("b", "end")))
         },
         "verifyAction" to { input ->

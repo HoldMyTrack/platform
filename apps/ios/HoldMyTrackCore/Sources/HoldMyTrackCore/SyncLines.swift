@@ -2,26 +2,31 @@ import Foundation
 
 /// The Sync tab's recordings on the map (apps/android/docs/SPEC.md FR-3.2): each listed one
 /// dashed, drawn from the phone's own points since none is on the server yet, and the one picked
-/// on the list or the map solid over a halo, as the layers document draws a focused track. One
-/// GeoJSON group added to the document, styled from its `casing`, `track` and `focused` layers.
+/// on the list or the map solid over a halo in its pace bands, as the layers document draws a
+/// focused track. One group added to the document, styled from its `casing`, `track`, `focused`
+/// and `pace-bands` layers, with a GeoJSON source for the lines and one for the bands. The lines
+/// are the simplified ones (Simplify), the bands worked out on the phone (RecordedTrack.metrics).
 public enum SyncLines {
     public static let group = "sync-candidates"
     static let haloID = "sync-candidates-halo"
     public static let lineID = "sync-candidates-line"
     public static let highlightID = "sync-candidates-highlight"
+    public static let bandsSource = "sync-candidates-bands"
+    static let bandsID = "sync-candidates-bands"
 
     /// document with the group added under the labels; unchanged when it has no track layers.
     public static func adding(to document: LayersDocument) -> LayersDocument {
         let layers = document.groups.flatMap(\.layers)
         func role(_ name: String) -> JSONValue? { layers.first { $0["metadata"]?["holdmytrack:role"]?.string == name } }
-        guard let track = role("track"), let casing = role("casing"), let focused = role("focused"),
+        guard let track = role("track"), let casing = role("casing"), let focused = role("focused"), let paceBands = role("pace-bands"),
               !document.groups.contains(where: { $0.id == group }) else { return document }
-        func layer(_ id: String, role: String, layout: JSONValue?, paint: JSONValue?) -> JSONValue {
+        func layer(_ id: String, role: String?, layout: JSONValue?, paint: JSONValue?, source: String = group, filter: JSONValue? = nil) -> JSONValue {
             var spec: [String: JSONValue] = [
-                "id": .string(id), "type": .string("line"), "source": .string(group),
-                "filter": .array([.string("=="), .array([.string("get"), .string("role")]), .string(role)]),
+                "id": .string(id), "type": .string("line"), "source": .string(source),
                 "layout": layout ?? .object([:]), "paint": paint ?? .object([:]),
             ]
+            if let role { spec["filter"] = .array([.string("=="), .array([.string("get"), .string("role")]), .string(role)]) }
+            if let filter { spec["filter"] = filter }
             if let minzoom = track["minzoom"] { spec["minzoom"] = minzoom }
             return .object(spec)
         }
@@ -33,27 +38,55 @@ public enum SyncLines {
         var document = document
         document.groups.append(LayersDocument.Group(
             id: group, placement: .beneathLabels, lifts: [],
-            sources: [group: .object(["type": .string("geojson")])],
+            sources: [group: .object(["type": .string("geojson")]), bandsSource: .object(["type": .string("geojson")])],
             layers: [
                 layer(haloID, role: "highlight", layout: casing["layout"], paint: casing["paint"]),
                 layer(lineID, role: "line", layout: .object(["line-cap": .string("butt"), "line-join": .string("round")]), paint: dashed),
                 layer(highlightID, role: "highlight", layout: focused["layout"], paint: focused["paint"]),
+                layer(bandsID, role: nil, layout: paceBands["layout"], paint: paceBands["paint"], source: bandsSource, filter: paceBands["filter"]),
             ],
             legend: [:]
         ))
         return document
     }
 
-    /// The lines for tracks, highlight's last so it's drawn over its neighbours; one with fewer
+    /// A recording's route as drawn: simplified and banded once, for every redraw after.
+    public struct Shape: Equatable, Sendable {
+        public let id: String
+        /// How many points the route had, so one that changed is shaped again.
+        public let points: Int
+        public let drawn: [RecordedPoint]
+        public let metrics: RouteMetrics
+
+        public init(_ track: RecordedTrack) {
+            id = track.id
+            points = track.points.count
+            drawn = track.drawnPoints
+            metrics = track.metrics(kept: drawn)
+        }
+    }
+
+    /// What was last drawn: the same rows and pick draw nothing new.
+    public struct Drawn: Equatable, Sendable {
+        public let ids: [String]
+        public let highlight: String?
+
+        public init(ids: [String], highlight: String?) {
+            self.ids = ids
+            self.highlight = highlight
+        }
+    }
+
+    /// The lines for shapes, highlight's last so it's drawn over its neighbours; one with fewer
     /// than two points has no line.
-    public static func features(_ tracks: [RecordedTrack], highlight: String?) -> JSONValue {
-        let ordered = tracks.filter { $0.id != highlight } + tracks.filter { $0.id == highlight }
-        let features: [JSONValue] = ordered.filter { $0.points.count >= 2 }.map { track in
+    public static func features(_ shapes: [Shape], highlight: String?) -> JSONValue {
+        let ordered = shapes.filter { $0.id != highlight } + shapes.filter { $0.id == highlight }
+        let features: [JSONValue] = ordered.filter { $0.drawn.count >= 2 }.map { shape -> JSONValue in
             .object([
                 "type": .string("Feature"),
-                "properties": .object(["role": .string(track.id == highlight ? "highlight" : "line"), "key": .string(track.id)]),
+                "properties": .object(["role": .string(shape.id == highlight ? "highlight" : "line"), "key": .string(shape.id)]),
                 "geometry": .object(["type": .string("LineString"),
-                                     "coordinates": .array(track.points.map { .array([.number($0.lon), .number($0.lat)]) })]),
+                                     "coordinates": .array(shape.drawn.map { .array([.number($0.lon), .number($0.lat)]) })]),
             ])
         }
         return .object(["type": .string("FeatureCollection"), "features": .array(features)])
@@ -84,8 +117,8 @@ public enum SyncSimilar {
         let a = aEnd.timeIntervalSince(aStart), b = bEnd.timeIntervalSince(bStart)
         guard a > 0, b > 0 else { return false }
         let shared = min(aEnd, bEnd).timeIntervalSince(max(aStart, bStart))
-        // In milliseconds, as the server and Android compare, so a boundary case agrees.
-        return (shared * 1000).rounded() >= minShare * (max(a, b) * 1000).rounded()
+        // In whole milliseconds, cut as Android's Duration.toMillis cuts, so a boundary case agrees.
+        return (shared * 1000).rounded(.towardZero) >= minShare * (max(a, b) * 1000).rounded(.towardZero)
     }
 
     /// For each of tracks, by id, the others it overlaps, newest first; one that overlaps
