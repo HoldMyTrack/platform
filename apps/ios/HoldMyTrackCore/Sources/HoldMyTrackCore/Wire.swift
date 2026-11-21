@@ -349,6 +349,10 @@ struct StatsCardRequestJSON: Codable, Sendable, Equatable {
     }
 }
 
+struct HiddenTracksJSON: Codable, Sendable, Equatable {
+    let count: Int
+}
+
 struct OverlapsRequestJSON: Codable, Sendable, Equatable {
     let spans: [OverlapSpanJSON]
 }

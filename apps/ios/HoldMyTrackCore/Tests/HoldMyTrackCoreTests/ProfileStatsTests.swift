@@ -41,4 +41,11 @@ struct ProfileStatsTests {
         #expect(AccountCard.place(country: "", timezone: "UTC", unit: "km") == nil)
         #expect(AccountCard.place(country: nil, timezone: "UTC", unit: "km") == nil)
     }
+
+    @Test func aCirclesPreviewGrowsOnALogScaleWithinItsBounds() {
+        #expect(PrivateLocation.previewShare(radiusM: 50) == 0)
+        #expect(PrivateLocation.previewShare(radiusM: 2000) == 1)
+        #expect(PrivateLocation.previewShare(radiusM: 10) == 0, "below the smallest, the smallest")
+        #expect(abs(PrivateLocation.previewShare(radiusM: 316) - 0.5) < 0.01, "the geometric middle is halfway")
+    }
 }

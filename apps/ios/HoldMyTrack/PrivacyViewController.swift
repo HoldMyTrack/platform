@@ -2,17 +2,22 @@ import HoldMyTrackCore
 import SafariServices
 import UIKit
 
-/// Privacy (apps/android/docs/SPEC.md FR-1.7): Private locations, read again each time the screen
-/// shows, a row or Add opening the editor on the map (MapViewController+PrivateLocations);
-/// Download your data; the privacy policy. The demo account sees its Private locations read-only
-/// and no download.
+/// Privacy (apps/android/docs/SPEC.md FR-1.7), in Android's order: what a Private location does;
+/// the account's locations, each a row with its circle drawn small (CirclePreviewView) that opens
+/// the editor on the map (MapViewController+PrivateLocations), and Add a location on the map, with
+/// how many tracks they hide entirely and that a change reprocesses; what HoldMyTrack keeps; then
+/// Your data: Download your data and the privacy policy. Read again each time the screen shows.
+/// The demo account sees its locations read-only, with no Add and no download.
 final class PrivacyViewController: UITableViewController {
     private unowned let flow: AppFlow
     private let account: Account
     private var locations: [PrivateLocation] = []
     private var note: (text: String, failed: Bool)? = (String(localized: "Loading…"), false)
+    /// How many tracks lie entirely inside the locations, once read; a failure leaves it out.
+    private var hidden: Int?
 
-    private enum Section: Int, CaseIterable { case locations, data }
+    private enum Section: Int, CaseIterable { case locations, keeps, data }
+    private enum Row { case location(PrivateLocation), note(String, failed: Bool), add, keep(String, ImageResource), download, policy }
 
     init(flow: AppFlow, account: Account) {
         self.flow = flow
@@ -29,11 +34,28 @@ final class PrivacyViewController: UITableViewController {
         tableView.backgroundColor = UIColor(resource: .bg)
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "row")
         tableView.accessibilityIdentifier = "privacy"
-        if !account.isDemo {
-            let add = UIBarButtonItem(image: UIImage(resource: .plus), primaryAction: UIAction { [weak self] _ in self?.edit(nil) })
-            add.accessibilityLabel = String(localized: "Add a Private location")
-            add.accessibilityIdentifier = "addLocation"
-            navigationItem.rightBarButtonItem = add
+        let subtitle = Controls.body(String(localized: "privacy.subtitle", defaultValue: "Tracks never start or end inside these circles — the part inside is clipped off every track, so nobody can trace a track back to your door.",
+                                            comment: "Privacy: what a Private location does."))
+        subtitle.numberOfLines = 0
+        let box = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 80))
+        subtitle.translatesAutoresizingMaskIntoConstraints = false
+        box.addSubview(subtitle)
+        NSLayoutConstraint.activate([
+            subtitle.topAnchor.constraint(equalTo: box.topAnchor, constant: DesignTokens.Space.s8),
+            subtitle.bottomAnchor.constraint(equalTo: box.bottomAnchor, constant: -DesignTokens.Space.s4),
+            subtitle.leadingAnchor.constraint(equalTo: box.layoutMarginsGuide.leadingAnchor, constant: DesignTokens.Space.s8),
+            subtitle.trailingAnchor.constraint(equalTo: box.layoutMarginsGuide.trailingAnchor, constant: -DesignTokens.Space.s8),
+        ])
+        tableView.tableHeaderView = box
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        guard let header = tableView.tableHeaderView else { return }
+        let size = header.systemLayoutSizeFitting(CGSize(width: tableView.bounds.width, height: 0), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
+        if abs(header.frame.height - size.height) > 0.5 {
+            header.frame.size.height = size.height
+            tableView.tableHeaderView = header
         }
     }
 
@@ -46,79 +68,122 @@ final class PrivacyViewController: UITableViewController {
         Task {
             do {
                 locations = try await flow.api.privateLocations()
-                note = locations.isEmpty ? (String(localized: "No Private locations yet. Where a track starts or ends inside one, that part is hidden everywhere, your own map included."), false) : nil
+                note = locations.isEmpty ? (String(localized: "privacy.none", defaultValue: "None yet.", comment: "Privacy: no Private locations."), false) : nil
             } catch {
                 note = ((error as? APIError)?.serverMessage ?? String(localized: "Private locations couldn't load."), true)
             }
             tableView.reloadData()
+            // Only a line of context: the screen works without it.
+            hidden = locations.isEmpty ? nil : try? await flow.api.hiddenTrackCount()
+            tableView.reloadData()
+        }
+    }
+
+    private func rows(_ section: Section) -> [Row] {
+        switch section {
+        case .locations:
+            return locations.map(Row.location) + (note.map { [Row.note($0.text, failed: $0.failed)] } ?? []) + (account.isDemo ? [] : [.add])
+        case .keeps:
+            return [
+                .keep(String(localized: "privacy.keepsMap", defaultValue: "Nobody else sees your map.", comment: "What HoldMyTrack keeps: the map is yours."), .eyeOff),
+                .keep(String(localized: "privacy.keepsHealth", defaultValue: "No heart rate or other health data is ever read or stored.", comment: "What HoldMyTrack keeps: no health data."), .shield),
+                .keep(String(localized: "privacy.keepsPhotos", defaultValue: "Photos are kept as a resized copy, never the original.", comment: "What HoldMyTrack keeps: photos."), .camera),
+            ]
+        case .data:
+            return (account.isDemo ? [] : [.download]) + [.policy]
         }
     }
 
     override func numberOfSections(in tableView: UITableView) -> Int { Section.allCases.count }
 
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        Section(rawValue: section) == .locations ? String(localized: "Private locations") : nil
-    }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch Section(rawValue: section)! {
-        case .locations: locations.count + (note == nil ? 0 : 1)
-        case .data: account.isDemo ? 1 : 2
+        case .locations: String(localized: "Private locations")
+        case .keeps: String(localized: "privacy.keepsTitle", defaultValue: "What HoldMyTrack keeps", comment: "Privacy: the section of what's kept and what isn't.")
+        case .data: String(localized: "privacy.yourData", defaultValue: "Your data", comment: "Privacy: the section with the download and the policy.")
         }
     }
+
+    /// Under the locations: how many tracks they hide entirely, and that a change reprocesses.
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        guard Section(rawValue: section) == .locations, !locations.isEmpty else { return nil }
+        var lines: [String] = []
+        if let hidden {
+            lines.append(hidden == 0
+                ? String(localized: "privacy.hiddenNone", defaultValue: "No track lies entirely inside these locations.", comment: "Privacy: no track is wholly private.")
+                : String(localized: "privacy.hidden", defaultValue: "\(hidden) tracks lie entirely inside these locations and show as Private.", comment: "Privacy: how many tracks are wholly private."))
+        }
+        if !account.isDemo {
+            lines.append(String(localized: "privacy.reprocess", defaultValue: "Saving a change reprocesses the tracks it touches — they show Pending until done.", comment: "Privacy: what a change to a location does."))
+        }
+        return lines.isEmpty ? nil : lines.joined(separator: "\n\n")
+    }
+
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { rows(Section(rawValue: section)!).count }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "row", for: indexPath)
         var config = UIListContentConfiguration.subtitleCell()
         config.textProperties.font = Typeface.sans(DesignTokens.Text.xl)
+        config.secondaryTextProperties.color = UIColor(resource: .inkSecondary)
+        config.imageProperties.tintColor = UIColor(resource: .inkSecondary)
         cell.backgroundColor = UIColor(resource: .surface)
         cell.accessoryType = .none
         cell.selectionStyle = .default
         cell.accessibilityIdentifier = nil
-        switch Section(rawValue: indexPath.section)! {
-        case .locations:
-            if indexPath.row < locations.count {
-                let location = locations[indexPath.row]
-                config.text = location.name.isEmpty ? String(localized: "Unnamed") : location.name
-                config.secondaryText = String(localized: "Radius: \(location.radiusM) m")
-                config.image = UIImage(resource: .mapPin)
-                cell.accessibilityIdentifier = "privateLocation"
-                cell.selectionStyle = account.isDemo ? .none : .default
-            } else if let note {
-                config.text = note.text
-                config.textProperties.font = Typeface.sans(DesignTokens.Text.md)
-                config.textProperties.color = UIColor(resource: note.failed ? .danger : .inkSecondary)
-                cell.selectionStyle = .none
-            }
-        case .data:
-            if indexPath.row == 0 && !account.isDemo {
-                config.text = String(localized: "Download your data")
-                config.image = UIImage(resource: .download)
-                cell.accessoryType = .disclosureIndicator
-                cell.accessibilityIdentifier = "downloadData"
-            } else {
-                config.text = String(localized: "Privacy policy")
-                config.image = UIImage(resource: .shield)
-                cell.accessibilityIdentifier = "privacyPolicy"
-            }
+        switch rows(Section(rawValue: indexPath.section)!)[indexPath.row] {
+        case .location(let location):
+            config.text = location.name.isEmpty ? String(localized: "Unnamed") : location.name
+            config.secondaryText = String(localized: "privacy.rowMeta", defaultValue: "Radius · \(location.radiusM) m", comment: "Privacy: a location's radius.")
+            config.image = CirclePreviewView.image(radiusM: location.radiusM)
+            config.imageProperties.tintColor = nil
+            config.imageProperties.maximumSize = CGSize(width: 44, height: 44)
+            cell.accessoryType = account.isDemo ? .none : .disclosureIndicator
+            cell.selectionStyle = account.isDemo ? .none : .default
+            cell.accessibilityIdentifier = "privateLocation"
+        case .note(let text, let failed):
+            config.text = text
+            config.textProperties.font = Typeface.sans(DesignTokens.Text.md)
+            config.textProperties.color = UIColor(resource: failed ? .danger : .inkSecondary)
+            cell.selectionStyle = .none
+        case .add:
+            config = UIListContentConfiguration.cell()
+            config.text = String(localized: "privacy.add", defaultValue: "Add a location on the map", comment: "Privacy: add a Private location on the map.")
+            config.textProperties.color = UIColor(resource: .accent)
+            config.textProperties.font = Typeface.sans(DesignTokens.Text.xl)
+            config.image = UIImage(resource: .plus)
+            config.imageProperties.tintColor = UIColor(resource: .accent)
+            cell.accessibilityIdentifier = "addLocation"
+        case .keep(let text, let icon):
+            config = UIListContentConfiguration.cell()
+            config.text = text
+            config.textProperties.font = Typeface.sans(DesignTokens.Text.md)
+            config.image = UIImage(resource: icon)
+            config.imageProperties.tintColor = UIColor(resource: .inkSecondary)
+            cell.selectionStyle = .none
+        case .download:
+            config.text = String(localized: "Download your data")
+            config.secondaryText = String(localized: "privacy.downloadSub", defaultValue: "A copy of everything, emailed when it's ready", comment: "Privacy: what Download your data does.")
+            config.image = UIImage(resource: .download)
+            cell.accessoryType = .disclosureIndicator
+            cell.accessibilityIdentifier = "downloadData"
+        case .policy:
+            config.text = String(localized: "Privacy policy")
+            config.image = UIImage(resource: .shield)
+            cell.accessibilityIdentifier = "privacyPolicy"
         }
-        config.imageProperties.tintColor = UIColor(resource: .inkSecondary)
         cell.contentConfiguration = config
         return cell
     }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        switch Section(rawValue: indexPath.section)! {
-        case .locations:
-            guard indexPath.row < locations.count, !account.isDemo else { return }
-            edit(locations[indexPath.row])
-        case .data:
-            if indexPath.row == 0 && !account.isDemo {
-                navigationController?.pushViewController(DataExportViewController(api: flow.api), animated: true)
-            } else {
-                present(SFSafariViewController(url: flow.api.app.apiBaseURL.appending(path: "privacy")), animated: true)
-            }
+        switch rows(Section(rawValue: indexPath.section)!)[indexPath.row] {
+        case .location(let location) where !account.isDemo: edit(location)
+        case .add: edit(nil)
+        case .download: navigationController?.pushViewController(DataExportViewController(api: flow.api, email: account.email), animated: true)
+        case .policy: present(SFSafariViewController(url: flow.api.app.apiBaseURL.appending(path: "privacy")), animated: true)
+        default: break
         }
     }
 
@@ -128,18 +193,50 @@ final class PrivacyViewController: UITableViewController {
     }
 }
 
-/// Download your data (root docs/SPEC.md FR-1.13): asks for a copy, checks it every 10 seconds
-/// while it's being prepared and the screen shows, and hands each ready part to the share sheet,
-/// whose Save to Files keeps it.
+/// A Private location as a picture rather than a map, for its Privacy row: a tile with two
+/// streets across it and the circle in the map's purple, larger the larger its radius
+/// (PrivateLocation.previewShare), as Android's CirclePreviewView.
+enum CirclePreviewView {
+    static func image(radiusM: Int, side: CGFloat = 44) -> UIImage {
+        let purple = UIColor(red: 0x7a / 255, green: 0x4b / 255, blue: 0xc2 / 255, alpha: 1)
+        return UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { context in
+            let rect = CGRect(x: 0, y: 0, width: side, height: side)
+            UIBezierPath(roundedRect: rect, cornerRadius: 10).addClip()
+            UIColor(resource: .surfaceTintStrong).setFill()
+            context.fill(rect)
+            let street = UIBezierPath()
+            street.move(to: CGPoint(x: 0, y: side * 0.6)); street.addLine(to: CGPoint(x: side, y: side * 0.5))
+            street.move(to: CGPoint(x: side * 0.35, y: 0)); street.addLine(to: CGPoint(x: side * 0.5, y: side))
+            street.lineWidth = 3
+            UIColor(resource: .surface).setStroke()
+            street.stroke()
+            let r = 5 + PrivateLocation.previewShare(radiusM: radiusM) * (side / 2 - 7)
+            let circle = UIBezierPath(arcCenter: CGPoint(x: side / 2, y: side / 2), radius: r, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
+            purple.withAlphaComponent(0.22).setFill()
+            circle.fill()
+            purple.setStroke()
+            circle.lineWidth = 1.5
+            circle.stroke()
+            UIBezierPath(arcCenter: CGPoint(x: side / 2, y: side / 2), radius: 2.5, startAngle: 0, endAngle: 2 * .pi, clockwise: true).fill()
+        }.withRenderingMode(.alwaysOriginal)
+    }
+}
+
+/// Download your data (root docs/SPEC.md FR-1.13), a screen of its own as on Android, in its
+/// words: asks for a copy, checks it every 10 seconds while it's being prepared and the screen
+/// shows, and hands each ready part to the share sheet, whose Save to Files keeps it.
 final class DataExportViewController: UIViewController {
     private let api: APIClient
+    /// Where the server emails that the archive is ready.
+    private let email: String
     private let status = Controls.body(color: UIColor(resource: .ink))
-    private let request = Controls.primaryButton(String(localized: "Prepare a download"), id: "requestExport")
+    private let request = Controls.primaryButton(String(localized: "export.request", defaultValue: "Request a download", comment: "Download your data: ask for an archive."), id: "requestExport")
     private let parts = Controls.column([], spacing: DesignTokens.Space.s8)
     private var poll: Task<Void, Never>?
 
-    init(api: APIClient) {
+    init(api: APIClient, email: String) {
         self.api = api
+        self.email = email
         super.init(nibName: nil, bundle: nil)
         title = String(localized: "Download your data")
     }
@@ -151,7 +248,8 @@ final class DataExportViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .bg)
         status.accessibilityIdentifier = "exportStatus"
-        let about = Controls.body(String(localized: "A copy of your tracks, Trips, photos and settings, as zip files. We email you when it's ready; the download lasts 7 days."))
+        let about = Controls.body(String(localized: "export.hint", defaultValue: "A copy of everything in your account, as zip archives: the files you uploaded or synced, every track as GPX, your photos, and your settings, Trips, Private locations and captured places.",
+                                         comment: "Download your data: what the archive holds."))
         request.addAction(UIAction { [weak self] _ in self?.ask() }, for: .primaryActionTriggered)
         Controls.host(Controls.column([about, status, request, parts]), in: self)
     }
@@ -196,21 +294,27 @@ final class DataExportViewController: UIViewController {
 
     private func show(_ export: ExportStatus) {
         status.textColor = UIColor(resource: export.state == .failed ? .danger : .ink)
+        let total = ByteCountFormatter.string(fromByteCount: Int64(export.parts.reduce(0) { $0 + $1.size }), countStyle: .file)
+        let until = export.expiresAt.flatMap { ISO8601DateFormatter().date(from: $0) }?.formatted(date: .abbreviated, time: .omitted) ?? ""
         status.text = switch export.state {
-        case .none: String(localized: "No download prepared yet.")
-        case .preparing: String(localized: "Preparing your download… It can take a few minutes.")
-        case .ready: String(localized: "Ready. Save each part to Files.")
-        case .failed: String(localized: "The last download couldn't be prepared. Try again.")
+        case .none: ""
+        case .preparing: String(localized: "export.preparing", defaultValue: "Preparing your archive. It usually takes a few minutes; we'll email \(email) when it's ready, and it will be here too.", comment: "Download your data: being prepared, and the email told when it's ready.")
+        case .ready: String(localized: "export.ready", defaultValue: "Ready, \(total) in all. Download until \(until):", comment: "Download your data: ready, its size and until when.")
+        case .failed: String(localized: "export.failed", defaultValue: "Your last download couldn't be prepared. Please try again, and if it fails again, let us know.", comment: "Download your data: the last one failed.")
         }
+        status.isHidden = export.state == .none
         request.isHidden = export.state == .preparing
         var config = request.configuration
-        config?.title = export.state == .ready ? String(localized: "Prepare a new download") : String(localized: "Prepare a download")
+        config?.title = export.state == .ready
+            ? String(localized: "export.again", defaultValue: "Request a new one", comment: "Download your data: ask for a fresh archive.")
+            : String(localized: "export.request", defaultValue: "Request a download", comment: "Download your data: ask for an archive.")
         request.configuration = config
         parts.arrangedSubviews.forEach { $0.removeFromSuperview() }
         guard export.state == .ready else { return }
         for part in export.parts {
             let size = ByteCountFormatter.string(fromByteCount: Int64(part.size), countStyle: .file)
-            let button = Controls.secondaryButton("\(part.name) (\(size))", id: "exportPart", icon: UIImage(resource: .download))
+            let button = Controls.secondaryButton(String(localized: "export.download", defaultValue: "Download \(part.n) of \(export.parts.count) (\(size))", comment: "Download your data: one part, of how many, and its size."),
+                                                  id: "exportPart", icon: UIImage(resource: .download))
             button.addAction(UIAction { [weak self] _ in self?.save(part, from: button) }, for: .primaryActionTriggered)
             parts.addArrangedSubview(button)
         }

@@ -10,6 +10,14 @@ public struct PrivateLocation: Equatable, Sendable {
 
     /// The server's bounds on a radius.
     public static let radiusRange = 50...2000
+
+    /// How much of a Privacy row's tile a circle of radiusM fills, 0 to 1: on a log scale from
+    /// the smallest radius to the largest, so 50 m and 2 km both read (Android's
+    /// CirclePreviewView).
+    public static func previewShare(radiusM: Int) -> Double {
+        let clamped = Double(min(max(radiusM, radiusRange.lowerBound), radiusRange.upperBound))
+        return log(clamped / Double(radiusRange.lowerBound)) / log(Double(radiusRange.upperBound) / Double(radiusRange.lowerBound))
+    }
 }
 
 /// Where the account's latest copy of its data stands (root docs/SPEC.md FR-1.13).
@@ -52,6 +60,13 @@ extension APIClient {
     public func privateLocations() async throws -> [PrivateLocation] {
         let json: [PrivateLocationJSON] = try decode(try await send("GET", "v2/private-locations"))
         return json.map(PrivateLocation.init)
+    }
+
+    /// How many of the account's tracks its Private locations hide entirely
+    /// (`GET /v2/private-locations/hidden`): the list's Private rows.
+    public func hiddenTrackCount() async throws -> Int {
+        let json: HiddenTracksJSON = try decode(try await send("GET", "v2/private-locations/hidden"))
+        return json.count
     }
 
     /// `POST /v2/private-locations`, or with id `PATCH` it: the whole circle either way.
