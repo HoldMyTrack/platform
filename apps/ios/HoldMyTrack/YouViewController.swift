@@ -47,6 +47,15 @@ final class YouViewController: UITableViewController {
     private var avatar: UIImage?
     /// Take a tour (TourController.request).
     var onTour: (() -> Void)?
+    /// The account's tile version as the map last read it: a sync, upload, delete or edit moves
+    /// it, so the numbers are read again (YouRefresh).
+    var tileVersion: () -> String = { "" }
+    /// When the numbers were last read, and against what.
+    private var numbersRead: YouRefresh.Mark?
+    /// A page was pushed over this one, or the app left: the next showing is a return.
+    private var resumed = false
+    private var numbersTask: Task<Void, Never>?
+    private var privacyTask: Task<Void, Never>?
 
     private enum Row { case settings, profile, privacy, theme, language, tour, web, delete, signOut }
     private var sections: [[Row]] {
@@ -87,11 +96,22 @@ final class YouViewController: UITableViewController {
         tableView.tableHeaderView = wrap(title, top: DesignTokens.Space.s8)
         tableView.tableFooterView = footer()
         loadAvatar()
+        // A return to the app while You shows is a return, read as one.
+        NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.viewIfLoaded?.window != nil else { return }
+                self.resumed = true
+                self.load()
+                self.resumed = false
+            }
+        }
         NotificationCenter.default.addObserver(forName: AppFlow.accountChanged, object: nil, queue: .main) { [weak self] note in
             let changed = note.userInfo?["account"] as? Account
             MainActor.assumeIsolated {
                 guard let self, let account = changed else { return }
                 self.account = account
+                // A removed photo goes back to the initials.
+                self.avatarView.image = nil
                 self.loadAvatar()
                 self.tableView.reloadData()
             }
@@ -100,25 +120,41 @@ final class YouViewController: UITableViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        loadNumbers()
+        load()
+        resumed = false
     }
 
-    /// Every track day since 1970, and the Private locations: Settings, a Private location or a
-    /// sync can each change them since the last showing.
-    private func loadNumbers() {
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        resumed = navigationController.map { $0.topViewController !== self } ?? false
+    }
+
+    /// The numbers when they could have changed (YouRefresh), and the Private locations on every
+    /// showing, since the map's editor changes them. A read overtaken by a newer one is dropped.
+    private func load() {
         let zone = TimeZone(identifier: account.timezone) ?? .current
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = zone
         let p = calendar.dateComponents([.year, .month, .day], from: Date())
         let today = String(format: "%04d-%02d-%02d", p.year!, p.month!, p.day!)
-        Task { [weak self, api = flow.api!] in
-            guard let days = try? await api.trackDays(from: "1970-01-01", to: "\(p.year!)-12-31"), let self else { return }
-            self.totals = ProfileStats.totals(days)
-            self.weeks = ProfileStats.recentWeeks(days, today: today, weeks: Self.recentWeeks)
-            self.tableView.reloadData()
+        let now = YouRefresh.Mark(atMs: Int64(Date().timeIntervalSince1970 * 1000), tileVersion: tileVersion(), today: today)
+        if YouRefresh.of(numbers: numbersRead, accountAtMs: nil, now: now, resumed: resumed).numbers {
+            numbersRead = now
+            numbersTask?.cancel()
+            numbersTask = Task { [weak self, api = flow.api!] in
+                let days = try? await api.trackDays(from: "1970-01-01", to: "\(p.year!)-12-31")
+                guard !Task.isCancelled, let self else { return }
+                // A failed read is made again on the next showing.
+                guard let days else { return self.numbersRead = nil }
+                self.totals = ProfileStats.totals(days)
+                self.weeks = ProfileStats.recentWeeks(days, today: today, weeks: Self.recentWeeks)
+                self.tableView.reloadData()
+            }
         }
-        Task { [weak self, api = flow.api!] in
-            guard let locations = try? await api.privateLocations(), let self else { return }
+        privacyTask?.cancel()
+        privacyTask = Task { [weak self, api = flow.api!] in
+            let locations = try? await api.privateLocations()
+            guard !Task.isCancelled, let self, let locations else { return }
             self.privateCount = locations.count
             self.tableView.reloadData()
         }
@@ -163,7 +199,7 @@ final class YouViewController: UITableViewController {
         avatarView.layer.cornerRadius = 28
         avatarView.clipsToBounds = true
         avatarView.isAccessibilityElement = false
-        let initials = Controls.label(Self.initials(account.displayName.isEmpty ? account.email : account.displayName),
+        let initials = Controls.label(AccountCard.initials(account.displayName.isEmpty ? account.email : account.displayName),
                                       font: Typeface.sans(DesignTokens.Text.lg, weight: DesignTokens.Weight.semibold), color: UIColor(resource: .inkSecondary))
         initials.textAlignment = .center
         initials.isHidden = avatarView.image != nil
@@ -181,10 +217,9 @@ final class YouViewController: UITableViewController {
         name.accessibilityIdentifier = "account"
         var lines: [UIView] = [name]
         if !account.isDemo && !account.displayName.isEmpty { lines.append(Controls.body(account.email)) }
-        if !account.country.isEmpty {
-            let country = Locale.current.localizedString(forRegionCode: account.country) ?? account.country
-            let place = Controls.label([country, account.timezone, PanelFormat(account: account).unit].filter { !$0.isEmpty }.joined(separator: " · "),
-                                       font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
+        let country = account.country.isEmpty ? nil : Locale.current.localizedString(forRegionCode: account.country) ?? account.country
+        if let text = AccountCard.place(country: country, timezone: account.timezone, unit: PanelFormat(account: account).unit) {
+            let place = Controls.label(text, font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
             place.numberOfLines = 0
             lines.append(place)
         }
@@ -193,12 +228,6 @@ final class YouViewController: UITableViewController {
         row.spacing = DesignTokens.Space.s16
         row.alignment = .center
         return row
-    }
-
-    /// The first letters of the first two words: "Sam Taylor" is "ST", an email its first.
-    static func initials(_ text: String) -> String {
-        let head = text.split(separator: "@").first.map(String.init) ?? text
-        return head.split(whereSeparator: { " ._-".contains($0) }).prefix(2).compactMap(\.first).map { String($0).uppercased() }.joined()
     }
 
     /// The numbers' half: Tracks, Distance, Active days and Longest streak, the recent weeks

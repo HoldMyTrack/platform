@@ -78,6 +78,9 @@ final class YouTests: XCTestCase {
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         app.tabBars.buttons["tabYou"].tap()
+        // The last row: scrolled to, as a smaller phone needs.
+        XCTAssertTrue(app.tables["you"].waitForExistence(timeout: 10))
+        app.tables["you"].swipeUp()
         XCTAssertTrue(app.cells["youDelete"].waitForExistence(timeout: 10))
         app.cells["youDelete"].tap()
         let field = app.alerts.textFields["deleteEmail"]

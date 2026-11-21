@@ -28,4 +28,17 @@ struct ProfileStatsTests {
         let midweek = ProfileStats.recentWeeks([], today: "2026-11-19", weeks: 1)
         #expect(midweek == [0, 0, 0, 0, 0, -1, -1], "Friday and Saturday haven't come")
     }
+
+    @Test func initialsTakeTheFirstTwoWordsOrTheEmailsName() {
+        #expect(AccountCard.initials("Sam Taylor") == "ST")
+        #expect(AccountCard.initials("ann.lee@example.com") == "AL")
+        #expect(AccountCard.initials("bob@example.com") == "B")
+        #expect(AccountCard.initials("") == "")
+    }
+
+    @Test func thePlaceLineNeedsACountry() {
+        #expect(AccountCard.place(country: "United States", timezone: "America/New_York", unit: "mi") == "United States · America/New_York · mi")
+        #expect(AccountCard.place(country: "", timezone: "UTC", unit: "km") == nil)
+        #expect(AccountCard.place(country: nil, timezone: "UTC", unit: "km") == nil)
+    }
 }

@@ -73,3 +73,43 @@ public enum ProfileStats {
         return String(format: "%04d-%02d-%02d", p.year!, p.month!, p.day!)
     }
 }
+
+/// Which of the You tab's reads to make again, as Android's YouRefresh. Both are made on every
+/// return to the app or from another of its screens (resumed). On a switch between tabs the
+/// numbers, which read every track day since 1970, are read only when the tracks could have
+/// changed: the tile version moved, the day turned, or they're maxAge old; the account once it
+/// is that old.
+public enum YouRefresh {
+    public struct Mark: Equatable, Sendable {
+        public let atMs: Int64
+        public let tileVersion: String
+        public let today: String
+
+        public init(atMs: Int64, tileVersion: String, today: String) {
+            (self.atMs, self.tileVersion, self.today) = (atMs, tileVersion, today)
+        }
+    }
+
+    public static let maxAgeMs: Int64 = 10 * 60_000
+
+    public static func of(numbers: Mark?, accountAtMs: Int64?, now: Mark, resumed: Bool) -> (account: Bool, numbers: Bool) {
+        let readNumbers = numbers.map { resumed || now.atMs - $0.atMs >= maxAgeMs || now.tileVersion != $0.tileVersion || now.today != $0.today } ?? true
+        let readAccount = accountAtMs.map { resumed || now.atMs - $0 >= maxAgeMs } ?? true
+        return (readAccount, readNumbers)
+    }
+}
+
+/// The You tab's account card's words.
+public enum AccountCard {
+    /// The first letters of the first two words: "Sam Taylor" is "ST", an email its first.
+    public static func initials(_ text: String) -> String {
+        let head = text.split(separator: "@").first.map(String.init) ?? text
+        return head.split(whereSeparator: { " ._-".contains($0) }).prefix(2).compactMap(\.first).map { String($0).uppercased() }.joined()
+    }
+
+    /// "United States · America/New_York · mi", or nil with no Country yet.
+    public static func place(country: String?, timezone: String, unit: String) -> String? {
+        guard let country, !country.isEmpty else { return nil }
+        return [country, timezone, unit].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+}

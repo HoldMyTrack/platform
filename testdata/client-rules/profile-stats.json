@@ -1,0 +1,18 @@
+{
+  "rule": "profileStats",
+  "description": "The You tab's all-time numbers and its glance at the track graph, by the web Profile page's rules (services/server/internal/httpapi/profile_page.go): count and distance are sums, active days the number of days, the streak the longest run of consecutive ones; recent weeks are the last weeks through today, Sunday to Saturday column by column, each day 0 for none, then 1, 2 and 3 for three or more, -1 for a day still to come. days are the histogram's buckets, ascending, never one without a track.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "nothing yet", "input": { "days": [], "today": "2026-11-19", "weeks": 1 },
+      "expected": { "count": 0, "distanceMeters": 0, "activeDays": 0, "longestStreakDays": 0, "weeks": [0, 0, 0, 0, 0, -1, -1] } },
+    { "name": "a streak across the end of February, and a gap", "input": {
+        "days": [{ "date": "2026-02-27", "count": 2, "distanceMeters": 1000 }, { "date": "2026-02-28", "count": 1, "distanceMeters": 1000 },
+                 { "date": "2026-03-01", "count": 1, "distanceMeters": 1000 }, { "date": "2026-03-05", "count": 1, "distanceMeters": 500 }],
+        "today": "2026-03-07", "weeks": 1 },
+      "expected": { "count": 5, "distanceMeters": 3500, "activeDays": 4, "longestStreakDays": 3, "weeks": [1, 0, 0, 0, 1, 0, 0] } },
+    { "name": "three or more is the darkest, and the last column is this week", "input": {
+        "days": [{ "date": "2026-11-15", "count": 5, "distanceMeters": 100 }, { "date": "2026-11-21", "count": 2, "distanceMeters": 100 }],
+        "today": "2026-11-21", "weeks": 2 },
+      "expected": { "count": 7, "distanceMeters": 200, "activeDays": 2, "longestStreakDays": 1, "weeks": [0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 2] } }
+  ]
+}

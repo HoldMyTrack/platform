@@ -87,6 +87,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             }
         }
         home.onTour = { [weak self] in self?.tour.request() }
+        home.tileVersion = { [weak map] in map?.pair?.layers.tileVersion ?? "" }
         map.onHistoryKnown = { [weak self] any in self?.tour.historyKnown(any) }
         map.onModePicked = { [weak self] mode in self?.tour.notice(.mode(mode)) }
         map.onMapFreed = { [weak self] in self?.tour.mapFreed() }

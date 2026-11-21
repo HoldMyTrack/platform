@@ -1003,7 +1003,7 @@
       }
     },
     "Delete account" : {
-      "comment" : "You tab: the row and the confirmation's button.",
+      "comment" : "Delete account's confirmation: its button.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
