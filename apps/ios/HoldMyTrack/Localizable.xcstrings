@@ -23,17 +23,6 @@
         }
       }
     },
-    "%@ explored" : {
-      "comment" : "Fog's level control: under a level, how many of its places the account has explored.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Посещено: %@"
-          }
-        }
-      }
-    },
     "%@ is over %lld MB." : {
       "comment" : "Upload: a file past the size limit: its name and the limit.",
       "localizations" : {
@@ -562,6 +551,17 @@
         }
       }
     },
+    "Check" : {
+      "comment" : "Tracks panel: the selection bar's menu of All, None and Invert.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отметить"
+          }
+        }
+      }
+    },
     "Check %@" : {
       "comment" : "Tracks panel: a row's tile; the placeholder is the row's title.",
       "localizations" : {
@@ -573,13 +573,13 @@
         }
       }
     },
-    "Check all" : {
-      "comment" : "Tracks panel: the master checkbox.",
+    "Check all tracks" : {
+      "comment" : "Tracks panel: the selection bar's check box, some or none checked.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отметить все"
+            "value" : "Отметить все треки"
           }
         }
       }
@@ -2773,17 +2773,6 @@
         }
       }
     },
-    "Select" : {
-      "comment" : "Tracks panel: the select menu's button: All, None, Invert.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Выбор"
-          }
-        }
-      }
-    },
     "Send" : {
       "comment" : "Trips tab: sends a copy.",
       "localizations" : {
@@ -3121,17 +3110,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Стоп"
-          }
-        }
-      }
-    },
-    "Stop selecting" : {
-      "comment" : "Tracks panel: the selection bar's ×: unchecks every row.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Снять отметки"
           }
         }
       }
@@ -3786,12 +3764,23 @@
       }
     },
     "Uncheck all" : {
-      "comment" : "Tracks panel: the master checkbox when every row is checked.",
+      "comment" : "Tracks panel: the selection bar's ×, which unchecks every row.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Снять все отметки"
+          }
+        }
+      }
+    },
+    "Uncheck all tracks" : {
+      "comment" : "Tracks panel: the selection bar's check box, all checked.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снять отметку со всех треков"
           }
         }
       }
@@ -9291,7 +9280,7 @@
       }
     },
     "recording.paused" : {
-      "comment" : "Recording: paused, and its moving time.",
+      "comment" : "Recording: paused, and the distance so far.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -9361,6 +9350,24 @@
           }
         }
       }
+    },
+    "recording.stopButton" : {
+      "comment" : "The recording's status over the map: stop, which asks first.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стоп"
+          }
+        }
+      },
+      "extractionState" : "manual"
     },
     "recording.stopMessage" : {
       "comment" : "Stopping from the Live Activity: the moving time and distance so far.",

@@ -83,14 +83,13 @@ struct RecordingTests {
 
     @Test func theStatusSaysWhatTheRecordingIsDoing() {
         var r = Recording()
-        #expect(RecordingStatus.of(r, holding: false, at: t0) == .none)
+        #expect(RecordingStatus.of(r, at: t0) == .none)
         r.start(at: t0)
-        #expect(RecordingStatus.of(r, holding: false, at: t0.addingTimeInterval(5)) == .waiting)
+        #expect(RecordingStatus.of(r, at: t0.addingTimeInterval(5)) == .waiting(moving: 5), "the clock runs before the first fix")
         r.add(point(0, 0, 1), accuracy: 5)
-        #expect(RecordingStatus.of(r, holding: false, at: t0.addingTimeInterval(5)) == .running(moving: 5, meters: 0))
-        #expect(RecordingStatus.of(r, holding: true, at: t0.addingTimeInterval(5)) == .holding)
+        #expect(RecordingStatus.of(r, at: t0.addingTimeInterval(5)) == .running(moving: 5, meters: 0))
         r.pause(at: t0.addingTimeInterval(10))
-        #expect(RecordingStatus.of(r, holding: false, at: t0.addingTimeInterval(99)) == .paused(moving: 10))
+        #expect(RecordingStatus.of(r, at: t0.addingTimeInterval(99)) == .paused(moving: 10, meters: 0))
         #expect(RecordingStatus.clock(3725) == "1:02:05")
         #expect(RecordingStatus.clock(-1) == "0:00:00")
     }
@@ -127,7 +126,7 @@ struct RecordingTests {
 
     @Test func aRecordingShowsOnlyItselfInNormal() {
         #expect(TabMode.shown(picked: .fog, onTracksTab: true, recording: true) == .normal)
-        #expect(!TabMode.toggleShown(onTracksTab: true, recording: true))
+        #expect(!MapChrome.modeBarShown(recording: true, editOpen: false, selectionShown: false, onTracksTab: true))
         #expect(TabMode.hiddenGroups(recording: true) == ["tracks", "route-bands"])
         #expect(TabMode.hiddenGroups(recording: false).isEmpty)
         #expect(TabMode.shown(picked: .fog, onTracksTab: true) == .fog)

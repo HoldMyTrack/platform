@@ -24,8 +24,7 @@ extension MapViewController {
         applyTabMode()
     }
 
-    /// The views a step on the map points at. Fog's level button shows only once the layers
-    /// document has its levels; until then the step points at the toggle.
+    /// The views a step on the map points at, a menu the step holds open included.
     func tourViews(_ target: TourTarget) -> [UIView] {
         guard isViewLoaded else { return [] }
         return switch target {
@@ -34,8 +33,7 @@ extension MapViewController {
         case .layers: [rail.layers] + [layersMenu.content].compactMap { $0 }
         case .places: [rail.places] + [placesMenu.content].compactMap { $0 }
         case .export: [rail.export]
-        case .modes: [modes]
-        case .fogLevel: fogViews.menuButton.isHidden ? [modes] : [fogViews.menuButton]
+        case .modes, .fogLevel: [modes] + [fogLevelMenu.content].compactMap { $0 }
         case .page, .youTour, .record: []
         }
     }

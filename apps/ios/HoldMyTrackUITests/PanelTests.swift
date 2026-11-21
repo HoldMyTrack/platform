@@ -93,8 +93,8 @@ final class PanelTests: XCTestCase {
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
-        let modes = app.segmentedControls["modes"]
-        modes.buttons.element(boundBy: 1).tap()
+        let modes = app.otherElements["modes"]
+        app.buttons["modeFog"].tap()
         XCTAssertFalse(app.buttons["panelHandle"].isHittable, "the sheet is Normal mode's")
 
         app.tabBars.buttons["tabTrips"].tap()
@@ -103,6 +103,6 @@ final class PanelTests: XCTestCase {
 
         app.tabBars.buttons["tabTracks"].tap()
         XCTAssertTrue(modes.waitForExistence(timeout: 5))
-        XCTAssertTrue(modes.buttons.element(boundBy: 1).isSelected, "Fog again")
+        XCTAssertTrue(app.buttons["modeFog"].isSelected, "Fog again")
     }
 }

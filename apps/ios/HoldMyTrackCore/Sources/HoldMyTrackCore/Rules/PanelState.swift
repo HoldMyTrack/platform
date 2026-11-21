@@ -104,6 +104,10 @@ public struct PanelState: Equatable, Sendable {
 
     public mutating func clearChecked() { checked = [] }
 
+    /// Checks ids again after the tour, the ones still listed: a row the map moved away from
+    /// stays unchecked, as a reload keeps only listed rows checked.
+    public mutating func restoreChecked(_ ids: Set<String>) { checked = ids.intersection(listed.map(\.id)) }
+
     /// Checks every listed row that isn't and unchecks every one that is; a checked row filtered
     /// out of sight is dropped rather than kept checked where it can't be seen.
     public mutating func invertChecked() { checked = Set(listed.map(\.id).filter { !checked.contains($0) }) }

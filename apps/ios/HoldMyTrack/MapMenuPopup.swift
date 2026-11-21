@@ -1,8 +1,8 @@
 import HoldMyTrackCore
 import UIKit
 
-/// A map menu's popup, Android's `MenuPopup`: a panel under its button, its end edge on the
-/// button's. A tap on the button opens it; a tap outside it, or VoiceOver's escape, closes it. The
+/// A map menu's popup, Android's `MenuPopup`: a panel under its button, lined up with its end
+/// edge, or its start edge for Fog's level menu. A tap on the button opens it; a tap outside it, or VoiceOver's escape, closes it. The
 /// tour can hold it open view-only (hold), letting go of touches so the tour's card under it keeps
 /// working, and at most 40% of the screen tall so it can't cover that card. build makes the content
 /// on each opening and refresh; canOpen says whether there is anything to show, and a hold asked
@@ -11,8 +11,11 @@ import UIKit
 final class MapMenuPopup {
     private unowned let host: UIView
     private unowned let anchor: UIView
+    private let alignStart: Bool
     private let canOpen: () -> Bool
     private let build: () -> UIView
+    /// Each opening, for content read again then (Fog's counts).
+    var onOpen: (() -> Void)?
     private var panel: MenuPanel?
     private let scroll = UIScrollView()
     /// What build made last, in the scroll view.
@@ -32,15 +35,20 @@ final class MapMenuPopup {
     /// Around the content, inside the panel.
     static let inset = DesignTokens.Space.s8
 
-    init(host: UIView, anchor: UIView, canOpen: @escaping () -> Bool = { true }, build: @escaping () -> UIView) {
+    init(host: UIView, anchor: UIView, alignStart: Bool = false, canOpen: @escaping () -> Bool = { true }, build: @escaping () -> UIView) {
         self.host = host
         self.anchor = anchor
+        self.alignStart = alignStart
         self.canOpen = canOpen
         self.build = build
     }
 
     func open() {
         if panel == nil, canOpen() { show(interactive: true) }
+    }
+
+    func toggle() {
+        if panel == nil { open() } else { dismiss() }
     }
 
     func dismiss() {
@@ -93,7 +101,7 @@ final class MapMenuPopup {
         }
     }
 
-    /// Under the button, its end edge on the button's; laid out again on every layout pass.
+    /// Under the button, lined up with it; laid out again on every layout pass.
     func place() {
         guard let panel, let built else { return }
         let below = anchor.convert(anchor.bounds, to: host)
@@ -104,7 +112,7 @@ final class MapMenuPopup {
             CGSize(width: Self.width - 2 * Self.inset, height: UIView.layoutFittingCompressedSize.height),
             withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel).height + 2 * Self.inset
         let height = max(0, min(fitting, cap, room))
-        let x = min(max(below.maxX - Self.width, DesignTokens.Space.s8), host.bounds.width - Self.width - DesignTokens.Space.s8)
+        let x = min(max(alignStart ? below.minX : below.maxX - Self.width, DesignTokens.Space.s8), host.bounds.width - Self.width - DesignTokens.Space.s8)
         panel.frame = CGRect(x: x, y: top, width: Self.width, height: height)
         catcher?.frame = host.bounds
     }
@@ -140,6 +148,7 @@ final class MapMenuPopup {
         held = !interactive
         setContent()
         place()
+        onOpen?()
         if interactive { UIAccessibility.post(notification: .screenChanged, argument: panel) }
     }
 
@@ -235,6 +244,36 @@ enum MenuRows {
         let row = UIStackView(arrangedSubviews: [button, UIImageView(image: trailing)])
         row.alignment = .center
         row.spacing = DesignTokens.Space.s8
+        return row
+    }
+
+    /// One choice of several: a radio button and its label, a muted hint after it, and a count at
+    /// the end where there is one.
+    static func radio(_ title: String, hint: String? = nil, on: Bool, count: String? = nil, action: @escaping () -> Void) -> UIView {
+        let text = NSMutableAttributedString(string: title, attributes: [.font: Typeface.sans(DesignTokens.Text.md), .foregroundColor: UIColor(resource: .ink)])
+        if let hint {
+            text.append(NSAttributedString(string: "  " + hint, attributes: [.font: Typeface.sans(DesignTokens.Text.md), .foregroundColor: UIColor(resource: .inkMuted)]))
+        }
+        var config = UIButton.Configuration.plain()
+        config.attributedTitle = AttributedString(text)
+        config.image = UIImage(systemName: on ? "largecircle.fill.circle" : "circle")
+        config.imagePadding = DesignTokens.Space.s12
+        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: DesignTokens.Space.s4, bottom: 0, trailing: 0)
+        config.imageColorTransformer = UIConfigurationColorTransformer { _ in UIColor(resource: on ? .accent : .inkMuted) }
+        config.background.backgroundColorTransformer = UIConfigurationColorTransformer { _ in .clear }
+        let button = UIButton(configuration: config)
+        button.contentHorizontalAlignment = .leading
+        button.isSelected = on
+        button.accessibilityIdentifier = title
+        button.accessibilityLabel = [title, hint, count].compactMap { $0 }.joined(separator: ", ")
+        button.addAction(UIAction { _ in action() }, for: .primaryActionTriggered)
+        button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        let number = Controls.label(count ?? "", font: Typeface.sans(DesignTokens.Text.sm), color: UIColor(resource: .inkMuted))
+        number.isAccessibilityElement = false
+        number.setContentHuggingPriority(.required, for: .horizontal)
+        let row = UIStackView(arrangedSubviews: [button, number])
+        row.alignment = .center
+        row.spacing = DesignTokens.Space.s4
         return row
     }
 

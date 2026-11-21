@@ -4,17 +4,9 @@ import UIKit
 /// The rail down the map's right edge (apps/android/docs/SPEC.md FR-2.2): Layers, Places, Find my
 /// location and the export, each on a panel of its own. Layers and Places each open a menu
 /// (MapMenuPopup) of picks under a switch that shows or hides them all and keeps them; the button
-/// is filled while picks show, with a badge counting them (MapChrome.RailLook). The rail steps aside while an
-/// editor has the map, and Find my location and the export while recording.
+/// is filled while picks show, with a badge counting them (MapChrome.RailLook). When the rail
+/// shows is MapViewController+TopRow's.
 extension MapViewController {
-    /// Shows or hides the rail and its items for what has the map.
-    func renderRail() {
-        rail.view.isHidden = editOpen || privateLocations.open
-        if rail.view.isHidden { dismissMenus() }
-        rail.locate.isHidden = recordingLive
-        rail.export.isHidden = recordingLive
-    }
-
     /// Both buttons, and an open menu, from the saved picks.
     func updateRailMenus() {
         rail.layers.render(MapChrome.layers(state), label: String(localized: "Layers"))
@@ -30,6 +22,7 @@ extension MapViewController {
         switch menu {
         case .layers: layersMenu.hold(open)
         case .places: placesMenu.hold(open)
+        case .fogLevel: fogLevelMenu.hold(open)
         }
     }
 
@@ -37,6 +30,7 @@ extension MapViewController {
     func dismissMenus() {
         layersMenu.dismissUsers()
         placesMenu.dismissUsers()
+        fogLevelMenu.dismissUsers()
     }
 
     /// A pick changed: kept on the phone, then drawn.
@@ -161,7 +155,8 @@ final class MapRail {
                                id: "export")
         for item in [self.layers, self.places, self.locate, self.export] { view.addArrangedSubview(item) }
         view.spacing = DesignTokens.Space.s8
-        view.alignment = .trailing
+        // Its panels' own size: the toggle, the selection bar or the recording's status take the rest.
+        view.alignment = .fill
     }
 
     /// Stacked down the edge in portrait, in a row in landscape.

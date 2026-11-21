@@ -4,46 +4,41 @@ import MapLibre
 import UIKit
 
 /// Fog's level control and place popup (root docs/SPEC.md FR-4.2, apps/android/docs/SPEC.md
-/// FR-2.2). While Fog shows, its segment names the level in view, with a lock while one is locked,
-/// and a tap on it opens the level menu: Auto, which follows the zoom, and every level with how
-/// many of its places the account has explored, read on each opening. A picked level draws at
-/// every zoom (MapState.fogLevel, FogLevels.zoomRanges) until Auto or a restart, through a trip
-/// out of Fog. A tap on a place outlines it, through the layers document's `fogPlace` var, since
-/// MapLibre Native has no feature-state to set, and names it in a popup until it's closed, a tap
-/// lands off every place, the level in view changes or Fog is left.
+/// FR-2.2). While Fog shows, its button names the level in view, with a lock while one is locked,
+/// and a tap on it opens the level menu (MapMenuPopup): Auto, which follows the zoom, and every
+/// level with how many of its places the account has explored, read on each opening. A picked
+/// level draws at every zoom (MapState.fogLevel, FogLevels.zoomRanges) until Auto or a restart,
+/// through a trip out of Fog. A tap on a place outlines it, through the layers document's
+/// `fogPlace` var, since MapLibre Native has no feature-state to set, and names it in a popup until
+/// it's closed, a tap lands off every place, the level in view changes or Fog is left.
 extension MapViewController {
-    private var fogIndex: Int { MapMode.allCases.firstIndex(of: .fog) ?? 1 }
-
-    private var levels: [FogLevels.Level] { pair?.layers.levels ?? [] }
+    var levels: [FogLevels.Level] { pair?.layers.levels ?? [] }
 
     private var levelInView: String {
         FogLevels.inView(levels, zoom: mapView.zoomLevel, locked: state.fogLevel)
     }
 
-    /// The Fog segment's label and the menu over it, for the mode and level in view; called on
-    /// every camera move, so it names the level only when the level, the lock or the look changes.
+    /// Fog's label and its menu, for the mode and level in view; called on every camera move, so
+    /// it names the level only when the level, the lock or the text size changes.
     func renderLevel() {
         let level = state.mode == .fog && !levels.isEmpty ? levelInView : nil
-        fogViews.menuButton.isHidden = level == nil || modes.isHidden
         if let place = fogViews.place, place.level != level { closeFogPlace() }
+        if state.mode != .fog { fogLevelMenu.dismiss() } else { fogLevelMenu.retry() }
         guard let level else {
             if fogViews.shown != nil {
                 fogViews.shown = nil
-                modes.setTitle(String(localized: "Fog"), forSegmentAt: fogIndex)
+                let fog = String(localized: "Fog")
+                modes.setFogTitle(fog, locked: false, menu: false, spoken: fog)
             }
             return
         }
         let locked = FogLevels.lock(levels, state.fogLevel) != nil
-        let shown = FogViews.Shown(level: level, locked: locked, style: traitCollection.userInterfaceStyle,
-                                   size: traitCollection.preferredContentSizeCategory)
+        let shown = FogViews.Shown(level: level, locked: locked, size: traitCollection.preferredContentSizeCategory)
         guard shown != fogViews.shown else { return }
         fogViews.shown = shown
         let fog = String(localized: "Fog"), name = levelName(level)
         let spoken = "\(fog) · \(name)" + (locked ? ", " + String(localized: "Locked") : "")
-        let image = FogViews.label("\(fog) · \(name)", locked: locked, font: FogViews.font, traits: traitCollection)
-        image.accessibilityLabel = spoken
-        modes.setImage(image, forSegmentAt: fogIndex)
-        fogViews.menuButton.accessibilityLabel = spoken
+        modes.setFogTitle("\(fog) · \(name)", locked: locked, menu: true, spoken: spoken)
     }
 
     /// A level's name in the control: its country's word for regions and counties where there's
@@ -53,71 +48,44 @@ extension MapViewController {
         return FogLevels.labelKey(level, word: word, has: FogWords.has).flatMap(FogWords.string) ?? level
     }
 
-    /// The segments' text in the app's face at the reader's text size, which the Fog segment's
-    /// label is drawn in too.
-    func styleModes() {
-        modes.setTitleTextAttributes([.font: FogViews.font], for: .normal)
-        renderLevel()
-    }
-
     func setUpFogControl() {
-        styleModes()
-        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (self: Self, _) in self.styleModes() }
-        let button = fogViews.menuButton
-        button.showsMenuAsPrimaryAction = true
-        button.accessibilityIdentifier = "fogLevel"
-        button.menu = UIMenu(title: String(localized: "Fog level"), children: [
-            // The counts are read on each opening; past a second the menu opens with the last ones
-            // read, so a slow network never keeps Auto out of reach.
-            UIDeferredMenuElement.uncached { [weak self] completion in
-                let opened = FogViews.Once()
-                let open: @MainActor () -> Void = {
-                    guard !opened.done else { return }
-                    opened.done = true
-                    completion(self?.levelItems(explored: self?.fogViews.explored) ?? [])
-                }
-                Task { @MainActor in
-                    if let explored = (try? await self?.flow.api.coverageStatus())?.explored { self?.fogViews.explored = explored }
-                    open()
-                }
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(1))
-                    open()
-                }
-            },
-        ])
-        button.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(button)
-        // Over the Fog segment: the segments share the control's width.
-        NSLayoutConstraint.activate([
-            button.leadingAnchor.constraint(equalTo: modes.centerXAnchor),
-            button.trailingAnchor.constraint(equalTo: modes.trailingAnchor),
-            button.topAnchor.constraint(equalTo: modes.topAnchor),
-            button.bottomAnchor.constraint(equalTo: modes.bottomAnchor),
-        ])
+        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (self: Self, _) in
+            self.fogViews.shown = nil
+            self.renderLevel()
+        }
+        // The counts change only with the account's tiles: read once per opening.
+        fogLevelMenu.onOpen = { [weak self] in
+            Task { @MainActor in
+                guard let explored = (try? await self?.flow.api.coverageStatus())?.explored else { return }
+                self?.fogViews.explored = explored
+                self?.fogLevelMenu.refresh()
+            }
+        }
         fogViews.popup.onClose = { [weak self] in self?.closeFogPlace() }
         view.insertSubview(fogViews.popup, aboveSubview: spotViews.popup)
     }
 
-    private func levelItems(explored: FogLevels.Explored?) -> [UIMenuElement] {
+    /// The level menu: a heading, Auto, then each level with its count once read.
+    func fogLevelContent() -> UIView {
         let locked = FogLevels.lock(levels, state.fogLevel)
-        var items: [UIMenuElement] = [
-            UIAction(title: String(localized: "Auto"), subtitle: String(localized: "follows the zoom"), state: locked == nil ? .on : .off) { [weak self] _ in
+        var rows: [UIView] = [
+            MenuRows.heading(String(localized: "Fog level")),
+            MenuRows.radio(String(localized: "Auto"), hint: String(localized: "follows the zoom"), on: locked == nil) { [weak self] in
                 self?.pickLevel(nil)
             },
         ]
         for level in levels {
-            let count = explored.flatMap { FogLevels.exploredCount($0, level: level.level) }
-            let subtitle = count.map { String(localized: "\($0.formatted()) explored", comment: "Fog's level control: under a level, how many of its places the account has explored.") }
-            items.append(UIAction(title: levelName(level.level), subtitle: subtitle, state: locked == level.level ? .on : .off) { [weak self] _ in
+            let count = fogViews.explored.flatMap { FogLevels.exploredCount($0, level: level.level) }
+            rows.append(MenuRows.radio(levelName(level.level), on: locked == level.level, count: count?.formatted()) { [weak self] in
                 self?.pickLevel(level.level)
             })
         }
-        return items
+        return Controls.column(rows, spacing: 0)
     }
 
     /// Auto (nil) or a level, picked in the menu.
     private func pickLevel(_ picked: String?) {
+        fogLevelMenu.dismiss()
         let locked = FogLevels.lock(levels, state.fogLevel)
         guard picked != locked else { return }
         let next = picked.map { FogLevels.pick(levels, zoom: mapView.zoomLevel, locked: locked, picked: $0) }
@@ -174,17 +142,16 @@ extension MapViewController {
     }
 }
 
-/// The level menu's button over the Fog segment, the place popup, and what they show.
+/// The place popup, and what Fog's label and menu show.
 @MainActor
 final class FogViews {
     /// The layers document's var naming the picked outline by its tile `id`.
     static let placeVar = "fogPlace"
 
-    let menuButton = UIButton(type: .system)
     let popup = FogPlacePopupView()
-    /// The Fog segment's label as last drawn, nil while it reads "Fog".
+    /// Fog's label as last drawn, nil while it reads "Fog".
     var shown: Shown?
-    /// The explored counts last read, for a level menu the network keeps waiting.
+    /// The explored counts last read.
     var explored: FogLevels.Explored?
     /// Where the picked place was tapped and the level it's on.
     var place: (at: CLLocationCoordinate2D, level: String)?
@@ -192,36 +159,6 @@ final class FogViews {
     struct Shown: Equatable {
         let level: String
         let locked: Bool
-        let style: UIUserInterfaceStyle
         let size: UIContentSizeCategory
-    }
-
-    /// Whether the level menu has opened.
-    @MainActor final class Once {
-        var done = false
-    }
-
-    /// The mode toggle's text, scaled with Dynamic Type.
-    static var font: UIFont { Typeface.sans(DesignTokens.Text.md, weight: DesignTokens.Weight.semibold, relativeTo: .footnote) }
-
-    /// The segment's label as an image, since a segment takes a title or an image: "Fog · City",
-    /// a lock while one holds, and the chevron saying it opens a menu.
-    static func label(_ text: String, locked: Bool, font: UIFont, traits: UITraitCollection) -> UIImage {
-        let color = UIColor.label.resolvedColor(with: traits)
-        let line = NSMutableAttributedString(string: text, attributes: [.font: font, .foregroundColor: color])
-        let symbol = UIImage.SymbolConfiguration(pointSize: font.pointSize * 0.75, weight: .semibold)
-        for name in (locked ? ["lock.fill"] : []) + ["chevron.down"] {
-            guard let image = UIImage(systemName: name, withConfiguration: symbol)?.withTintColor(color, renderingMode: .alwaysOriginal) else { continue }
-            let attachment = NSTextAttachment(image: image)
-            attachment.bounds = CGRect(x: 0, y: (font.capHeight - image.size.height) / 2, width: image.size.width, height: image.size.height)
-            line.append(NSAttributedString(string: " "))
-            line.append(NSAttributedString(attachment: attachment))
-        }
-        let size = line.boundingRect(with: CGSize(width: 400, height: 40), options: [.usesLineFragmentOrigin], context: nil).size
-        let format = UIGraphicsImageRendererFormat(for: traits)
-        let image = UIGraphicsImageRenderer(size: CGSize(width: ceil(size.width), height: ceil(size.height)), format: format).image { _ in
-            line.draw(at: .zero)
-        }
-        return image.withRenderingMode(.alwaysOriginal)
     }
 }

@@ -23,6 +23,8 @@ extension MapViewController {
         }
 
         for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
+        // In the mode toggle's place while rows are checked (MapViewController+TopRow).
+        modesRow.insertArrangedSubview(tracksPanel.selectionBar, at: 1)
         for v in [tracksPanel.content, tripsPanel.content] {
             v.translatesAutoresizingMaskIntoConstraints = false
             sheet.content.addSubview(v)
@@ -275,7 +277,9 @@ extension MapViewController {
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
         sheet.isHidden = state.mode != .normal || privateLocations.open || recordingLive
         sheet.setNeedsLayout()
-        renderRail()
+        // The map's credit sits above the sheet (placeAttribution), and the row's controls follow it.
+        view.setNeedsLayout()
+        renderTopRow()
     }
 
     // MARK: Events
@@ -305,6 +309,23 @@ extension MapViewController {
             onWantsTrips?(id)
             return
         }
+        panelChanged()
+    }
+
+    /// The tour runs with no rows checked, since checked rows put the rail its steps point at
+    /// away; it hands back the ones it unchecked, for recheckAfterTour.
+    func uncheckForTour() -> Set<String> {
+        let checked = session.panel.checked
+        guard !checked.isEmpty else { return [] }
+        session.panel.clearChecked()
+        panelChanged()
+        return checked
+    }
+
+    /// The rows the tour unchecked, checked again as it ends.
+    func recheckAfterTour(_ ids: Set<String>) {
+        guard !ids.isEmpty else { return }
+        session.panel.restoreChecked(ids)
         panelChanged()
     }
 

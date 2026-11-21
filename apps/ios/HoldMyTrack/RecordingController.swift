@@ -422,20 +422,19 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
-    // MARK: The status line
+    // MARK: The status
 
-    /// The line over the button (RecordingStatus), in words.
-    func status(format: PanelFormat, holding: Bool, at now: Date) -> String? {
-        switch RecordingStatus.of(recording, holding: holding, at: now) {
+    /// The status over the map (RecordingStatus), in words: the clock, the line under it, and
+    /// whether it's paused; nil while idle.
+    func status(format: PanelFormat, at now: Date) -> (clock: String, detail: String, paused: Bool)? {
+        switch RecordingStatus.of(recording, at: now) {
         case .none: return nil
-        case .holding:
-            return String(localized: "recording.holding", defaultValue: "Keep holding to stop…", comment: "Recording: the hold that stops is under way.")
-        case .waiting:
-            return String(localized: "recording.waiting", defaultValue: "Waiting for GPS…", comment: "Recording: no precise fix yet.")
-        case .paused(let moving):
-            return String(localized: "recording.paused", defaultValue: "Paused · \(RecordingStatus.clock(moving))", comment: "Recording: paused, and its moving time.")
+        case .waiting(let moving):
+            return (RecordingStatus.clock(moving), String(localized: "recording.waiting", defaultValue: "Waiting for GPS…", comment: "Recording: no precise fix yet."), false)
+        case .paused(let moving, let meters):
+            return (RecordingStatus.clock(moving), String(localized: "recording.paused", defaultValue: "Paused · \(format.distance(meters))", comment: "Recording: paused, and the distance so far."), true)
         case .running(let moving, let meters):
-            return "\(RecordingStatus.clock(moving)) · \(format.distance(meters))"
+            return (RecordingStatus.clock(moving), format.distance(meters), false)
         }
     }
 }
