@@ -32,7 +32,7 @@ Each shot starts from the account's opening view, so the same pinch and drags gi
 
 - **`adb shell input` has one finger.** Pinches and drags go through the emulator console (`adb emu event send`) on the touch panel's 0–32767 axes; the `wm size` override is letterboxed inside the panel, which `toPanel` accounts for.
 - **A short pinch is ignored.** The map ignores a pinch whose spread changes by less than about 720 px, so `zoomPlan` pinches 2 to 3 levels and makes up the rest with taps of one level each (`rules.mjs`, tested in `apps/web/tests/playShots.test.mjs`).
-- **A pinch zooms less than its levels.** Past the ignored start it still falls about a level short, and by a tenth of a level more or less from run to run, so its levels are tuned against the capture and the shot is checked by eye.
+- **A pinch zooms about half a level less than its levels**, the part of the spread the map ignores, so a pinch's levels are the measured zoom plus that shortfall, confirmed by a trial capture.
 - **A drag that lifts while moving flings.** Every gesture rests before lifting.
 - **The profile is a WebView**, which UI Automator can't see into, so its rows are tapped at measured positions, per language. Choosing Month reloads the page and scrolls it to the top, so it goes first.
 - **Edit is closed to the demo account**, so the listing has no Edit shot.

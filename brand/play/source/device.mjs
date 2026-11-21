@@ -77,6 +77,9 @@ export async function zoomOut(x, y) {
 export async function pinch(x, y, levels, n = 30) {
   const plan = zoomPlan(levels);
   const wide = 500;
+  geo ??= geometry();
+  // A finger off the screen is clamped by the emulator, and the pinch comes out short.
+  if (x - wide < 0 || x + wide > geo.w) throw new Error(`pinch about x=${x} puts a finger off the screen`);
   const narrow = wide / 2 ** Math.abs(plan.pinch);
   const [r0, r1] = plan.pinch > 0 ? [narrow, wide] : [wide, narrow];
   await gesture(
