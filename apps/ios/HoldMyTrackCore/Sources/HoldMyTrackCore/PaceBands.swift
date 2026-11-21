@@ -74,7 +74,7 @@ public enum PaceBands {
         let legend = document.groups.first { $0.id == group }?.legend ?? [:]
         return legend.keys.filter { $0.hasPrefix("band-") }
             .sorted { Int($0.dropFirst(5)) ?? 0 < Int($1.dropFirst(5)) ?? 0 }
-            .compactMap { legend[$0] }
+            .compactMap { legend[$0]?.color }
     }
 
     private static func feature(_ points: ArraySlice<RouteMetrics.Point>, _ properties: [String: JSONValue]) -> JSONValue {

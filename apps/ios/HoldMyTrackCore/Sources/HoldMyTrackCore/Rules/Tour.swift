@@ -133,39 +133,55 @@ public enum TourRules {
 }
 
 /// What a step points at, found by the app; nil points at nothing and puts the card at the bottom.
-public enum TourTarget: Sendable { case sheet, dates, layers, export, modes, fogLevel, record, page, youTour }
+public enum TourTarget: Sendable { case sheet, dates, layers, places, export, modes, fogLevel, record, page, youTour }
+
+/// A map menu the tour can hold open.
+public enum TourMenu: CaseIterable, Sendable { case layers, places }
 
 /// One step of the tour. tab is the tab bar's tab for the step, mode the map's, sheet whether the
-/// map's sheet is open; the user's come back when the tour ends. view is the camera, nil for the
-/// one before the tour's first move. card is the first-time card the step stands in for, and
-/// text the key of its title and body.
+/// map's sheet is open, menu the map menu held open; the user's come back when the tour ends. view
+/// is the camera, nil for the one before the tour's first move. card is the first-time card the
+/// step stands in for, and text the key of its title and body.
 public struct TourStep: Equatable, Sendable {
     public let id: String
     public let target: TourTarget?
     public var tab: TourTab = .map
     public var mode: MapMode = .normal
     public var sheet = false
+    public var menu: TourMenu?
     public var view: TourView?
     public var card: TourCard?
     public var text: String
 
     init(_ id: String, _ target: TourTarget?, tab: TourTab = .map, mode: MapMode = .normal, sheet: Bool = false,
-         view: TourView? = nil, card: TourCard? = nil, text: String? = nil) {
+         menu: TourMenu? = nil, view: TourView? = nil, card: TourCard? = nil, text: String? = nil) {
         self.id = id
         self.target = target
         self.tab = tab
         self.mode = mode
         self.sheet = sheet
+        self.menu = menu
         self.view = view
         self.card = card
         self.text = text ?? id
     }
 }
 
-/// The iOS tour's steps (apps/ios/docs/SPEC.md FR-2.12): Android's, with
-/// Places folded into Layers, whose menu holds both. A step about a menu (Layers, Fog's level)
-/// points at its button and leaves the menu closed, since UIKit can't open a button's menu for
-/// the app.
+/// What a tour's hold does to a map menu: a menu the user opened is taken over as held, so it lets
+/// go of touches and closes after the step; letting go closes only a held one, never the user's own.
+/// Android's `MenuHold`.
+public enum MenuHold: Equatable, Sendable {
+    case none, close, openHeld, reopenHeld
+
+    public static func next(isOpen: Bool, held: Bool, want: Bool, canOpen: Bool) -> MenuHold {
+        if !want { return isOpen && held ? .close : .none }
+        if isOpen && held { return .none }
+        if !canOpen { return .none }
+        return isOpen ? .reopenHeld : .openHeld
+    }
+}
+
+/// The iOS tour's steps (apps/android/docs/SPEC.md FR-2.12).
 public enum TourSteps {
     /// The demo's views over its fixed history (`services/server/internal/httpapi/demo_data`), the
     /// web's `DEMO_VIEWS`, one per Fog level: Brecksville Reservation's tracks, exact coverage
@@ -193,7 +209,8 @@ public enum TourSteps {
             TourStep("tracks", .sheet, sheet: true),
             TourStep("range", .dates, sheet: true),
             TourStep("trips", .sheet, tab: .trips, sheet: true, card: .trips),
-            TourStep("layers", .layers),
+            TourStep("layers", .layers, menu: .layers),
+            TourStep("places", .places, menu: .places),
             TourStep("export", .export),
         ] + fog + [
             TourStep("record", .record, text: isDemo ? "record_demo" : "record"),
@@ -207,6 +224,11 @@ public enum TourSteps {
     public static func sheet(_ step: TourStep?, restore: SheetDetent) -> SheetDetent {
         guard let step else { return restore }
         return step.sheet ? .half : .collapsed
+    }
+
+    /// Each map menu, and whether step holds it open; at the end (nil) every one is let go.
+    public static func menus(_ step: TourStep?) -> [(menu: TourMenu, open: Bool)] {
+        TourMenu.allCases.map { ($0, step?.menu == $0) }
     }
 
     /// A first-time card's text and what it points at.

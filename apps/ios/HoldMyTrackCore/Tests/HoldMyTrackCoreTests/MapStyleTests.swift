@@ -60,10 +60,10 @@ struct MapStyleTests {
        {"id": "route-bands", "placement": "beneath-labels",
         "sources": {"route-bands": {"type": "geojson"}},
         "layers": [{"id": "route-bands-line", "type": "line", "source": "route-bands"}],
-        "legend": {"band-10": {"color": "#c00"}, "band-0": {"color": "#00b"}, "band-2": {"color": "#0b0"}, "other": {"color": "#fff"}}},
+        "legend": {"band-10": {"color": "#c00"}, "band-0": {"color": "#00b"}, "band-2": {"color": "#0b0"}, "other": {"color": "#fff", "dash": [2, 1]}}},
        {"id": "spots", "placement": "top",
         "sources": {"spots": {"type": "vector", "tiles": "/tiles/v1/spots/{z}/{x}/{y}.mvt?cv=7.1"}},
-        "layers": [{"id": "spots-icons", "type": "symbol", "source": "spots"}]}
+        "layers": [{"id": "spots-icons", "type": "symbol", "source": "spots", "metadata": {"holdmytrack:toggle": "spots"}}]}
      ]}
     """.utf8))!)!
 
@@ -189,11 +189,6 @@ struct MapStyleTests {
         #expect(document.levels[1] == FogLevels.Level(level: "region", from: 4, below: 8, layers: ["region-fog-fill"], word: "state"))
     }
 
-    @Test func fogHasAChipNormalHasNone() {
-        #expect(MapChrome.chip(.normal) == nil)
-        #expect(MapChrome.chip(.fog) == .everyTrack)
-    }
-
     @Test func theEmptyNoticeShowsForARealAccountWithNothingOnTheMapUntilClosed() {
         #expect(MapChrome.emptyNoticeShown(empty: true, demo: false, closed: false))
         #expect(!MapChrome.emptyNoticeShown(empty: true, demo: false, closed: true))
@@ -231,18 +226,42 @@ struct MapStyleTests {
         #expect(["country", "region", "county", "city", "exact"].map { FogLevels.exploredCount(explored, level: $0) } == [3, 9, 20, 41, nil])
     }
 
-    @Test func theLayersBadgeCountsRoadsAndPathsAndGreysWhileHidden() {
+    @Test func aRailButtonIsFilledWhilePicksShowAndItsSwitchNeedsAPick() {
+        #expect(MapChrome.RailLook.of(picked: 2, shown: true) == .init(count: 2, filled: true, badge: true, greyed: false, switchEnabled: true))
+        #expect(MapChrome.RailLook.of(picked: 2, shown: false) == .init(count: 2, filled: false, badge: true, greyed: true, switchEnabled: true))
+        #expect(MapChrome.RailLook.of(picked: 0, shown: true) == .init(count: 0, filled: false, badge: false, greyed: false, switchEnabled: false))
+    }
+
+    @Test func theLayersButtonCountsRoadsAndPathsAndNotPlaces() {
         var state = MapState()
-        #expect(MapChrome.layersBadge(state, places: 0) == .init(count: 1, filled: true, greyed: false), "Roads starts picked")
+        #expect(MapChrome.layers(state).count == 1, "Roads starts picked")
         state.roads = false
-        #expect(MapChrome.layersBadge(state, places: 0) == .init(count: 0, filled: false, greyed: false))
-        state.toggles = ["bikePaths": true, "sharedPaths": false, "mtbTrails": true]
-        #expect(MapChrome.layersBadge(state, places: 0).count == 2)
+        #expect(MapChrome.layers(state).count == 0)
+        state.toggles = ["bikePaths": true, "sharedPaths": false, "mtbTrails": true, Spots.group: true]
+        #expect(MapChrome.layers(state).count == 2, "the spots group's switch is the Places button's")
         state.showLayers = false
-        #expect(MapChrome.layersBadge(state, places: 0) == .init(count: 2, filled: false, greyed: true))
+        #expect(MapChrome.layers(state).greyed)
+        #expect(MapChrome.places(state, picked: 3) == .of(picked: 3, shown: true), "Show layers doesn't reach places")
+        state.showPlaces = false
+        #expect(MapChrome.places(state, picked: 3).greyed)
+    }
+
+    @Test func showPlacesHidesPlacesAndShowLayersHidesTheRest() {
+        var state = MapState()
+        state.toggles = ["bikePaths": true, Spots.group: true]
+        state.showLayers = false
+        #expect(layer(compose(state), "bike-paths-cycleway")?["layout"]?["visibility"] == .string("none"))
+        #expect(layer(compose(state), "spots-icons")?["layout"]?["visibility"] == .string("visible"))
         state.showLayers = true
-        state.toggles[Spots.group] = true
-        #expect(MapChrome.layersBadge(state, places: 3).count == 5, "each place category counts, not the group's switch")
+        state.showPlaces = false
+        #expect(layer(compose(state), "bike-paths-cycleway")?["layout"]?["visibility"] == .string("visible"))
+        #expect(layer(compose(state), "spots-icons")?["layout"]?["visibility"] == .string("none"))
+    }
+
+    @Test func aLegendLineKeepsItsDash() {
+        let legend = document.groups.first { $0.id == "route-bands" }?.legend
+        #expect(legend?["other"] == LayersDocument.Legend(color: "#fff", dash: [2, 1]))
+        #expect(legend?["band-0"]?.dash == nil)
     }
 
     @Test func roadsShowWhilePickedAndShowLayersIsOn() {

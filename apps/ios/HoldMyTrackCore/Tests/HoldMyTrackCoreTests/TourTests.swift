@@ -7,10 +7,29 @@ import Testing
 struct TourTests {
     @Test func aRealAccountGetsOneFogStepOnItsLevelMenu() {
         let steps = TourSteps.of(isDemo: false)
-        #expect(steps.map(\.id) == ["welcome", "tracks", "range", "trips", "layers", "export", "fog", "record", "sync", "done"])
+        #expect(steps.map(\.id) == ["welcome", "tracks", "range", "trips", "layers", "places", "export", "fog", "record", "sync", "done"])
         let fog = steps.first { $0.id == "fog" }!
         #expect(fog.target == .fogLevel && fog.mode == .fog && fog.card == .fog && fog.view == nil)
         #expect(steps.first { $0.id == "sync" }?.text == "sync")
+        #expect(steps.first { $0.id == "places" }?.target == .places, "Places is a step of its own, after Layers")
+    }
+
+    @Test func theLayersAndPlacesStepsEachHoldTheirMenuOpenAndTheEndLetsGo() {
+        let steps = TourSteps.of(isDemo: false)
+        let layers = steps.first { $0.id == "layers" }
+        #expect(TourSteps.menus(layers).map(\.open) == [true, false])
+        #expect(TourSteps.menus(steps.first { $0.id == "places" }).map(\.open) == [false, true])
+        #expect(TourSteps.menus(steps.first { $0.id == "export" }).allSatisfy { !$0.open })
+        #expect(TourSteps.menus(nil).allSatisfy { !$0.open })
+    }
+
+    @Test func aHoldTakesOverTheUsersMenuAndLetsGoOnlyOfItsOwn() {
+        #expect(MenuHold.next(isOpen: false, held: false, want: true, canOpen: true) == .openHeld)
+        #expect(MenuHold.next(isOpen: true, held: false, want: true, canOpen: true) == .reopenHeld)
+        #expect(MenuHold.next(isOpen: true, held: true, want: true, canOpen: true) == MenuHold.none)
+        #expect(MenuHold.next(isOpen: false, held: false, want: true, canOpen: false) == MenuHold.none, "nothing to show yet")
+        #expect(MenuHold.next(isOpen: true, held: true, want: false, canOpen: true) == .close)
+        #expect(MenuHold.next(isOpen: true, held: false, want: false, canOpen: true) == MenuHold.none, "the user's own stays")
     }
 
     @Test func aDemoFliesFogOutLevelByLevel() {
