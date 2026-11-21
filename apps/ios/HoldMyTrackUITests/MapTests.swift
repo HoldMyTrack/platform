@@ -15,14 +15,14 @@ final class MapTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         let modes = app.segmentedControls["modes"]
         XCTAssertTrue(modes.exists)
-        // Fog names what it covers, since it doesn't take the date range; Normal doesn't.
-        let chip = app.staticTexts["modeChip"]
+        // The rail down the right edge, top to bottom.
+        let rail = ["layers", "places", "locate", "export"].map { app.buttons[$0] }
+        XCTAssertTrue(rail.allSatisfy(\.exists))
+        XCTAssertEqual(rail.map(\.frame.minY), rail.map(\.frame.minY).sorted(), "Layers, Places, Find my location, export")
         modes.buttons.element(boundBy: 1).tap()
         XCTAssertTrue(modes.buttons.element(boundBy: 1).isSelected)
-        XCTAssertTrue(chip.waitForExistence(timeout: 5))
         attach("Fog")
         modes.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(chip.waitForNonExistence(timeout: 5))
         // Dates: picking a day in To's calendar sets the button, and Clear dates puts it back.
         app.buttons["panelHandle"].tap()
         let dates = app.buttons["datesFilter"]
@@ -46,7 +46,7 @@ final class MapTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].exists, "the map keeps its place across a tab switch")
     }
 
-    /// Points of interest around the sample tracks: a picked category counts on the Layers badge,
+    /// Places around the sample tracks: a picked category counts on the Places badge,
     /// and below the tiles' zoom "Show in this area" loads its places and says how many.
     @MainActor
     func testAPickedCategoryShowsItsPlacesInTheArea() throws {
@@ -58,18 +58,20 @@ final class MapTests: XCTestCase {
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
-        let layers = app.buttons["layers"]
+        let places = app.buttons["places"]
+        let layers = app.buttons["layers"].label
         app.setPlaygrounds(false)
-        let before = layers.label
+        let before = places.label
         app.setPlaygrounds(true)
-        XCTAssertNotEqual(layers.label, before, "the badge counts the pick")
+        XCTAssertNotEqual(places.label, before, "the badge counts the pick")
+        XCTAssertEqual(app.buttons["layers"].label, layers, "places count on their own button")
         let area = app.buttons["showInArea"]
         XCTAssertTrue(area.waitForExistence(timeout: 10))
         area.tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier == 'showInArea' AND label CONTAINS ':'")).firstMatch.waitForExistence(timeout: 10))
         app.setPlaygrounds(false)
         XCTAssertTrue(area.waitForNonExistence(timeout: 5))
-        XCTAssertEqual(layers.label, before)
+        XCTAssertEqual(places.label, before)
     }
 
     /// Fog's level control over the sample tracks: its segment names the level, the menu offers Auto and
@@ -117,18 +119,16 @@ final class MapTests: XCTestCase {
 
 
 extension XCUIApplication {
-    /// Ticks or unticks Playgrounds in the Layers menu, whatever an earlier test left: the pick is
+    /// Ticks or unticks Playgrounds in the Places menu, whatever an earlier test left: the pick is
     /// kept on the phone.
     @MainActor
     func setPlaygrounds(_ on: Bool) {
-        buttons["layers"].tap()
+        buttons["places"].tap()
         let item = buttons["Playgrounds"]
         XCTAssertTrue(item.waitForExistence(timeout: 5))
-        if item.isSelected == on {
-            // The menu closes on a tap outside it.
-            otherElements["map"].coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.6)).tap()
-        } else {
-            item.tap()
-        }
+        if item.isSelected != on { item.tap() }
+        // The menu stays open for more picks, and closes on a tap outside it.
+        otherElements["map"].coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.6)).tap()
+        XCTAssertTrue(item.waitForNonExistence(timeout: 5))
     }
 }

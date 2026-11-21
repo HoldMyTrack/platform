@@ -408,6 +408,17 @@
         }
       }
     },
+    "Always shown when zoomed in:" : {
+      "comment" : "Layers menu: the heading over the trails and dirt tracks the map always draws.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всегда видны при приближении:"
+          }
+        }
+      }
+    },
     "An account with this email already exists. Sign in the way you usually do, or use “Forgot password?” to set a password." : {
       "comment" : "Sign-in screen: Facebook's email belongs to an existing account, which Facebook is never linked to.",
       "localizations" : {
@@ -1112,6 +1123,17 @@
         }
       }
     },
+    "Dirt tracks" : {
+      "comment" : "Layers menu: dirt tracks, which the map always draws zoomed in.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Грунтовки"
+          }
+        }
+      }
+    },
     "Discard" : {
       "comment" : "Edit window: closes, throwing the photo changes away.",
       "localizations" : {
@@ -1306,17 +1328,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Целиком внутри одного из ваших приватных мест, поэтому его нет на карте и у него нет расстояния. Если сдвинуть или удалить это место, оно вернётся."
-          }
-        }
-      }
-    },
-    "Every track, any date" : {
-      "comment" : "Map: the chip under Fog of War, which shows every track whatever the date range.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Все треки, за всё время"
           }
         }
       }
@@ -1757,6 +1768,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Самое длинное"
+          }
+        }
+      }
+    },
+    "Map" : {
+      "comment" : "Layers menu: the heading over Roads.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Карта"
           }
         }
       }
@@ -2256,6 +2278,28 @@
         }
       }
     },
+    "Pick places first" : {
+      "comment" : "Places menu: why Show places can't be switched with nothing picked.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сначала выберите места"
+          }
+        }
+      }
+    },
+    "Pick roads or paths first" : {
+      "comment" : "Layers menu: why Show layers can't be switched with nothing picked.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сначала выберите дороги или тропы"
+          }
+        }
+      }
+    },
     "Place every new photo on the route before saving." : {
       "comment" : "Edit window: Save with a photo still waiting for its place.",
       "localizations" : {
@@ -2289,6 +2333,17 @@
         }
       }
     },
+    "Places" : {
+      "comment" : "Map: the Places button and its menu of place categories.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Места"
+          }
+        }
+      }
+    },
     "Places in this area: %@" : {
       "comment" : "Map: what Show in this area found; the placeholder is the count.",
       "localizations" : {
@@ -2318,17 +2373,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Детские площадки"
-          }
-        }
-      }
-    },
-    "Points of interest" : {
-      "comment" : "Layers menu: the heading over the place categories.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Интересные места"
           }
         }
       }
@@ -2868,6 +2912,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывать слои"
+          }
+        }
+      }
+    },
+    "Show places" : {
+      "comment" : "Places menu: the switch over every picked category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показывать места"
           }
         }
       }
@@ -3616,6 +3671,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Треки: %@"
+          }
+        }
+      }
+    },
+    "Trails" : {
+      "comment" : "Layers menu: trails, which the map always draws zoomed in.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тропы"
           }
         }
       }
@@ -9920,19 +9986,19 @@
       }
     },
     "tour.layers.body" : {
-      "comment" : "The tour: the Layers menu, which holds the points of interest too.",
+      "comment" : "The tour: the Layers menu.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tick the roads, paths and points of interest you want on the map, and tap a point of interest to see what it is. Show layers turns them all on or off at once."
+            "value" : "Tick the roads and paths you want on the map. Show layers turns them all on or off at once."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отметьте дороги, тропы и интересные места, которые хотите видеть на карте, и нажмите на место, чтобы узнать, что это. «Показывать слои» включает или выключает их все сразу."
+            "value" : "Отметьте дороги и тропы, которые хотите видеть на карте. «Показывать слои» включает или выключает их все сразу."
           }
         }
       }
@@ -10044,6 +10110,42 @@
           }
         }
       }
+    },
+    "tour.places.body" : {
+      "comment" : "The tour: the Places menu.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waterfalls, viewpoints, historic sites and more: tick the kinds you want on the map, and tap one to see what it is. Show places turns them all on or off."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Водопады, смотровые площадки, исторические места и другое: отметьте, что хотите видеть на карте, и нажмите на место, чтобы узнать, что это. «Показывать места» включает или выключает их все."
+          }
+        }
+      },
+      "extractionState" : "manual"
+    },
+    "tour.places.title" : {
+      "comment" : "The tour: the Places menu.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Places"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Места"
+          }
+        }
+      },
+      "extractionState" : "manual"
     },
     "tour.progress" : {
       "comment" : "The tour: the step shown and how many there are.",

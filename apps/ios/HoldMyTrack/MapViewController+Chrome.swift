@@ -2,34 +2,9 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// What the map shows beside the modes (apps/android/docs/SPEC.md FR-2.2): the chip naming what
-/// Fog covers, the Layers button's badge, and whether Satellite imagery loads on this device (root docs/SPEC.md FR-4.10). The decisions are
-/// HoldMyTrackCore's MapChrome and SatelliteStatus.
+/// Whether Satellite imagery loads on this device (root docs/SPEC.md FR-4.10), decided by
+/// HoldMyTrackCore's SatelliteStatus.
 extension MapViewController {
-    /// The chip and Fog's level for the mode shown.
-    func renderModeChrome() {
-        let chip = MapChrome.chip(state.mode)
-        chrome.chip.text = switch chip {
-        case .everyTrack: String(localized: "Every track, any date")
-        case nil: nil
-        }
-        chrome.chip.isHidden = chip == nil
-        renderLevel()
-    }
-
-    /// The Layers button filled while picks show, with their count on its corner, greyed while
-    /// Show layers hides them.
-    func renderLayersButton(_ button: UIButton) {
-        let badge = MapChrome.layersBadge(state, places: spots.categories.count)
-        button.configuration?.baseBackgroundColor = UIColor(resource: badge.filled ? .ink : .surface)
-        button.configuration?.baseForegroundColor = UIColor(resource: badge.filled ? .surface : .ink)
-        chrome.badge.text = " \(badge.count) "
-        chrome.badge.isHidden = badge.count == 0
-        chrome.badge.alpha = badge.greyed ? 0.55 : 1
-        let label = String(localized: "Layers")
-        button.accessibilityLabel = badge.count > 0 ? "\(label), \(badge.count)" : label
-    }
-
     /// The imagery's status changed: the look follows, the layer stays as switched.
     func onImagery(_ status: SatelliteStatus) {
         state.satelliteFailed = status == .failed
@@ -54,34 +29,13 @@ extension MapViewController {
     }
 }
 
-/// The views MapViewController+Chrome renders, and Satellite's watch.
+/// Satellite's watch, for MapViewController+Chrome.
 @MainActor
 final class MapChromeViews {
-    let chip = InsetLabel(insets: UIEdgeInsets(top: 0, left: DesignTokens.Space.s16, bottom: 0, right: DesignTokens.Space.s16))
-    let badge = UILabel()
     let satellite: SatelliteWatch
 
     init(onImagery: @escaping (SatelliteStatus) -> Void) {
         satellite = SatelliteWatch(onChange: onImagery)
-        chip.font = Typeface.sans(DesignTokens.Text.lg)
-        chip.adjustsFontForContentSizeCategory = true
-        chip.textColor = UIColor(resource: .ink)
-        chip.numberOfLines = 0
-        chip.textAlignment = .center
-        chip.layer.masksToBounds = true
-        chip.isHidden = true
-        chip.backgroundColor = UIColor(resource: .surface)
-        chip.layer.cornerRadius = 20
-        chip.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
-        chip.accessibilityIdentifier = "modeChip"
-        badge.font = Typeface.sans(DesignTokens.Text.xxxs, weight: DesignTokens.Weight.bold)
-        badge.textColor = UIColor(resource: .onAccent)
-        badge.backgroundColor = UIColor(resource: .accent)
-        badge.textAlignment = .center
-        badge.layer.cornerRadius = 8
-        badge.layer.masksToBounds = true
-        badge.isAccessibilityElement = false
-        badge.isHidden = true
     }
 }
 
@@ -128,27 +82,5 @@ final class SatelliteWatch {
         guard next != status else { return }
         status = next
         onChange(next)
-    }
-}
-
-/// A label with room around its text, for the chip.
-final class InsetLabel: UILabel {
-    private let insets: UIEdgeInsets
-
-    init(insets: UIEdgeInsets) {
-        self.insets = insets
-        super.init(frame: .zero)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
-
-    override func drawText(in rect: CGRect) {
-        super.drawText(in: rect.inset(by: insets))
-    }
-
-    override func textRect(forBounds bounds: CGRect, limitedToNumberOfLines lines: Int) -> CGRect {
-        let inner = super.textRect(forBounds: bounds.inset(by: insets), limitedToNumberOfLines: lines)
-        return inner.inset(by: UIEdgeInsets(top: -insets.top, left: -insets.left, bottom: -insets.bottom, right: -insets.right))
     }
 }

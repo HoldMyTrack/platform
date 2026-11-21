@@ -1,6 +1,6 @@
 import XCTest
 
-/// The tour, its offer and the first-time cards (apps/ios/docs/SPEC.md FR-2.12), from a phone that
+/// The tour, its offer and the first-time cards (apps/android/docs/SPEC.md FR-2.12), from a phone that
 /// has shown none of them (-hmtTourReset).
 final class TourTests: XCTestCase {
     /// The demo gets the tour unasked: every step to Done, which puts the Tracks tab and Normal back;
@@ -14,12 +14,12 @@ final class TourTests: XCTestCase {
         app.buttons["demo"].tap()
         let progress = app.staticTexts["tourProgress"]
         XCTAssertTrue(progress.waitForExistence(timeout: 20), "the demo's tour starts by itself")
-        XCTAssertEqual(progress.label, "1 of 14")
+        XCTAssertEqual(progress.label, "1 of 15")
         let next = app.buttons["tourNext"]
-        for step in 2...14 {
+        for step in 2...15 {
             next.tap()
-            XCTAssertTrue(app.staticTexts["\(step) of 14"].waitForExistence(timeout: 10), "step \(step)")
-            if step == 6 || step == 14 { attach("Tour step \(step)") }
+            XCTAssertTrue(app.staticTexts["\(step) of 15"].waitForExistence(timeout: 10), "step \(step)")
+            if step == 6 || step == 15 { attach("Tour step \(step)") }
         }
         XCTAssertTrue(app.cells["youTour"].exists, "the last step is on the You tab")
         next.tap()
@@ -29,7 +29,7 @@ final class TourTests: XCTestCase {
 
         app.tabBars.buttons["tabYou"].tap()
         app.cells["youTour"].tap()
-        XCTAssertTrue(app.staticTexts["1 of 14"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["1 of 15"].waitForExistence(timeout: 10))
         app.buttons["tourSkip"].tap()
         XCTAssertTrue(app.otherElements["tourCard"].waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.tabBars.buttons["tabYou"].isSelected, "Skip leaves the user where they were")

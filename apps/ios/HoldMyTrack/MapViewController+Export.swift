@@ -11,24 +11,7 @@ import UIKit
 /// sheet. The geometry is Viewfinder's, the stats card's request ExportStats'.
 extension MapViewController {
     func setUpExport() {
-        let button = export.button
-        var config = UIButton.Configuration.filled()
-        config.image = UIImage(resource: .camera)
-        config.baseBackgroundColor = UIColor(resource: .surface)
-        config.baseForegroundColor = UIColor(resource: .ink)
-        config.cornerStyle = .capsule
-        button.configuration = config
-        button.accessibilityLabel = String(localized: "export.open", defaultValue: "Export map image", comment: "The map's camera button: open the image export.")
-        button.accessibilityIdentifier = "export"
-        button.addAction(UIAction { [weak self] _ in self?.openExport() }, for: .primaryActionTriggered)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(button)
-        NSLayoutConstraint.activate([
-            button.widthAnchor.constraint(equalToConstant: 44),
-            button.heightAnchor.constraint(equalToConstant: 44),
-            button.trailingAnchor.constraint(equalTo: locateButton.trailingAnchor),
-            button.bottomAnchor.constraint(equalTo: locateButton.topAnchor, constant: -DesignTokens.Space.s8),
-        ])
+        export.button.addAction(UIAction { [weak self] _ in self?.openExport() }, for: .primaryActionTriggered)
     }
 
     var exportOpen: Bool { export.view != nil }
@@ -38,13 +21,14 @@ extension MapViewController {
         closeFogPlace()
         spotViews.popup.close()
         photoViews.popup.close()
+        dismissMenus()
         let finder = ExportViewfinderView(frame: view.bounds)
         finder.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         export.view = finder
         // The chrome would sit inside the picture. Faded out and left alone rather than hidden: the
         // map's renders set isHidden as they go (Fog's level button on every camera move, the
         // sheet on a panel change) and would bring it back over the viewfinder.
-        let covers: [UIView] = [modesRow.superview, locateButton, export.button, chrome.chip, sheet, fogViews.menuButton, mapView.attributionButton].compactMap { $0 }
+        let covers: [UIView] = [chromeColumn, sheet, fogViews.menuButton, mapView.attributionButton].compactMap { $0 }
         export.covered = covers
         for cover in covers {
             cover.alpha = 0

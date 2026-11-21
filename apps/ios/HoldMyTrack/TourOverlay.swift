@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The tour drawn over the whole app (apps/ios/docs/SPEC.md FR-2.12), in one of two looks:
+/// The tour drawn over the whole app (apps/android/docs/SPEC.md FR-2.12), in one of two looks:
 ///
 /// - **A step** (dim): the screen dimmed but for a ring around each of the step's views, every
 ///   touch taken so nothing under it changes, and the card across the top or bottom

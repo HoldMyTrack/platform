@@ -19,13 +19,22 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var mapView: MLNMapView!
     let modes = UISegmentedControl()
     let layersButton = UIButton(type: .system)
-    /// The chip, the Layers badge and Satellite's watch (MapViewController+Chrome).
+    let placesButton = UIButton(type: .system)
+    /// Satellite's watch (MapViewController+Chrome).
     lazy var chrome = MapChromeViews { [weak self] in self?.onImagery($0) }
     let locateButton = UIButton(type: .system)
+    /// Layers, Places, Find my location and the export down the right edge (MapViewController+Rail).
+    lazy var rail = MapRail(layers: layersButton, places: placesButton, locate: locateButton, export: export.button)
+    lazy var layersMenu = MapMenuPopup(host: view, anchor: rail.layers) { [unowned self] in self.layersContent() }
+    lazy var placesMenu = MapMenuPopup(host: view, anchor: rail.places) { [unowned self] in self.placesContent() }
+    /// The controls along the top: the mode toggle and the rail, then the notices under them.
+    let chromeColumn = UIStackView()
+    /// The toggle beside the rail, whose bottom the sheet and popups stay under.
+    let topRow = UIStackView()
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
     private let location = CLLocationManager()
     let modesRow = UIStackView()
-    /// Takes the row's room while the toggle is hidden, so Layers keeps its size.
+    /// Takes the row's room while the toggle is hidden, so the rail keeps its place.
     private let modesSpacer = UIView()
 
     var session = MapSession()
@@ -59,7 +68,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Bumped whenever tracks change under the same query, so their tiles are fetched again.
     var tracksVersion = 0
     var editOpen = false {
-        didSet { if oldValue && !tourBlocked { onMapFreed?() } }
+        didSet {
+            renderRail()
+            if oldValue && !tourBlocked { onMapFreed?() }
+        }
     }
     /// The focused track's pace bands (MapViewController+Bands).
     var bands = BandsState()
@@ -99,10 +111,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var recordingLive = false
     /// Whether the camera has flown to this recording's first fix; later fixes only pan.
     var recordingFollowed = false
-    /// Whether the camera follows the recording; a pan or zoom by the user stops it.
-    var recordingFollows = true
-    /// The camera move is the recording's own, not the user's.
-    var recordingMoving = false
     var lastRecordingPoints: [RecordedPoint] = []
     var recordingNoticeShown = 0
     /// Counts the tour's camera moves, so a move's end only continues the latest (MapViewController+Tour).
@@ -185,7 +193,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let guide = view.safeAreaLayoutGuide.layoutFrame
-        sheet.setRoom(container: guide.height, topInset: modesRow.frame.maxY - guide.minY + DesignTokens.Space.s8)
+        sheet.setRoom(container: guide.height, topInset: topRow.frame.maxY - guide.minY + DesignTokens.Space.s8)
+        rail.layOut(landscape: view.bounds.width > view.bounds.height)
+        layersMenu.place()
+        placesMenu.place()
         layoutExport()
     }
 
@@ -198,6 +209,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         capturing.stop()
         closePrivateEditor()
         closeExport()
+        dismissMenus()
     }
 
     // MARK: The documents
@@ -220,7 +232,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         self.pair = pair
         render()
         if styleLoaded, let style = mapView.style { addBadgeImages(to: style) }
-        updateLayersMenu()
+        updateRailMenus()
         renderInArea()
         countSatelliteWait(onScreen: viewIfLoaded?.window != nil)
         renderLevel()
@@ -271,7 +283,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     }
 
     /// How far down the controls over the map reach: a popup goes under its place above it.
-    var chromeBottom: CGFloat { modesRow.convert(modesRow.bounds, to: view).maxY + DesignTokens.Space.s8 }
+    var chromeBottom: CGFloat { topRow.convert(topRow.bounds, to: view).maxY + DesignTokens.Space.s8 }
 
     /// The tracks' lines a tap is asked about (TrackTap).
     var trackLayers: Set<String> { pair.map { TrackTap.layerIDs($0.layers) } ?? [] }
@@ -301,42 +313,11 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         renderLevel()
         guard shown != state.mode else { return }
         state.mode = shown
-        renderModeChrome()
+        renderLevel()
         render()
         checkCoverage()
         renderPanel()
         refreshPhotos(force: false)
-    }
-
-    private func updateLayersMenu() {
-        let hasSatellite = pair.map { MapStyle.hasSatellite($0.style) } ?? false
-        func toggle(_ title: String, _ id: String, _ on: Bool, _ change: @escaping (inout MapState) -> Void) -> UIAction {
-            UIAction(title: title, state: on ? .on : .off) { [weak self] _ in
-                guard let self else { return }
-                change(&self.state)
-                MapPreferences.save(self.state, mode: self.pickedMode)
-                self.applySpots()
-                self.updateLayersMenu()
-                self.countSatelliteWait(onScreen: self.viewIfLoaded?.window != nil)
-            }
-        }
-        var items: [UIMenuElement] = [toggle(String(localized: "Show layers"), "showLayers", state.showLayers) { $0.showLayers.toggle() }]
-        if hasSatellite {
-            items.append(toggle(String(localized: "Satellite"), "satellite", state.satellite) { $0.satellite.toggle() })
-        }
-        items.append(toggle(String(localized: "Roads"), "roads", state.roads) { $0.roads.toggle() })
-        let paths: [(String, String)] = [
-            (String(localized: "Bike paths"), "bikePaths"),
-            (String(localized: "Shared paths"), "sharedPaths"),
-            (String(localized: "Mountain bike trails"), "mtbTrails"),
-        ]
-        let pathItems = paths.map { title, id in
-            toggle(title, id, state.toggles[id] == true) { $0.toggles[id] = !($0.toggles[id] ?? false) }
-        }
-        items.append(UIMenu(title: String(localized: "Paths"), options: .displayInline, children: pathItems))
-        items.append(spotsMenu { [weak self] in self?.updateLayersMenu() })
-        layersButton.menu = UIMenu(title: String(localized: "Layers"), children: items)
-        renderLayersButton(layersButton)
     }
 
     // MARK: Framing
@@ -372,7 +353,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     // MARK: Find my location
 
     private func locate() {
-        if followRecordingAgain() { return }
         switch location.authorizationStatus {
         case .notDetermined:
             locating = true
@@ -553,31 +533,14 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: state.mode) ?? 0
         modes.backgroundColor = UIColor(resource: .surface)
         modes.accessibilityIdentifier = "modes"
-        renderModeChrome()
 
-        for (button, icon, label, id) in [
-            (layersButton, UIImage(resource: .layers), String(localized: "Layers"), "layers"),
-            (locateButton, UIImage(resource: .locateFixed), String(localized: "Find my location"), "locate"),
-        ] {
-            var config = UIButton.Configuration.filled()
-            config.image = icon
-            config.baseBackgroundColor = UIColor(resource: .surface)
-            config.baseForegroundColor = UIColor(resource: .ink)
-            config.cornerStyle = .capsule
-            button.configuration = config
-            button.accessibilityLabel = label
-            button.accessibilityIdentifier = id
-            button.widthAnchor.constraint(equalToConstant: 44).isActive = true
-            button.heightAnchor.constraint(equalToConstant: 44).isActive = true
-        }
-        layersButton.showsMenuAsPrimaryAction = true
         locateButton.addAction(UIAction { [weak self] _ in self?.locate() }, for: .primaryActionTriggered)
-        updateLayersMenu()
+        layersButton.addAction(UIAction { [weak self] _ in self?.layersMenu.open() }, for: .primaryActionTriggered)
+        placesButton.addAction(UIAction { [weak self] _ in self?.placesMenu.open() }, for: .primaryActionTriggered)
+        updateRailMenus()
 
         modesSpacer.isHidden = true
-        for v in [modes, modesSpacer, layersButton] { modesRow.addArrangedSubview(v) }
-        modesRow.spacing = DesignTokens.Space.s8
-        modesRow.alignment = .center
+        for v in [modes, modesSpacer] { modesRow.addArrangedSubview(v) }
         let inArea = UIStackView(arrangedSubviews: [spotViews.inArea])
         inArea.axis = .vertical
         inArea.alignment = .center
@@ -586,15 +549,15 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             self?.closeFogPlace()
             self?.capturing.start(spot)
         }
-        let column = Controls.column([modesRow, capturing.banner, inArea, notices], spacing: DesignTokens.Space.s8)
-        chrome.badge.translatesAutoresizingMaskIntoConstraints = false
-        layersButton.addSubview(chrome.badge)
-        NSLayoutConstraint.activate([
-            chrome.badge.heightAnchor.constraint(equalToConstant: 16),
-            chrome.badge.widthAnchor.constraint(greaterThanOrEqualToConstant: 16),
-            chrome.badge.topAnchor.constraint(equalTo: layersButton.topAnchor, constant: -6),
-            chrome.badge.trailingAnchor.constraint(equalTo: layersButton.trailingAnchor, constant: 6),
-        ])
+        // The toggle and Show in this area at the start, the rail at the end; the notices under both.
+        let start = Controls.column([modesRow, inArea], spacing: DesignTokens.Space.s8)
+        for v in [start, rail.view] { topRow.addArrangedSubview(v) }
+        topRow.spacing = DesignTokens.Space.s8
+        topRow.alignment = .top
+        for v in [topRow, capturing.banner, notices] { chromeColumn.addArrangedSubview(v) }
+        chromeColumn.axis = .vertical
+        chromeColumn.spacing = DesignTokens.Space.s8
+        let column = chromeColumn
 
         // Over the map and under its controls: the photo markers, then the popups.
         photoViews.markers.frame = view.bounds
@@ -602,12 +565,13 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         view.insertSubview(photoViews.markers, aboveSubview: mapView)
         view.insertSubview(spotViews.popup, aboveSubview: photoViews.markers)
         bindPhotos()
-        for v in [column, locateButton, chrome.chip, sheet] {
+        for v in [column, sheet] {
             v.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(v)
         }
         setUpFogControl()
         setUpExport()
+        renderRail()
         bindPrivateEditor()
         // Over the sheet: opened low on the map, the photo popup runs past the sheet's edge.
         view.addSubview(photoViews.popup)
@@ -616,21 +580,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             column.topAnchor.constraint(equalTo: guide.topAnchor, constant: DesignTokens.Space.s8),
             column.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: DesignTokens.Space.s12),
             column.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -DesignTokens.Space.s12),
-            chrome.chip.centerXAnchor.constraint(equalTo: guide.centerXAnchor),
-            chrome.chip.bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: -DesignTokens.Space.s32),
-            // Clear of Find my location on both sides, so it stays centred.
-            chrome.chip.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, constant: -2 * (44 + DesignTokens.Space.s12 + DesignTokens.Space.s8)),
             sheet.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
             sheet.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
             sheet.bottomAnchor.constraint(equalTo: guide.bottomAnchor),
-            locateButton.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -DesignTokens.Space.s12),
-            locateButton.bottomAnchor.constraint(lessThanOrEqualTo: guide.bottomAnchor, constant: -DesignTokens.Space.s32),
-            locateButton.topAnchor.constraint(greaterThanOrEqualTo: column.bottomAnchor, constant: DesignTokens.Space.s8),
         ])
-        // Above the sheet while it shows, else near the bottom.
-        let aboveSheet = locateButton.bottomAnchor.constraint(equalTo: sheet.topAnchor, constant: -DesignTokens.Space.s12)
-        aboveSheet.priority = .defaultHigh
-        aboveSheet.isActive = true
     }
 
     /// What the map shows before the documents arrive: the background alone.
@@ -668,6 +621,7 @@ enum MapPreferences {
         state.satellite = defaults.bool(forKey: "map.satellite")
         state.roads = defaults.object(forKey: "map.roads") as? Bool ?? true
         state.showLayers = defaults.object(forKey: "map.showLayers") as? Bool ?? true
+        state.showPlaces = defaults.object(forKey: "map.showPlaces") as? Bool ?? true
         state.toggles = defaults.dictionary(forKey: "map.toggles") as? [String: Bool] ?? [:]
     }
 
@@ -678,10 +632,11 @@ enum MapPreferences {
         defaults.set(state.satellite, forKey: "map.satellite")
         defaults.set(state.roads, forKey: "map.roads")
         defaults.set(state.showLayers, forKey: "map.showLayers")
+        defaults.set(state.showPlaces, forKey: "map.showPlaces")
         defaults.set(state.toggles.filter { $0.key != Spots.group }, forKey: "map.toggles")
     }
 
-    /// The Points of interest picked, every one off until ticked.
+    /// The places picked, every one off until ticked.
     static func spots() -> [SpotCategory] {
         let saved = Set(defaults.stringArray(forKey: "map.spots") ?? [])
         return SpotCategory.allCases.filter { saved.contains($0.rawValue) }

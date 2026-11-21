@@ -4,7 +4,8 @@ import MapLibre
 import UIKit
 
 /// The recording on the map (apps/android/docs/SPEC.md FR-5.1): while one runs the map shows it and
-/// nothing else, Normal with the tracks hidden and the sheet, the toggle and the export put away;
+/// nothing else, Normal with the tracks hidden and the sheet, the toggle, Find my location and the
+/// export put away;
 /// its line and a dot at its latest fix are the app's own source and layers, drawn from the fixes
 /// the phone holds, since the server has never seen them. The camera flies to the first fix, then
 /// only pans, so a zoom picked meanwhile sticks.
@@ -17,7 +18,6 @@ extension MapViewController {
         if active != recordingLive {
             recordingLive = active
             recordingFollowed = false
-            recordingFollows = true
             if active {
                 closeExport()
                 closeFogPlace()
@@ -28,7 +28,7 @@ extension MapViewController {
             // The track's photos step aside with the tracks; Spots and paths stay, as on Android,
             // being about where the recording goes.
             photoViews.markers.isHidden = active
-            export.button.isHidden = active
+            renderRail()
             state.hiddenGroups = TabMode.hiddenGroups(recording: active)
             applyTabMode()
             render()
@@ -39,33 +39,16 @@ extension MapViewController {
         followRecording()
     }
 
-    /// The camera on the latest fix: flown to at the first, panned after, and left alone once the
-    /// user moves the map, until Find my location.
+    /// The camera on the latest fix: flown to at the first, panned after.
     private func followRecording() {
-        guard recordingLive, recordingFollows, let last = lastRecordingPoints.last else { return }
+        guard recordingLive, let last = lastRecordingPoints.last else { return }
         let at = CLLocationCoordinate2D(latitude: last.lat, longitude: last.lon)
-        recordingMoving = true
         if recordingFollowed {
             mapView.setCenter(at, animated: true)
         } else {
             recordingFollowed = true
             mapView.setCenter(at, zoomLevel: max(mapView.zoomLevel, 15), animated: true)
         }
-        recordingMoving = false
-    }
-
-    /// The user moved the map while recording: the camera stops following.
-    func mapView(_ mapView: MLNMapView, regionWillChangeWith reason: MLNCameraChangeReason, animated: Bool) {
-        guard recordingLive, !recordingMoving, reason.contains(.gesturePan) || reason.contains(.gesturePinch) || reason.contains(.gestureRotate) else { return }
-        recordingFollows = false
-    }
-
-    /// Find my location while recording: the camera follows the recording again.
-    func followRecordingAgain() -> Bool {
-        guard recordingLive else { return false }
-        recordingFollows = true
-        followRecording()
-        return true
     }
 
     /// A recording's message over the map, for a few seconds: the last one replaces the one before.

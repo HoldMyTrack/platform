@@ -18,7 +18,10 @@ enum TourText {
             String(localized: "tour.trips.body", defaultValue: "Group your tracks into Trips: a holiday, a multi-day hike, a race weekend. A Trip shows only its own tracks, and you can send someone a copy.", comment: "The tour and the Trips tab's first-time card."))
         case "layers": (
             String(localized: "tour.layers.title", defaultValue: "Layers", comment: "The tour: the Layers menu."),
-            String(localized: "tour.layers.body", defaultValue: "Tick the roads, paths and points of interest you want on the map, and tap a point of interest to see what it is. Show layers turns them all on or off at once.", comment: "The tour: the Layers menu, which holds the points of interest too."))
+            String(localized: "tour.layers.body", defaultValue: "Tick the roads and paths you want on the map. Show layers turns them all on or off at once.", comment: "The tour: the Layers menu."))
+        case "places": (
+            String(localized: "tour.places.title", defaultValue: "Places", comment: "The tour: the Places menu."),
+            String(localized: "tour.places.body", defaultValue: "Waterfalls, viewpoints, historic sites and more: tick the kinds you want on the map, and tap one to see what it is. Show places turns them all on or off.", comment: "The tour: the Places menu."))
         case "export": (
             String(localized: "tour.export.title", defaultValue: "Export", comment: "The tour: the map image export."),
             String(localized: "tour.export.body", defaultValue: "Save what's on the map as an image. Tick tracks in the list first to make them bold, and Show stats adds a card with their distance and time.", comment: "The tour: the map image export."))
