@@ -10,7 +10,9 @@ struct TourTests {
         #expect(steps.map(\.id) == ["welcome", "tracks", "range", "trips", "layers", "places", "export", "fog", "record", "sync", "done"])
         let fog = steps.first { $0.id == "fog" }!
         #expect(fog.target == .fogLevel && fog.mode == .fog && fog.card == .fog && fog.view == nil)
-        #expect(steps.first { $0.id == "sync" }?.text == "sync")
+        let sync = steps.first { $0.id == "sync" }!
+        #expect(sync.text == "sync")
+        #expect(sync.target == .sheet && sync.tab == .sync && sync.sheet, "the Sync tab's sheet, half open, as on Android")
         #expect(steps.first { $0.id == "places" }?.target == .places, "Places is a step of its own, after Layers")
     }
 

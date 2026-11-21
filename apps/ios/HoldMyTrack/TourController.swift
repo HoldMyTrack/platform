@@ -152,8 +152,10 @@ final class TourController {
     private func go(_ run: Running, _ index: Int?) {
         let step = index.map { run.steps[$0] }
         let changes = TourRules.changes(mode: host.map.pickedMode, tab: host.tourTab, step: step, restoreMode: run.mode, restoreTab: run.tab)
-        // Only the You step needs its tab's first page; the end leaves the user's pages as they were.
-        if let tab = changes.tab { host.showTourTab(tab, root: step?.target == .youTour) }
+        // The You and Sync steps need their tab's first page, Sync's being its map with the sheet,
+        // even with the tab showing already; the end leaves the user's pages as they were.
+        let needsRoot = step?.target == .youTour || step?.tab == .sync
+        if let tab = changes.tab ?? (needsRoot ? step?.tab : nil) { host.showTourTab(tab, root: needsRoot) }
         if let mode = changes.mode { host.map.showTourMode(mode) }
         host.map.setTourSheet(TourSteps.sheet(step, restore: run.sheet))
         for (menu, open) in TourSteps.menus(step) { host.map.holdTourMenu(menu, open: open) }

@@ -19,7 +19,11 @@ final class TourTests: XCTestCase {
         for step in 2...15 {
             next.tap()
             XCTAssertTrue(app.staticTexts["\(step) of 15"].waitForExistence(timeout: 10), "step \(step)")
-            if step == 6 || step == 15 { attach("Tour step \(step)") }
+            if step == 6 || step == 14 || step == 15 { attach("Tour step \(step)") }
+            if step == 14 {
+                XCTAssertTrue(app.tabBars.buttons["tabSync"].isSelected, "Sync's step is on the Sync tab")
+                XCTAssertTrue(app.tables["sync"].exists, "with its sheet open")
+            }
         }
         XCTAssertTrue(app.cells["youTour"].exists, "the last step is on the You tab")
         next.tap()
@@ -27,12 +31,21 @@ final class TourTests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons.element(boundBy: 0).isSelected, "the Tracks tab comes back")
         XCTAssertTrue(app.buttons["modeNormal"].isSelected, "Normal comes back")
 
+        // A page over Sync's map, Sync history here, gives way for the Sync step's sheet.
+        app.tabBars.buttons["tabSync"].tap()
+        app.cells["syncHistory"].tap()
+        XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 10))
         app.tabBars.buttons["tabYou"].tap()
         app.cells["youTour"].tap()
         XCTAssertTrue(app.staticTexts["1 of 15"].waitForExistence(timeout: 10))
+        for step in 2...14 {
+            next.tap()
+            XCTAssertTrue(app.staticTexts["\(step) of 15"].waitForExistence(timeout: 10), "again, step \(step)")
+        }
+        XCTAssertTrue(app.tables["sync"].exists, "Sync's step is on the sheet, the page gone")
         app.buttons["tourSkip"].tap()
         XCTAssertTrue(app.otherElements["tourCard"].waitForNonExistence(timeout: 5))
-        XCTAssertTrue(app.tabBars.buttons["tabYou"].isSelected, "Skip leaves the user where they were")
+        XCTAssertTrue(app.tabBars.buttons["tabYou"].isSelected, "Skip puts the user back where the tour started")
     }
 
     /// An account with tracks is offered the tour; Not now declines it, and Fog and the Trips tab
