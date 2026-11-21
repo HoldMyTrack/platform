@@ -590,8 +590,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         start.spacing = DesignTokens.Space.s8
         rail.layOut(landscape: view.bounds.width > view.bounds.height)
         // The start takes the row's room; the rail keeps to its buttons.
-        start.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        rail.view.setContentHuggingPriority(.required, for: .horizontal)
         for v in [start, rail.view] { topRow.addArrangedSubview(v) }
         topRow.spacing = DesignTokens.Space.s8
         topRow.alignment = .top
