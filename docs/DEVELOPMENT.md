@@ -101,9 +101,23 @@ Every request `internal/httpapi`'s tests send through `dbTest.do`, `dbTest.send`
 
 ### Android verification
 
-The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and UI Automator flows over the map (`connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:8081`, on an emulator); there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and a track deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
+The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and UI Automator flows over the map (`make e2e-android`, "End-to-end suites"); there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and a track deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
 
 CI also runs `./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:optimizeReleaseResources`. Lint fails on any warning `app/lint-baseline.xml` doesn't list: fix a new one, and run `:app:updateLintBaseline` only to drop entries a fix removed. The release is compiled through R8 and resource shrinking but not packaged, since packaging needs the upload key.
+
+### End-to-end suites
+
+Each client's flows run against the dev stack, which `make e2e-stack` starts and waits for on `.env`'s `API_PORT`. A release runs its client's suite on the commit it ships (`DEPLOY.md` §10).
+
+| Client | Command | Needs | In CI |
+|---|---|---|---|
+| Web | `make e2e-web` | Docker and the basemap extract (`make basemap`) | each pull request that touches the web or the server |
+| Android | `make e2e-android` | a running emulator, JDK 17 and the Android SDK | no |
+| iOS | `make e2e-ios` | Xcode and an iPhone simulator (`IOS_DESTINATION=…` names another) | no |
+
+- The Android flows rebuild and install the debug app against `10.0.2.2:$API_PORT`; a debug build installed for other work points there afterwards.
+- `make e2e-ios` passes `HMT_API_BASE_URL` on the command line, which outranks `Config/Local.xcconfig`. Run from Xcode, the UI tests use the xcconfig's origin and skip when it doesn't answer. `IOS_UI_TESTS=HoldMyTrackUITests/LaunchTests` runs one class.
+- The iOS demo tests sign in as the demo, which the dev stack allows a few times an hour from one address; one refused with "Too many demo sessions" passes again once the hour is up. `CaptureTests` skips while the dev stack has no Spots ("Seeding a fresh database").
 
 ### CI
 
@@ -111,7 +125,7 @@ CI also runs `./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:
 
 `.github/workflows/contract.yml` fails a pull request touching `services/server/api/` on a change an installed client can't follow, such as a response field removed: against the base branch (`scripts/check-contract-break.sh`), and against each release tag `android/<versionCode>` or `ios/<build>` from the minimum production's `/healthz` reports for that app, counting only breaks the pull request adds (`scripts/check-contract-release.sh`). An intended break carries the `contract-break` label and ships with a raised `MIN_ANDROID_BUILD` (`DEPLOY.md` §10). A change oasdiff calls breaking that no client can feel, such as declaring a limit the server already enforced, goes in `services/server/api/breaking-ignore.txt` with why.
 
-`.github/workflows/ios.yml` runs the iOS tests on a macOS runner only for a push or pull request touching a file other than Markdown under `apps/ios/`, `testdata/client-rules/`, `services/server/api/` or the design sources `scripts/make-design.py` reads; it is its own workflow so that path filter keeps the macOS runner off every other pull request, and a nightly run on `main` runs everything, UI tests included.
+`.github/workflows/ios.yml` runs the iOS tests on a macOS runner only for a push or pull request touching a file other than Markdown under `apps/ios/`, `testdata/client-rules/`, `services/server/api/` or the design sources `scripts/make-design.py` reads; it is its own workflow so that path filter keeps the macOS runner off every other pull request, and a nightly run on `main` runs it whatever changed. Its UI tests aren't in it: they need the dev stack ("End-to-end suites").
 
 ## Writing a migration
 
@@ -138,16 +152,12 @@ Removing or renaming takes two releases: stop using it, then drop it. A migratio
 
 ## Commands
 
-`make help` lists the wrapper targets; `make test` runs every CI suite except the doc checks and the Android tests. Not wrapped:
+`make help` lists the wrapper targets. `make test` runs every CI test suite that needs only Docker, the doc checks included; `make test-android` and `make test-ios` run the apps' on the host, and `make test-all` runs all three. Not wrapped:
 
 ```bash
-scripts/check-doc-refs.sh                                         # citation check
-scripts/check-doc-style.sh                                        # writing rules a pattern can catch
 scripts/check-file-size.sh                                        # soft size warnings
 cd apps/web && npm run gen:api-types                              # after a contract change
 cd apps/web && npm run build:style                                # after a change under src/map that a served document carries
-cd apps/android/holdmytrack && ./gradlew :app:testDebugUnitTest   # Android JUnit tests
-cd apps/android/holdmytrack && ./gradlew :app:lintDebug           # Android lint, against its baseline
 ```
 
 On the host, `npm run build` must precede `verify:build`, and `npm run basemap` needs `pmtiles` on `PATH`.

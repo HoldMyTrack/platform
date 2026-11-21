@@ -1,9 +1,9 @@
-# Runs the iOS package's tests, then builds the app and runs its unit tests, and on main its UI tests (apps/ios/docs/ROADMAP.md,
-# 3.4 and 4.0) when a change touches
-# the app, the shared rule cases it implements, the API contract its wire models follow, or the
-# web and Android files its palette, fonts and icons are made from, Markdown aside. Its
-# own workflow, not a job in ci.yml, so the path filter keeps the macOS runner off every other
-# pull request.
+# Runs the iOS package's tests, then builds the app and runs its unit tests (apps/ios/docs/ROADMAP.md,
+# 3.4 and 4.0), when a change touches the app, the shared rule cases it implements, the API
+# contract its wire models follow, or the web and Android files its palette, fonts and icons are
+# made from, Markdown aside. Its own workflow, not a job in ci.yml, so the path filter keeps the
+# macOS runner off every other pull request. The UI tests need the dev stack, which this runner
+# doesn't have, so they run before a release instead (`make e2e-ios`, docs/DEVELOPMENT.md).
 name: iOS
 
 on:
@@ -34,7 +34,7 @@ on:
       - .github/workflows/ios.yml
       # Documentation alone builds nothing.
       - '!**/*.md'
-  # Every night on main, and from Actions → iOS → Run workflow: unit and UI tests, whatever
+  # Every night on main, and from Actions → iOS → Run workflow: every step, whatever
   # changed, so a dependency the path filter misses fails within a day.
   schedule:
     - cron: "0 3 * * *"
@@ -100,13 +100,4 @@ jobs:
           set -o pipefail
           xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
             -destination "id=${{ steps.sim.outputs.udid }}" -only-testing:HoldMyTrackTests \
-            -clonedSourcePackagesDirPath ~/spm | tail -n 100
-      # The end-to-end flows (HoldMyTrackUITests), which need no server. Slower than the unit
-      # tests, so not on pull requests: a launch regression shows up on main, nightly or manual runs.
-      - name: UI tests
-        if: github.event_name != 'pull_request'
-        run: |
-          set -o pipefail
-          xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
-            -destination "id=${{ steps.sim.outputs.udid }}" -only-testing:HoldMyTrackUITests \
             -clonedSourcePackagesDirPath ~/spm | tail -n 100

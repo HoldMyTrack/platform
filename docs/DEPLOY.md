@@ -1,6 +1,6 @@
 # Deploying HoldMyTrack — minimal single-VPS setup
 
-One small VPS runs `compose.prod.yml` (Postgres+PostGIS, `api`, `worker`, and Caddy in front of the built frontend), with Cloudflare R2 for object storage. The cost model is `docs/VISION.md` §4.3. The reasons for each setting live in the header comments of `compose.prod.yml`, `.env.prod.example` and `scripts/*.sh`. Redeploying holdmytrack.com is `/deploy` in Claude Code (`.claude/skills/deploy/SKILL.md`), which walks §6–§8 and §10.
+One small VPS runs `compose.prod.yml` (Postgres+PostGIS, `api`, `worker`, and Caddy in front of the built frontend), with Cloudflare R2 for object storage. The cost model is `docs/VISION.md` §4.3. The reasons for each setting live in the header comments of `compose.prod.yml`, `.env.prod.example` and `scripts/*.sh`. Redeploying holdmytrack.com is `/deploy` in Claude Code (`.claude/skills/deploy/SKILL.md`), which walks §6–§8 and §10. A redeploy takes a commit whose CI run on `main` passed, which includes the web's end-to-end suite (`DEVELOPMENT.md`, "End-to-end suites").
 
 Every compose command below is `docker compose -f compose.prod.yml --env-file .env.prod …`, run in the repository checkout on the server (`/srv/holdmytrack`); `…` in a command stands for that prefix. Never drop `--env-file`.
 
@@ -336,6 +336,8 @@ Something wrong before step 4's upgrade: put the old tag back and `… up -d db`
 The Android app ships only through Google Play, as the release-signed bundle built from a deployed commit (`apps/android/holdmytrack/README.md`, Release build).
 
 **Release number.** Each app has its own `major.minor.patch`: `versionName` in `apps/android/holdmytrack/app/build.gradle.kts` and `MARKETING_VERSION` in `apps/ios/Config/Base.xcconfig`, written nowhere else. It is raised in every pull request that changes what the app does, its code or resources outside `docs/` and tests: patch by 1 for a fix, or minor by 1 with patch back to 0 for a feature. So `main` always carries the number the next release goes out with, and a release may skip numbers. When two such pull requests are open, the second to merge takes the number after the first's. Major stays 0 until the app is offered widely (North America, the EU, Asia) and enough people use it to have found the obvious bugs.
+
+**End-to-end first.** A build goes to Google Play or TestFlight only after its client's suite passes on the commit it is built from: `make e2e-android` or `make e2e-ios` (`DEVELOPMENT.md`, "End-to-end suites"). CI runs neither.
 
 **Tagging.** Tag every build that reaches Play, for the release contract check (`DEVELOPMENT.md`, "CI"): `git tag android/<versionCode> <sha>`, then `git push origin android/<versionCode>`.
 
