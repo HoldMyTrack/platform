@@ -25,15 +25,16 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let locateButton = UIButton(type: .system)
     /// Layers, Places, Find my location and the export down the right edge (MapViewController+Rail).
     lazy var rail = MapRail(layers: layersButton, places: placesButton, locate: locateButton, export: export.button)
-    lazy var layersMenu = MapMenuPopup(host: view, anchor: rail.layers) { [unowned self] in self.layersContent() }
+    /// Layers waits for the layers document, which gives it Satellite and the swatches.
+    lazy var layersMenu = MapMenuPopup(host: view, anchor: rail.layers, canOpen: { [unowned self] in self.pair != nil }) { [unowned self] in self.layersContent() }
     lazy var placesMenu = MapMenuPopup(host: view, anchor: rail.places) { [unowned self] in self.placesContent() }
     /// The controls along the top: the mode toggle and the rail, then the notices under them.
-    let chromeColumn = UIStackView()
+    let chromeColumn = PassThroughStackView()
     /// The toggle beside the rail, whose bottom the sheet and popups stay under.
-    let topRow = UIStackView()
+    let topRow = PassThroughStackView()
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
     private let location = CLLocationManager()
-    let modesRow = UIStackView()
+    let modesRow = PassThroughStackView()
     /// Takes the row's room while the toggle is hidden, so the rail keeps its place.
     private let modesSpacer = UIView()
 
@@ -193,11 +194,16 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let guide = view.safeAreaLayoutGuide.layoutFrame
-        sheet.setRoom(container: guide.height, topInset: topRow.frame.maxY - guide.minY + DesignTokens.Space.s8)
-        rail.layOut(landscape: view.bounds.width > view.bounds.height)
+        sheet.setRoom(container: guide.height, topInset: topRow.convert(topRow.bounds, to: view).maxY - guide.minY + DesignTokens.Space.s8)
         layersMenu.place()
         placesMenu.place()
         layoutExport()
+    }
+
+    /// The rail turns before the layout that measures it for the sheet.
+    override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        rail.layOut(landscape: size.width > size.height)
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -540,8 +546,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         updateRailMenus()
 
         modesSpacer.isHidden = true
+        modesSpacer.isUserInteractionEnabled = false
         for v in [modes, modesSpacer] { modesRow.addArrangedSubview(v) }
-        let inArea = UIStackView(arrangedSubviews: [spotViews.inArea])
+        let inArea = PassThroughStackView(arrangedSubviews: [spotViews.inArea])
         inArea.axis = .vertical
         inArea.alignment = .center
         spotViews.inArea.addAction(UIAction { [weak self] _ in self?.loadInArea() }, for: .primaryActionTriggered)
@@ -550,7 +557,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             self?.capturing.start(spot)
         }
         // The toggle and Show in this area at the start, the rail at the end; the notices under both.
-        let start = Controls.column([modesRow, inArea], spacing: DesignTokens.Space.s8)
+        let start = PassThroughStackView(arrangedSubviews: [modesRow, inArea])
+        start.axis = .vertical
+        start.spacing = DesignTokens.Space.s8
+        rail.layOut(landscape: view.bounds.width > view.bounds.height)
         for v in [start, rail.view] { topRow.addArrangedSubview(v) }
         topRow.spacing = DesignTokens.Space.s8
         topRow.alignment = .top

@@ -2,17 +2,21 @@ import HoldMyTrackCore
 import UIKit
 
 /// A map menu's popup, Android's `MenuPopup`: a panel under its button, its end edge on the
-/// button's. A tap on the button opens it; a tap outside it closes it, the button's own included.
-/// The tour can hold it open view-only (hold), letting go of touches so the tour's card under it
-/// keeps working, and at most 40% of the screen tall so it can't cover that card. build makes the
-/// content on each opening and refresh.
+/// button's. A tap on the button opens it; a tap outside it, or VoiceOver's escape, closes it. The
+/// tour can hold it open view-only (hold), letting go of touches so the tour's card under it keeps
+/// working, and at most 40% of the screen tall so it can't cover that card. build makes the content
+/// on each opening and refresh; canOpen says whether there is anything to show, and a hold asked
+/// for before there is waits for retry.
 @MainActor
 final class MapMenuPopup {
     private unowned let host: UIView
     private unowned let anchor: UIView
+    private let canOpen: () -> Bool
     private let build: () -> UIView
-    private var panel: UIView?
+    private var panel: MenuPanel?
     private let scroll = UIScrollView()
+    /// What build made last, in the scroll view.
+    private var built: UIView?
     private var catcher: UIView?
     private var held = false
     private var wantHeld = false
@@ -28,21 +32,25 @@ final class MapMenuPopup {
     /// Around the content, inside the panel.
     static let inset = DesignTokens.Space.s8
 
-    init(host: UIView, anchor: UIView, build: @escaping () -> UIView) {
+    init(host: UIView, anchor: UIView, canOpen: @escaping () -> Bool = { true }, build: @escaping () -> UIView) {
         self.host = host
         self.anchor = anchor
+        self.canOpen = canOpen
         self.build = build
     }
 
     func open() {
-        if panel == nil { show(interactive: true) }
+        if panel == nil, canOpen() { show(interactive: true) }
     }
 
     func dismiss() {
         panel?.removeFromSuperview()
         catcher?.removeFromSuperview()
+        // The scroll view goes on to the next panel: what it showed goes now.
+        built?.removeFromSuperview()
         panel = nil
         catcher = nil
+        built = nil
         held = false
     }
 
@@ -54,7 +62,16 @@ final class MapMenuPopup {
     /// Holds the menu open for the tour, or lets go of it (MenuHold).
     func hold(_ open: Bool) {
         wantHeld = open
-        switch MenuHold.next(isOpen: isOpen, held: held, want: open, canOpen: true) {
+        apply()
+    }
+
+    /// Applies a hold that had nothing to show when asked, once there is.
+    func retry() {
+        if wantHeld { apply() }
+    }
+
+    private func apply() {
+        switch MenuHold.next(isOpen: isOpen, held: held, want: wantHeld, canOpen: canOpen()) {
         case .none: break
         case .close: dismiss()
         case .openHeld: show(interactive: false)
@@ -64,23 +81,28 @@ final class MapMenuPopup {
         }
     }
 
-    /// The content made again from the state, where the menu is open.
+    /// The content made again from the state, where the menu is open. VoiceOver stays on the row
+    /// it was on, found again by its identifier.
     func refresh() {
         guard panel != nil else { return }
+        let focused = (UIAccessibility.focusedElement(using: .notificationVoiceOver) as? UIView)?.accessibilityIdentifier
         setContent()
         place()
+        if let focused, let again = built.flatMap({ Self.find(focused, in: $0) }) {
+            UIAccessibility.post(notification: .layoutChanged, argument: again)
+        }
     }
 
     /// Under the button, its end edge on the button's; laid out again on every layout pass.
     func place() {
-        guard let panel else { return }
+        guard let panel, let built else { return }
         let below = anchor.convert(anchor.bounds, to: host)
         let top = below.maxY + DesignTokens.Space.s6
         let room = host.bounds.height - host.safeAreaInsets.bottom - top - DesignTokens.Space.s8
         let cap = held ? (host.window?.bounds.height ?? host.bounds.height) * Self.heldHeight : room
-        let fitting = (scroll.subviews.first?.systemLayoutSizeFitting(
+        let fitting = built.systemLayoutSizeFitting(
             CGSize(width: Self.width - 2 * Self.inset, height: UIView.layoutFittingCompressedSize.height),
-            withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel).height ?? 0) + 2 * Self.inset
+            withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel).height + 2 * Self.inset
         let height = max(0, min(fitting, cap, room))
         let x = min(max(below.maxX - Self.width, DesignTokens.Space.s8), host.bounds.width - Self.width - DesignTokens.Space.s8)
         panel.frame = CGRect(x: x, y: top, width: Self.width, height: height)
@@ -88,7 +110,8 @@ final class MapMenuPopup {
     }
 
     private func show(interactive: Bool) {
-        let panel = UIView()
+        let panel = MenuPanel()
+        panel.onEscape = { [weak self] in self?.dismiss() }
         panel.backgroundColor = UIColor(resource: .surface)
         panel.layer.cornerRadius = DesignTokens.Radius.lg
         panel.layer.borderWidth = 1
@@ -121,10 +144,11 @@ final class MapMenuPopup {
     }
 
     private func setContent() {
-        for view in scroll.subviews { view.removeFromSuperview() }
+        built?.removeFromSuperview()
         let content = build()
         content.translatesAutoresizingMaskIntoConstraints = false
         scroll.addSubview(content)
+        built = content
         let inset = Self.inset
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor, constant: inset),
@@ -134,8 +158,26 @@ final class MapMenuPopup {
         ])
     }
 
+    private static func find(_ id: String, in view: UIView) -> UIView? {
+        if view.accessibilityIdentifier == id { return view }
+        for sub in view.subviews { if let found = find(id, in: sub) { return found } }
+        return nil
+    }
+
     @objc private func outside() { dismiss() }
 }
+
+/// The popup's panel, which VoiceOver's escape closes.
+final class MenuPanel: UIView {
+    var onEscape: (() -> Void)?
+
+    override func accessibilityPerformEscape() -> Bool {
+        guard let onEscape else { return false }
+        onEscape()
+        return true
+    }
+}
+
 
 /// A map menu's rows, Android's popup layouts: switches, check boxes, headings and the legend key.
 @MainActor

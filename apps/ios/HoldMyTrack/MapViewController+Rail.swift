@@ -19,8 +19,10 @@ extension MapViewController {
     func updateRailMenus() {
         rail.layers.render(MapChrome.layers(state), label: String(localized: "Layers"))
         rail.places.render(MapChrome.places(state, picked: spots.categories.count), label: String(localized: "Places"))
+        // The documents arriving can open a menu the tour asked for before they had.
         layersMenu.refresh()
         placesMenu.refresh()
+        layersMenu.retry()
     }
 
     /// The tour holds a menu open, view-only, or lets go of it.
@@ -144,7 +146,7 @@ extension MapViewController {
 /// height the sheet needs.
 @MainActor
 final class MapRail {
-    let view = UIStackView()
+    let view = PassThroughStackView()
     let layers: RailItem
     let places: RailItem
     let locate: RailItem
@@ -165,6 +167,15 @@ final class MapRail {
     /// Stacked down the edge in portrait, in a row in landscape.
     func layOut(landscape: Bool) {
         view.axis = landscape ? .horizontal : .vertical
+    }
+}
+
+/// A stack laid over the map that takes no touch of its own, so the map pans and taps through its
+/// gaps; Android's top bar does the same.
+final class PassThroughStackView: UIStackView {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let hit = super.hitTest(point, with: event)
+        return hit === self ? nil : hit
     }
 }
 
