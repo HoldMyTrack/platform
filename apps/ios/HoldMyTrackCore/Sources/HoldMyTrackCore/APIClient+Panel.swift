@@ -149,4 +149,15 @@ extension APIClient {
         let data = try await send("POST", "v2/tracks/stats-card", body: body)
         return data.isEmpty ? nil : data
     }
+
+    /// The account's track each span overlaps the most (`POST /v2/tracks/overlaps`), by key: the
+    /// server's half of the Sync tab's similar-tracks hint (docs/SPEC.md FR-3.5).
+    public func trackOverlaps(_ tracks: [RecordedTrack]) async throws -> [String: TrackOverlap] {
+        guard !tracks.isEmpty else { return [:] }
+        let time = ISO8601DateFormatter()
+        time.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let body = OverlapsRequestJSON(spans: tracks.map { OverlapSpanJSON(key: $0.id, start: time.string(from: $0.startedAt), end: time.string(from: $0.endedAt)) })
+        let json: OverlapsJSON = try decode(try await send("POST", "v2/tracks/overlaps", body: body))
+        return Dictionary(json.overlaps.map { ($0.key, TrackOverlap($0)) }, uniquingKeysWith: { a, _ in a })
+    }
 }

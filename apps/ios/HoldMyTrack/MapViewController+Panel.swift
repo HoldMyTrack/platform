@@ -281,7 +281,8 @@ extension MapViewController {
         syncPanel?.content.isHidden = panelTab != .sync
         notices.aside = MapChrome.areaNoticesShown(recording: recordingLive, onSync: panelTab == .sync) ? [] : [Notice.empty.rawValue, Notice.capped.rawValue]
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
-        sheet.isHidden = state.mode != .normal || privateLocations.open || recordingLive
+        // The Sync tab's sheet stays up while recording, as on Android.
+        sheet.isHidden = state.mode != .normal || privateLocations.open || (recordingLive && panelTab != .sync)
         sheet.setNeedsLayout()
         // The map's credit sits above the sheet (placeAttribution), and the row's controls follow it.
         view.setNeedsLayout()
@@ -409,8 +410,11 @@ extension MapViewController {
             _ = tapFogPlace(at: tap.location(in: mapView))
             return
         }
-        // The Sync tab's sheet lists what isn't on the map yet: the map's tracks aren't picked from it.
-        guard state.mode == .normal, panelTab != .sync, !sheet.isHidden || panelTab == .trips else { return }
+        if panelTab == .sync {
+            tapSyncLine(at: tap.location(in: mapView))
+            return
+        }
+        guard state.mode == .normal, !sheet.isHidden || panelTab == .trips else { return }
         let point = tap.location(in: mapView)
         let r = TrackTap.radius
         let rect = CGRect(x: point.x - r, y: point.y - r, width: 2 * r, height: 2 * r)
@@ -432,6 +436,25 @@ extension MapViewController {
             if panelTab == .trips { tripsPanel.scrollTo(id) } else { tracksPanel.scrollTo(id) }
         }
         panelChanged()
+    }
+
+    // MARK: The Sync tab's lines
+
+    /// The Sync tab's rows to draw, highlight picked out (SyncLines).
+    func drawSyncLines(_ tracks: [RecordedTrack], highlight: String?) {
+        let features = SyncLines.features(tracks, highlight: highlight)
+        guard state.geojson[SyncLines.group] != features else { return }
+        state.geojson[SyncLines.group] = features
+        render()
+    }
+
+    /// A line tapped on the Sync tab: its row picked out.
+    private func tapSyncLine(at point: CGPoint) {
+        let r = TrackTap.radius
+        let rect = CGRect(x: point.x - r, y: point.y - r, width: 2 * r, height: 2 * r)
+        let features = mapView.visibleFeatures(in: rect, styleLayerIdentifiers: [SyncLines.highlightID, SyncLines.lineID])
+        guard let key = features.lazy.compactMap({ $0.attribute(forKey: "key") as? String }).first else { return }
+        syncPanel?.focus(key)
     }
 
     // MARK: Edit and Delete

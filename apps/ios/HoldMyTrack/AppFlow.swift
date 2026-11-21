@@ -205,7 +205,6 @@ final class AppFlow {
             MapDocuments.forget(account: account)
             EmptyNoticeDismissal.forget(account: account)
             RecordingController.defaultStore.forget(account: account)
-            RecordingsSync.forget(account: account)
         }
         endSession()
         keepsRecording = false

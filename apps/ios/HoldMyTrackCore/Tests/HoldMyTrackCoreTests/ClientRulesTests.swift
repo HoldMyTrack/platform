@@ -85,6 +85,10 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         let saved = input.strings("saved").map { PrivateLocation(id: $0, name: "", lon: 0, lat: 0, radiusM: 200) }
         return .list(PrivateLocationEditing.drawOrder(saved, editing: input["editing"].string).map(\.id))
     },
+    "similarSpans": { input in
+        func at(_ span: String, _ end: String) -> Date { Date(timeIntervalSince1970: input[span][end].double! / 1000) }
+        return .bool(SyncSimilar.overlaps(at("a", "start"), at("a", "end"), at("b", "start"), at("b", "end")))
+    },
     "verifyAction": { input in
         switch VerifyAction.of(input["typed"].string!) {
         case .check: .string("check")

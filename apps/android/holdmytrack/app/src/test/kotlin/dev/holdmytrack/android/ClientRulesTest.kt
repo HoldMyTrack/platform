@@ -20,6 +20,8 @@ import dev.holdmytrack.android.net.RouteEdit
 import dev.holdmytrack.android.net.RoutePoint
 import dev.holdmytrack.android.panel.TrackFacets
 import dev.holdmytrack.android.recording.RecordingTypes
+import dev.holdmytrack.android.sync.Similar
+import java.time.Instant
 import dev.holdmytrack.android.recording.TypeCount
 import dev.holdmytrack.android.recording.TypeSearch
 import dev.holdmytrack.android.panel.TrackZone
@@ -186,6 +188,10 @@ class ClientRulesTest {
         "privateDrawOrder" to { input ->
             val circle = { id: String -> Circle(id, 0.0, 0.0, 200) }
             ids(PrivateLocationsOverlay.drawOrder(input.strings("saved").map(circle), input.string("editing")?.let(circle)).map { it.id!! }, sort = false)
+        },
+        "similarSpans" to { input ->
+            fun at(span: String, end: String) = Instant.ofEpochMilli(input[span]!!.jsonObject[end]!!.jsonPrimitive.long)
+            JsonPrimitive(Similar.overlaps(at("a", "start"), at("a", "end"), at("b", "start"), at("b", "end")))
         },
         "verifyAction" to { input ->
             when (val action = VerifyAction.of(input.string("typed")!!)) {

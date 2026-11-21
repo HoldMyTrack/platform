@@ -290,7 +290,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// reloaded, which keeps the camera.
     func render() {
         guard let pair else { return }
-        let next = MapStyle.compose(style: pair.style, document: pair.layers, state: state, apiBase: flow.api.app.apiBaseURL)
+        let next = MapStyle.compose(style: pair.style, document: SyncLines.adding(to: pair.layers), state: state, apiBase: flow.api.app.apiBaseURL)
         if let loaded, styleLoaded, let style = mapView.style, let changes = MapStyle.changes(from: loaded, to: next),
            MapPatcher.apply(changes, to: style) {
             self.loaded = next
@@ -362,7 +362,14 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         modes.select(pickedMode)
         renderTopRow()
         renderLevel()
-        guard shown != state.mode else { return }
+        // The account's tracks step aside for a recording and for the Sync tab's own lines.
+        let hidden = TabMode.hiddenGroups(recording: recordingLive, syncing: panelTab == .sync)
+        let asideChanged = hidden != state.hiddenGroups
+        state.hiddenGroups = hidden
+        guard shown != state.mode else {
+            if asideChanged { render() }
+            return
+        }
         state.mode = shown
         renderLevel()
         render()
