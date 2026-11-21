@@ -25,10 +25,10 @@ IOS_UI_TESTS    ?= HoldMyTrackUITests
 ANDROID_TESTS   ?=
 
 .DEFAULT_GOAL := help
-.PHONY: help up down logs shell build typecheck basemap test-go test-unit verify verify-build doc-checks test test-android test-ios test-all e2e-stack e2e-web e2e-android e2e-ios clean
+.PHONY: help up down logs shell build typecheck basemap test-go test-unit verify verify-build doc-checks test test-android test-android-device test-ios test-all e2e-stack e2e-web e2e-android e2e-ios clean
 
 help: ## List targets
-	@grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  %-14s %s\n", $$1, $$2}'
+	@grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  %-20s %s\n", $$1, $$2}'
 
 up: ## Start the whole stack (web on :5173, api on :8080, db, rustfs, migrate, worker)
 	$(COMPOSE) up
@@ -99,14 +99,18 @@ e2e-stack:
 
 e2e-web: verify verify-build ## Web end-to-end: the Playwright map checks, dev server and production bundle
 
-# The emulator reaches the host's API at 10.0.2.2; -P rebuilds the debug app against it.
+e2e-android: e2e-stack test-android-device ## Android instrumented tests with the dev stack: the UI Automator flows and the recording stores
+
+# The emulator reaches the host's API at 10.0.2.2; -P rebuilds the debug app against it. Gradle
+# uninstalls both APKs after a run, and the app's data with them, unless told to leave them.
 # Gradle passes when the APK fails to install and no test runs, so the result files are read:
 # at least one test per device, none failed.
 ANDROID_TEST_RESULTS := apps/android/holdmytrack/app/build/outputs/androidTest-results/connected/debug
-e2e-android: e2e-stack ## Android instrumented tests on a running emulator: the UI Automator flows and the recording stores
+test-android-device: ## Android instrumented tests on a running emulator, no dev stack: the flows need e2e-android (ANDROID_TESTS narrows)
 	@adb devices | grep -q 'device$$' || { echo "no emulator: start one (Android Studio's Device Manager, or emulator -avd <name>)"; exit 1; }
 	rm -rf $(ANDROID_TEST_RESULTS)
 	cd apps/android/holdmytrack && ./gradlew :app:connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:$(API_PORT) \
+	  -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true \
 	  $(if $(ANDROID_TESTS),-Pandroid.testInstrumentationRunnerArguments.class=$(ANDROID_TESTS))
 	@for f in $(ANDROID_TEST_RESULTS)/TEST-*.xml; do \
 	  grep -q 'tests="[1-9]' "$$f" && ! grep -qE '(failures|errors)="[1-9]' "$$f" || { echo "no test ran, or one failed: $$f"; exit 1; }; \
