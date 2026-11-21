@@ -8987,7 +8987,7 @@
       }
     },
     "or" : {
-      "comment" : "Sign-in screen: between email sign-in and the providers.",
+      "comment" : "Sign in: the divider before the email form, under the providers, and before the demo.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
