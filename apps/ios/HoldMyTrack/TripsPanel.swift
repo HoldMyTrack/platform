@@ -252,9 +252,12 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         cell.contentView.subviews.forEach { $0.removeFromSuperview() }
         cell.backgroundColor = .clear
         cell.selectionStyle = .none
+        // Indented as the Trip's rows it totals.
+        cell.contentView.directionalLayoutMargins.leading = 36
         let small = Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote)
         let whole = Controls.label(line(trip.stats), font: Typeface.sans(DesignTokens.Text.md, weight: DesignTokens.Weight.semibold, relativeTo: .subheadline), color: UIColor(resource: .ink))
         whole.numberOfLines = 0
+        whole.accessibilityIdentifier = "tripStats"
         var views: [UIView] = [whole]
         var typeLabels: [UILabel] = []
         if !trip.byType.isEmpty {
@@ -263,8 +266,9 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             for type in trip.byType {
                 let label = Controls.label(TrackTypes.shared.label(type.trackType), font: small, color: UIColor(resource: .inkSecondary))
                 let value = Controls.label(line(type), font: small, color: UIColor(resource: .inkSecondary))
-                label.setContentHuggingPriority(.required, for: .horizontal)
-                label.setContentCompressionResistancePriority(.required, for: .horizontal)
+                label.numberOfLines = 0
+                // Below the column's width, above the numbers', so the numbers take what's left.
+                label.setContentHuggingPriority(UILayoutPriority(700), for: .horizontal)
                 typeLabels.append(label)
                 value.numberOfLines = 0
                 let row = UIStackView(arrangedSubviews: [label, value])
@@ -274,7 +278,6 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             }
         }
         let column = Controls.column(views, spacing: DesignTokens.Space.s4)
-        column.accessibilityIdentifier = "tripStats"
         column.translatesAutoresizingMaskIntoConstraints = false
         cell.contentView.addSubview(column)
         NSLayoutConstraint.activate([
@@ -283,9 +286,15 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             column.leadingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.leadingAnchor),
             column.trailingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.trailingAnchor),
         ])
-        // Every type label as wide as the widest, measured, so the shares line up as a column.
-        let widest = typeLabels.map { ceil($0.intrinsicContentSize.width) }.max() ?? 0
-        NSLayoutConstraint.activate(typeLabels.map { $0.widthAnchor.constraint(equalToConstant: widest) })
+        // Every type label as wide as the widest, measured, so the shares line up as a column; but
+        // never past 40% of the row, so a long label or large text wraps rather than squeezing
+        // the numbers out.
+        let widest = typeLabels.map { ceil((($0.text ?? "") as NSString).size(withAttributes: [.font: small]).width) }.max() ?? 0
+        for label in typeLabels {
+            let wide = label.widthAnchor.constraint(equalToConstant: widest)
+            wide.priority = UILayoutPriority(999)
+            NSLayoutConstraint.activate([wide, label.widthAnchor.constraint(lessThanOrEqualTo: column.widthAnchor, multiplier: 0.4)])
+        }
         return cell
     }
 
@@ -357,12 +366,11 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         cell.accessibilityIdentifier = "tripFolder"
         cell.accessibilityValue = open ? String(localized: "Open") : String(localized: "Folded")
 
-        let edit = Self.chip(.pencil, demo ? String(localized: "The demo account can't change a Trip")
-            : String(localized: "trips.edit", defaultValue: "Edit name and description", comment: "A Trip's folder: rename it."), id: "tripEdit")
-        let send = Self.chip(.send, demo ? String(localized: "The demo account can't change a Trip")
-            : String(localized: "trips.send", defaultValue: "Send a copy", comment: "A Trip's folder: send someone a copy."), id: "tripSend")
-        let delete = Self.chip(.trash2, demo ? String(localized: "The demo account can't change a Trip")
-            : String(localized: "trips.delete", defaultValue: "Delete trip", comment: "A Trip's folder: delete it."), id: "tripDelete")
+        // Each named for its Trip, since VoiceOver reads a folder's buttons on their own.
+        func named(_ action: String) -> String { demo ? String(localized: "The demo account can't change a Trip") : "\(action): \(trip.name)" }
+        let edit = Self.chip(.pencil, named(String(localized: "trips.edit", defaultValue: "Edit name and description", comment: "A Trip's folder: rename it.")), id: "tripEdit")
+        let send = Self.chip(.send, named(String(localized: "trips.send", defaultValue: "Send a copy", comment: "A Trip's folder: send someone a copy.")), id: "tripSend")
+        let delete = Self.chip(.trash2, named(String(localized: "trips.delete", defaultValue: "Delete trip", comment: "A Trip's folder: delete it.")), id: "tripDelete")
         for b in [edit, send, delete] { b.isEnabled = !demo }
         edit.addAction(UIAction { [weak self] _ in self?.rename(trip) }, for: .primaryActionTriggered)
         send.addAction(UIAction { [weak self] _ in self?.sendCopy(trip) }, for: .primaryActionTriggered)

@@ -124,7 +124,7 @@ final class PanelTests: XCTestCase {
         app.tabBars.buttons["tabTrips"].tap()
         XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
         XCTAssertFalse(modes.exists, "no mode toggle on Trips")
-        XCTAssertTrue(app.staticTexts["By track type"].waitForExistence(timeout: 10), "the open Trip's numbers under its rows")
+        XCTAssertTrue(app.staticTexts["tripStats"].waitForExistence(timeout: 10), "the open Trip's numbers under its rows")
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = "Trips"
         shot.lifetime = .keepAlways

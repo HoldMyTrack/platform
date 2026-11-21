@@ -59,7 +59,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 ### FR-2.8 Spots
 
 - With only approximate location allowed, Capture asks through iOS's one-time prompt for precise location; refused, nothing starts.
-- Leaving the Tracks tab ends a capture: iOS has no Back.
 
 ### FR-2.9 The bottom bar
 
