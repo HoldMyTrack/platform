@@ -48,7 +48,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let topRow = PassThroughStackView()
     /// Under the top row, the camera while rows are checked.
     let underBar = PassThroughStackView()
-    private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
+    private let notices = MapNotices()
     private let location = CLLocationManager()
     let modesRow = PassThroughStackView()
     /// Takes the row's room while the toggle is hidden, so the rail keeps its place.
@@ -527,70 +527,16 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, capped, tour, exported, recording }
 
-    /// Shows kind's notice under the top row, or changes its words: its text, then, as on Android,
-    /// an optional line of small print and an action button, and × when onClose is given, which
-    /// takes it down and then calls onClose.
+    /// Shows kind's notice under the top row, or changes its words (MapNotices.show).
     func notice(_ kind: Notice, _ text: String, detail: String? = nil, action: (title: String, run: () -> Void)? = nil, onClose: (() -> Void)? = nil) {
-        // Shown again, it keeps its place, its buttons and VoiceOver's quiet; only the words change.
-        if let shown = notices.arrangedSubviews.first(where: { $0.tag == kind.rawValue + 1 }) {
-            Self.labels(in: shown).first { $0.accessibilityIdentifier == "notice" }?.text = text
-            if let detail { Self.labels(in: shown).first { $0.accessibilityIdentifier == "noticeDetail" }?.text = detail }
-            return
-        }
-        let label = Controls.body(text, color: UIColor(resource: .ink))
-        label.textAlignment = .center
-        label.accessibilityIdentifier = "notice"
-        var column: [UIView] = [label]
-        if let detail {
-            let small = Controls.label(detail, font: Typeface.sans(DesignTokens.Text.xs, relativeTo: .caption2), color: UIColor(resource: .inkSecondary))
-            small.textAlignment = .center
-            small.accessibilityIdentifier = "noticeDetail"
-            column.append(small)
-        }
-        if let action {
-            let button = Controls.textButton(action.title, id: "noticeAction")
-            button.addAction(UIAction { _ in action.run() }, for: .primaryActionTriggered)
-            column.append(button)
-        }
-        let content: UIView = column.count == 1 ? label : Controls.column(column, spacing: DesignTokens.Space.s4)
-        let box: UIView
-        if let onClose {
-            let close = Controls.iconButton(Controls.icon(UIImage(resource: .x), size: 18), label: String(localized: "Close"), id: "noticeClose")
-            close.addAction(UIAction { [weak self] _ in
-                self?.hideNotice(kind)
-                onClose()
-            }, for: .primaryActionTriggered)
-            let row = UIStackView(arrangedSubviews: [content, close])
-            row.alignment = .center
-            row.spacing = DesignTokens.Space.s8
-            row.isLayoutMarginsRelativeArrangement = true
-            row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: DesignTokens.Space.s12, bottom: 0, trailing: DesignTokens.Space.s4)
-            box = row
-        } else if column.count > 1 {
-            let wrap = UIStackView(arrangedSubviews: [content])
-            wrap.isLayoutMarginsRelativeArrangement = true
-            wrap.directionalLayoutMargins = NSDirectionalEdgeInsets(top: DesignTokens.Space.s8, leading: DesignTokens.Space.s12, bottom: DesignTokens.Space.s4, trailing: DesignTokens.Space.s12)
-            box = wrap
-        } else {
-            box = label
-        }
-        box.tag = kind.rawValue + 1
-        box.backgroundColor = UIColor(resource: .noticeBg)
-        box.layer.cornerRadius = DesignTokens.Radius.md
-        box.layer.masksToBounds = true
-        notices.addArrangedSubview(box)
-        UIAccessibility.post(notification: .announcement, argument: text)
+        notices.show(kind.rawValue, text, detail: detail, action: action, onClose: onClose)
     }
 
     /// Whether kind's notice is up.
-    func noticeShown(_ kind: Notice) -> Bool { notices.arrangedSubviews.contains { $0.tag == kind.rawValue + 1 } }
-
-    private static func labels(in view: UIView) -> [UILabel] {
-        (view as? UILabel).map { [$0] } ?? view.subviews.flatMap { labels(in: $0) }
-    }
+    func noticeShown(_ kind: Notice) -> Bool { notices.shown(kind.rawValue) }
 
     func hideNotice(_ kind: Notice) {
-        notices.arrangedSubviews.first { $0.tag == kind.rawValue + 1 }?.removeFromSuperview()
+        notices.hide(kind.rawValue)
     }
 
     // MARK: Layout
@@ -682,7 +628,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     }
 
     /// What the map shows before the documents arrive: the background alone.
-    private static let emptyStyle = ##"{"version":8,"sources":{},"layers":[{"id":"background","type":"background","paint":{"background-color":"#e8e4da"}}]}"##
+    static let emptyStyle = ##"{"version":8,"sources":{},"layers":[{"id":"background","type":"background","paint":{"background-color":"#e8e4da"}}]}"##
 }
 
 /// Whether this phone closed the empty map notice for an account (AccountKey), which then stays
