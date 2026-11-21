@@ -42,6 +42,10 @@ final class CaptureTests: XCTestCase {
         let banner = app.otherElements["captureBanner"]
         XCTAssertTrue(banner.waitForExistence(timeout: 5))
         XCTAssertTrue(banner.staticTexts.matching(NSPredicate(format: "label ENDSWITH ' away'")).firstMatch.waitForExistence(timeout: 10))
+        // A tab switch keeps the capture going, as on Android.
+        app.tabBars.buttons["tabYou"].tap()
+        app.tabBars.buttons["tabTracks"].tap()
+        XCTAssertTrue(banner.waitForExistence(timeout: 5), "the capture outlasts a tab switch")
 
         // A fix a second inside, as GPS gives them.
         let saved = NSPredicate { _, _ in account.captures().contains(place.id) }

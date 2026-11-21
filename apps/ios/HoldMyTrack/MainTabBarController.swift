@@ -269,6 +269,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     func endRecording(save: Bool) {
         recorder.end(save: save)
         recordings.stop()
+        // A capture outlasts a tab switch, never the session: its save would go to the next account.
+        if map.isViewLoaded { map.capturing.stop() }
     }
 
     /// The Save screen over whatever shows, as Android opens it the moment a recording stops.
