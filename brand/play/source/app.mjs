@@ -77,7 +77,8 @@ export async function layers({ satellite, roads }) {
 
 /** Normal, or Fog at the level labelled `label` in the app's language. */
 export async function mode(label) {
-  if (!label) return tapView("mode_normal");
+  // Tapped only when off: a build whose tap on Normal while it's on unchecks it shows neither checked.
+  if (!label) return setChecked("mode_normal", true);
   await tapView("mode_fog");
   await sleep(1000);
   if (!views().some((v) => v.id === "fog_level_radio")) await tapView("mode_fog");
