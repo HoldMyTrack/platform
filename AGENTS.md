@@ -50,7 +50,7 @@ New code puts what it decides (which screen a session goes to, whether a day is 
 
 A rule every client applies has its cases in `testdata/client-rules/` (ADR-0049): change the cases first, then every client's implementation, in the same pull request, and fix a bug in a rule by adding the failing case.
 
-CI on a pull request runs only the suites whose files the change touches, and neither app's end-to-end flows (`docs/DEVELOPMENT.md`, "CI"). When a change could break a suite CI won't run on it, such as a test that reads a file outside its job's path filter or app code the flows cover, name that suite to the user before the pull request is opened and ask them to run it: Run workflow on the branch, or the `make` target from `docs/DEVELOPMENT.md`'s "End-to-end suites".
+CI on a pull request runs only the suites whose files the change touches, and neither app's instrumented or UI tests (`docs/DEVELOPMENT.md`, "CI"). When a change could break a suite CI won't run on it, such as a test that reads a file outside its job's path filter or app code those tests cover (the Android stores and flows, the iOS screens), name that suite to the user before the pull request is opened and ask them to run it: Run workflow on the branch, or the `make` target from `docs/DEVELOPMENT.md`'s "End-to-end suites".
 
 A pull request that changes what an app does, its code or resources outside `docs/` and tests, raises that app's release number in the same change (`docs/DEPLOY.md` §10): patch for a fix, minor with patch reset for a feature.
 

@@ -19,8 +19,8 @@ import kotlinx.coroutines.withContext
  * already prefers where a platform API covers the need (`LocationManager` over Play Services'
  * `FusedLocationProviderClient`, plain `OkHttp` over Retrofit).
  */
-internal class RecordingDbHelper private constructor(context: Context) :
-    SQLiteOpenHelper(context.applicationContext, "holdmytrack-recordings.db", null, 7) {
+internal class RecordingDbHelper(context: Context, name: String = FILE) :
+    SQLiteOpenHelper(context.applicationContext, name, null, 7) {
 
     init {
         // `LiveRecordingJournal` writes on every GPS fix while other screens read the finished
@@ -167,6 +167,8 @@ internal class RecordingDbHelper private constructor(context: Context) :
         fun of(context: Context): RecordingDbHelper =
             instance ?: synchronized(this) { instance ?: RecordingDbHelper(context.applicationContext).also { instance = it } }
 
+        /** The app's file; the instrumented tests open throwaway files of their own. */
+        const val FILE = "holdmytrack-recordings.db"
         const val TABLE = "recorded_activities"
         const val LIVE_TABLE = "live_recording"
         const val LIVE_POINTS_TABLE = "live_points"
@@ -237,11 +239,13 @@ internal class RecordingDbHelper private constructor(context: Context) :
  * way, and a demo account can never sync (the Sync tab's own demo gate), so nothing recorded
  * under it ever reaches the server regardless of which demo session sees it locally.
  */
-class RecordedTrackStore(context: Context) {
+class RecordedTrackStore internal constructor(
+    private val helper: RecordingDbHelper,
+    /** The signed-in account, read on every call. */
+    private val account: () -> String,
+) {
 
-    private val helper = RecordingDbHelper.of(context)
-
-    private fun account() = Session.email
+    constructor(context: Context) : this(RecordingDbHelper.of(context), { Session.email })
 
     suspend fun insert(record: RecordedTrackRecord) = withContext(Dispatchers.IO) {
         transaction { RecordingDbHelper.writeRecord(it, record, account()) }

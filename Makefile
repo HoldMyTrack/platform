@@ -21,6 +21,8 @@ GO      := docker run --rm -v $(CURDIR)/services/server:/src -w /src -v $(CURDIR
 API_PORT        ?= $(or $(shell sed -n 's/^API_PORT=//p' .env 2>/dev/null),8080)
 IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17
 IOS_UI_TESTS    ?= HoldMyTrackUITests
+# Empty runs every Android instrumented test; a class name runs that one.
+ANDROID_TESTS   ?=
 
 .DEFAULT_GOAL := help
 .PHONY: help up down logs shell build typecheck basemap test-go test-unit verify verify-build doc-checks test test-android test-ios test-all e2e-stack e2e-web e2e-android e2e-ios clean
@@ -101,12 +103,13 @@ e2e-web: verify verify-build ## Web end-to-end: the Playwright map checks, dev s
 # Gradle passes when the APK fails to install and no test runs, so the result files are read:
 # at least one test per device, none failed.
 ANDROID_TEST_RESULTS := apps/android/holdmytrack/app/build/outputs/androidTest-results/connected/debug
-e2e-android: e2e-stack ## Android end-to-end: the UI Automator flows on a running emulator
+e2e-android: e2e-stack ## Android instrumented tests on a running emulator: the UI Automator flows and the recording stores
 	@adb devices | grep -q 'device$$' || { echo "no emulator: start one (Android Studio's Device Manager, or emulator -avd <name>)"; exit 1; }
 	rm -rf $(ANDROID_TEST_RESULTS)
-	cd apps/android/holdmytrack && ./gradlew :app:connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:$(API_PORT)
+	cd apps/android/holdmytrack && ./gradlew :app:connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:$(API_PORT) \
+	  $(if $(ANDROID_TESTS),-Pandroid.testInstrumentationRunnerArguments.class=$(ANDROID_TESTS))
 	@for f in $(ANDROID_TEST_RESULTS)/TEST-*.xml; do \
-	  grep -q 'tests="[1-9]' "$$f" && ! grep -qE '(failures|errors)="[1-9]' "$$f" || { echo "no flow ran, or one failed: $$f"; exit 1; }; \
+	  grep -q 'tests="[1-9]' "$$f" && ! grep -qE '(failures|errors)="[1-9]' "$$f" || { echo "no test ran, or one failed: $$f"; exit 1; }; \
 	done
 
 # HMT_API_BASE_URL on the command line outranks Config/Local.xcconfig, so the tests reach the
