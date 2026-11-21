@@ -764,7 +764,7 @@
     <string name="tour_fog_body">Все места, где вы когда-либо были, за всё время: даты и фильтры здесь не действуют. Туман открывает места целиком, от стран до городов, а вблизи — точно вдоль ваших маршрутов. «Авто» выбирает уровень по масштабу. Выберите уровень, чтобы оставить его на любом масштабе, или «Точно», чтобы туман рассеивался только вдоль маршрутов.</string>
     <string name="tour_fog_exact_body">Все места, где вы когда-либо были, за всё время: даты и фильтры здесь не действуют. Туман рассеивается вдоль ваших маршрутов.</string>
     <string name="tour_fog_cities_title">Туман: города</string>
-    <string name="tour_fog_cities_body">При отдалении целый город открывается, как только в нём есть хоть один трек. Коснитесь места, чтобы увидеть его название и сколько в нём исследовано.</string>
+    <string name="tour_fog_cities_body">При отдалении целый город открывается, как только в нём есть хоть один трек. Коснитесь места, чтобы увидеть его название и сколько в нём посещено.</string>
     <string name="tour_fog_counties_title">Туман: округа</string>
     <string name="tour_fog_counties_body">Ещё дальше открывается целый округ.</string>
     <string name="tour_fog_regions_title">Туман: штаты и регионы</string>
@@ -849,8 +849,8 @@
     <string name="fog_place_country">Страна</string>
     <string name="fog_place_county">Округ</string>
     <string name="fog_place_region">Регион</string>
-    <string name="fog_place_unvisited">Ещё не исследовано</string>
-    <string name="fog_place_visited">Исследовано</string>
+    <string name="fog_place_unvisited">Ещё не посещено</string>
+    <string name="fog_place_visited">Посещено</string>
     <plurals name="fog_count_allotments">
         <item quantity="one">%1$s из %2$s садового участка</item>
         <item quantity="few">%1$s из %2$s садовых участков</item>
