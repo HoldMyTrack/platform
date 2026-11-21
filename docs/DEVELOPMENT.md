@@ -101,7 +101,7 @@ Every request `internal/httpapi`'s tests send through `dbTest.do`, `dbTest.send`
 
 ### Android verification
 
-The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and instrumented tests on an emulator (`make e2e-android`, "End-to-end suites"): UI Automator flows over the map, and the recording journal and store against a throwaway database file; there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and a track deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
+The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and instrumented tests on an emulator (`make e2e-android`, "End-to-end suites"): UI Automator flows over the map, and the recording journal and store; there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and a track deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
 
 CI also runs `./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:optimizeReleaseResources`. Lint fails on any warning `app/lint-baseline.xml` doesn't list: fix a new one, and run `:app:updateLintBaseline` only to drop entries a fix removed. The release is compiled through R8 and resource shrinking but not packaged, since packaging needs the upload key.
 
@@ -116,7 +116,7 @@ Each client's flows run against the dev stack, which `make e2e-stack` starts and
 | iOS | `make e2e-ios` | Xcode and an iPhone simulator (`IOS_DESTINATION=…` names another) | no |
 
 - The Android flows rebuild and install the debug app against `10.0.2.2:$API_PORT`; a debug build installed for other work points there afterwards.
-- The Android store tests open a throwaway database file each, so the emulator's own recordings survive a run. `ANDROID_TESTS=dev.holdmytrack.android.recording.db.RecordingStoresTest` runs one class.
+- Both APKs stay installed after a run, so the emulator keeps its recordings: the store tests open a throwaway database file each, and the flows only sign out whoever was signed in. `make test-android-device ANDROID_TESTS=dev.holdmytrack.android.recording.db.RecordingStoresTest` runs the store tests without the dev stack.
 - `make e2e-ios` passes `HMT_API_BASE_URL` on the command line, which outranks `Config/Local.xcconfig`. Run from Xcode, the UI tests use the xcconfig's origin and skip when it doesn't answer. `IOS_UI_TESTS=HoldMyTrackUITests/LaunchTests` runs one class.
 - The iOS demo tests sign in as the demo, which the dev stack allows a few times an hour from one address; one refused with "Too many demo sessions" passes again once the hour is up. `CaptureTests` skips while the dev stack has no Spots ("Seeding a fresh database").
 

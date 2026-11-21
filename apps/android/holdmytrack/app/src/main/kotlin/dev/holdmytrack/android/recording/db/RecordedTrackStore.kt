@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
  * already prefers where a platform API covers the need (`LocationManager` over Play Services'
  * `FusedLocationProviderClient`, plain `OkHttp` over Retrofit).
  */
-internal class RecordingDbHelper(context: Context, name: String = FILE) :
+internal class RecordingDbHelper(context: Context, name: String) :
     SQLiteOpenHelper(context.applicationContext, name, null, 7) {
 
     init {
@@ -165,9 +165,9 @@ internal class RecordingDbHelper(context: Context, name: String = FILE) :
         /** The process's one helper for this file, so the stores and the journal share one
          *  connection pool rather than each holding its own until the collector finds it. */
         fun of(context: Context): RecordingDbHelper =
-            instance ?: synchronized(this) { instance ?: RecordingDbHelper(context.applicationContext).also { instance = it } }
+            instance ?: synchronized(this) { instance ?: RecordingDbHelper(context.applicationContext, FILE).also { instance = it } }
 
-        /** The app's file; the instrumented tests open throwaway files of their own. */
+        /** The app's file, opened only through [of]; the instrumented tests open throwaway files. */
         const val FILE = "holdmytrack-recordings.db"
         const val TABLE = "recorded_activities"
         const val LIVE_TABLE = "live_recording"
