@@ -11,6 +11,8 @@ final class SyncSettingsViewController: UIViewController {
     var onOpenList: (() -> Void)?
 
     private let status = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
+    /// Refused: iOS won't ask again, so the way back is the system's Settings.
+    private let openSettings = Controls.textButton(String(localized: "Settings"), id: "recordedSettings")
     private let icon = UIImageView(image: Controls.icon(UIImage(resource: .circleDot), size: 24))
 
     override func viewDidLoad() {
@@ -26,7 +28,10 @@ final class SyncSettingsViewController: UIViewController {
         status.numberOfLines = 0
         status.accessibilityIdentifier = "recordedStatus"
         icon.setContentHuggingPriority(.required, for: .horizontal)
-        let text = Controls.column([name, sub, status], spacing: DesignTokens.Space.s4)
+        openSettings.contentHorizontalAlignment = .leading
+        openSettings.isHidden = true
+        openSettings.addAction(UIAction { _ in UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!) }, for: .primaryActionTriggered)
+        let text = Controls.column([name, sub, status, openSettings], spacing: DesignTokens.Space.s4)
         let row = UIStackView(arrangedSubviews: [icon, text])
         row.spacing = DesignTokens.Space.s12
         row.alignment = .top
@@ -38,6 +43,10 @@ final class SyncSettingsViewController: UIViewController {
         let open = Controls.primaryButton(String(localized: "sync.openList", defaultValue: "Choose what to sync", comment: "Settings › Sync: go to the Sync tab."), id: "syncOpenList")
         open.addAction(UIAction { [weak self] _ in self?.onOpenList?() }, for: .primaryActionTriggered)
         Controls.host(Controls.column([intro, section, card, open], spacing: DesignTokens.Space.s16), in: self)
+        // Back from the system's Settings, where a permission may have changed.
+        NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.renderStatus() }
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -45,26 +54,39 @@ final class SyncSettingsViewController: UIViewController {
         renderStatus()
     }
 
-    /// Allowed once location while in use and notifications both are; else they're asked for on
-    /// the first recording.
+    /// What the record button's permissions are now (SyncSources.recording); read again on a
+    /// return from the system's Settings.
     private func renderStatus() {
         let location = CLLocationManager().authorizationStatus
         Task { [weak self] in
             let notifications = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
             guard let self else { return }
-            let allowed = SyncSources.recordingAllowed(location: [.authorizedWhenInUse, .authorizedAlways].contains(location),
-                                                       notifications: [.authorized, .provisional, .ephemeral].contains(notifications))
-            self.status.text = allowed
-                ? String(localized: "sync.recordedAllowed", defaultValue: "Location and notifications allowed", comment: "Settings › Sync: the record button can record.")
-                : String(localized: "sync.recordedNotYet", defaultValue: "Location and notifications are asked for on your first recording.", comment: "Settings › Sync: the record button hasn't been allowed yet.")
-            self.status.textColor = UIColor(resource: allowed ? .success : .inkSecondary)
-            self.icon.tintColor = UIColor(resource: allowed ? .success : .inkSecondary)
+            let state = SyncSources.recording(location: location, notifications: notifications)
+            self.status.text = switch state {
+            case .allowed: String(localized: "sync.recordedAllowed", defaultValue: "Location and notifications allowed", comment: "Settings › Sync: the record button can record.")
+            case .notAsked: String(localized: "sync.recordedNotYet", defaultValue: "Location and notifications are asked for on your first recording.", comment: "Settings › Sync: the record button hasn't been allowed yet.")
+            case .refused: String(localized: "sync.recordedRefused", defaultValue: "Location or notifications are off for HoldMyTrack. Turn them on in Settings to record.", comment: "Settings › Sync: a permission the record button needs was refused.")
+            }
+            let color = UIColor(resource: state == .allowed ? .success : state == .refused ? .danger : .inkSecondary)
+            self.status.textColor = color
+            self.icon.tintColor = color
+            self.openSettings.isHidden = state != .refused
         }
     }
 }
 
 /// What Settings › Sync says about its sources.
 enum SyncSources {
-    /// The record button can record: location and notifications both allowed.
-    static func recordingAllowed(location: Bool, notifications: Bool) -> Bool { location && notifications }
+    enum Recording: Equatable { case allowed, notAsked, refused }
+
+    /// The record button's permissions: allowed once location while in use and notifications
+    /// both are; refused when either was, since iOS won't ask again; else asked for on the first
+    /// recording.
+    static func recording(location: CLAuthorizationStatus, notifications: UNAuthorizationStatus) -> Recording {
+        let locationOK = [.authorizedWhenInUse, .authorizedAlways].contains(location)
+        let notificationsOK = [.authorized, .provisional, .ephemeral].contains(notifications)
+        if locationOK && notificationsOK { return .allowed }
+        if [.denied, .restricted].contains(location) || notifications == .denied { return .refused }
+        return .notAsked
+    }
 }

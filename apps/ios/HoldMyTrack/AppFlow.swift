@@ -198,11 +198,11 @@ final class AppFlow {
         presentOpenedFiles()
     }
 
-    /// The account was deleted: the phone forgets what it kept for it and signs out, with no
-    /// logout request, since the server ended every session.
     /// Said once on the next Sign in, such as after Delete account.
     private var signInNotice: String?
 
+    /// The account was deleted: the phone forgets what it kept for it and signs out, with no
+    /// logout request, since the server ended every session.
     func accountDeleted() {
         if let stored = store.stored {
             let account = AccountKey.of(email: stored.email, isDemo: stored.isDemo)

@@ -10146,6 +10146,24 @@
         }
       }
     },
+    "sync.recordedRefused" : {
+      "comment" : "Settings › Sync: a permission the record button needs was refused.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location or notifications are off for HoldMyTrack. Turn them on in Settings to record."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Геолокация или уведомления для HoldMyTrack выключены. Включите их в настройках, чтобы записывать."
+          }
+        }
+      }
+    },
     "sync.recordedSub" : {
       "comment" : "Settings › Sync: the record button's note.",
       "extractionState" : "manual",

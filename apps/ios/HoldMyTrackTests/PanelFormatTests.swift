@@ -1,3 +1,5 @@
+import CoreLocation
+import UserNotifications
 import Foundation
 import HoldMyTrackCore
 import Testing
@@ -32,9 +34,19 @@ struct PanelFormatTests {
 /// Settings › Sync's word on the record button.
 @MainActor
 struct SyncSourcesTests {
-    @Test func theRecordButtonIsAllowedOnlyWithLocationAndNotifications() {
-        #expect(SyncSources.recordingAllowed(location: true, notifications: true))
-        #expect(!SyncSources.recordingAllowed(location: true, notifications: false))
-        #expect(!SyncSources.recordingAllowed(location: false, notifications: true))
+    @Test func bothAllowedIsAllowed() {
+        #expect(SyncSources.recording(location: .authorizedWhenInUse, notifications: .authorized) == .allowed)
+        #expect(SyncSources.recording(location: .authorizedAlways, notifications: .provisional) == .allowed)
+    }
+
+    @Test func eitherRefusedIsRefusedSinceIOSWontAskAgain() {
+        #expect(SyncSources.recording(location: .denied, notifications: .authorized) == .refused)
+        #expect(SyncSources.recording(location: .restricted, notifications: .notDetermined) == .refused)
+        #expect(SyncSources.recording(location: .authorizedWhenInUse, notifications: .denied) == .refused)
+    }
+
+    @Test func otherwiseTheyreAskedOnTheFirstRecording() {
+        #expect(SyncSources.recording(location: .notDetermined, notifications: .notDetermined) == .notAsked)
+        #expect(SyncSources.recording(location: .authorizedWhenInUse, notifications: .notDetermined) == .notAsked)
     }
 }
