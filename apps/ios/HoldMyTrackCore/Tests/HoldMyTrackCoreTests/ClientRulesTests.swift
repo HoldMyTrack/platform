@@ -85,6 +85,21 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         let saved = input.strings("saved").map { PrivateLocation(id: $0, name: "", lon: 0, lat: 0, radiusM: 200) }
         return .list(PrivateLocationEditing.drawOrder(saved, editing: input["editing"].string).map(\.id))
     },
+    "profileStats": { input in
+        let days = input["days"].list!.map { TrackDay(date: $0["date"].string!, count: $0.int("count"), distanceMeters: $0["distanceMeters"].double!) }
+        let totals = ProfileStats.totals(days)
+        let weeks = ProfileStats.recentWeeks(days, today: input["today"].string!, weeks: input.int("weeks"))
+        return .object(["count": .number(Double(totals.count)), "distanceMeters": .number(totals.distanceMeters), "activeDays": .number(Double(totals.activeDays)),
+                        "longestStreakDays": .number(Double(totals.longestStreakDays)), "weeks": .array(weeks.map { .number(Double($0)) })])
+    },
+    "youRefresh": { input in
+        func mark(_ json: RuleJSON) -> YouRefresh.Mark? {
+            guard let at = json["atMs"].double else { return nil }
+            return YouRefresh.Mark(atMs: Int64(at), tileVersion: json["tileVersion"].string!, today: json["today"].string!)
+        }
+        let reads = YouRefresh.of(numbers: mark(input["numbers"]), accountAtMs: input["accountAtMs"].double.map { Int64($0) }, now: mark(input["now"])!, resumed: input["resumed"].bool!)
+        return .object(["account": .bool(reads.account), "numbers": .bool(reads.numbers)])
+    },
     "similarSpans": { input in
         func at(_ span: String, _ end: String) -> Date { Date(timeIntervalSince1970: input[span][end].double! / 1000) }
         return .bool(SyncSimilar.overlaps(at("a", "start"), at("a", "end"), at("b", "start"), at("b", "end")))

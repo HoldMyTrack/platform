@@ -24,6 +24,8 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `deleteDone` | `status` (a DELETE's HTTP status) | boolean |
 | `verifyAction` | `typed` (the code field's text) | `"check"` or `{ submit }` |
 | `similarSpans` | `a`, `b` (`{ start, end }`, epoch ms, maybe fractional) | boolean |
+| `profileStats` | `days` (`{ date, count, distanceMeters }`), `today`, `weeks` | `{ count, distanceMeters, activeDays, longestStreakDays, weeks }` |
+| `youRefresh` | `numbers` (`{ atMs, tileVersion, today }` or null), `accountAtMs`, `now`, `resumed` | `{ account, numbers }` |
 | `uploadPlan` | `files` (`{ name, size }`, size -1 when unknown) | `{ send, refusals }`, each refusal `{ kind, name }` or `{ kind: "tooMany", count }` |
 | `toolbarTarget` | `checked` (ids), `focused` | ids |
 | `statsOffered` | `checked` (ids), `tripId` | boolean |

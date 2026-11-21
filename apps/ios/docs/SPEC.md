@@ -63,7 +63,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 ### FR-2.9 The bottom bar
 
 - Tracks, Trips, the record button, Sync and You. Sync's sheet lists the recordings on the phone (FR-5.2) and leads to Upload and Sync history (FR-4.1).
-- You leads to Settings, Track graph & trends, Privacy, Theme, Language, Take a tour, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
+- You's Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
 - Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
 
 ### FR-2.10 Photos

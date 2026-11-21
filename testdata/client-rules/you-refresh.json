@@ -1,0 +1,19 @@
+{
+  "rule": "youRefresh",
+  "description": "Which of the You tab's reads to make again. Both are made on every return to the app or from another of its screens (resumed). On a switch between tabs, the numbers, which read every track day since 1970, are read only when the tracks could have changed: the account's tile version moved, the day turned, or they're 10 minutes old or more; the account once it's that old. numbers and accountAtMs are the last reads, null before the first.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "the first showing reads both", "input": { "numbers": null, "accountAtMs": null, "now": { "atMs": 1000, "tileVersion": "7", "today": "2026-11-21" }, "resumed": false },
+      "expected": { "account": true, "numbers": true } },
+    { "name": "a tab switch soon after reads neither", "input": { "numbers": { "atMs": 1000, "tileVersion": "7", "today": "2026-11-21" }, "accountAtMs": 1000, "now": { "atMs": 60000, "tileVersion": "7", "today": "2026-11-21" }, "resumed": false },
+      "expected": { "account": false, "numbers": false } },
+    { "name": "a return from another screen reads both", "input": { "numbers": { "atMs": 1000, "tileVersion": "7", "today": "2026-11-21" }, "accountAtMs": 1000, "now": { "atMs": 2000, "tileVersion": "7", "today": "2026-11-21" }, "resumed": true },
+      "expected": { "account": true, "numbers": true } },
+    { "name": "a new tile version reads the numbers", "input": { "numbers": { "atMs": 1000, "tileVersion": "7", "today": "2026-11-21" }, "accountAtMs": 1000, "now": { "atMs": 2000, "tileVersion": "8", "today": "2026-11-21" }, "resumed": false },
+      "expected": { "account": false, "numbers": true } },
+    { "name": "a new day reads the numbers", "input": { "numbers": { "atMs": 1000, "tileVersion": "7", "today": "2026-11-21" }, "accountAtMs": 1000, "now": { "atMs": 2000, "tileVersion": "7", "today": "2026-11-22" }, "resumed": false },
+      "expected": { "account": false, "numbers": true } },
+    { "name": "ten minutes on, both", "input": { "numbers": { "atMs": 0, "tileVersion": "7", "today": "2026-11-21" }, "accountAtMs": 0, "now": { "atMs": 600000, "tileVersion": "7", "today": "2026-11-21" }, "resumed": false },
+      "expected": { "account": true, "numbers": true } }
+  ]
+}

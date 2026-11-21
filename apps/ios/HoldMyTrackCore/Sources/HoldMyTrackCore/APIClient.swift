@@ -151,6 +151,14 @@ public final class APIClient: Sendable {
         return (json.buckets.map(\.date), json.earliest)
     }
 
+    /// Every track day from from through to, ascending, with its count and distance: the You
+    /// tab's numbers and recent weeks (ProfileStats).
+    public func trackDays(from: String, to: String) async throws -> [TrackDay] {
+        let items = [URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to)]
+        let json: HistogramJSON = try await decode(send("GET", "v2/tracks/histogram", query: items))
+        return json.buckets.map { TrackDay(date: $0.date, count: $0.count, distanceMeters: $0.distanceMeters) }
+    }
+
 
     public func coverageStatus() async throws -> CoverageStatus {
         let json: CoverageStatusJSON = try await decode(send("GET", "v2/coverage/status"))

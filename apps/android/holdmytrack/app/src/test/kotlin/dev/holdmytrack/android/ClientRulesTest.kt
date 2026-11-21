@@ -21,6 +21,11 @@ import dev.holdmytrack.android.net.RoutePoint
 import dev.holdmytrack.android.panel.TrackFacets
 import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.sync.Similar
+import kotlinx.serialization.json.longOrNull
+import java.time.LocalDate
+import dev.holdmytrack.android.profile.YouRefresh
+import dev.holdmytrack.android.profile.ProfileStats
+import dev.holdmytrack.android.net.TrackDay
 import java.time.Instant
 import dev.holdmytrack.android.recording.TypeCount
 import dev.holdmytrack.android.recording.TypeSearch
@@ -188,6 +193,28 @@ class ClientRulesTest {
         "privateDrawOrder" to { input ->
             val circle = { id: String -> Circle(id, 0.0, 0.0, 200) }
             ids(PrivateLocationsOverlay.drawOrder(input.strings("saved").map(circle), input.string("editing")?.let(circle)).map { it.id!! }, sort = false)
+        },
+        "profileStats" to { input ->
+            val days = input["days"]!!.jsonArray.map { it.jsonObject }.map { TrackDay(it.string("date")!!, it.int("count"), it["distanceMeters"]!!.jsonPrimitive.double) }
+            val totals = ProfileStats.statsOf(days)
+            val weeks = ProfileStats.recentWeeks(days, LocalDate.parse(input.string("today")!!), input.int("weeks"))
+            buildJsonObject {
+                put("count", totals.count)
+                put("distanceMeters", totals.distanceMeters)
+                put("activeDays", totals.activeDays)
+                put("longestStreakDays", totals.longestStreakDays)
+                put("weeks", buildJsonArray { weeks.forEach { add(JsonPrimitive(it)) } })
+            }
+        },
+        "youRefresh" to { input ->
+            fun mark(json: JsonElement?): YouRefresh.Mark? = (json as? JsonObject)?.let {
+                YouRefresh.Mark(it["atMs"]!!.jsonPrimitive.long, it.string("tileVersion")!!, LocalDate.parse(it.string("today")!!))
+            }
+            val reads = YouRefresh.of(mark(input["numbers"]), input["accountAtMs"]?.jsonPrimitive?.longOrNull, mark(input["now"])!!, input["resumed"]!!.jsonPrimitive.boolean)
+            buildJsonObject {
+                put("account", reads.account)
+                put("numbers", reads.numbers)
+            }
         },
         "similarSpans" to { input ->
             fun at(span: String, end: String) = Instant.EPOCH.plusNanos(Math.round(input[span]!!.jsonObject[end]!!.jsonPrimitive.double * 1_000_000))
