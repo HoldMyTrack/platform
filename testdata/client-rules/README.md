@@ -36,6 +36,9 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `distanceBounds` | `tracks` (`{ trackType, distanceMeters, private }`) | `{ min, max }` or `null` |
 | `distanceFilter` | `bounds`, `current` (`{ min, max }`), `knob` (`min`, `max`), `value` | `{ min, max }` or `null` |
 | `typeFacets` | `tracks`, `distanceFilter` | `[{ type, count }]` |
+| `typeSearch` | `options` (`{ value, label, count }`), `query`, `maxLength` | `{ shown, add }`: values, and the text offered as a new type or `null` |
+| `typeOptions` | `current`, `known` (`{ type, count }`) | `[{ type, count }]` |
+| `recordingTypes` | `server` (`{ type, count }`), `local` (types) | `[{ type, count }]` |
 | `passesFilters` | `track`, `excludedTypes`, `distanceFilter` | boolean |
 | `fitBoxes` | `tracks` (`{ bbox, pending, private }`) | the boxes, in order |
 | `selectionBoxes` | `tracks` (`{ bbox, pending, private }`) | the boxes, in order |

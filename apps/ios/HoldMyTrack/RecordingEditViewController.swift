@@ -2,13 +2,16 @@ import HoldMyTrackCore
 import UIKit
 
 /// A recording's Edit (apps/android/docs/SPEC.md FR-5.2): its name, description and type, kept on the
-/// phone until it's sent; the type set becomes the account's for the next recording. The type
-/// menu lists the types this phone's recordings use, most used first, then every type the server
-/// described, and Other… types a new one. Download GPX and Delete are here too.
+/// phone until it's sent; the type set becomes the account's for the next recording. The Type
+/// picker lists the account's types and this phone's waiting recordings', most used first, then
+/// the presets (TypeSearch.recordingKnown). Download GPX and Delete are here too.
 final class RecordingEditViewController: UIViewController {
     private var track: RecordedTrack
     private let account: Account
     private let recordings: RecordingsSync
+    private let api: APIClient
+    /// The account's tracks by type, empty until read or when they couldn't be.
+    private var serverCounts: [(type: String, count: Int)] = []
     var onGPX: ((RecordedTrack) -> Void)?
     var onDelete: ((RecordedTrack) -> Void)?
 
@@ -17,10 +20,11 @@ final class RecordingEditViewController: UIViewController {
     private let typeButton = Controls.secondaryButton("", id: "recordingType")
     private let error = Controls.error(id: "recordingError")
 
-    init(track: RecordedTrack, account: Account, recordings: RecordingsSync) {
+    init(track: RecordedTrack, account: Account, recordings: RecordingsSync, api: APIClient) {
         self.track = track
         self.account = account
         self.recordings = recordings
+        self.api = api
         super.init(nibName: nil, bundle: nil)
         title = String(localized: "recording.editTitle", defaultValue: "Edit recording", comment: "A recording's Edit: the screen's title.")
     }
@@ -50,8 +54,14 @@ final class RecordingEditViewController: UIViewController {
         about.accessibilityIdentifier = "recordingDescription"
         about.accessibilityLabel = String(localized: "recording.description", defaultValue: "Description (optional)", comment: "A recording's Edit: its description.")
         about.heightAnchor.constraint(greaterThanOrEqualToConstant: 96).isActive = true
-        typeButton.showsMenuAsPrimaryAction = true
+        typeButton.addAction(UIAction { [weak self] _ in self?.openTypePicker() }, for: .primaryActionTriggered)
         renderType()
+        Task { [weak self, api] in
+            guard let read = try? await api.typeCounts() else { return }
+            TrackTypes.shared.merge(read.types)
+            self?.serverCounts = read.counts
+            self?.renderType()
+        }
         let gpx = Controls.secondaryButton(String(localized: "recording.gpx", defaultValue: "Download GPX", comment: "A recording: save its route as GPX."), id: "recordingGPX")
         gpx.addAction(UIAction { [weak self] _ in
             guard let self else { return }
@@ -80,39 +90,20 @@ final class RecordingEditViewController: UIViewController {
         Controls.label(text, font: Typeface.sans(DesignTokens.Text.sm, weight: DesignTokens.Weight.semibold, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     }
 
-    /// The phone's recordings' types by use, then the server's others, then Other….
     private func renderType() {
+        typeButton.configuration?.title = TrackTypes.shared.label(track.type)
+    }
+
+    private func openTypePicker() {
         let types = TrackTypes.shared
-        typeButton.configuration?.title = types.label(track.type)
-        let pick = { [weak self] (value: String) in
+        let known = TypeSearch.recordingKnown(server: serverCounts, local: recordings.all.filter { !$0.sent }.map(\.type))
+        let options = TypeSearch.options(current: track.type, known: known, label: types.label)
+        let format = { (n: Int) in NumberFormatter.localizedString(from: NSNumber(value: n), number: .decimal) }
+        TypePickerViewController.present(over: self, options: options, current: track.type, format: format) { [weak self] value in
             self?.track.type = value
             self?.error.isHidden = true
             self?.renderType()
         }
-        let counts = Dictionary(recordings.all.map { ($0.type, 1) }, uniquingKeysWith: +)
-        let used = counts.keys.filter { $0 != "unknown" }.sorted { (counts[$0]!, $1) > (counts[$1]!, $0) }
-        let mine = used.map { t in
-            UIAction(title: types.label(t), image: TrackTypes.icon(types.kind(t)), state: t == track.type ? .on : .off) { _ in pick(t) }
-        }
-        let others = types.known.filter { !used.contains($0) }.map { t in
-            UIAction(title: types.label(t), image: TrackTypes.icon(types.kind(t)), state: t == track.type ? .on : .off) { _ in pick(t) }
-        }
-        let other = UIAction(title: String(localized: "recording.otherType", defaultValue: "Other…", comment: "A recording's type menu: type a new one."), image: UIImage(systemName: "plus")) { [weak self] _ in
-            self?.typeNew(pick)
-        }
-        typeButton.menu = UIMenu(children: [UIMenu(options: .displayInline, children: mine), UIMenu(options: .displayInline, children: others), other])
-    }
-
-    /// A type of the user's own, kept as typed, up to the server's limit.
-    private func typeNew(_ pick: @escaping (String) -> Void) {
-        let alert = UIAlertController(title: String(localized: "recording.otherTypeTitle", defaultValue: "Track type", comment: "A recording's new type: the prompt's title."), message: nil, preferredStyle: .alert)
-        alert.addTextField { $0.autocapitalizationType = .sentences }
-        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        alert.addAction(UIAlertAction(title: String(localized: "recording.otherTypeAdd", defaultValue: "Use", comment: "A recording's new type: use what was typed."), style: .default) { [weak alert] _ in
-            let typed = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if !typed.isEmpty { pick(typed) }
-        })
-        present(alert, animated: true)
     }
 
     private func save() {

@@ -10,6 +10,7 @@ import { fogLevelInView, fogLevelPick } from '../src/map/fogLevels.ts';
 import { placeLabel } from '../src/map/fogPlaceLabel.ts';
 import { dateFilterBounds, dateFilterLabel, setDateFilter } from '../src/ui/dateFilter.ts';
 import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/trackFacets.ts';
+import { typeOptions, typeSearch } from '../src/ui/pickerSearch.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editRouteOps.ts';
 import { insertionPoint, needsLift } from '../src/map/mapLayers.ts';
 import { pendingAnswer, pendingBatches, pendingChange, pendingWatched } from '../src/map/pending.ts';
@@ -82,6 +83,8 @@ export const rules = {
   distanceBounds: ({ tracks }) => distanceBounds(tracks),
   distanceFilter: ({ bounds, current, knob, value }) => nextDistanceFilter(bounds, current, knob, value),
   typeFacets: ({ tracks, distanceFilter }) => typeFacets(tracks, distanceFilter ?? null),
+  typeSearch: ({ options, query, maxLength }) => typeSearch(options, query, maxLength),
+  typeOptions: ({ current, known }) => typeOptions(current, known),
   passesFilters: ({ track, excludedTypes, distanceFilter }) => passesFilters(track, new Set(excludedTypes), distanceFilter ?? null),
   trackZone: ({ own, account }) => trackTimeZone(own ?? undefined, account ?? undefined) ?? null,
   photoClusters: ({ points, radius }) => clusterPoints(points, radius),

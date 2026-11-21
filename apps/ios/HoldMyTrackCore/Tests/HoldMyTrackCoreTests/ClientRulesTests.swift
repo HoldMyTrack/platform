@@ -128,6 +128,18 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "typeFacets": { input in
         .array(TrackFacets.typeFacets(tracks(input["tracks"]), distanceFilter: distance(input["distanceFilter"])).map { ["type": .string($0.type), "count": .num($0.count)] })
     },
+    "typeSearch": { input in
+        let options = (input["options"].list ?? []).map { TypeSearch.Option(value: $0["value"].string!, label: $0["label"].string!, count: $0.int("count")) }
+        let result = TypeSearch.search(options, query: input["query"].string!, maxLength: input.int("maxLength"))
+        return ["shown": .array(result.shown.map { .string($0.value) }), "add": result.add.map { .string($0) } ?? .null]
+    },
+    "typeOptions": { input in
+        let rows = TypeSearch.options(current: input["current"].string!, known: typeCounts(input["known"]), label: { $0 })
+        return .array(rows.map { ["type": .string($0.value), "count": .number(Double($0.count))] })
+    },
+    "recordingTypes": { input in
+        .array(TypeSearch.recordingKnown(server: typeCounts(input["server"]), local: input.strings("local")).map { ["type": .string($0.type), "count": .number(Double($0.count))] })
+    },
     "passesFilters": { input in
         .bool(TrackFacets.passesFilters(track(input["track"]), excludedTypes: Set(input.strings("excludedTypes")), distanceFilter: distance(input["distanceFilter"])))
     },
@@ -510,3 +522,7 @@ func partsJSON(_ parts: DistanceParts) -> RuleJSON {
 private func dates(_ json: RuleJSON) -> DateFilter { DateFilter(after: json["after"].string, before: json["before"].string) }
 
 private func datesJSON(_ filter: DateFilter) -> RuleJSON { ["after": .opt(filter.after), "before": .opt(filter.before)] }
+
+private func typeCounts(_ json: RuleJSON) -> [(type: String, count: Int)] {
+    (json.list ?? []).map { (type: $0["type"].string!, count: $0.int("count")) }
+}

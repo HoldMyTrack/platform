@@ -19,6 +19,9 @@ import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.RouteEdit
 import dev.holdmytrack.android.net.RoutePoint
 import dev.holdmytrack.android.panel.TrackFacets
+import dev.holdmytrack.android.recording.RecordingTypes
+import dev.holdmytrack.android.recording.TypeCount
+import dev.holdmytrack.android.recording.TypeSearch
 import dev.holdmytrack.android.panel.TrackZone
 import dev.holdmytrack.android.panel.DistanceKnob
 import dev.holdmytrack.android.panel.DistanceRange
@@ -94,6 +97,12 @@ class ClientRulesTest {
     }
 
     private fun JsonObject.string(key: String): String? = (this[key] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content
+
+    private fun typeCountList(json: JsonElement?): List<TypeCount> =
+        (json as? JsonArray).orEmpty().map { it.jsonObject.let { o -> TypeCount(o.string("type")!!, o["count"]!!.jsonPrimitive.int) } }
+
+    private fun typeCounts(list: List<TypeCount>): JsonArray =
+        buildJsonArray { list.forEach { add(buildJsonObject { put("type", it.type); put("count", it.count) }) } }
 
     private fun JsonObject.strings(key: String): List<String> = (this[key] as? JsonArray)?.map { it.jsonPrimitive.content }.orEmpty()
 
@@ -251,6 +260,21 @@ class ClientRulesTest {
                     add(buildJsonObject { put("type", facet.type); put("count", facet.count) })
                 }
             }
+        },
+        "typeSearch" to { input ->
+            val options = input["options"]!!.jsonArray.map { it.jsonObject.let { o -> TypeSearch.Option(o.string("value")!!, o.string("label")!!) } }
+            val result = TypeSearch.search(options, input.string("query")!!, input["maxLength"]!!.jsonPrimitive.int)
+            buildJsonObject {
+                put("shown", buildJsonArray { result.shown.forEach { add(JsonPrimitive(it.value)) } })
+                put("add", result.add?.let(::JsonPrimitive) ?: JsonNull)
+            }
+        },
+        "typeOptions" to { input ->
+            typeCounts(TypeSearch.options(input.string("current")!!, typeCountList(input["known"])))
+        },
+        "recordingTypes" to { input ->
+            val server = LinkedHashMap<String, Int>().apply { typeCountList(input["server"]).forEach { put(it.type, it.count) } }
+            typeCounts(RecordingTypes.known(server, input.strings("local")))
         },
         "passesFilters" to { input ->
             JsonPrimitive(TrackFacets.passesFilters(facetTrack(input["track"]!!.jsonObject), input.strings("excludedTypes").toSet(), distance(input["distanceFilter"])))

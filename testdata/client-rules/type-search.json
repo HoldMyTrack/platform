@@ -1,0 +1,20 @@
+{
+  "rule": "typeSearch",
+  "description": "The Type picker's search (docs/SPEC.md FR-5.5): options are { value, label, count } in browsing order. A blank query lists them all. Otherwise matching ignores case and nonspacing marks (lowercased, then canonically decomposed with every \\p{Mn} dropped) on the label, ranked an exact label first, then a label or one of its words starting with the query, then a label or raw value containing it, the options' order kept within a rank; the count is never searched. While no option's label or value equals the trimmed query and it is at most maxLength code points long, it is offered as add.",
+  "cases": [
+    { "name": "a blank query lists every option", "input": { "options": [{ "value": "walking", "label": "Walking", "count": 3 }, { "value": "dog_walk", "label": "Dog Walk", "count": 1 }], "query": "  ", "maxLength": 50 }, "expected": { "shown": ["walking", "dog_walk"], "add": null } },
+    { "name": "an exact label first, and no add", "input": { "options": [{ "value": "dog_walk", "label": "Dog Walk", "count": 4 }, { "value": "walk", "label": "Walk", "count": 1 }], "query": "walk", "maxLength": 50 }, "expected": { "shown": ["walk", "dog_walk"], "add": null } },
+    { "name": "a word starting with the query before one containing it", "input": { "options": [{ "value": "overrun", "label": "Overrun", "count": 3 }, { "value": "trail_running", "label": "Trail Running", "count": 2 }, { "value": "running", "label": "Running", "count": 1 }], "query": "run", "maxLength": 50 }, "expected": { "shown": ["trail_running", "running", "overrun"], "add": "run" } },
+    { "name": "case and accents ignored", "input": { "options": [{ "value": "Café crawl", "label": "Café crawl", "count": 1 }], "query": "CAFE", "maxLength": 50 }, "expected": { "shown": ["Café crawl"], "add": "CAFE" } },
+    { "name": "the raw value is searched", "input": { "options": [{ "value": "dog_walk", "label": "Dog Walk", "count": 1 }], "query": "dog_w", "maxLength": 50 }, "expected": { "shown": ["dog_walk"], "add": "dog_w" } },
+    { "name": "an exact raw value means no add", "input": { "options": [{ "value": "dog_walk", "label": "Dog Walk", "count": 1 }], "query": "Dog_Walk", "maxLength": 50 }, "expected": { "shown": ["dog_walk"], "add": null } },
+    { "name": "no match offers the trimmed query", "input": { "options": [{ "value": "walking", "label": "Walking", "count": 3 }], "query": " Solowheel ", "maxLength": 50 }, "expected": { "shown": [], "add": "Solowheel" } },
+    { "name": "the count is not searched", "input": { "options": [{ "value": "walking", "label": "Walking", "count": 3 }], "query": "3", "maxLength": 50 }, "expected": { "shown": [], "add": "3" } },
+    { "name": "Cyrillic ё folds to е", "input": { "options": [{ "value": "Ёлка", "label": "Ёлка", "count": 1 }], "query": "елк", "maxLength": 50 }, "expected": { "shown": ["Ёлка"], "add": "елк" } },
+    { "name": "every nonspacing mark is dropped, Thai vowel and tone marks too", "input": { "options": [{ "value": "ที่", "label": "ที่", "count": 1 }], "query": "ที", "maxLength": 50 }, "expected": { "shown": ["ที่"], "add": null } },
+    { "name": "length is counted in code points: two of a four-point emoji fit ten", "input": { "options": [], "query": "🚴‍♀️🚴‍♀️", "maxLength": 10 }, "expected": { "shown": [], "add": "🚴‍♀️🚴‍♀️" } },
+    { "name": "length is counted in code points: one past the limit", "input": { "options": [], "query": "🚴🚴🚴", "maxLength": 2 }, "expected": { "shown": [], "add": null } },
+    { "name": "length is counted in code points: at the limit", "input": { "options": [], "query": "🚴🚴", "maxLength": 2 }, "expected": { "shown": [], "add": "🚴🚴" } },
+    { "name": "too long to add", "input": { "options": [{ "value": "walking", "label": "Walking", "count": 3 }], "query": "kayaking", "maxLength": 5 }, "expected": { "shown": [], "add": null } }
+  ]
+}

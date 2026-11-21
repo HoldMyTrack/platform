@@ -1,7 +1,6 @@
 package dev.holdmytrack.android.recording
 
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.Typeface
 import android.text.Editable
 import android.text.InputType
@@ -18,7 +17,6 @@ import android.widget.TextView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.panel.TrackTypes
-import java.text.Normalizer
 
 /** One type the account already uses, and how many tracks use it — the same facet the
  *  web client's Tracks panel and Type picker are built from (`trackFacets.ts`). */
@@ -45,10 +43,7 @@ object TrackTypePicker {
     private data class Option(val value: String, val label: String, val detail: String)
 
     fun show(context: Context, current: String, known: List<TypeCount>, onPick: (String) -> Unit) {
-        val options = buildList {
-            if (current.isNotEmpty() && known.none { it.type == current }) add(option(context.resources, current, null))
-            known.forEach { add(option(context.resources, it.type, it.count)) }
-        }
+        val options = TypeSearch.options(current, known).map { option(it.type, it.count) }
 
         val padding = context.resources.getDimensionPixelSize(R.dimen.hmt_space_16)
         val search = EditText(context).apply {
@@ -110,34 +105,17 @@ object TrackTypePicker {
         list.setSelection(options.indexOfFirst { it.value == current }.coerceAtLeast(0))
     }
 
-    private fun option(res: Resources, type: String, count: Int?) =
-        Option(value = type, label = TrackTypes.label(type).ifEmpty { type }, detail = count?.takeIf { it > 0 }?.toString().orEmpty())
+    private fun option(type: String, count: Int) =
+        Option(value = type, label = TrackTypes.label(type).ifEmpty { type }, detail = count.takeIf { it > 0 }?.toString().orEmpty())
 
-    /** `SearchPicker.tsx`'s ranking: an exact whole-label match first ("walk" → Walk before
-     *  Dog Walk), then labels with a word starting with the query, then anything containing it,
-     *  keeping [options]' own order within each rank — plus the "Add …" row while nothing
-     *  matches exactly. */
+    /** [TypeSearch]'s matches, then its "Add …" row. */
     private fun filter(context: Context, options: List<Option>, text: String): List<Option> {
-        if (text.isEmpty()) return options
-        val q = fold(text)
-        val ranked = List(3) { mutableListOf<Option>() }
-        for (o in options) {
-            val label = fold(o.label)
-            when {
-                label == q -> ranked[0] += o
-                label.startsWith(q) || label.contains(" $q") -> ranked[1] += o
-                label.contains(q) || fold(o.value).contains(q) -> ranked[2] += o
-            }
-        }
-        val matches = ranked.flatten()
-        val exact = options.any { fold(it.value) == q || fold(it.label) == q }
-        if (exact || text.length > MAX_LENGTH) return matches
-        return matches + Option(text, context.getString(R.string.recording_type_add, text), context.getString(R.string.recording_type_new))
+        val result = TypeSearch.search(options.map { TypeSearch.Option(it.value, it.label) }, text, MAX_LENGTH)
+        val byValue = options.associateBy { it.value }
+        val matches = result.shown.map { byValue.getValue(it.value) }
+        val add = result.add ?: return matches
+        return matches + Option(add, context.getString(R.string.recording_type_add, add), context.getString(R.string.recording_type_new))
     }
-
-    /** Case- and accent-insensitive, matching `SearchPicker.tsx`'s own `fold`. */
-    private fun fold(s: String): String =
-        Normalizer.normalize(s, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "").lowercase()
 
     private class OptionAdapter(private val context: Context, private val current: String) : BaseAdapter() {
         var shown: List<Option> = emptyList()

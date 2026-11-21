@@ -197,7 +197,7 @@ final class SyncViewController: UITableViewController {
     // MARK: Actions
 
     func edit(_ track: RecordedTrack) {
-        let editor = RecordingEditViewController(track: track, account: account, recordings: recordings)
+        let editor = RecordingEditViewController(track: track, account: account, recordings: recordings, api: flow.api)
         editor.onGPX = { [weak self] track in self?.downloadGPX(track) }
         editor.onDelete = { [weak self] track in self?.confirmDelete(track) }
         let nav = UINavigationController(rootViewController: editor)

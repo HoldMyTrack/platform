@@ -1,0 +1,11 @@
+{
+  "rule": "recordingTypes",
+  "clients": ["android", "ios"],
+  "description": "A recording's Type list (apps/android/docs/SPEC.md FR-5.2): the account's types (server, { type, count } in the order the server's rows first use them) and this phone's recordings waiting to be sent (local, one type each) counted together, most used first with ties in first appearance, server before local; then each preset (walking, hiking, running, cycling, driving) not among them, with count 0. unknown, the placeholder for no type, is left out.",
+  "cases": [
+    { "name": "server and phone counted together, presets after", "input": { "server": [{ "type": "walking", "count": 3 }, { "type": "kayaking", "count": 1 }], "local": ["walking", "kayaking", "kayaking"] }, "expected": [{ "type": "walking", "count": 4 }, { "type": "kayaking", "count": 3 }, { "type": "hiking", "count": 0 }, { "type": "running", "count": 0 }, { "type": "cycling", "count": 0 }, { "type": "driving", "count": 0 }] },
+    { "name": "ties in first appearance, server before phone", "input": { "server": [{ "type": "running", "count": 2 }, { "type": "cycling", "count": 2 }], "local": ["skating", "skating"] }, "expected": [{ "type": "running", "count": 2 }, { "type": "cycling", "count": 2 }, { "type": "skating", "count": 2 }, { "type": "walking", "count": 0 }, { "type": "hiking", "count": 0 }, { "type": "driving", "count": 0 }] },
+    { "name": "unknown left out", "input": { "server": [{ "type": "unknown", "count": 5 }], "local": ["unknown"] }, "expected": [{ "type": "walking", "count": 0 }, { "type": "hiking", "count": 0 }, { "type": "running", "count": 0 }, { "type": "cycling", "count": 0 }, { "type": "driving", "count": 0 }] },
+    { "name": "the presets alone with nothing read", "input": { "server": [], "local": [] }, "expected": [{ "type": "walking", "count": 0 }, { "type": "hiking", "count": 0 }, { "type": "running", "count": 0 }, { "type": "cycling", "count": 0 }, { "type": "driving", "count": 0 }] }
+  ]
+}
