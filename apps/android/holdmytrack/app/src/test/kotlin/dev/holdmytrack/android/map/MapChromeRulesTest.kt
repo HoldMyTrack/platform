@@ -43,6 +43,14 @@ class MapChromeRulesTest {
     }
 
     @Test
+    fun `only a tap on Fog while it's on opens the level menu`() {
+        assertTrue(MapChromeRules.fogMenuOnTap(MapMode.FOG, MapMode.FOG))
+        assertFalse(MapChromeRules.fogMenuOnTap(MapMode.NORMAL, MapMode.NORMAL))
+        assertFalse(MapChromeRules.fogMenuOnTap(MapMode.FOG, MapMode.NORMAL))
+        assertFalse(MapChromeRules.fogMenuOnTap(MapMode.NORMAL, MapMode.FOG))
+    }
+
+    @Test
     fun `a mode carried through a recreation comes back, and one this build lacks opens Normal`() {
         assertEquals(MapMode.FOG, MapChromeRules.restoredMode("FOG"))
         assertEquals(MapMode.NORMAL, MapChromeRules.restoredMode("NORMAL"))

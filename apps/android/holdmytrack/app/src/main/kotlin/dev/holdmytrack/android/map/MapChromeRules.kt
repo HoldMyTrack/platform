@@ -22,6 +22,10 @@ object MapChromeRules {
      *  whose sheet and tracks are Normal mode's; back on Tracks, the pick comes back. */
     fun tabMode(picked: MapMode, tab: PanelTab): MapMode = if (tab == PanelTab.TRACKS) picked else MapMode.NORMAL
 
+    /** Whether a tap on [tapped]'s button while [current] is on opens Fog's level menu: a tap on
+     *  Fog while it's on. */
+    fun fogMenuOnTap(tapped: MapMode, current: MapMode): Boolean = tapped == MapMode.FOG && current == MapMode.FOG
+
     /** The tab the bottom bar's [asked] switches the panel to from [current], or null for none:
      *  Tracks on Tracks changes nothing, so a sheet left open stays open. */
     fun tabRequest(current: PanelTab, asked: PanelTab): PanelTab? =
