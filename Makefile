@@ -91,9 +91,12 @@ test-ios: ## iOS design-file drift, package tests and the app's unit tests (Xcod
 test-all: test test-android test-ios ## test, test-android and test-ios
 
 # The dev stack up and answering, for the apps' flows: api and worker for the test account and
-# its uploads, web for the basemap the iOS export renders.
+# its uploads, web for the basemap the iOS export renders. --build, so the flows run against this
+# checkout's server rather than whichever image was built last. Every checkout shares the one
+# compose project, so a checkout without .env (a new worktree) would rebuild it with defaults.
 e2e-stack:
-	$(COMPOSE) up -d
+	@test -f .env || { echo "e2e-stack: no .env here; copy it (and any compose.override.yaml) from your main checkout"; exit 1; }
+	$(COMPOSE) up -d --build
 	curl -sf -o /dev/null --retry 60 --retry-delay 2 --retry-all-errors http://localhost:$(API_PORT)/healthz
 	curl -sf -o /dev/null --retry 60 --retry-delay 2 --retry-all-errors http://localhost:5173/
 

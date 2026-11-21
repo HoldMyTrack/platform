@@ -107,7 +107,7 @@ CI also runs `./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:
 
 ### End-to-end suites
 
-Each client's flows run against the dev stack, which `make e2e-stack` starts and waits for on `.env`'s `API_PORT`. A release runs its client's suite on the commit it ships (`DEPLOY.md` §10).
+Each client's flows run against the dev stack, which `make e2e-stack` rebuilds from the checkout it runs in, starts and waits for on `.env`'s `API_PORT`. The rebuild applies that checkout's migrations to the dev database, and the stack keeps running that checkout's code after the run. Every checkout shares the one compose project, so a new worktree needs the main checkout's `.env` and any `compose.override.yaml` copied in; without `.env` the target stops. A release runs its client's suite on the commit it ships (`DEPLOY.md` §10).
 
 | Client | Command | Needs | In CI |
 |---|---|---|---|
