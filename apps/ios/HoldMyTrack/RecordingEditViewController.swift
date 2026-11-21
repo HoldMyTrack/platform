@@ -14,7 +14,7 @@ final class RecordingEditViewController: UIViewController {
     private let api: APIClient
     /// The account's tracks by type, empty until read or when they couldn't be.
     private var serverCounts: [(type: String, count: Int)] = []
-    /// The Save screen a Stop opens, rather than a row's Edit.
+    /// The Save screen a Stop opens.
     private let justStopped: Bool
     var onGPX: ((RecordedTrack) -> Void)?
     /// Saved from the Save screen: it waits on the phone until Sync sends it, which the map it

@@ -395,8 +395,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                                       message: String(localized: "sync.deleteMessage", defaultValue: "It hasn't been synced, so this is the only copy. This can't be undone.", comment: "Sync: deleting a recording, why it asks."),
                                       preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        alert.addAction(UIAlertAction(title: String(localized: "recording.delete", defaultValue: "Delete", comment: "A recording: delete it from the phone."), style: .destructive) { [weak self, weak host] _ in
-            host?.presentedViewController?.dismiss(animated: true)
+        alert.addAction(UIAlertAction(title: String(localized: "recording.delete", defaultValue: "Delete", comment: "A recording: delete it from the phone."), style: .destructive) { [weak self] _ in
             self?.recordings.delete(track.id)
         })
         (host.presentedViewController ?? host).present(alert, animated: true)
