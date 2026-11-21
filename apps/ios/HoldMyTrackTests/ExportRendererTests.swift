@@ -16,17 +16,23 @@ struct ExportRendererTests {
                  "satellite": {"type": "raster", "tiles": ["http://127.0.0.1:9/s/{z}/{x}/{y}.png"], "tileSize": 256}},
      "layers": [{"id": "bg", "type": "background", "paint": {"background-color": "#e8e4da"}},
                 {"id": "earth", "type": "raster", "source": "protomaps"},
-                {"id": "sat", "type": "raster", "source": "satellite"}]}
+                {"id": "satellite", "type": "raster", "source": "satellite"}]}
     """##.utf8))!
 
     @Test func unreachableTilesAreLeftOutRatherThanFailingTheImage() async throws {
+        var state = MapState()
+        state.satellite = true
+        let empty = LayersDocument(JSONValue.parse(Data(#"{"views": {}, "groups": []}"#.utf8))!)!
+        let steps = ExportStyle.steps(style: style, document: empty, state: state, apiBase: URL(string: "http://127.0.0.1:9")!)
         let renderer = ExportRenderer()
+        // A short time per step: a refused tile fails at once, and a retried one would time out.
         let result: Result<ExportRenderer.Picture, Error> = await withCheckedContinuation { done in
-            renderer.render(style: style, center: CLLocationCoordinate2D(latitude: 50, longitude: 10), zoom: 5, heading: 0, pitch: 0,
-                            window: CGSize(width: 100, height: 100), pixelWidth: 200, pixelHeight: 200) { done.resume(returning: $0) }
+            renderer.render(steps: steps, center: CLLocationCoordinate2D(latitude: 50, longitude: 10), zoom: 5, heading: 0, pitch: 0,
+                            window: CGSize(width: 100, height: 100), pixelWidth: 200, pixelHeight: 200, stepTime: 3) { done.resume(returning: $0) }
         }
         let picture = try result.get()
         #expect(picture.image.size.width > 0)
-        #expect(picture.leftOut == ["satellite", "protomaps"], "Satellite first, then the basemap")
+        #expect(picture.step.leftOut == ["satellite", "protomaps"], "Satellite first, then the basemap")
+        #expect(!picture.step.satellite)
     }
 }

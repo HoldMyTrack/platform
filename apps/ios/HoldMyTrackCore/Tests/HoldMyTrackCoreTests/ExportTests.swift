@@ -164,22 +164,47 @@ struct ExportTests {
 }
 /// The image made without a basemap or Satellite that can't be reached.
 struct ExportFallbackTests {
+    private let api = URL(string: "http://localhost")!
+
     private let style = JSONValue.parse(Data(##"""
-    {"version": 8, "sources": {"protomaps": {"type": "vector"}, "satellite": {"type": "raster"}, "tracks": {"type": "vector"}},
-     "layers": [{"id": "bg", "type": "background"}, {"id": "sat", "type": "raster", "source": "satellite"},
-                {"id": "earth", "type": "fill", "source": "protomaps"}, {"id": "tracks-line", "type": "line", "source": "tracks"}]}
+    {"version": 8,
+     "metadata": {"holdmytrack:satellite-hides": ["earth"], "holdmytrack:satellite-dims": ["roads"], "holdmytrack:satellite-road-opacity": 0.4},
+     "sources": {"protomaps": {"type": "vector"}, "satellite": {"type": "raster"}},
+     "layers": [{"id": "bg", "type": "background"}, {"id": "satellite", "type": "raster", "source": "satellite"},
+                {"id": "earth", "type": "fill", "source": "protomaps"}, {"id": "roads", "type": "line", "source": "protomaps"}]}
     """##.utf8))!
 
-    @Test func satelliteGoesFirstThenTheBasemapToo() {
-        #expect(ExportStyle.fallbacks(style) == [["satellite"], ["satellite", "protomaps"]])
-        let plain = ExportStyle.without(["satellite"], in: style)
-        #expect(ExportStyle.fallbacks(plain) == [["protomaps"]], "no Satellite to leave out")
+    private let document = LayersDocument(JSONValue.parse(Data(##"{"views": {}, "groups": [{"id": "tracks", "sources": {"tracks": {"type": "vector", "tiles": "/t/{z}/{x}/{y}"}}, "layers": [{"id": "tracks-line", "type": "line", "source": "tracks"}]}]}"##.utf8))!)!
+
+    private func layer(_ style: JSONValue, _ id: String) -> JSONValue? { style["layers"]?.array?.first { $0["id"]?.string == id } }
+
+    @Test func withSatelliteShownItsLeftOutFirstWithTheBasemapAsItLooksWithoutIt() {
+        var state = MapState()
+        state.satellite = true
+        let steps = ExportStyle.steps(style: style, document: document, state: state, apiBase: api)
+        #expect(steps.map(\.leftOut) == [[], [], ["satellite"], ["satellite", "protomaps"]], "the map as shown, once more, then without Satellite, then without the basemap")
+        #expect(steps.map(\.satellite) == [true, true, false, false])
+        #expect(layer(steps[0].style, "earth")?["layout"]?["visibility"] == .string("none"), "Satellite's look hides the fills")
+        #expect(layer(steps[2].style, "earth")?["layout"]?["visibility"] == .string("visible"), "without it, the basemap is whole again")
+        #expect(layer(steps[2].style, "roads")?["paint"]?["line-opacity"] == .number(1))
+        #expect(steps[3].style["sources"]?["protomaps"] == nil)
+        #expect(steps[3].style["sources"]?["satellite"] == nil, "nothing of the imagery can fail the last step")
+        #expect(layer(steps[3].style, "tracks-line") != nil, "the app's own layers stay")
+    }
+
+    @Test func withSatelliteOffTheBasemapIsTheOnlyFallback() {
+        let steps = ExportStyle.steps(style: style, document: document, state: MapState(), apiBase: api)
+        #expect(steps.map(\.leftOut) == [[], [], ["protomaps"]], "no step for an imagery that isn't drawn")
+        var failed = MapState()
+        failed.satellite = true
+        failed.satelliteFailed = true
+        #expect(ExportStyle.steps(style: style, document: document, state: failed, apiBase: api).map(\.leftOut) == [[], [], ["protomaps"]], "imagery that failed on screen is off already")
     }
 
     @Test func leavingOutASourceTakesItsLayersAndKeepsTheRest() {
         let bare = ExportStyle.without(["satellite", "protomaps"], in: style)
-        #expect(bare["sources"]?.object?.keys.sorted() == ["tracks"])
-        #expect(bare["layers"]?.array?.compactMap { $0["id"]?.string } == ["bg", "tracks-line"], "the background and the app's own layers stay")
+        #expect(bare["sources"]?.object?.isEmpty == true)
+        #expect(bare["layers"]?.array?.compactMap { $0["id"]?.string } == ["bg"])
         #expect(ExportStyle.without([], in: style) == style)
     }
 }
