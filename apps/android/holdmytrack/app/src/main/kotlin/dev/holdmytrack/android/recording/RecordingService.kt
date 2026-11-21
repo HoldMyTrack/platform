@@ -105,29 +105,18 @@ class RecordingService : Service() {
 
     private val binder = LocalBinder()
 
-    var state: RecordingState = RecordingState.IDLE
-        private set
+    /** The recording itself, as values ([RecordingSession]); this service is its Android side. */
+    private val session = RecordingSession<Location> { a, b -> a.distanceTo(b).toDouble() }
+
+    val state: RecordingState get() = session.state
 
     /** Set by whoever is bound and wants live redraws (state changes and new fixes); cleared
      *  on unbind. Nothing here fans out to more than one listener — only `MapFragment` binds. */
     var onChange: (() -> Unit)? = null
 
-    /** The journal's key for the recording in progress, and the `external_id` it syncs under
-     *  (`RecordedTrackRecord`) — minted at Start, so the journal and the saved row share it. */
-    private var recordingId = ""
-
-    /** Fixed at Start: the recording belongs to whoever was signed in when it began, even if
-     *  it ends up saved from a leftover while someone else is. */
-    private var account = ""
-
-    private val recorded = mutableListOf<RecordedPoint>()
+    /** The latest fix, for the notification's speed and altitude; none until the first after
+     *  a start or resume. */
     private var lastFix: Location? = null
-    private val tally = DistanceTally<Location> { a, b -> a.distanceTo(b).toDouble() }
-
-    /** Elapsed time is measured off `elapsedRealtime()`, not wall-clock time — immune to the
-     *  user's clock being adjusted (timezone travel, NTP correction) mid-recording. */
-    private var recordingStartedAtRealtime = 0L
-    private var accumulatedBeforePauseMs = 0L
 
     private var locationManager: LocationManager? = null
 
@@ -164,18 +153,15 @@ class RecordingService : Service() {
         locationManager = null
         // The moving time since the last fix, as a pause keeps it, so the leftover resumes from
         // where this stopped.
-        if (state == RecordingState.RECORDING) {
-            val id = recordingId
-            val movingMs = currentStats().elapsedMs
-            val distance = tally.meters
-            journalWrite { it.updateTotals(id, movingMs, distance) }
+        session.checkpoint(SystemClock.elapsedRealtime())?.let { totals ->
+            journalWrite { it.updateTotals(totals.id, totals.movingMs, totals.distanceM) }
         }
         super.onDestroy()
     }
 
     /** A copy, not the live list — it keeps growing on the main thread while the caller
      *  draws it. */
-    fun points(): List<RecordedPoint> = recorded.toList()
+    fun points(): List<RecordedPoint> = session.points()
 
     /** `MapFragment` has already confirmed `ACCESS_FINE_LOCATION` before sending
      *  [ACTION_START] — a foreground service with a location type throws at `startForeground`
@@ -184,20 +170,14 @@ class RecordingService : Service() {
      *  can't follow the caller's check: revoking a runtime permission kills the app's process. */
     private fun start() {
         if (!hasLocationPermission()) return
-        recordingId = UUID.randomUUID().toString()
-        account = Session.email
-        recorded.clear()
+        session.start(UUID.randomUUID().toString(), Session.email, SystemClock.elapsedRealtime())
         lastFix = null
-        tally.reset(0.0)
-        accumulatedBeforePauseMs = 0L
-        recordingStartedAtRealtime = SystemClock.elapsedRealtime()
-        state = RecordingState.RECORDING
 
         startForeground()
         listenForFixes()
         publish()
-        val id = recordingId
-        val owner = account
+        val id = session.id
+        val owner = session.account
         val context = applicationContext
         journalWrite { journal ->
             // Normally answered before this, from the map's prompt — but a leftover the prompt
@@ -238,14 +218,8 @@ class RecordingService : Service() {
      *  time. False, and nothing changes, when location access has been taken away since. */
     fun resumeLeftover(leftover: LiveRecordingJournal.Leftover): Boolean {
         if (state != RecordingState.IDLE || !hasLocationPermission()) return false
-        recordingId = leftover.id
-        account = leftover.account
-        recorded.clear()
-        recorded += leftover.points
+        session.resume(leftover.id, leftover.account, leftover.points, leftover.movingMs, leftover.distanceM)
         lastFix = null
-        tally.reset(leftover.distanceM)
-        accumulatedBeforePauseMs = leftover.movingMs
-        state = RecordingState.PAUSED
         // Started, not just bound, so it outlives the map the way a fresh recording does;
         // ACTION_START on a service that isn't idle only goes foreground.
         ContextCompat.startForegroundService(this, intent(this, ACTION_START))
@@ -266,23 +240,12 @@ class RecordingService : Service() {
     }
 
     private fun toggle() {
-        when (state) {
-            RecordingState.RECORDING -> {
-                state = RecordingState.PAUSED
-                accumulatedBeforePauseMs += SystemClock.elapsedRealtime() - recordingStartedAtRealtime
-                val id = recordingId
-                val movingMs = accumulatedBeforePauseMs
-                val distance = tally.meters
-                journalWrite { it.updateTotals(id, movingMs, distance) }
-            }
-            RecordingState.PAUSED -> {
-                state = RecordingState.RECORDING
-                recordingStartedAtRealtime = SystemClock.elapsedRealtime()
-                // The next fix after a pause is a fresh baseline (DistanceTally).
-                lastFix = null
-                tally.breakStep()
-            }
-            RecordingState.IDLE -> return
+        if (state == RecordingState.IDLE) return
+        val paused = session.toggle(SystemClock.elapsedRealtime())
+        if (paused != null) {
+            journalWrite { it.updateTotals(paused.id, paused.movingMs, paused.distanceM) }
+        } else {
+            lastFix = null
         }
         publish()
     }
@@ -290,29 +253,23 @@ class RecordingService : Service() {
     /** Ends a recording made under [owner] without saving it: the account was deleted
      *  ([forgetAccount]), so its recording mustn't be saved under an email a new account can take. */
     private fun discard(owner: String?) {
-        if (state == RecordingState.IDLE || owner == null || account != owner) return
-        state = RecordingState.IDLE
+        if (owner == null || !session.discard(owner)) return
         locationManager?.removeUpdates(locationListener)
         locationManager = null
         stopForeground(STOP_FOREGROUND_REMOVE)
-        recorded.clear()
         publish()
         journalWrite { it.clear(owner) }
     }
 
     private fun stop() {
-        if (state == RecordingState.IDLE) return
-        val stats = currentStats()
-        val points = recorded.toList()
-        state = RecordingState.IDLE
+        val done = session.stop(SystemClock.elapsedRealtime()) ?: return
         locationManager?.removeUpdates(locationListener)
         locationManager = null
         stopForeground(STOP_FOREGROUND_REMOVE)
-        recorded.clear()
         publish()
 
         val context = applicationContext
-        finish(context, recordingId, recordOf(context, recordingId, account, stats.elapsedMs, stats.distanceM, points), account)
+        finish(context, done.id, recordOf(context, done.id, done.account, done.movingMs, done.distanceM, done.points), done.account)
     }
 
     /** Moves recording [id] out of the journal — into `recorded_activities` as [record], then
@@ -340,35 +297,25 @@ class RecordingService : Service() {
     }
 
     fun currentStats(): RecordingStats {
-        val elapsed = when (state) {
-            RecordingState.RECORDING -> accumulatedBeforePauseMs + (SystemClock.elapsedRealtime() - recordingStartedAtRealtime)
-            else -> accumulatedBeforePauseMs
-        }
         val fix = lastFix
         return RecordingStats(
-            elapsedMs = elapsed,
-            distanceM = tally.meters,
+            elapsedMs = session.movingMs(SystemClock.elapsedRealtime()),
+            distanceM = session.distanceM,
             altitudeM = fix?.takeIf { it.hasAltitude() }?.altitude,
             speedMps = fix?.takeIf { it.hasSpeed() }?.speed?.toDouble() ?: 0.0,
         )
     }
 
     private fun onLocation(location: Location) {
-        if (state != RecordingState.RECORDING) return
-        tally.add(location)
-        lastFix = location
         val point = RecordedPoint(
             lat = location.latitude,
             lon = location.longitude,
             elevationM = if (location.hasAltitude()) location.altitude.toFloat() else null,
             time = Instant.ofEpochMilli(location.time),
         )
-        recorded += point
-        val id = recordingId
-        val seq = recorded.size - 1
-        val movingMs = currentStats().elapsedMs
-        val distance = tally.meters
-        journalWrite { it.append(id, seq, point, movingMs, distance) }
+        val added = session.add(location, point, SystemClock.elapsedRealtime()) ?: return
+        lastFix = location
+        journalWrite { it.append(added.id, added.seq, added.point, added.movingMs, added.distanceM) }
         publish()
     }
 

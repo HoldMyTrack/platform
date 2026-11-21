@@ -179,7 +179,7 @@ The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Con
 
 ## 5. Recording and crash recovery
 
-The lifecycle is the state diagram in `apps/android/docs/SPEC.md` FR-5, and the wire contract root `docs/IMPLEMENTATION.md` §4.0.4. `recording/RecordingService`, a foreground location service, holds the recording; the map binds to it only to watch, which is also how reopening the app mid-recording redraws the route so far. The record button and the notification send intents. Every fix the GPS gives is recorded, whatever its accuracy: the phone decides what a fix is, and a stray point is fixed in the route editor, never dropped by a rule on the user's behalf (ADR-0039).
+The lifecycle is the state diagram in `apps/android/docs/SPEC.md` FR-5, and the wire contract root `docs/IMPLEMENTATION.md` §4.0.4. `recording/RecordingService`, a foreground location service, holds the recording, whose moving time, distance, pauses and owner are `RecordingSession`, plain values under unit test; the map binds to it only to watch, which is also how reopening the app mid-recording redraws the route so far. The record button and the notification send intents. Every fix the GPS gives is recorded, whatever its accuracy: the phone decides what a fix is, and a stray point is fixed in the route editor, never dropped by a rule on the user's behalf (ADR-0039).
 
 ### 5.1 Stop
 
