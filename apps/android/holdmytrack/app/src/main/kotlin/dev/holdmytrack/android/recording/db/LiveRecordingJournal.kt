@@ -20,9 +20,9 @@ import java.time.Instant
  * Every call blocks — `RecordingService` makes them all from one single-threaded dispatcher,
  * which is also what keeps them in order.
  */
-class LiveRecordingJournal(context: Context) {
+class LiveRecordingJournal internal constructor(private val helper: RecordingDbHelper) {
 
-    private val helper = RecordingDbHelper.of(context)
+    constructor(context: Context) : this(RecordingDbHelper.of(context))
 
     /** What a process death left behind: the account it was recorded under, the moving time
      *  and distance as of its last fix or pause, and every point recorded. Moving time is kept
