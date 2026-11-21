@@ -19,7 +19,7 @@ public enum RecordingSync {
         return known.contains(id) ? .landed : .failed
     }
 
-    /// What one refused send says, kept beside its row; nil for one the server took.
+    /// Why one send was refused, said over the Sync list; nil for one the server took.
     public enum Refusal: Equatable, Sendable {
         case tooManyPoints
         case server(String?)
@@ -29,14 +29,6 @@ public enum RecordingSync {
     public static func refusal(_ track: RecordedTrack) -> Refusal? {
         track.points.count > maxPoints ? .tooManyPoints : nil
     }
-
-    /// The recordings the list shows, newest first: every one on the phone but those sent and awaited.
-    public static func listed(_ tracks: [RecordedTrack]) -> [RecordedTrack] {
-        tracks.filter { !$0.sent }.sorted { $0.startedAt > $1.startedAt }
-    }
-
-    /// Whether Sync can send: something ticked, and not the demo, which can't add anything.
-    public static func canSend(ticked: Set<String>, isDemo: Bool) -> Bool { !isDemo && !ticked.isEmpty }
 
     static func request(_ track: RecordedTrack) -> SyncTracksRequestJSON {
         let time = ISO8601DateFormatter()

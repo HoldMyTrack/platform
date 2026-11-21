@@ -87,17 +87,33 @@ final class RecordingTests: XCTestCase {
         XCTAssertTrue(row.staticTexts["Test walk"].exists, "listed by its name")
         attach("Sync")
 
-        // Ticked and sent, it's on its way, then on the map and off the phone.
-        row.buttons["recordingTick"].tap()
+        // A swipe hides it, with Undo, which puts it back.
+        row.swipeLeft()
+        app.buttons["Hide"].tap()
+        XCTAssertTrue(app.cells["syncShowHidden"].waitForExistence(timeout: 5), "Show hidden counts it")
+        XCTAssertFalse(app.cells["recordingRow"].exists, "hidden off the list")
+        app.buttons["Undo"].tap()
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "back on the list")
+
+        // Ticks don't outlast the tab: back from You, nothing is ticked.
+        app.buttons["syncSelectAll"].tap()
+        XCTAssertEqual(app.buttons["syncSend"].label, "Sync 1")
+        app.tabBars.buttons["tabYou"].tap()
+        app.tabBars.buttons["tabSync"].tap()
+        XCTAssertEqual(app.buttons["syncSend"].label, "Sync", "a fresh tab ticks nothing")
+
+        // Select all ticks it; sent, it's on its way, then on the map and off the phone.
+        app.buttons["syncSelectAll"].tap()
+        XCTAssertEqual(app.buttons["syncSend"].label, "Sync 1")
         app.buttons["syncSend"].tap()
-        XCTAssertTrue(app.staticTexts["syncOnTheirWay"].waitForExistence(timeout: 15), "being added")
+        XCTAssertTrue(app.staticTexts["syncRowNote"].waitForExistence(timeout: 15), "being added")
         XCTAssertTrue(app.cells["syncEmpty"].waitForExistence(timeout: 90), "landed: it leaves the phone")
         XCTAssertTrue(account.waitForTracks(1, timeout: 10), "the account has it")
     }
 
     /// A recording the app is killed in comes back on the next launch: Discard, asked twice,
     /// drops it; Resume goes on with its moving time, and Stop saves it, listed on the Sync tab
-    /// until a swipe deletes it.
+    /// until its Delete deletes it.
     @MainActor
     func testARecordingTheAppDiesInIsOfferedBack() throws {
         let base = try LaunchTests.requireDevStack(self)
@@ -147,15 +163,14 @@ final class RecordingTests: XCTestCase {
         let pastAMinute = NSPredicate(format: "label CONTAINS '0:01:'")
         XCTAssertTrue(status.wait(for: pastAMinute, timeout: 10), "the moving time goes on from where it was")
         record.press(forDuration: 2.6)
-        // Saved, it opens for naming; cancelled, it's listed, and a swipe deletes it, asked first.
+        // Saved, it opens for naming; cancelled, it's listed, and its Delete deletes it, asked first.
         let cancel = app.navigationBars.buttons["Cancel"]
         XCTAssertTrue(cancel.waitForExistence(timeout: 5))
         cancel.tap()
         let row = app.cells.matching(identifier: "recordingRow").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
-        row.swipeLeft()
-        app.buttons["Delete"].firstMatch.tap()
-        let confirmDelete = app.alerts["Discard this recording?"]
+        row.buttons["recordingDelete"].tap()
+        let confirmDelete = app.alerts["Delete this recording?"]
         XCTAssertTrue(confirmDelete.waitForExistence(timeout: 5))
         confirmDelete.buttons["Delete"].tap()
         XCTAssertTrue(app.cells["syncEmpty"].waitForExistence(timeout: 5))

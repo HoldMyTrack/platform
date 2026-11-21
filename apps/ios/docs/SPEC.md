@@ -48,10 +48,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as below.
 
-### FR-2.2 Two map modes: Normal and Fog of War
-
-- Trips is Normal mode's, as on Android; the Sync tab is a page with no map.
-
 ### FR-2.6 Dates
 
 - Each end of Dates is picked in a calendar in a sheet, and applies at once.
@@ -67,8 +63,8 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 ### FR-2.9 The bottom bar
 
-- Tracks, Trips, the record button, Sync and You. Sync lists the recordings on the phone (FR-5.2) and leads to Upload and Sync history (FR-4.1).
-- You leads to Settings, Track graph & trends, Upload, Privacy, Theme, Language, Take a tour, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
+- Tracks, Trips, the record button, Sync and You. Sync's sheet lists the recordings on the phone (FR-5.2) and leads to Upload and Sync history (FR-4.1).
+- You leads to Settings, Track graph & trends, Privacy, Theme, Language, Take a tour, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
 - Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
 
 ### FR-2.10 Photos
@@ -105,7 +101,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-5.2), except as below.
 
-- The Sync tab is a list of the recordings, not the map: they aren't drawn, and no overlap is marked. A swipe deletes a recording, asked first; no row is hidden.
+- The recordings aren't drawn on the map and no overlap is marked; a tap on a row ticks it.
 - Download GPX goes to the share sheet, which saves to Files among its choices.
 
 ## 8. Non-Functional Requirements (summary)

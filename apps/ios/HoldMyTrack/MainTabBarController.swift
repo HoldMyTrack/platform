@@ -2,14 +2,16 @@ import HoldMyTrackCore
 import UIKit
 
 /// The signed-in app: Tracks, Trips, the record button, Sync and You
-/// (apps/android/docs/SPEC.md FR-2.9), each tab keeping its state across a switch. Tracks and
-/// Trips are one map screen with its sheet on the Tracks or the Trips tab
-/// (MapHostViewController); Trips counts copies waiting to be answered. The record button sits
+/// (apps/android/docs/SPEC.md FR-2.9), each tab keeping its state across a switch. Tracks, Trips
+/// and Sync are one map screen with its sheet on that tab (MapHostViewController); Sync's sits in
+/// a navigation controller, whose bar shows only for Upload and Sync history over it. Trips counts
+/// copies waiting to be answered. The record button sits
 /// over an empty middle item, with the recording's status above it (RecordingController). The
 /// tour runs over all of it (TourController).
-final class MainTabBarController: UITabBarController, UITabBarControllerDelegate, TourHost {
+final class MainTabBarController: UITabBarController, UITabBarControllerDelegate, UINavigationControllerDelegate, TourHost {
     let map: MapViewController
     private let account: Account
+    private unowned let flow: AppFlow
     private lazy var tour = TourController(host: self)
     private let recorder: RecordingController
     /// The recordings on the phone and their sending, followed on every tab.
@@ -30,6 +32,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         self.account = account
         recorder = RecordingController(account: AccountKey.of(email: account.email, isDemo: account.isDemo))
         recordings = RecordingsSync(api: flow.api, account: AccountKey.of(email: account.email, isDemo: account.isDemo), isDemo: account.isDemo)
+        self.flow = flow
         super.init(nibName: nil, bundle: nil)
         delegate = self
         let mapHost = MapHostViewController(map: map, tab: .tracks)
@@ -38,8 +41,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         let trips = MapHostViewController(map: map, tab: .trips)
         trips.tabBarItem = UITabBarItem(title: String(localized: "Trips"), image: UIImage(resource: .bookOpen), tag: 1)
         trips.tabBarItem.accessibilityIdentifier = "tabTrips"
-        let syncList = SyncViewController(flow: flow, account: account, recordings: recordings)
-        let sync = UINavigationController(rootViewController: syncList)
+        let syncPanel = SyncPanel(recordings: recordings, api: flow.api, account: account, host: map)
+        map.syncPanel = syncPanel
+        let sync = UINavigationController(rootViewController: MapHostViewController(map: map, tab: .sync))
+        sync.setNavigationBarHidden(true, animated: false)
         sync.tabBarItem = UITabBarItem(title: String(localized: "Sync"), image: UIImage(resource: .refreshCw), tag: 2)
         let home = YouViewController(flow: flow, account: account)
         let you = UINavigationController(rootViewController: home)
@@ -52,10 +57,22 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         tabBar.tintColor = UIColor(resource: .accent)
         tabBar.backgroundColor = UIColor(resource: .surface)
         sync.tabBarItem.accessibilityIdentifier = "tabSync"
-        syncList.onViewOnMap = { [weak self, weak mapHost, weak map] track, day in
-            guard let self, let mapHost, let map else { return }
-            self.selectedViewController = mapHost
-            map.viewOnMap(track: track, day: day)
+        sync.delegate = self
+        syncPanel.onEvent = { [weak self, weak sync, weak map] event in
+            guard let self, let sync else { return }
+            switch event {
+            case .upload: sync.pushViewController(UploadViewController(api: flow.api), animated: true)
+            case .history:
+                let page = WebPageViewController(flow: flow, page: .syncHistory)
+                page.onViewOnMap = { [weak self, weak map] track, day in
+                    guard let self, let map, let mapHost = self.viewControllers?.first else { return }
+                    self.selectedViewController = mapHost
+                    map.viewOnMap(track: track, day: day)
+                }
+                sync.pushViewController(page, animated: true)
+            case .hid(let text, let undo):
+                map?.say(text, action: (String(localized: "sync.undo", defaultValue: "Undo", comment: "Sync: put a hidden row back, or hide it again."), undo))
+            }
         }
         home.onTour = { [weak self] in self?.tour.request() }
         map.onHistoryKnown = { [weak self] any in self?.tour.historyKnown(any) }
@@ -245,10 +262,15 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     }
 
     private func openRecording(_ track: RecordedTrack) {
-        guard let sync = viewControllers?[3] as? UINavigationController, let list = sync.viewControllers.first as? SyncViewController else { return }
+        guard let sync = viewControllers?[3] as? UINavigationController else { return }
         sync.popToRootViewController(animated: false)
         selectedViewController = sync
-        list.edit(track)
+        map.syncPanel?.open(track)
+    }
+
+    /// The Sync tab's bar shows only over Upload and Sync history, never over its map.
+    func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
+        navigationController.setNavigationBarHidden(viewController is MapHostViewController, animated: animated)
     }
 
     /// Location is off for HoldMyTrack: Settings is where it's turned on.
@@ -317,10 +339,17 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         map.editPrivateLocation(id)
     }
 
-    /// Files opened or shared from another app: Upload on the You tab, for an account that can.
+    /// Files opened or shared from another app: Upload on the Sync tab, for an account that can.
     func upload(_ files: [URL]) {
-        guard let you = viewControllers?.last as? UINavigationController, let home = you.viewControllers.first as? YouViewController else { return }
-        selectedViewController = you
-        home.upload(files)
+        guard let sync = viewControllers?[3] as? UINavigationController else { return }
+        selectedViewController = sync
+        guard !account.isDemo else {
+            TripDialogs.inform(over: view, String(localized: "The demo account can't upload. Sign up to add your own tracks."))
+            return
+        }
+        Uploads.shared.share(files)
+        guard !(sync.topViewController is UploadViewController) else { return }
+        sync.popToRootViewController(animated: false)
+        sync.pushViewController(UploadViewController(api: flow.api), animated: true)
     }
 }

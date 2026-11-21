@@ -35,7 +35,7 @@ enum Theme: String, CaseIterable {
     }
 }
 
-/// The You tab (apps/android/docs/SPEC.md FR-2.9): the account, Upload, Privacy, the theme,
+/// The You tab (apps/android/docs/SPEC.md FR-2.9): the account, Privacy, the theme,
 /// Language, About, Help and Contacts, the build, Delete account and Sign out. No Donate: App
 /// Review allows payment links only through Apple's purchase system.
 final class YouViewController: UITableViewController {
@@ -45,11 +45,11 @@ final class YouViewController: UITableViewController {
     /// Take a tour (TourController.request).
     var onTour: (() -> Void)?
 
-    private enum Row { case settings, profile, upload, privacy, theme, language, tour, about, help, contacts, delete, signOut }
+    private enum Row { case settings, profile, privacy, theme, language, tour, about, help, contacts, delete, signOut }
     private var sections: [[Row]] {
         let real = !account.isDemo
         return [
-            [.settings, .profile] + (real ? [.upload] : []) + [.privacy],
+            [.settings, .profile, .privacy],
             [.theme, .language],
             [.tour, .about, .help, .contacts],
             (real ? [.delete] : []) + [.signOut],
@@ -182,19 +182,6 @@ final class YouViewController: UITableViewController {
         }
     }
 
-    /// Upload with files another app opened listed, to send on its Upload. The demo account is
-    /// told it can't.
-    func upload(_ files: [URL]) {
-        guard !account.isDemo else {
-            TripDialogs.inform(over: view, String(localized: "The demo account can't upload. Sign up to add your own tracks."))
-            return
-        }
-        Uploads.shared.share(files)
-        guard !(navigationController?.topViewController is UploadViewController) else { return }
-        navigationController?.popToRootViewController(animated: false)
-        navigationController?.pushViewController(UploadViewController(api: flow.api), animated: true)
-    }
-
     // MARK: Rows
 
     override func numberOfSections(in tableView: UITableView) -> Int { sections.count }
@@ -213,7 +200,6 @@ final class YouViewController: UITableViewController {
         switch row {
         case .settings: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Settings"), UIImage(resource: .user), "youSettings")
         case .profile: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Track graph & trends"), UIImage(resource: .chart), "youProfile")
-        case .upload: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Upload"), UIImage(resource: .upload), "youUpload")
         case .privacy: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Privacy"), UIImage(resource: .shield), "youPrivacy")
         case .theme:
             (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Theme"), UIImage(resource: .contrast), "youTheme")
@@ -244,7 +230,6 @@ final class YouViewController: UITableViewController {
         switch sections[indexPath.section][indexPath.row] {
         case .settings: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .settings), animated: true)
         case .profile: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .profile), animated: true)
-        case .upload: navigationController?.pushViewController(UploadViewController(api: flow.api), animated: true)
         case .privacy: navigationController?.pushViewController(PrivacyViewController(flow: flow, account: account), animated: true)
         case .theme: pickTheme(at: indexPath)
         // D11: the app's language is iOS's per-app setting, in the system's Settings.
