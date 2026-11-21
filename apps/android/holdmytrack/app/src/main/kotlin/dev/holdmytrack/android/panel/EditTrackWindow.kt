@@ -20,6 +20,7 @@ import dev.holdmytrack.android.net.RoutePoint
 import dev.holdmytrack.android.recording.TrackTypePicker
 import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.recording.TypeCount
+import dev.holdmytrack.android.recording.TypeSearch
 
 /**
  * The Edit window, after the web's `apps/web/src/ui/EditTrackWindow.tsx` (`docs/SPEC.md`
@@ -298,9 +299,9 @@ class EditTrackWindow(
         val description = descriptionField.text?.toString().orEmpty()
         val invalid = when {
             type.isEmpty() && !mixedTypes -> res.getString(R.string.edit_type_required)
-            type.length > MAX_TYPE -> res.getQuantityString(R.plurals.edit_type_too_long, MAX_TYPE, MAX_TYPE)
-            name.length > MAX_NAME -> res.getQuantityString(R.plurals.edit_name_too_long, MAX_NAME, MAX_NAME)
-            description.length > MAX_DESCRIPTION -> res.getQuantityString(R.plurals.edit_description_too_long, MAX_DESCRIPTION, MAX_DESCRIPTION)
+            TypeSearch.codePoints(type) > MAX_TYPE -> res.getQuantityString(R.plurals.edit_type_too_long, MAX_TYPE, MAX_TYPE)
+            TypeSearch.codePoints(name) > MAX_NAME -> res.getQuantityString(R.plurals.edit_name_too_long, MAX_NAME, MAX_NAME)
+            TypeSearch.codePoints(description) > MAX_DESCRIPTION -> res.getQuantityString(R.plurals.edit_description_too_long, MAX_DESCRIPTION, MAX_DESCRIPTION)
             else -> null
         }
         if (invalid != null) {

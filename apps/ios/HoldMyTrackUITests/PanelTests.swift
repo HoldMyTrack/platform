@@ -68,6 +68,14 @@ final class PanelTests: XCTestCase {
         name.press(forDuration: 1)
         if app.menuItems["Select All"].waitForExistence(timeout: 2) { app.menuItems["Select All"].tap() }
         name.typeText("Renamed by iOS")
+        // A new type, from the Type picker's search.
+        app.buttons["editType"].tap()
+        let search = app.searchFields["typeSearch"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("Solowheel")
+        app.tables["typeList"].staticTexts["Add “Solowheel”"].tap()
+        XCTAssertTrue(app.buttons["editType"].staticTexts["Solowheel"].waitForExistence(timeout: 5))
         app.buttons["editSave"].tap()
         XCTAssertTrue(app.staticTexts["Renamed by iOS"].waitForExistence(timeout: 15))
 

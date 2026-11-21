@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import type { TypeFacet } from './trackFacets.ts';
 import { formatTrackType } from './format.ts';
-import { fold, SearchPicker, type PickerOption } from './SearchPicker.tsx';
+import { SearchPicker, type PickerOption } from './SearchPicker.tsx';
+import { codePoints, fold, typeOptions } from './pickerSearch.ts';
 import { t } from '../i18n/index.ts';
 
 interface TrackTypePickerProps {
@@ -17,11 +18,11 @@ interface TrackTypePickerProps {
   emptyLabel?: string;
 }
 
-function typeOption(type: string, count?: number): PickerOption {
+function typeOption(type: string, count: number): PickerOption {
   return {
     value: type,
     label: formatTrackType(type) || type,
-    detail: count === undefined ? '' : String(count),
+    detail: count > 0 ? String(count) : '',
     keywords: [fold(type)],
   };
 }
@@ -36,15 +37,11 @@ function typeOption(type: string, count?: number): PickerOption {
  * list, so the current choice is always there to see.
  */
 export function TrackTypePicker({ value, onChange, known, labelledBy, maxLength, emptyLabel }: TrackTypePickerProps) {
-  const options = useMemo(() => {
-    const list = known.map((f) => typeOption(f.type, f.count));
-    if (value && !known.some((f) => f.type === value)) list.unshift(typeOption(value));
-    return list;
-  }, [known, value]);
+  const options = useMemo(() => typeOptions(value, known).map((f) => typeOption(f.type, f.count)), [known, value]);
 
   const createOption = useCallback(
     (text: string): PickerOption | null =>
-      text.length > maxLength ? null : { value: text, label: t('picker.add_type', { type: text }), detail: t('picker.new'), keywords: [] },
+      codePoints(text) > maxLength ? null : { value: text, label: t('picker.add_type', { type: text }), detail: t('picker.new'), keywords: [] },
     [maxLength],
   );
 

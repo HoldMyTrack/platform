@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type R
 import { ChevronDown, Search } from 'lucide-react';
 import { t } from '../i18n/index.ts';
 import { useDismiss } from './useDismiss.ts';
+import { searchRows } from './pickerSearch.ts';
 
 /** One row of a SearchPicker: `leading` · `label` · `detail` (muted, right-aligned). */
 export interface PickerOption {
@@ -10,31 +11,10 @@ export interface PickerOption {
   detail: string;
   /** Rendered before the label — a flag, a GMT offset. Also shown in the closed trigger. */
   leading?: ReactNode;
-  /** Extra search terms beyond label/detail, already folded (see `fold`). */
+  /** Extra search terms beyond the label, already folded (see `fold`). */
   keywords?: string[];
   /** Terms that, typed exactly, float this option to the top — a country's ISO code. */
   exact?: string[];
-}
-
-/** Case- and accent-insensitive, so "aland" finds "Åland Islands" and "sao" finds "São Paulo". */
-export function fold(s: string): string {
-  return s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-}
-
-/** Ranks an exact match first — an exact term ("us" → United States, not Australia) or the
- *  whole label ("walk" → Walk, before Dog Walk) — then labels with a word starting with the
- *  query, then anything containing it; the caller's own order (A–Z for countries, by offset
- *  for timezones) is kept within each rank. */
-function search(options: PickerOption[], query: string): PickerOption[] {
-  const q = fold(query.trim());
-  const ranked: PickerOption[][] = [[], [], []];
-  for (const o of options) {
-    const label = fold(o.label);
-    if (label === q || o.exact?.some((t) => fold(t) === q)) ranked[0]!.push(o);
-    else if (label.startsWith(q) || label.includes(` ${q}`)) ranked[1]!.push(o);
-    else if (label.includes(q) || fold(o.detail).includes(q) || o.keywords?.some((k) => k.includes(q))) ranked[2]!.push(o);
-  }
-  return ranked.flat();
 }
 
 interface SearchPickerProps {
@@ -69,7 +49,7 @@ interface SearchPickerProps {
  * place of a native `<select>`, which can't show a right-aligned detail and offers no
  * type-to-filter beyond first-letter jumping. The Edit route dialog's Type field uses it;
  * the server-rendered Settings page's Country and Timezone use its plain-script port
- * (services/server/internal/web/static/search-picker.js — keep the two in step), and both
+ * (services/server/internal/web/static/search-picker.js — keep the two in step, except that this one never searches a row's detail, a type's count there), and both
  * are styled by that directory's search-picker.css. Follows the WAI-ARIA combobox pattern: focus stays in
  * the search input while ↑/↓ move the active option (`aria-activedescendant`), Enter picks
  * it, Escape closes and returns focus to the trigger. Dismisses on an outside `pointerdown`,
@@ -98,15 +78,10 @@ export function SearchPicker({
   const listId = useId();
 
   const browseList = useMemo(() => (unsetOption ? [unsetOption, ...options] : options), [options, unsetOption]);
-  const shown = useMemo(() => {
-    const text = query.trim();
-    if (!text) return browseList;
-    const matches = search(options, query);
-    const q = fold(text);
-    const exact = options.some((o) => fold(o.value) === q || fold(o.label) === q);
-    const created = !exact && createOption ? createOption(text) : null;
-    return created ? [...matches, created] : matches;
-  }, [options, browseList, query, createOption]);
+  const shown = useMemo(
+    () => (query.trim() ? searchRows(options, query, createOption) : browseList),
+    [options, browseList, query, createOption],
+  );
   const selected = browseList.find((o) => o.value === value);
 
   function openPicker() {

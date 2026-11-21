@@ -9,6 +9,20 @@ extension APIClient {
         return (json.tracks.map(Track.init), json.types.mapValues(TrackTypeInfo.init))
     }
 
+    /// `GET /v2/tracks`: how many of the account's tracks use each type, in the order the rows
+    /// (newest first) first use them, for a recording's Type picker, with what the server says
+    /// about them.
+    public func typeCounts() async throws -> (counts: [(type: String, count: Int)], types: [String: TrackTypeInfo]) {
+        let json: TracksJSON = try decode(try await send("GET", "v2/tracks"))
+        var order: [String] = []
+        var counts: [String: Int] = [:]
+        for row in json.tracks where !row.trackType.isEmpty {
+            if counts[row.trackType] == nil { order.append(row.trackType) }
+            counts[row.trackType, default: 0] += 1
+        }
+        return (order.map { (type: $0, count: counts[$0]!) }, json.types.mapValues(TrackTypeInfo.init))
+    }
+
     /// `GET /v2/tracks/area`: the newest tracks, at most limit, whose track crosses box
     /// (`[west, south, east, north]`), all of them without one, under dates; total is how many the
     /// box holds, more than listed when they were cut at the limit (root docs/SPEC.md FR-5.11).

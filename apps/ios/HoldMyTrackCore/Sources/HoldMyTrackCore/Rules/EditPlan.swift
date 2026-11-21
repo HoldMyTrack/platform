@@ -31,9 +31,9 @@ public enum EditPlan {
     public static func invalid(group: [Track], type: String, name: String, description: String) -> Invalid? {
         let type = type.trimmingCharacters(in: .whitespacesAndNewlines)
         if type.isEmpty && !initialType(group).isEmpty { return .typeRequired }
-        if type.count > maxType { return .typeTooLong }
-        if name.trimmingCharacters(in: .whitespacesAndNewlines).count > maxName { return .nameTooLong }
-        if description.count > maxDescription { return .descriptionTooLong }
+        if type.unicodeScalars.count > maxType { return .typeTooLong }
+        if name.trimmingCharacters(in: .whitespacesAndNewlines).unicodeScalars.count > maxName { return .nameTooLong }
+        if description.unicodeScalars.count > maxDescription { return .descriptionTooLong }
         return nil
     }
 

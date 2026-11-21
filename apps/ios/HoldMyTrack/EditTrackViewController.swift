@@ -15,7 +15,7 @@ import UniformTypeIdentifiers
 final class EditTrackViewController: UIViewController, PHPickerViewControllerDelegate {
     private let api: APIClient
     private let group: [Track]
-    /// The range's types with their counts, listed first in the Type menu.
+    /// The range's types with their counts, the Type picker's list.
     private let facets: [TypeFacet]
     private let format: PanelFormat
     /// The ids written, and whether any photo was, once Save is done or Cancel follows a partial save.
@@ -85,7 +85,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         config.imagePlacement = .trailing
         typeButton.configuration = config
         typeButton.contentHorizontalAlignment = .leading
-        typeButton.showsMenuAsPrimaryAction = true
+        typeButton.addAction(UIAction { [weak self] _ in self?.openTypePicker() }, for: .primaryActionTriggered)
         typeButton.accessibilityIdentifier = "editType"
 
         name.text = single?.name
@@ -224,25 +224,22 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         Controls.label(text, font: Typeface.sans(DesignTokens.Text.sm, weight: DesignTokens.Weight.semibold, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     }
 
-    /// The range's types with how many use each, then every other type the server described.
     private func renderType() {
-        let types = TrackTypes.shared
         var config = typeButton.configuration
-        config?.title = type.isEmpty ? String(localized: "Mixed types") : types.label(type)
+        config?.title = type.isEmpty ? String(localized: "Mixed types") : TrackTypes.shared.label(type)
         typeButton.configuration = config
-        let pick = { [weak self] (value: String) in
+    }
+
+    /// The range's types with how many use each, and the current type when none of them is it.
+    private func openTypePicker() {
+        guard !saving else { return }
+        let types = TrackTypes.shared
+        let options = TypeSearch.options(current: type, known: facets.map { (type: $0.type, count: $0.count) }, label: types.label)
+        TypePickerViewController.present(over: self, options: options, current: type, format: format.count) { [weak self] value in
             self?.type = value
             self?.error.isHidden = true
             self?.renderType()
         }
-        let inRange = facets.map { f in
-            UIAction(title: types.label(f.type), subtitle: format.count(f.count), image: TrackTypes.icon(types.kind(f.type)), state: f.type == type ? .on : .off) { _ in pick(f.type) }
-        }
-        let shown = Set(facets.map(\.type))
-        let others = types.known.filter { !shown.contains($0) }.map { t in
-            UIAction(title: types.label(t), image: TrackTypes.icon(types.kind(t)), state: t == type ? .on : .off) { _ in pick(t) }
-        }
-        typeButton.menu = UIMenu(children: [UIMenu(options: .displayInline, children: inRange), UIMenu(options: .displayInline, children: others)])
     }
 
     private func save() {

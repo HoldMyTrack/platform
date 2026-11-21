@@ -1,0 +1,10 @@
+{
+  "rule": "typeOptions",
+  "description": "The Type picker's rows before any search (docs/SPEC.md FR-5.5): known ({ type, count }) in its order, led by current with count 0 when none of them is it, so the current choice is always listed. An empty current, a mixed group's, adds nothing.",
+  "cases": [
+    { "name": "a current type not known leads", "input": { "current": "Solowheel", "known": [{ "type": "walking", "count": 2 }, { "type": "running", "count": 1 }] }, "expected": [{ "type": "Solowheel", "count": 0 }, { "type": "walking", "count": 2 }, { "type": "running", "count": 1 }] },
+    { "name": "a known current keeps its place", "input": { "current": "running", "known": [{ "type": "walking", "count": 2 }, { "type": "running", "count": 1 }] }, "expected": [{ "type": "walking", "count": 2 }, { "type": "running", "count": 1 }] },
+    { "name": "a mixed group adds nothing", "input": { "current": "", "known": [{ "type": "walking", "count": 2 }] }, "expected": [{ "type": "walking", "count": 2 }] },
+    { "name": "the current type alone when none is known", "input": { "current": "walking", "known": [] }, "expected": [{ "type": "walking", "count": 0 }] }
+  ]
+}

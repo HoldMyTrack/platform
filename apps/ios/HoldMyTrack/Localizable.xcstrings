@@ -9236,60 +9236,6 @@
         }
       }
     },
-    "recording.otherType" : {
-      "comment" : "A recording's type menu: type a new one.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Other…"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Другой…"
-          }
-        }
-      }
-    },
-    "recording.otherTypeAdd" : {
-      "comment" : "A recording's new type: use what was typed.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Use"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Выбрать"
-          }
-        }
-      }
-    },
-    "recording.otherTypeTitle" : {
-      "comment" : "A recording's new type: the prompt's title.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Track type"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Тип трека"
-          }
-        }
-      }
-    },
     "recording.paused" : {
       "comment" : "Recording: paused, and the distance so far.",
       "extractionState" : "manual",
@@ -10467,6 +10413,96 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добро пожаловать в HoldMyTrack"
+          }
+        }
+      }
+    },
+    "typePicker.add" : {
+      "comment" : "The Type picker: the last row, saving what was typed as a new type.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add “%@”"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить «%@»"
+          }
+        }
+      }
+    },
+    "typePicker.new" : {
+      "comment" : "The Type picker: the detail of the row adding a new type.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "новый"
+          }
+        }
+      }
+    },
+    "typePicker.noMatch" : {
+      "comment" : "The Type picker: nothing matches the search, too long to add.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No type matches “%@”"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет типа, подходящего под «%@»"
+          }
+        }
+      }
+    },
+    "typePicker.search" : {
+      "comment" : "The Type picker's search field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search or add a type"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Найдите или добавьте тип"
+          }
+        }
+      }
+    },
+    "typePicker.title" : {
+      "comment" : "The Type picker's title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track type"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тип трека"
           }
         }
       }

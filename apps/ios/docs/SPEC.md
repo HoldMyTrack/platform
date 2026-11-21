@@ -106,7 +106,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
 As the Android app's (`apps/android/docs/SPEC.md` FR-5.2), except as below.
 
 - The Sync tab is a list of the recordings, not the map: they aren't drawn, and no overlap is marked. A swipe deletes a recording, asked first; no row is hidden.
-- The type menu lists the types the phone's recordings use, most used first, then the server's, and Other… types a new one.
 - Download GPX goes to the share sheet, which saves to Files among its choices.
 
 ## 8. Non-Functional Requirements (summary)
