@@ -32,9 +32,9 @@ func TestAuthHandoffStartsSession(t *testing.T) {
 	}
 }
 
-// A token without a nonce is refused: every build MIN_ANDROID_BUILD lets in asks for one, so a
-// token without it was copied from somewhere.
-func TestGoogleTokenWithoutNonceIsRefused(t *testing.T) {
+// A token without a nonce signs in while MIN_ANDROID_BUILD lets in builds before the nonce, and is
+// refused once it doesn't (googleNonceAndroidBuild).
+func TestGoogleTokenWithoutNonce(t *testing.T) {
 	d := newDBTest(t)
 	key := newRSAKey(t)
 	certs := &fakeCerts{keys: map[string]*rsa.PublicKey{"k1": &key.PublicKey}}
@@ -51,8 +51,15 @@ func TestGoogleTokenWithoutNonceIsRefused(t *testing.T) {
 		}
 	})
 	token := signedIDToken(t, key, map[string]string{"alg": "RS256", "kid": "k1"}, claims)
-	if rec := d.do(account{}, "POST", "/v2/auth/google/token", map[string]string{"id_token": token, "tz": "Europe/Berlin"}); rec.Code != http.StatusUnauthorized {
-		t.Fatalf("a token without a nonce: status %d, want 401", rec.Code)
+	post := func() int {
+		return d.do(account{}, "POST", "/v2/auth/google/token", map[string]string{"id_token": token, "tz": "Europe/Berlin"}).Code
+	}
+	if code := post(); code != http.StatusOK {
+		t.Fatalf("no minimum build: status %d, want 200", code)
+	}
+	d.srv.SetMinAndroidBuild(googleNonceAndroidBuild)
+	if code := post(); code != http.StatusUnauthorized {
+		t.Fatalf("minimum build past the nonce: status %d, want 401", code)
 	}
 }
 

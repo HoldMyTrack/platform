@@ -171,14 +171,15 @@ func (s *Server) handleGoogleToken(w http.ResponseWriter, r *http.Request) {
 		fail("id_token", err)
 		return
 	}
-	// Every Android build MIN_ANDROID_BUILD lets in asks for a nonce, so a token without one is a copy.
-	if claims.Nonce == "" {
+	if claims.Nonce == "" && s.minAndroidBuild >= googleNonceAndroidBuild {
 		fail("nonce", errNoGoogleNonce)
 		return
 	}
-	if err := s.spendGoogleNonce(ctx, claims.Nonce); err != nil {
-		fail("nonce", err)
-		return
+	if claims.Nonce != "" {
+		if err := s.spendGoogleNonce(ctx, claims.Nonce); err != nil {
+			fail("nonce", err)
+			return
+		}
 	}
 	tz, _ := normalizeTimezone(req.TZ)
 	userID, err := s.resolveVerifiedUser(ctx, "google", claims.Sub, claims.Email, claims.Name, tz)
@@ -188,6 +189,11 @@ func (s *Server) handleGoogleToken(w http.ResponseWriter, r *http.Request) {
 	}
 	s.writeSession(w, r, userID, sessionTTL, http.StatusOK)
 }
+
+// googleNonceAndroidBuild is the first Android build that asks for a nonce. Once MIN_ANDROID_BUILD
+// reaches it, no build the server answers posts a token without one, so such a token is refused as
+// a copy; below it, an older build's token without a nonce still signs in.
+const googleNonceAndroidBuild = 2516
 
 var errNoGoogleNonce = errors.New("id_token carries no nonce")
 
