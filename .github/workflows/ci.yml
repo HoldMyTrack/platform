@@ -154,7 +154,9 @@ jobs:
           cache-dependency-path: services/server/go.sum
       # One package at a time: the database tests share one database, and the worker's claim
       # takes any runnable job in it, another package's included (docs/DEVELOPMENT.md).
-      - run: go test -p 1 -coverprofile=coverage.out ./...
+      # -coverpkg credits a package for lines any package's tests run: ingest is driven mostly by
+      # httpapi's and the worker's tests, and without it counted only its own.
+      - run: go test -p 1 -coverpkg=./... -coverprofile=coverage.out ./...
       # Coverage of the Go unit tests only: the Playwright suites exercise far more of the
       # server but aren't instrumented. Informational (codecov.yml), never a merge gate, and
       # an upload failure doesn't fail the build.

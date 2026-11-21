@@ -2,6 +2,7 @@
   "all": true,
   "src": ["src"],
   "include": ["src/**"],
+  "exclude": ["src/apiSchema.ts"],
   "extension": [".ts", ".tsx"],
   "reporter": ["text-summary", "lcov"],
   "reports-dir": "coverage"
