@@ -1178,17 +1178,6 @@
         }
       }
     },
-    "Distance: %@" : {
-      "comment" : "Tracks panel: the focused track's distance.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Расстояние: %@"
-          }
-        }
-      }
-    },
     "Dog park" : {
       "comment" : "Spot popup: a place's category.",
       "localizations" : {
@@ -1893,17 +1882,6 @@
         }
       }
     },
-    "Moving: %@" : {
-      "comment" : "Tracks panel: the focused track's moving time.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В движении: %@"
-          }
-        }
-      }
-    },
     "Name" : {
       "comment" : "A name field: a track's or a Trip's.",
       "localizations" : {
@@ -1911,17 +1889,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Название"
-          }
-        }
-      }
-    },
-    "Name and description stay each track's own." : {
-      "comment" : "Edit window, for a group.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Название и описание у каждого трека останутся своими."
           }
         }
       }
@@ -1977,6 +1944,168 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Следующая фотография"
+          }
+        }
+      }
+    },
+    "card.delete" : {
+      "comment" : "The focused track's card: delete it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить"
+          }
+        }
+      }
+    },
+    "card.distance" : {
+      "comment" : "The focused track's card: its distance.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Расстояние"
+          }
+        }
+      }
+    },
+    "card.edit" : {
+      "comment" : "The focused track's card: edit it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить"
+          }
+        }
+      }
+    },
+    "card.hide" : {
+      "comment" : "The focused track's card: hide it on the map.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрыть"
+          }
+        }
+      }
+    },
+    "card.moving" : {
+      "comment" : "The focused track's card: its moving time.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moving"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В движении"
+          }
+        }
+      }
+    },
+    "card.show" : {
+      "comment" : "The focused track's card: show a hidden track on the map.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать"
+          }
+        }
+      }
+    },
+    "card.trip" : {
+      "comment" : "The focused track's card: add it to a Trip.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trip"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Путешествие"
+          }
+        }
+      }
+    },
+    "card.zoom" : {
+      "comment" : "The focused track's card: fly the camera to it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "На карту"
+          }
+        }
+      }
+    },
+    "edit.multiReason" : {
+      "comment" : "Edit over several tracks: why Name and Description are greyed out.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editing multiple tracks changes their type and Trips — name and description are per-track."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "При редактировании нескольких треков меняются тип и путешествия — название и описание у каждого трека свои."
           }
         }
       }
@@ -3660,17 +3789,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Треки, которые начинаются или заканчиваются внутри него, снова покажут эти части после повторной обработки."
-          }
-        }
-      }
-    },
-    "Tracks: %@" : {
-      "comment" : "A count of tracks, written as label: N.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Треки: %@"
           }
         }
       }
@@ -8865,6 +8983,98 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "или"
+          }
+        }
+      }
+    },
+    "panel.footer" : {
+      "comment" : "The Tracks tab's footer: how many tracks the toolbar acts on, and their distance.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ checked · %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отмечено: %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "panel.trackCount" : {
+      "comment" : "A count of tracks: the number for the plural, then the number as written.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ %1$#@tracks@"
+          },
+          "substitutions" : {
+            "tracks" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "track"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "tracks"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ %1$#@tracks@"
+          },
+          "substitutions" : {
+            "tracks" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "трек"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "трека"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "треков"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "трека"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

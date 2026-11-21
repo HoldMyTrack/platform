@@ -46,9 +46,16 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var cardActions: ActionButtons!
 
     private let cardIcon = UIImageView()
-    private let cardTitle = Controls.label("", font: Typeface.sans(DesignTokens.Text.xl, weight: DesignTokens.Weight.semibold), color: UIColor(resource: .ink))
+    private let cardTitle = Controls.label("", font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
     private let cardMeta = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
-    private let cardStats = Controls.label("", font: Typeface.sans(DesignTokens.Text.md), color: UIColor(resource: .ink))
+    /// Distance, Moving and Pace or Speed, each a tile, as on Android; a private track's note instead.
+    private let cardStats = UIStackView()
+    private let cardDistance = TracksPanel.statValue("cardDistance")
+    private let cardMoving = TracksPanel.statValue("cardMoving")
+    private let cardPace = TracksPanel.statValue("cardPace")
+    private let cardPaceLabel = TracksPanel.statLabel("")
+    private let cardPrivate = Controls.label(String(localized: "Private: inside a Private location, so it has no route or numbers."),
+                                             font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     /// The pace bands' legend, slowest first, while the map draws them.
     private let cardBands = UIStackView()
     private let bandSteps = UIStackView()
@@ -68,20 +75,45 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         self.demo = demo
         super.init()
         barActions = makeActions(prefix: "bar")
-        cardActions = makeActions(prefix: "card")
+        cardActions = makeActions(prefix: "card", labelled: true)
         buildContent()
         buildCard()
     }
 
     // MARK: Building
 
-    private func makeActions(prefix: String) -> ActionButtons {
+    /// The toolbar's icon buttons, or labelled ones for the card: Hide, Edit, Trip, Zoom and
+    /// Delete, each its word under its icon, as Android's card has them.
+    private func makeActions(prefix: String, labelled: Bool = false) -> ActionButtons {
+        func button(_ icon: UIImage, _ label: String, _ word: String, id: String, danger: Bool = false) -> UIButton {
+            guard labelled else { return Controls.iconButton(icon, label: label, id: id) }
+            var config = UIButton.Configuration.plain()
+            config.image = Controls.icon(icon, size: 20)
+            config.imagePlacement = .top
+            config.imagePadding = DesignTokens.Space.s4
+            config.title = word
+            config.baseForegroundColor = UIColor(resource: danger ? .danger : .ink)
+            config.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 2, bottom: 4, trailing: 2)
+            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
+                var a = a
+                a.font = Typeface.sans(DesignTokens.Text.xs, weight: DesignTokens.Weight.semibold, relativeTo: .caption1)
+                return a
+            }
+            config.titleLineBreakMode = .byClipping
+            let b = UIButton(configuration: config)
+            // A fifth of the card each: a long word ("На карту") shrinks rather than being cut.
+            b.titleLabel?.adjustsFontSizeToFitWidth = true
+            b.titleLabel?.minimumScaleFactor = 0.6
+            b.accessibilityLabel = label
+            b.accessibilityIdentifier = id
+            return b
+        }
         let a = ActionButtons(
-            visibility: Controls.iconButton(UIImage(resource: .eye), label: String(localized: "Hide"), id: "\(prefix)Visibility"),
-            edit: Controls.iconButton(UIImage(resource: .pencil), label: String(localized: "Edit"), id: "\(prefix)Edit"),
-            addToTrip: Controls.iconButton(UIImage(resource: .bookPlus), label: String(localized: "Add to trip"), id: "\(prefix)AddToTrip"),
-            delete: Controls.iconButton(UIImage(resource: .trash2), label: String(localized: "Delete"), id: "\(prefix)Delete"),
-            focus: Controls.iconButton(UIImage(resource: .focus), label: String(localized: "Fly to"), id: "\(prefix)Focus")
+            visibility: button(UIImage(resource: .eye), String(localized: "Hide"), String(localized: "card.hide", defaultValue: "Hide", comment: "The focused track's card: hide it on the map."), id: "\(prefix)Visibility"),
+            edit: button(UIImage(resource: .pencil), String(localized: "Edit"), String(localized: "card.edit", defaultValue: "Edit", comment: "The focused track's card: edit it."), id: "\(prefix)Edit"),
+            addToTrip: button(UIImage(resource: .bookPlus), String(localized: "Add to trip"), String(localized: "card.trip", defaultValue: "Trip", comment: "The focused track's card: add it to a Trip."), id: "\(prefix)AddToTrip"),
+            delete: button(UIImage(resource: .trash2), String(localized: "Delete"), String(localized: "card.delete", defaultValue: "Delete", comment: "The focused track's card: delete it."), id: "\(prefix)Delete", danger: true),
+            focus: button(UIImage(resource: .focus), String(localized: "Fly to"), String(localized: "card.zoom", defaultValue: "Zoom", comment: "The focused track's card: fly the camera to it."), id: "\(prefix)Focus")
         )
         a.visibility.addAction(UIAction { [weak self] _ in self?.onEvent?(.toggleVisibility) }, for: .primaryActionTriggered)
         a.edit.addAction(UIAction { [weak self] _ in self?.onEvent?(.edit) }, for: .primaryActionTriggered)
@@ -204,8 +236,23 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let top = UIStackView(arrangedSubviews: [cardIcon, titles, close])
         top.spacing = DesignTokens.Space.s8
         top.alignment = .center
-        let actions = UIStackView(arrangedSubviews: cardActions.all)
-        actions.distribution = .equalSpacing
+        // Android's order: Hide, Edit, Trip, Zoom, Delete.
+        let actions = UIStackView(arrangedSubviews: [cardActions.visibility, cardActions.edit, cardActions.addToTrip, cardActions.focus, cardActions.delete])
+        actions.distribution = .fillEqually
+        for (label, value) in [(TracksPanel.statLabel(String(localized: "card.distance", defaultValue: "Distance", comment: "The focused track's card: its distance.")), cardDistance),
+                               (TracksPanel.statLabel(String(localized: "card.moving", defaultValue: "Moving", comment: "The focused track's card: its moving time.")), cardMoving),
+                               (cardPaceLabel, cardPace)] {
+            let tile = Controls.column([label, value], spacing: 2)
+            tile.isLayoutMarginsRelativeArrangement = true
+            tile.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10)
+            tile.backgroundColor = UIColor(resource: .surfaceTint)
+            tile.layer.cornerRadius = DesignTokens.Radius.md
+            tile.isAccessibilityElement = true
+            cardStats.addArrangedSubview(tile)
+        }
+        cardStats.distribution = .fillEqually
+        cardStats.spacing = DesignTokens.Space.s8
+        cardPrivate.numberOfLines = 0
         let legend = Typeface.sans(DesignTokens.Text.xs, relativeTo: .caption2)
         bandSteps.spacing = DesignTokens.Space.s2
         bandSteps.distribution = .fillEqually
@@ -218,7 +265,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         cardBands.alignment = .center
         cardBands.isHidden = true
         cardBands.accessibilityIdentifier = "cardBands"
-        let column = Controls.column([top, cardStats, cardBands, actions], spacing: DesignTokens.Space.s4)
+        let column = Controls.column([top, cardStats, cardPrivate, cardBands, actions], spacing: DesignTokens.Space.s8)
         column.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(column)
         NSLayoutConstraint.activate([
@@ -255,8 +302,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         renderToolbar()
         renderCard()
         let targets = state.targets.compactMap { byID[$0.id] }
-        footer.text = targets.isEmpty ? nil : [targetName(targets), format.totalDistance(targets.compactMap(\.distanceMeters).reduce(0, +))].joined(separator: " · ")
-        footer.isHidden = footer.text == nil
+        footer.text = format.checkedFooter(count: targets.count, meters: targets.compactMap(\.distanceMeters).reduce(0, +))
     }
 
     /// Whether the card shows at the head: something focused and nothing checked.
@@ -352,6 +398,9 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             describe(actions.delete, use.delete, demo: String(localized: "The demo account can't delete tracks"), String(localized: "Delete \(name ?? "")"))
             describe(actions.focus, use.focus, String(localized: "Fly to \(name ?? "")"))
         }
+        cardActions.visibility.configuration?.title = anyHidden
+            ? String(localized: "card.show", defaultValue: "Show", comment: "The focused track's card: show a hidden track on the map.")
+            : String(localized: "card.hide", defaultValue: "Hide", comment: "The focused track's card: hide it on the map.")
     }
 
     /// Each action says what it would do, or why it can't; a disabled one stays in view.
@@ -359,7 +408,9 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         button.isEnabled = use.enabled
         if let image {
             var config = button.configuration
-            config?.image = image
+            // The card's labelled buttons draw their icons at 20 points, as they're built.
+            let labelled = config?.title != nil
+            config?.image = labelled ? Controls.icon(image, size: 20) : image
             button.configuration = config
         }
         button.accessibilityLabel = switch use {
@@ -392,16 +443,29 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         cardTitle.text = format.label(track)
         cardMeta.text = ([track.title != nil ? format.startedAt(track) : nil, TrackTypes.shared.label(track.trackType)] as [String?])
             .compactMap { $0 }.joined(separator: " · ")
-        if track.isPrivate {
-            cardStats.text = String(localized: "Private: inside a Private location, so it has no route or numbers.")
-        } else {
-            let speed = kind.showsPace ? String(localized: "Pace") : String(localized: "Speed")
-            cardStats.text = [
-                String(localized: "Distance: \(format.distance(track.distanceMeters))"),
-                String(localized: "Moving: \(format.duration(track.movingSeconds))"),
-                "\(speed): \(format.paceOrSpeed(kind, meters: track.distanceMeters, seconds: track.movingSeconds))",
-            ].joined(separator: "  ·  ")
+        // A private track has no numbers worth showing: what it is stands in for them.
+        cardStats.isHidden = track.isPrivate
+        cardPrivate.isHidden = !track.isPrivate
+        cardPaceLabel.text = kind.showsPace ? String(localized: "Pace") : String(localized: "Speed")
+        cardDistance.text = format.distance(track.distanceMeters)
+        cardMoving.text = format.duration(track.movingSeconds)
+        cardPace.text = format.paceOrSpeed(kind, meters: track.distanceMeters, seconds: track.movingSeconds)
+        for tile in cardStats.arrangedSubviews {
+            tile.accessibilityLabel = (tile as? UIStackView)?.arrangedSubviews.compactMap { ($0 as? UILabel)?.text }.joined(separator: ", ")
         }
+    }
+
+    private static func statLabel(_ text: String) -> UILabel {
+        Controls.label(text, font: Typeface.sans(DesignTokens.Text.xs, relativeTo: .caption2), color: UIColor(resource: .inkSecondary))
+    }
+
+    private static func statValue(_ id: String) -> UILabel {
+        let label = Controls.label("", font: Typeface.sans(DesignTokens.Text.lg, weight: DesignTokens.Weight.semibold, relativeTo: .body), color: UIColor(resource: .ink))
+        label.accessibilityIdentifier = id
+        label.numberOfLines = 1
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.7
+        return label
     }
 
     // MARK: Distance

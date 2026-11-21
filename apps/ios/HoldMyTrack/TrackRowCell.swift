@@ -3,7 +3,8 @@ import UIKit
 
 /// One track row (root docs/SPEC.md FR-5.1, the web's TrackRow), on the Tracks tab and
 /// under an open Trip: the title, "[date ·] distance · duration · type", dimmed with a Pending
-/// or Hidden badge, a Private badge, and a Trip badge for the Trips it's in but the open one.
+/// or Hidden badge, a Private badge, and a Trip badge for the Trips it's in but the open one,
+/// the badges in a column on the right, as on Android.
 /// Its kind's tile is its checkbox: a tap on it, or a long press on the row, checks it.
 final class TrackRowCell: UITableViewCell {
     static let reuse = "track"
@@ -37,10 +38,17 @@ final class TrackRowCell: UITableViewCell {
         tile.addAction(UIAction { [weak self] _ in self?.onCheck?() }, for: .primaryActionTriggered)
         tile.accessibilityIdentifier = "rowTile"
 
-        title.numberOfLines = 2
-        meta.numberOfLines = 2
-        badges.spacing = DesignTokens.Space.s6
-        badges.alignment = .center
+        title.numberOfLines = 1
+        meta.numberOfLines = 1
+        title.lineBreakMode = .byTruncatingTail
+        meta.lineBreakMode = .byTruncatingTail
+        badges.axis = .vertical
+        badges.spacing = DesignTokens.Space.s4
+        badges.alignment = .trailing
+        // The badges keep their width over the meta line, but the title over them.
+        badges.setContentHuggingPriority(.required, for: .horizontal)
+        badges.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+        title.setContentCompressionResistancePriority(.defaultHigh + 1, for: .horizontal)
 
         var removeConfig = UIButton.Configuration.plain()
         removeConfig.image = UIImage(resource: .x)
@@ -50,8 +58,8 @@ final class TrackRowCell: UITableViewCell {
         remove.accessibilityIdentifier = "removeFromTrip"
         remove.addAction(UIAction { [weak self] _ in self?.onRemove?() }, for: .primaryActionTriggered)
 
-        let text = Controls.column([title, meta, badges], spacing: DesignTokens.Space.s2)
-        let row = UIStackView(arrangedSubviews: [tile, text, remove])
+        let text = Controls.column([title, meta], spacing: DesignTokens.Space.s2)
+        let row = UIStackView(arrangedSubviews: [tile, text, badges, remove])
         row.spacing = DesignTokens.Space.s12
         row.alignment = .center
         row.translatesAutoresizingMaskIntoConstraints = false
@@ -96,8 +104,6 @@ final class TrackRowCell: UITableViewCell {
         let others = track.trips.filter { $0.id != openTripID }
         if !others.isEmpty { badges.addArrangedSubview(tripBadge(others, onOpenTrip: onOpenTrip)) }
         badges.isHidden = badges.arrangedSubviews.isEmpty
-        // Each badge as wide as its word.
-        badges.addArrangedSubview(UIView())
 
         self.onCheck = onCheck
         let ticked = row.checked && onCheck != nil

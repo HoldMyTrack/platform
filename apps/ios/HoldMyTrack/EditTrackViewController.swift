@@ -103,11 +103,18 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         about.accessibilityLabel = String(localized: "Description")
         about.heightAnchor.constraint(greaterThanOrEqualToConstant: 120).isActive = true
 
-        var views: [UIView] = [Self.caption(String(localized: "Type")), typeButton]
-        if single != nil {
-            views += [Self.caption(String(localized: "Name")), name, Self.caption(String(localized: "Description")), about]
-        } else {
-            views.append(Controls.body(String(localized: "Name and description stay each track's own.")))
+        // Several tracks show Name and Description greyed out, with why, as on Android.
+        var views: [UIView] = [Self.caption(String(localized: "Type")), typeButton,
+                               Self.caption(String(localized: "Name")), name, Self.caption(String(localized: "Description")), about]
+        if single == nil {
+            name.alpha = 0.5
+            about.alpha = 0.5
+            about.isSelectable = false
+            about.accessibilityTraits.insert(.notEnabled)
+            let note = Controls.body(String(localized: "edit.multiReason", defaultValue: "Editing multiple tracks changes their type and Trips — name and description are per-track.",
+                                            comment: "Edit over several tracks: why Name and Description are greyed out."))
+            note.accessibilityIdentifier = "editMultiNote"
+            views.append(note)
         }
         for v in views { fields.addArrangedSubview(v) }
         fields.axis = .vertical
@@ -159,6 +166,8 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
     /// The tabs' labels: Route and Photos marked while they have unsaved changes, Photos with
     /// the count Save would leave.
     private func renderTabs() {
+        // Several tracks have no tabs: there's nothing to label.
+        guard tabs.numberOfSegments == 3 else { return }
         let routeChanged = routeEditor?.session?.changed == true
         tabs.setTitle(routeChanged ? String(localized: "Route •", comment: "Edit window's tab with unsaved route changes.") : String(localized: "Route"), forSegmentAt: 1)
         if let photos {

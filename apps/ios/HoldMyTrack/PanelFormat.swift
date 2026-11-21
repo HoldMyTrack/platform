@@ -81,12 +81,30 @@ struct PanelFormat {
     /// An ISO 8601 moment as "Oct 11, 2026, 9:39 AM", in zone, else the account's (TrackZone).
     func moment(_ iso: String, zone: String) -> String {
         guard let date = Self.iso(iso) else { return iso }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        if let zone = TrackZone.of(own: zone, account: accountZone) { formatter.timeZone = TimeZone(identifier: zone) }
-        return formatter.string(from: date)
+        return Self.dateTime(date, zone: TrackZone.of(own: zone, account: accountZone).flatMap(TimeZone.init(identifier:)))
     }
+
+    /// A moment as Android writes it, a medium date and a short time joined by a comma:
+    /// "Oct 11, 2026, 9:39 AM", "11 окт. 2026 г., 09:39". iOS's own medium style puts "at"
+    /// between them in English. In zone, else the phone's.
+    static func dateTime(_ date: Date, zone: TimeZone? = nil) -> String {
+        dayFormatter.timeZone = zone ?? .current
+        timeFormatter.timeZone = zone ?? .current
+        return "\(dayFormatter.string(from: date)), \(timeFormatter.string(from: date))"
+    }
+
+    /// Made once: a list formats a moment for every row. Main-thread only, as the screens are.
+    private static let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        return f
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f
+    }()
 
     /// A moment, in epoch seconds, as a time of day ("9:39 AM") in zone, else the account's.
     func clock(_ seconds: Double, zone: String) -> String {
@@ -105,7 +123,15 @@ struct PanelFormat {
         [trackCount(count), totalDistance(meters), duration(seconds)].joined(separator: " · ")
     }
 
-    func trackCount(_ n: Int) -> String { String(localized: "Tracks: \(count(n))", comment: "A count of tracks, written as label: N.") }
+    /// "6 tracks", "1,234 tracks", as Android counts them: the count grouped, the plural from n.
+    func trackCount(_ n: Int) -> String {
+        String(localized: "panel.trackCount", defaultValue: "\(n) \(count(n)) tracks", comment: "A count of tracks: the number for the plural, then the number as written.")
+    }
+
+    /// The Tracks tab's footer: "2 checked · 12.4 km", the toolbar's target and its distance.
+    func checkedFooter(count: Int, meters: Double) -> String {
+        String(localized: "panel.footer", defaultValue: "\(self.count(count)) checked · \(totalDistance(meters))", comment: "The Tracks tab's footer: how many tracks the toolbar acts on, and their distance.")
+    }
 
     private static func iso(_ text: String) -> Date? {
         let plain = ISO8601DateFormatter()
