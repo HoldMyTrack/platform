@@ -42,7 +42,8 @@ final class PanelTests: XCTestCase {
 
         app.tabBars.buttons["tabTrips"].tap()
         XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
-        XCTAssertFalse(app.buttons["newTrip"].isEnabled)
+        XCTAssertFalse(app.buttons["newTrip"].exists, "no +: a Trip is made with Add to trip")
+        XCTAssertFalse(app.buttons["tripEdit"].firstMatch.isEnabled, "the demo can't change a Trip")
     }
 
     @MainActor
@@ -123,6 +124,11 @@ final class PanelTests: XCTestCase {
         app.tabBars.buttons["tabTrips"].tap()
         XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
         XCTAssertFalse(modes.exists, "no mode toggle on Trips")
+        XCTAssertTrue(app.staticTexts["By track type"].waitForExistence(timeout: 10), "the open Trip's numbers under its rows")
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "Trips"
+        shot.lifetime = .keepAlways
+        add(shot)
 
         app.tabBars.buttons["tabTracks"].tap()
         XCTAssertTrue(modes.waitForExistence(timeout: 5))

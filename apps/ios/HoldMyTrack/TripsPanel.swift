@@ -49,7 +49,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var inboxTask: Task<Void, Never>?
 
     private enum Item {
-        case send(TripSend), copying(TripCopying), folder(Trip, open: Bool), text(String, small: Bool)
+        case send(TripSend), copying(TripCopying), folder(Trip, open: Bool), text(String, small: Bool), stats(Trip)
         case row(TrackRowCell.Row, tripID: String), note(String, failed: Bool)
     }
     private var items: [Item] = []
@@ -59,15 +59,14 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         self.format = format
         self.demo = demo
         super.init()
+        // As on Android, no +: a Trip is made from tracks, with Add to trip.
         let title = Controls.label(String(localized: "Trips"), font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
-        let create = Controls.iconButton(UIImage(resource: .plus), label: demo ? String(localized: "The demo account can't change a Trip") : String(localized: "New trip"), id: "newTrip")
-        create.isEnabled = !demo
-        create.addAction(UIAction { [weak self] _ in self?.create() }, for: .primaryActionTriggered)
-        let row = UIStackView(arrangedSubviews: [title, UIView(), create])
-        row.alignment = .center
         head.axis = .vertical
-        head.addArrangedSubview(row)
-        head.addArrangedSubview(Controls.label(String(localized: "A Trip shows its own tracks instead of what's on the map."), font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary)))
+        head.addArrangedSubview(title)
+        let subtext = Controls.label(String(localized: "trips.subtext", defaultValue: "Hand-picked sets of your tracks. Only you can see them.", comment: "The Trips tab: what a Trip is."),
+                                     font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
+        subtext.numberOfLines = 0
+        head.addArrangedSubview(subtext)
 
         table.dataSource = self
         table.delegate = self
@@ -222,28 +221,72 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             if let rowsNote {
                 next.append(.note(rowsNote.text, failed: rowsNote.failed))
             } else if rows.isEmpty {
-                next.append(.note(trip.stats.count == 0 ? String(localized: "No tracks in this Trip yet. Add some with Add to trip.") : String(localized: "No tracks match these filters."), failed: false))
+                next.append(.note(trip.stats.count == 0 ? String(localized: "trips.noTracks", defaultValue: "No tracks in this trip.", comment: "An open Trip with no tracks.") : String(localized: "No tracks match these filters."), failed: false))
             }
         }
-        if let trip = openTrip, trip.id == openID, trip.stats.count > 0 {
-            let lines = [line(trip.stats)] + trip.byType.map { "\(TrackTypes.shared.label($0.trackType)): \(line($0))" }
-            if let at = next.lastIndex(where: { if case .row = $0 { true } else { false } }) {
-                next.insert(.text(lines.joined(separator: "\n"), small: true), at: at + 1)
-            }
+        // The whole Trip's numbers, and each type's share, under its rows (Android's footer).
+        if let trip = openTrip, trip.id == openID, trip.stats.count > 0,
+           let at = next.lastIndex(where: { if case .row = $0 { true } else { false } }) {
+            next.insert(.stats(trip), at: at + 1)
         }
         if let error {
             next.append(.note(error, failed: true))
         } else if !ready && trips.isEmpty {
             next.append(.note(String(localized: "Loading…"), failed: false))
         } else if ready && trips.isEmpty {
-            next.append(.note(String(localized: "No Trips yet. Check tracks on the Tracks tab and use Add to trip, or make one with +."), failed: false))
+            next.append(.note(String(localized: "trips.empty", defaultValue: "No trips yet. On the Tracks tab, check the tracks you want, or tap one, then choose Add to trip.", comment: "The Trips tab with no Trips."), failed: false))
         }
         items = next
         table.reloadData()
     }
 
+    /// "3 tracks · 58 km · 3h 26m moving": the Trip's, or one type's share of it.
     private func line(_ totals: TripTotals) -> String {
-        [format.trackCount(totals.count), format.totalDistance(totals.distanceMeters), String(localized: "\(format.duration(totals.movingSeconds)) moving")].joined(separator: " · ")
+        String(localized: "trips.stats", defaultValue: "\(format.trackCount(totals.count)) · \(format.totalDistance(totals.distanceMeters)) · \(format.duration(totals.movingSeconds)) moving",
+               comment: "A Trip's numbers: its tracks, distance and moving time.")
+    }
+
+    /// The open Trip's line, then By track type: each type's label beside its share.
+    private func statsCell(_ trip: Trip) -> UITableViewCell {
+        let cell = table.dequeueReusableCell(withIdentifier: "stats") ?? UITableViewCell(style: .default, reuseIdentifier: "stats")
+        cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+        cell.backgroundColor = .clear
+        cell.selectionStyle = .none
+        let small = Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote)
+        let whole = Controls.label(line(trip.stats), font: Typeface.sans(DesignTokens.Text.md, weight: DesignTokens.Weight.semibold, relativeTo: .subheadline), color: UIColor(resource: .ink))
+        whole.numberOfLines = 0
+        var views: [UIView] = [whole]
+        var typeLabels: [UILabel] = []
+        if !trip.byType.isEmpty {
+            views.append(Controls.label(String(localized: "trips.byType", defaultValue: "By track type", comment: "A Trip's numbers: the heading over each type's."), font: small, color: UIColor(resource: .inkSecondary)))
+            // The types as one column, as Android's table has them: every label as wide as the widest.
+            for type in trip.byType {
+                let label = Controls.label(TrackTypes.shared.label(type.trackType), font: small, color: UIColor(resource: .inkSecondary))
+                let value = Controls.label(line(type), font: small, color: UIColor(resource: .inkSecondary))
+                label.setContentHuggingPriority(.required, for: .horizontal)
+                label.setContentCompressionResistancePriority(.required, for: .horizontal)
+                typeLabels.append(label)
+                value.numberOfLines = 0
+                let row = UIStackView(arrangedSubviews: [label, value])
+                row.spacing = DesignTokens.Space.s12
+                row.alignment = .firstBaseline
+                views.append(row)
+            }
+        }
+        let column = Controls.column(views, spacing: DesignTokens.Space.s4)
+        column.accessibilityIdentifier = "tripStats"
+        column.translatesAutoresizingMaskIntoConstraints = false
+        cell.contentView.addSubview(column)
+        NSLayoutConstraint.activate([
+            column.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: DesignTokens.Space.s12),
+            column.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -DesignTokens.Space.s12),
+            column.leadingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.leadingAnchor),
+            column.trailingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.trailingAnchor),
+        ])
+        // Every type label as wide as the widest, measured, so the shares line up as a column.
+        let widest = typeLabels.map { ceil($0.intrinsicContentSize.width) }.max() ?? 0
+        NSLayoutConstraint.activate(typeLabels.map { $0.widthAnchor.constraint(equalToConstant: widest) })
+        return cell
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { items.count }
@@ -266,6 +309,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             return inboxCell(String(localized: "Copying “\(copy.tripName)” from \(copy.from)…"), send: nil)
         case .text(let text, let small):
             return textCell(text, color: UIColor(resource: .inkSecondary), size: small ? DesignTokens.Text.sm : DesignTokens.Text.md)
+        case .stats(let trip):
+            return statsCell(trip)
         case .note(let text, let failed):
             return textCell(text, color: UIColor(resource: failed ? .danger : .inkSecondary), size: DesignTokens.Text.md)
         }
@@ -312,17 +357,39 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         cell.accessibilityIdentifier = "tripFolder"
         cell.accessibilityValue = open ? String(localized: "Open") : String(localized: "Folded")
 
-        let edit = Controls.iconButton(UIImage(resource: .pencil), label: demo ? String(localized: "The demo account can't change a Trip") : String(localized: "Rename \(trip.name)"), id: "tripEdit")
-        let send = Controls.iconButton(UIImage(resource: .send), label: demo ? String(localized: "The demo account can't change a Trip") : String(localized: "Send a copy of \(trip.name)"), id: "tripSend")
-        let delete = Controls.iconButton(UIImage(resource: .trash2), label: demo ? String(localized: "The demo account can't change a Trip") : String(localized: "Delete \(trip.name)"), id: "tripDelete")
+        let edit = Self.chip(.pencil, demo ? String(localized: "The demo account can't change a Trip")
+            : String(localized: "trips.edit", defaultValue: "Edit name and description", comment: "A Trip's folder: rename it."), id: "tripEdit")
+        let send = Self.chip(.send, demo ? String(localized: "The demo account can't change a Trip")
+            : String(localized: "trips.send", defaultValue: "Send a copy", comment: "A Trip's folder: send someone a copy."), id: "tripSend")
+        let delete = Self.chip(.trash2, demo ? String(localized: "The demo account can't change a Trip")
+            : String(localized: "trips.delete", defaultValue: "Delete trip", comment: "A Trip's folder: delete it."), id: "tripDelete")
         for b in [edit, send, delete] { b.isEnabled = !demo }
         edit.addAction(UIAction { [weak self] _ in self?.rename(trip) }, for: .primaryActionTriggered)
         send.addAction(UIAction { [weak self] _ in self?.sendCopy(trip) }, for: .primaryActionTriggered)
         delete.addAction(UIAction { [weak self] _ in self?.confirmDelete(trip) }, for: .primaryActionTriggered)
         let buttons = UIStackView(arrangedSubviews: [edit, send, delete])
-        buttons.frame = CGRect(x: 0, y: 0, width: 132, height: 44)
+        buttons.spacing = DesignTokens.Space.s6
+        buttons.frame = CGRect(x: 0, y: 0, width: 3 * 36 + 2 * DesignTokens.Space.s6, height: 36)
         cell.accessoryView = buttons
         return cell
+    }
+
+    /// A folder's action in its own box, as Android's panel chips.
+    private static func chip(_ icon: ImageResource, _ label: String, id: String) -> UIButton {
+        var config = UIButton.Configuration.bordered()
+        config.image = Controls.icon(UIImage(resource: icon), size: 16)
+        config.cornerStyle = .medium
+        config.baseForegroundColor = UIColor(resource: .ink)
+        config.baseBackgroundColor = UIColor(resource: .surface)
+        config.background.strokeColor = UIColor(resource: .border)
+        config.background.strokeWidth = 1
+        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+        let button = UIButton(configuration: config)
+        button.accessibilityLabel = label
+        button.accessibilityIdentifier = id
+        button.widthAnchor.constraint(equalToConstant: 36).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        return button
     }
 
     private func inboxCell(_ text: String, send: TripSend?) -> UITableViewCell {
@@ -382,22 +449,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
     }
 
-    private func create() {
-        TripDialogs.name(over: table, title: String(localized: "New trip"), name: "", description: "", action: String(localized: "Create")) { [weak self] name, description in
-            guard let self else { return nil }
-            do {
-                let read = try await self.api.createTrip(name: name, description: description, trackIDs: [])
-                self.added(read.trip)
-                self.onEvent?(.open(read.trip.id, collapse: false))
-                return nil
-            } catch {
-                return Self.message(error, String(localized: "The Trip couldn't be saved."))
-            }
-        }
-    }
-
     private func rename(_ trip: Trip) {
-        TripDialogs.name(over: table, title: String(localized: "Rename trip"), name: trip.name, description: trip.description, action: String(localized: "Save")) { [weak self] name, description in
+        TripDialogs.name(over: table, title: String(localized: "trips.editTitle", defaultValue: "Edit trip", comment: "The dialog renaming a Trip: its title."), name: trip.name, description: trip.description, action: String(localized: "Save")) { [weak self] name, description in
             guard let self else { return nil }
             do {
                 let read = try await self.api.updateTrip(trip.id, name: name, description: description)
@@ -425,9 +478,9 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     private func confirmDelete(_ trip: Trip) {
-        TripDialogs.confirm(over: table, title: String(localized: "Delete this Trip?"),
-                             message: String(localized: "“\(trip.name)” will be deleted. Its tracks stay on your map."),
-                             action: String(localized: "Delete trip")) { [weak self] in
+        TripDialogs.confirm(over: table, title: String(localized: "trips.deleteTitle", defaultValue: "Delete trip", comment: "Deleting a Trip: the dialog's title."),
+                             message: String(localized: "trips.deleteMessage", defaultValue: "Delete “\(trip.name)”? Its tracks stay.", comment: "Deleting a Trip: the question, with its name."),
+                             action: String(localized: "trips.deleteButton", defaultValue: "Delete trip", comment: "Deleting a Trip: the button.")) { [weak self] in
             guard let self else { return nil }
             do {
                 try await self.api.deleteTrip(trip.id)

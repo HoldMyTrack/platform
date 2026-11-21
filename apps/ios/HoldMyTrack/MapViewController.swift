@@ -237,9 +237,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         super.viewDidDisappear(animated)
         coverageTask?.cancel()
         countSatelliteWait(onScreen: false)
-        // Leaving the map ends a capture and drops the Private location editor's draft: iOS has
-        // no Back, and the Tracks tab is where they show.
-        capturing.stop()
+        // A capture goes on across a tab switch, as on Android; leaving the map drops the Private
+        // location editor's draft: iOS has no Back, and the Tracks tab is where it shows.
         closePrivateEditor()
         closeExport()
         dismissMenus()

@@ -56,17 +56,6 @@
         }
       }
     },
-    "%@ moving" : {
-      "comment" : "Trips tab: a Trip's moving time; the placeholder is the duration.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ в движении"
-          }
-        }
-      }
-    },
     "%@ mph" : {
       "comment" : "A speed in miles an hour; the placeholder is the number.",
       "localizations" : {
@@ -261,17 +250,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld с"
-          }
-        }
-      }
-    },
-    "A Trip shows its own tracks instead of what's on the map." : {
-      "comment" : "Trips tab: the line under the title.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Путешествие показывает свои треки вместо тех, что на карте."
           }
         }
       }
@@ -1064,17 +1042,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить это приватное место?"
-          }
-        }
-      }
-    },
-    "Delete this Trip?" : {
-      "comment" : "Trips tab: the delete confirmation's title.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Удалить это путешествие?"
           }
         }
       }
@@ -2132,17 +2099,6 @@
         }
       }
     },
-    "No Trips yet. Check tracks on the Tracks tab and use Add to trip, or make one with +." : {
-      "comment" : "Trips tab: the account has no Trip.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Путешествий пока нет. Отметьте треки на вкладке «Карта» и нажмите «Добавить в путешествие» или создайте путешествие кнопкой +."
-          }
-        }
-      }
-    },
     "No download prepared yet." : {
       "comment" : "Download your data: no copy was asked for.",
       "localizations" : {
@@ -2172,17 +2128,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "В этой области мест нет"
-          }
-        }
-      }
-    },
-    "No tracks in this Trip yet. Add some with Add to trip." : {
-      "comment" : "Trips tab: the open Trip is empty.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В этом путешествии пока нет треков. Добавьте их через «Добавить в путешествие»."
           }
         }
       }
@@ -2759,28 +2704,6 @@
         }
       }
     },
-    "Rename %@" : {
-      "comment" : "Trips tab: a folder's pencil; the placeholder is the Trip's name.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Переименовать: %@"
-          }
-        }
-      }
-    },
-    "Rename trip" : {
-      "comment" : "Trips tab: the rename dialog's title.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Переименовать путешествие"
-          }
-        }
-      }
-    },
     "Resend verification email" : {
       "comment" : "Verify email screen: sends the confirmation link again.",
       "localizations" : {
@@ -2953,17 +2876,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отправить копию"
-          }
-        }
-      }
-    },
-    "Send a copy of %@" : {
-      "comment" : "Trips tab: a folder's send button; the placeholder is the Trip's name.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отправить копию: %@"
           }
         }
       }
@@ -11490,6 +11402,222 @@
         }
       }
     },
+    "trips.byType" : {
+      "comment" : "A Trip's numbers: the heading over each type's.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "By track type"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "По типам треков"
+          }
+        }
+      }
+    },
+    "trips.delete" : {
+      "comment" : "A Trip's folder: delete it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete trip"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить путешествие"
+          }
+        }
+      }
+    },
+    "trips.deleteButton" : {
+      "comment" : "Deleting a Trip: the button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete trip"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить путешествие"
+          }
+        }
+      }
+    },
+    "trips.deleteMessage" : {
+      "comment" : "Deleting a Trip: the question, with its name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete “%@”? Its tracks stay."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить «%@»? Треки останутся."
+          }
+        }
+      }
+    },
+    "trips.deleteTitle" : {
+      "comment" : "Deleting a Trip: the dialog's title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete trip"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить путешествие"
+          }
+        }
+      }
+    },
+    "trips.edit" : {
+      "comment" : "A Trip's folder: rename it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit name and description"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить название и описание"
+          }
+        }
+      }
+    },
+    "trips.editTitle" : {
+      "comment" : "The dialog renaming a Trip: its title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit trip"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить путешествие"
+          }
+        }
+      }
+    },
+    "trips.empty" : {
+      "comment" : "The Trips tab with no Trips.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No trips yet. On the Tracks tab, check the tracks you want, or tap one, then choose Add to trip."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Путешествий пока нет. На вкладке «Треки» отметьте нужные треки или нажмите на один из них, затем — «Добавить в путешествие»."
+          }
+        }
+      }
+    },
+    "trips.noTracks" : {
+      "comment" : "An open Trip with no tracks.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No tracks in this trip."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этом путешествии нет треков."
+          }
+        }
+      }
+    },
+    "trips.send" : {
+      "comment" : "A Trip's folder: send someone a copy.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send a copy"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить копию"
+          }
+        }
+      }
+    },
+    "trips.stats" : {
+      "comment" : "A Trip's numbers: its tracks, distance and moving time.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@ · %3$@ moving"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@ · %3$@ в движении"
+          }
+        }
+      }
+    },
+    "trips.subtext" : {
+      "comment" : "The Trips tab: what a Trip is.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hand-picked sets of your tracks. Only you can see them."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подборки ваших треков. Видны только вам."
+          }
+        }
+      }
+    },
     "typePicker.add" : {
       "comment" : "The Type picker: the last row, saving what was typed as a new type.",
       "extractionState" : "manual",
@@ -11605,17 +11733,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пройти тур"
-          }
-        }
-      }
-    },
-    "“%@” will be deleted. Its tracks stay on your map." : {
-      "comment" : "Trips tab: Delete trip's confirmation; the placeholder is the Trip's name.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "«%@» будет удалено. Его треки останутся на карте."
           }
         }
       }
