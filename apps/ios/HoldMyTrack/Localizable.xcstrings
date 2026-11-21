@@ -8994,28 +8994,28 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld checked · %2$@"
+            "value" : "%1$@ checked · %2$@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отмечено: %1$lld · %2$@"
+            "value" : "Отмечено: %1$@ · %2$@"
           }
         }
       }
     },
     "panel.trackCount" : {
-      "comment" : "A count of tracks.",
+      "comment" : "A count of tracks: the number for the plural, then the number as written.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@n@"
+            "value" : "%2$@ %1$#@tracks@"
           },
           "substitutions" : {
-            "n" : {
+            "tracks" : {
               "argNum" : 1,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -9023,13 +9023,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg track"
+                      "value" : "track"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg tracks"
+                      "value" : "tracks"
                     }
                   }
                 }
@@ -9040,10 +9040,10 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@n@"
+            "value" : "%2$@ %1$#@tracks@"
           },
           "substitutions" : {
-            "n" : {
+            "tracks" : {
               "argNum" : 1,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -9051,25 +9051,25 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg трек"
+                      "value" : "трек"
                     }
                   },
                   "few" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg трека"
+                      "value" : "трека"
                     }
                   },
                   "many" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg треков"
+                      "value" : "треков"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg трека"
+                      "value" : "трека"
                     }
                   }
                 }

@@ -88,12 +88,23 @@ struct PanelFormat {
     /// "Oct 11, 2026, 9:39 AM", "11 окт. 2026 г., 09:39". iOS's own medium style puts "at"
     /// between them in English. In zone, else the phone's.
     static func dateTime(_ date: Date, zone: TimeZone? = nil) -> String {
-        let day = DateFormatter(), time = DateFormatter()
-        day.dateStyle = .medium
-        time.timeStyle = .short
-        if let zone { (day.timeZone, time.timeZone) = (zone, zone) }
-        return "\(day.string(from: date)), \(time.string(from: date))"
+        dayFormatter.timeZone = zone ?? .current
+        timeFormatter.timeZone = zone ?? .current
+        return "\(dayFormatter.string(from: date)), \(timeFormatter.string(from: date))"
     }
+
+    /// Made once: a list formats a moment for every row. Main-thread only, as the screens are.
+    private static let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        return f
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f
+    }()
 
     /// A moment, in epoch seconds, as a time of day ("9:39 AM") in zone, else the account's.
     func clock(_ seconds: Double, zone: String) -> String {
@@ -112,12 +123,14 @@ struct PanelFormat {
         [trackCount(count), totalDistance(meters), duration(seconds)].joined(separator: " · ")
     }
 
-    /// "6 tracks", as Android counts them.
-    func trackCount(_ n: Int) -> String { String(localized: "panel.trackCount", defaultValue: "\(n) tracks", comment: "A count of tracks.") }
+    /// "6 tracks", "1,234 tracks", as Android counts them: the count grouped, the plural from n.
+    func trackCount(_ n: Int) -> String {
+        String(localized: "panel.trackCount", defaultValue: "\(n) \(count(n)) tracks", comment: "A count of tracks: the number for the plural, then the number as written.")
+    }
 
     /// The Tracks tab's footer: "2 checked · 12.4 km", the toolbar's target and its distance.
     func checkedFooter(count: Int, meters: Double) -> String {
-        String(localized: "panel.footer", defaultValue: "\(count) checked · \(totalDistance(meters))", comment: "The Tracks tab's footer: how many tracks the toolbar acts on, and their distance.")
+        String(localized: "panel.footer", defaultValue: "\(self.count(count)) checked · \(totalDistance(meters))", comment: "The Tracks tab's footer: how many tracks the toolbar acts on, and their distance.")
     }
 
     private static func iso(_ text: String) -> Date? {

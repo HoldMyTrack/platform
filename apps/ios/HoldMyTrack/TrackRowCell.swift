@@ -45,8 +45,10 @@ final class TrackRowCell: UITableViewCell {
         badges.axis = .vertical
         badges.spacing = DesignTokens.Space.s4
         badges.alignment = .trailing
+        // The badges keep their width over the meta line, but the title over them.
         badges.setContentHuggingPriority(.required, for: .horizontal)
-        badges.setContentCompressionResistancePriority(.required, for: .horizontal)
+        badges.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+        title.setContentCompressionResistancePriority(.defaultHigh + 1, for: .horizontal)
 
         var removeConfig = UIButton.Configuration.plain()
         removeConfig.image = UIImage(resource: .x)

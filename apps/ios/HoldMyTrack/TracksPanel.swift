@@ -99,7 +99,11 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 a.font = Typeface.sans(DesignTokens.Text.xs, weight: DesignTokens.Weight.semibold, relativeTo: .caption1)
                 return a
             }
+            config.titleLineBreakMode = .byClipping
             let b = UIButton(configuration: config)
+            // A fifth of the card each: a long word ("На карту") shrinks rather than being cut.
+            b.titleLabel?.adjustsFontSizeToFitWidth = true
+            b.titleLabel?.minimumScaleFactor = 0.6
             b.accessibilityLabel = label
             b.accessibilityIdentifier = id
             return b
@@ -458,6 +462,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private static func statValue(_ id: String) -> UILabel {
         let label = Controls.label("", font: Typeface.sans(DesignTokens.Text.lg, weight: DesignTokens.Weight.semibold, relativeTo: .body), color: UIColor(resource: .ink))
         label.accessibilityIdentifier = id
+        label.numberOfLines = 1
         label.adjustsFontSizeToFitWidth = true
         label.minimumScaleFactor = 0.7
         return label
