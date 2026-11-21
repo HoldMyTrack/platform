@@ -136,7 +136,7 @@ public enum TourRules {
 public enum TourTarget: Sendable { case sheet, dates, layers, places, export, modes, fogLevel, record, page, youTour }
 
 /// A map menu the tour can hold open.
-public enum TourMenu: CaseIterable, Sendable { case layers, places }
+public enum TourMenu: CaseIterable, Sendable { case layers, places, fogLevel }
 
 /// One step of the tour. tab is the tab bar's tab for the step, mode the map's, sheet whether the
 /// map's sheet is open, menu the map menu held open; the user's come back when the tour ends. view
@@ -201,9 +201,9 @@ public enum TourSteps {
                 TourStep("fog_cities", .modes, mode: .fog, view: city),
                 TourStep("fog_counties", .modes, mode: .fog, view: counties),
                 TourStep("fog_regions", .modes, mode: .fog, view: regions),
-                TourStep("fog_countries", .fogLevel, mode: .fog, view: countries),
+                TourStep("fog_countries", .fogLevel, mode: .fog, menu: .fogLevel, view: countries),
             ]
-            : [TourStep("fog", .fogLevel, mode: .fog, card: .fog)]
+            : [TourStep("fog", .fogLevel, mode: .fog, menu: .fogLevel, card: .fog)]
         return [
             TourStep("welcome", nil),
             TourStep("tracks", .sheet, sheet: true),
@@ -226,7 +226,9 @@ public enum TourSteps {
         return step.sheet ? .half : .collapsed
     }
 
-    /// Each map menu, and whether step holds it open; at the end (nil) every one is let go.
+    /// Each map menu, and whether step holds it open; at the end (nil) every one is let go. The
+    /// app applies them after the step's mode: Fog's level menu hangs from Fog's button, and a mode
+    /// change would close it again.
     public static func menus(_ step: TourStep?) -> [(menu: TourMenu, open: Bool)] {
         TourMenu.allCases.map { ($0, step?.menu == $0) }
     }

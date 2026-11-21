@@ -17,8 +17,11 @@ struct TourTests {
     @Test func theLayersAndPlacesStepsEachHoldTheirMenuOpenAndTheEndLetsGo() {
         let steps = TourSteps.of(isDemo: false)
         let layers = steps.first { $0.id == "layers" }
-        #expect(TourSteps.menus(layers).map(\.open) == [true, false])
-        #expect(TourSteps.menus(steps.first { $0.id == "places" }).map(\.open) == [false, true])
+        #expect(TourSteps.menus(layers).map(\.open) == [true, false, false])
+        #expect(TourSteps.menus(steps.first { $0.id == "places" }).map(\.open) == [false, true, false])
+        #expect(TourSteps.menus(steps.first { $0.id == "fog" }).map(\.open) == [false, false, true], "Fog's step opens its level menu")
+        let demo = TourSteps.of(isDemo: true).filter { $0.menu == .fogLevel }.map(\.id)
+        #expect(demo == ["fog_countries"], "the demo's last Fog step opens it")
         #expect(TourSteps.menus(steps.first { $0.id == "export" }).allSatisfy { !$0.open })
         #expect(TourSteps.menus(nil).allSatisfy { !$0.open })
     }

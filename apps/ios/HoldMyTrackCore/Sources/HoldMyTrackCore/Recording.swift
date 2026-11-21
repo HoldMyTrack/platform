@@ -151,20 +151,21 @@ public struct Recording: Equatable, Sendable {
     }
 }
 
-/// What the line over the record button says, as values: nothing while idle, the hold's count,
-/// paused with the moving time, waiting for the first fix, or the moving time and distance.
+/// What the recording's status over the map says, as values, Android's: nothing while idle, else
+/// the moving time over the distance, over "Paused" with it while paused, or over waiting for the
+/// first fix.
 public enum RecordingStatus: Equatable, Sendable {
-    case none, holding, waiting
-    case paused(moving: TimeInterval)
+    case none
+    case waiting(moving: TimeInterval)
+    case paused(moving: TimeInterval, meters: Double)
     case running(moving: TimeInterval, meters: Double)
 
-    public static func of(_ recording: Recording, holding: Bool, at now: Date) -> RecordingStatus {
+    public static func of(_ recording: Recording, at now: Date) -> RecordingStatus {
+        let moving = recording.moving(at: now)
         switch recording.state {
         case .idle: return .none
-        case _ where holding: return .holding
-        case .paused: return .paused(moving: recording.moving(at: now))
-        case .recording:
-            return recording.points.isEmpty ? .waiting : .running(moving: recording.moving(at: now), meters: recording.meters)
+        case .paused: return .paused(moving: moving, meters: recording.meters)
+        case .recording: return recording.points.isEmpty ? .waiting(moving: moving) : .running(moving: moving, meters: recording.meters)
         }
     }
 

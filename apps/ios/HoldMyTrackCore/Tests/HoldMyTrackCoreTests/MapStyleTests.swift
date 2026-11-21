@@ -246,6 +246,41 @@ struct MapStyleTests {
         #expect(MapChrome.places(state, picked: 3).greyed)
     }
 
+    @Test func theTopRowHoldsTheToggleTheSelectionBarOrTheRecording() {
+        #expect(MapChrome.modeBarShown(recording: false, editOpen: false, selectionShown: false, onTracksTab: true))
+        #expect(!MapChrome.modeBarShown(recording: true, editOpen: false, selectionShown: false, onTracksTab: true))
+        #expect(!MapChrome.modeBarShown(recording: false, editOpen: true, selectionShown: false, onTracksTab: true))
+        #expect(!MapChrome.modeBarShown(recording: false, editOpen: false, selectionShown: true, onTracksTab: true))
+        #expect(!MapChrome.modeBarShown(recording: false, editOpen: false, selectionShown: false, onTracksTab: false))
+        #expect(MapChrome.selectionShown(sheetVisible: true, selecting: true, onTracksTab: true, editOpen: false))
+        #expect(!MapChrome.selectionShown(sheetVisible: false, selecting: true, onTracksTab: true, editOpen: false))
+        #expect(!MapChrome.selectionShown(sheetVisible: true, selecting: true, onTracksTab: false, editOpen: false))
+        #expect(!MapChrome.selectionShown(sheetVisible: true, selecting: true, onTracksTab: true, editOpen: true))
+    }
+
+    @Test func theRailStepsAsideForAnEditorOrCheckedRowsAndTheCameraComesUnderTheBar() {
+        #expect(MapChrome.railShown(editing: false, selectionShown: false))
+        #expect(!MapChrome.railShown(editing: true, selectionShown: false))
+        #expect(!MapChrome.railShown(editing: false, selectionShown: true))
+        #expect(MapChrome.checkedExportShown(editing: false, selectionShown: true, recording: false))
+        #expect(!MapChrome.checkedExportShown(editing: true, selectionShown: true, recording: false))
+        #expect(!MapChrome.checkedExportShown(editing: false, selectionShown: false, recording: false))
+        #expect(!MapChrome.checkedExportShown(editing: false, selectionShown: true, recording: true))
+    }
+
+    @Test func theTabBarStepsAsideWhileAnEditorOrTheExportHasTheScreen() {
+        #expect(MapChrome.bottomBarShown(editOpen: false, privacyEditing: false, exportOpen: false))
+        #expect(!MapChrome.bottomBarShown(editOpen: true, privacyEditing: false, exportOpen: false))
+        #expect(!MapChrome.bottomBarShown(editOpen: false, privacyEditing: true, exportOpen: false))
+        #expect(!MapChrome.bottomBarShown(editOpen: false, privacyEditing: false, exportOpen: true))
+    }
+
+    @Test func aTapOnFogWhileItsOnOpensItsLevelMenu() {
+        #expect(MapChrome.fogMenuOnTap(tapped: .fog, current: .fog))
+        #expect(!MapChrome.fogMenuOnTap(tapped: .fog, current: .normal))
+        #expect(!MapChrome.fogMenuOnTap(tapped: .normal, current: .fog))
+    }
+
     @Test func showPlacesHidesPlacesAndShowLayersHidesTheRest() {
         var state = MapState()
         state.toggles = ["bikePaths": true, Spots.group: true]
