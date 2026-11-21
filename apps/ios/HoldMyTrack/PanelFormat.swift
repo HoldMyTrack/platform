@@ -81,11 +81,18 @@ struct PanelFormat {
     /// An ISO 8601 moment as "Oct 11, 2026, 9:39 AM", in zone, else the account's (TrackZone).
     func moment(_ iso: String, zone: String) -> String {
         guard let date = Self.iso(iso) else { return iso }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        if let zone = TrackZone.of(own: zone, account: accountZone) { formatter.timeZone = TimeZone(identifier: zone) }
-        return formatter.string(from: date)
+        return Self.dateTime(date, zone: TrackZone.of(own: zone, account: accountZone).flatMap(TimeZone.init(identifier:)))
+    }
+
+    /// A moment as Android writes it, a medium date and a short time joined by a comma:
+    /// "Oct 11, 2026, 9:39 AM", "11 окт. 2026 г., 09:39". iOS's own medium style puts "at"
+    /// between them in English. In zone, else the phone's.
+    static func dateTime(_ date: Date, zone: TimeZone? = nil) -> String {
+        let day = DateFormatter(), time = DateFormatter()
+        day.dateStyle = .medium
+        time.timeStyle = .short
+        if let zone { (day.timeZone, time.timeZone) = (zone, zone) }
+        return "\(day.string(from: date)), \(time.string(from: date))"
     }
 
     /// A moment, in epoch seconds, as a time of day ("9:39 AM") in zone, else the account's.
@@ -105,7 +112,13 @@ struct PanelFormat {
         [trackCount(count), totalDistance(meters), duration(seconds)].joined(separator: " · ")
     }
 
-    func trackCount(_ n: Int) -> String { String(localized: "Tracks: \(count(n))", comment: "A count of tracks, written as label: N.") }
+    /// "6 tracks", as Android counts them.
+    func trackCount(_ n: Int) -> String { String(localized: "panel.trackCount", defaultValue: "\(n) tracks", comment: "A count of tracks.") }
+
+    /// The Tracks tab's footer: "2 checked · 12.4 km", the toolbar's target and its distance.
+    func checkedFooter(count: Int, meters: Double) -> String {
+        String(localized: "panel.footer", defaultValue: "\(count) checked · \(totalDistance(meters))", comment: "The Tracks tab's footer: how many tracks the toolbar acts on, and their distance.")
+    }
 
     private static func iso(_ text: String) -> Date? {
         let plain = ISO8601DateFormatter()

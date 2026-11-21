@@ -269,7 +269,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
     }
 
-    static func date(_ track: RecordedTrack) -> String { track.startedAt.formatted(date: .abbreviated, time: .shortened) }
+    static func date(_ track: RecordedTrack) -> String { PanelFormat.dateTime(track.startedAt) }
 
     /// A row's title: the name typed for it, else when it started.
     static func title(_ track: RecordedTrack) -> String {

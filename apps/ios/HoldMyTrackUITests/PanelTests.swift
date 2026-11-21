@@ -20,6 +20,7 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["cardEdit"].isEnabled, "the demo account can't edit")
         XCTAssertTrue(app.buttons["cardFocus"].isEnabled)
+        XCTAssertTrue(app.staticTexts["cardDistance"].exists && app.staticTexts["cardMoving"].exists && app.staticTexts["cardPace"].exists, "the stat tiles")
         // The map draws its pace bands, and the card their legend.
         XCTAssertTrue(app.otherElements["cardBands"].waitForExistence(timeout: 10))
         app.buttons["cardFocus"].tap()
@@ -36,6 +37,7 @@ final class PanelTests: XCTestCase {
         rows.element(boundBy: 0).buttons["rowTile"].tap()
         XCTAssertTrue(app.otherElements["selectionBar"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["barDelete"].isEnabled)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '1 checked · '")).firstMatch.exists, "the footer counts the checked")
         app.buttons["endSelecting"].tap()
 
         app.tabBars.buttons["tabTrips"].tap()
@@ -78,6 +80,19 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(app.buttons["editType"].staticTexts["Solowheel"].waitForExistence(timeout: 5))
         app.buttons["editSave"].tap()
         XCTAssertTrue(app.staticTexts["Renamed by iOS"].waitForExistence(timeout: 15))
+
+        // Two checked: Edit greys out Name and Description, and says why.
+        app.buttons["cardClose"].tap()
+        app.buttons["panelHandle"].tap()
+        rows.element(boundBy: 0).buttons["rowTile"].tap()
+        rows.element(boundBy: 1).buttons["rowTile"].tap()
+        app.buttons["barEdit"].tap()
+        XCTAssertTrue(app.staticTexts["editMultiNote"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.textFields["editName"].isEnabled)
+        app.navigationBars.buttons["Cancel"].tap()
+        app.buttons["endSelecting"].tap()
+        app.staticTexts["Renamed by iOS"].tap()
+        XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 5))
 
         // Delete it, confirmed: one row fewer.
         app.buttons["cardDelete"].tap()
