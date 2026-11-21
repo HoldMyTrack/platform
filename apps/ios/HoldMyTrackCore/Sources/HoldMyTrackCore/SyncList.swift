@@ -1,6 +1,6 @@
 import Foundation
 
-/// What the Sync tab lists and offers, as values (apps/android/docs/SPEC.md FR-3.2, FR-3.4).
+/// What the Sync tab lists and offers, as values (apps/android/docs/SPEC.md FR-3.2, FR-3.5).
 /// A recording sent and not landed yet is listed as on its way: never tickable, hidden or edited.
 /// One in the send running now (inFlight) is neither ticked, edited nor deleted, and no row is
 /// swiped while a send runs. The demo account ticks nothing.
@@ -19,6 +19,11 @@ public struct SyncList: Equatable, Sendable {
     public let hiddenCount: Int
     /// The recordings the running send is sending.
     public let inFlight: Set<String>
+    /// What the map draws: shown, not on its way.
+    public var drawn: [RecordedTrack] { shown.filter { !$0.sent } }
+    /// What another row can be a double of: shown, not hidden, not on its way, not being sent, so
+    /// the similar-tracks hint never names a row the list doesn't show.
+    public let comparable: [RecordedTrack]
 
     /// The list for recordings under the tab's choices. types is the chips picked; empty is
     /// every type. A type no longer listed is dropped from it (`pickedTypes`).
@@ -36,7 +41,8 @@ public struct SyncList: Equatable, Sendable {
             sendable: tickable.filter { ticked.contains($0.id) },
             types: listedTypes,
             hiddenCount: everything.filter { hidden.contains($0.id) }.count,
-            inFlight: inFlight
+            inFlight: inFlight,
+            comparable: shown.filter { !hidden.contains($0.id) && !$0.sent && !inFlight.contains($0.id) }
         )
     }
 
@@ -67,13 +73,9 @@ public struct SyncList: Equatable, Sendable {
     public func pickedTypes(_ types: Set<String>) -> Set<String> { types.intersection(self.types) }
 }
 
-/// The phone's hidden Sync rows (FR-3.4): recordings swiped aside, by id. A recording that left
-/// the phone needn't be remembered.
+/// The phone's hidden Sync rows (apps/android/docs/SPEC.md FR-3.5): recordings swiped aside, by
+/// id, kept by RecordingStore.
 public enum SyncHidden {
-    public static func pruned(_ hidden: Set<String>, present: [RecordedTrack]) -> Set<String> {
-        hidden.intersection(present.map(\.id))
-    }
-
     /// A swipe: hidden, or a hidden row back on the list.
     public static func swiped(_ id: String, in hidden: Set<String>) -> Set<String> {
         setting(id, hidden: !hidden.contains(id), in: hidden)

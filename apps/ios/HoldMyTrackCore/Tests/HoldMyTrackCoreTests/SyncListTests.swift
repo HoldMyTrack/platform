@@ -71,6 +71,12 @@ struct SyncListTests {
         #expect(!idle.canEdit(walks[3]))
     }
 
+    @Test func onlyRowsTheListShowsAreComparedAndDrawn() {
+        let list = SyncList.of(walks, hidden: ["mid"], showHidden: true, types: ["walk"], ticked: [], inFlight: ["old"])
+        #expect(list.comparable.isEmpty, "a ride filtered out, a hidden row, one on its way and one being sent are no one's double")
+        #expect(list.drawn.map(\.id) == ["mid", "old"], "what's on its way isn't drawn")
+    }
+
     @Test func theDemoTicksNothing() {
         let list = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: [], isDemo: true)
         #expect(list.tickable.isEmpty)
@@ -78,11 +84,10 @@ struct SyncListTests {
         #expect(list.toggleAll([]).isEmpty)
     }
 
-    @Test func aSwipeHidesAndASecondBringsItBackAndALeftRecordingIsForgotten() {
+    @Test func aSwipeHidesAndASecondBringsItBack() {
         #expect(SyncHidden.swiped("a", in: []) == ["a"])
         #expect(SyncHidden.swiped("a", in: ["a"]).isEmpty)
         #expect(SyncHidden.setting("a", hidden: false, in: ["a"]).isEmpty, "Undo puts back what was, whatever happened since")
         #expect(SyncHidden.setting("a", hidden: true, in: ["a"]) == ["a"])
-        #expect(SyncHidden.pruned(["a", "gone"], present: [track("a", hours: 0)]) == ["a"])
     }
 }

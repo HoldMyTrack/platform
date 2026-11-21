@@ -149,4 +149,17 @@ struct RecordingTests {
         store.forget(account: "a@example.com")
         #expect(store.list(account: "a@example.com").isEmpty)
     }
+
+    @Test func hiddenRowsAreTheAccountsAndForgottenOnlyWithTheirRecording() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "recordings-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = RecordingStore(root: root)
+        store.setHidden(["one", "two"], account: "a@example.com")
+        #expect(store.hidden(account: "a@example.com") == ["one", "two"])
+        #expect(store.hidden(account: "demo").isEmpty)
+        store.delete(id: "one", account: "a@example.com")
+        #expect(store.hidden(account: "a@example.com") == ["two"], "a deleted or landed recording is forgotten")
+        store.forget(account: "a@example.com")
+        #expect(store.hidden(account: "a@example.com").isEmpty, "Delete account takes them too")
+    }
 }

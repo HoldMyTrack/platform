@@ -281,7 +281,8 @@ extension MapViewController {
         syncPanel?.content.isHidden = panelTab != .sync
         notices.aside = MapChrome.areaNoticesShown(recording: recordingLive, onSync: panelTab == .sync) ? [] : [Notice.empty.rawValue, Notice.capped.rawValue]
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
-        sheet.isHidden = state.mode != .normal || privateLocations.open || recordingLive
+        // The Sync tab's sheet stays up while recording, as on Android.
+        sheet.isHidden = state.mode != .normal || privateLocations.open || (recordingLive && panelTab != .sync)
         sheet.setNeedsLayout()
         // The map's credit sits above the sheet (placeAttribution), and the row's controls follow it.
         view.setNeedsLayout()

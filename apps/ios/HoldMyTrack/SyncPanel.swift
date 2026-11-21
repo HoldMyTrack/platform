@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The sheet's Sync tab, the tab bar's Sync (apps/android/docs/SPEC.md FR-3.4): every recording
+/// The sheet's Sync tab, the tab bar's Sync (apps/android/docs/SPEC.md FR-3.5): every recording
 /// on this phone not on the map yet, newest first, the user's to choose. Nothing starts ticked,
 /// and only what's ticked and shown is sent. Type chips narrow the list and Select all ticks
 /// what's shown; a row swiped aside is hidden, with Undo, and Show hidden brings it back. One sent
@@ -161,10 +161,11 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         list = SyncList.of(all, hidden: hidden, showHidden: showHidden, types: types, ticked: recordings.ticked,
                            isDemo: account.isDemo, inFlight: recordings.inFlight)
         types = list.pickedTypes(types)
-        // What another row can be a double of: not hidden, not on its way or being sent.
-        let offered = list.everything.filter { !hidden.contains($0.id) && !$0.sent && !list.inFlight.contains($0.id) }
-        similar = SyncSimilar.waiting(offered)
-        askOverlaps(offered)
+        similar = SyncSimilar.waiting(list.comparable)
+        // An answer about a row no longer compared, hidden since or filtered out, goes.
+        let comparable = Set(list.comparable.map(\.id))
+        overlaps = overlaps.filter { comparable.contains($0.key) }
+        askOverlaps(list.comparable)
 
         var items: [Item] = []
         if account.isDemo {
@@ -184,7 +185,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         self.items = items
         table.reloadData()
         renderBar()
-        let drawn = list.shown.filter { !$0.sent }
+        let drawn = list.drawn
         onEvent?(.lines(drawn, highlight: highlight))
         if !framed, let box = SyncLines.box(drawn) {
             framed = true
@@ -193,15 +194,20 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     /// The account's track each offered row overlaps (`POST /v2/tracks/overlaps`), asked again
-    /// when the rows change. A hint only: when the server can't say, the rows go without it.
+    /// when the rows change, or on the next render after a failure. A hint only: when the server
+    /// can't say, the rows go without it.
     private func askOverlaps(_ offered: [RecordedTrack]) {
         let ids = Set(offered.map(\.id))
         guard !account.isDemo, ids != overlapsAsked else { return }
         overlapsAsked = ids
         overlapsTask?.cancel()
         overlapsTask = Task { [weak self, api] in
-            let answer = (try? await api.trackOverlaps(offered)) ?? [:]
+            let answer = try? await api.trackOverlaps(offered)
             guard !Task.isCancelled, let self else { return }
+            guard let answer else {
+                self.overlapsAsked = nil
+                return
+            }
             self.overlaps = answer
             self.table.reloadData()
         }
@@ -210,10 +216,11 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private func renderBar() {
         let sendable = list.sendable
         // Two ticked copies of one walk: said in the bar, and still sent if the user goes on.
-        let sendingIDs = Set(sendable.map(\.id))
-        let doubled = sendable.filter { track in similar[track.id, default: []].contains { sendingIDs.contains($0.id) } }.count
+        let doubled = SyncSimilar.doubled(sendable, waiting: similar)
         if recordings.sending {
-            tickedLine.text = String(localized: "sync.progress", defaultValue: "Sent \(recordings.report?.sent ?? 0) of \(sendingTotal)…", comment: "Sync: a send in progress, how many so far of how many.")
+            // Each row the run has done, taken or refused, so the count reaches the total.
+            let done = (recordings.report?.sent ?? 0) + (recordings.report?.refused.count ?? 0)
+            tickedLine.text = String(localized: "sync.progress", defaultValue: "Sent \(done) of \(sendingTotal)…", comment: "Sync: a send in progress, how many so far of how many.")
         } else if doubled > 0 {
             tickedLine.text = String(localized: "sync.tickedSimilar", defaultValue: "\(sendable.count) of \(list.tickable.count) ticked · \(doubled) are similar",
                                      comment: "Sync: how many rows are ticked, of how many can be, and how many of them cover the same time as another ticked one.")
@@ -276,7 +283,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             note: track.sent ? String(localized: "sync.processing", defaultValue: "Adding to your map…", comment: "Sync: a sent row on its way to the map.") : nil,
             processing: track.sent, kind: TrackTypes.shared.kind(track.type), ticked: recordings.ticked.contains(track.id),
             hidden: hidden, tickable: list.canTick(track), editable: list.canEdit(track),
-            similar: track.sent ? 0 : similar[track.id, default: []].count + (overlaps[track.id] == nil ? 0 : 1),
+            similar: SyncSimilar.count(track, waiting: similar, onMap: overlaps[track.id] != nil),
             highlighted: track.id == highlight
         )
     }
@@ -357,7 +364,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             ? String(localized: "sync.unhidden", defaultValue: "Back on the list", comment: "Sync: a hidden row swiped back.")
             : String(localized: "sync.hidden", defaultValue: "Hidden — it won't be offered again", comment: "Sync: a row swiped aside.")
         onEvent?(.hid(text, undo: { [weak self] in
-            guard let self else { return }
+            // A send started since: its rows stay as they are, as a swipe would leave them.
+            guard let self, !self.recordings.sending else { return }
             self.recordings.hidden = SyncHidden.setting(track.id, hidden: wasHidden, in: self.recordings.hidden)
             self.render()
         }))

@@ -1,6 +1,6 @@
 import Foundation
 
-/// The Sync tab's recordings on the map (apps/android/docs/SPEC.md FR-3.4): each listed one
+/// The Sync tab's recordings on the map (apps/android/docs/SPEC.md FR-3.2): each listed one
 /// dashed, drawn from the phone's own points since none is on the server yet, and the one picked
 /// on the list or the map solid over a halo, as the layers document draws a focused track. One
 /// GeoJSON group added to the document, styled from its `casing`, `track` and `focused` layers.
@@ -99,6 +99,18 @@ public enum SyncSimilar {
             }
         }
         return found.mapValues { $0.sorted { $0.startedAt > $1.startedAt } }
+    }
+
+    /// How many tracks cover track's time, for its ⓘ: the other rows, and the account's track
+    /// when the server named one. None for one on its way.
+    public static func count(_ track: RecordedTrack, waiting: [String: [RecordedTrack]], onMap: Bool) -> Int {
+        track.sent ? 0 : waiting[track.id, default: []].count + (onMap ? 1 : 0)
+    }
+
+    /// How many of the rows Sync would send cover the same time as another of them.
+    public static func doubled(_ sendable: [RecordedTrack], waiting: [String: [RecordedTrack]]) -> Int {
+        let ids = Set(sendable.map(\.id))
+        return sendable.filter { track in waiting[track.id, default: []].contains { ids.contains($0.id) } }.count
     }
 }
 

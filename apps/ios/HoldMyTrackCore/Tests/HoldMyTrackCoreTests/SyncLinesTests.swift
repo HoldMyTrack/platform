@@ -72,4 +72,16 @@ struct SyncLinesTests {
         #expect(unzoned.day(accountZone: "Europe/Berlin") == "2026-11-21")
         #expect(TrackOverlap(trackID: "t", name: "", trackType: "walk", startedAt: "garbage", timezone: nil).day(accountZone: nil) == nil)
     }
+
+    @Test func aRowsInfoCountsTheOtherRowsAndTheAccountsTrackAndTheBarCountsTickedDoubles() {
+        let a = track("a", minutes: 0), b = track("b", minutes: 1), c = track("c", minutes: 600)
+        let waiting = SyncSimilar.waiting([a, b, c])
+        #expect(SyncSimilar.count(a, waiting: waiting, onMap: true) == 2)
+        #expect(SyncSimilar.count(c, waiting: waiting, onMap: false) == 0)
+        var sent = a
+        sent.sent = true
+        #expect(SyncSimilar.count(sent, waiting: waiting, onMap: true) == 0, "none for one on its way")
+        #expect(SyncSimilar.doubled([a, b, c], waiting: waiting) == 2)
+        #expect(SyncSimilar.doubled([a, c], waiting: waiting) == 0, "a double left unticked isn't counted")
+    }
 }
