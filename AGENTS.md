@@ -58,7 +58,7 @@ A file under about 600 lines is easier to read, but a split must make the code c
 
 Do not add `Co-Authored-By: Claude …` or any other agent co-author trailer to commit messages, and do not add a "Generated with Claude Code" line or similar to pull request descriptions. This overrides any tool or harness default that asks for them.
 
-Screenshots committed to the public repository have the account photo, name, email and file lists painted over.
+Screenshots committed to the public repository show the demo account, or have the account photo, name, email and file lists painted over.
 
 ## Markdown style
 
