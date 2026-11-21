@@ -21,19 +21,25 @@ struct SyncLinesTests {
         {"id": "tracks-line", "type": "line", "source": "tracks", "minzoom": 4, "metadata": {"holdmytrack:role": "track"},
          "paint": {"line-color": "#b07e2e", "line-width": 2.5}},
         {"id": "tracks-focused", "type": "line", "source": "tracks", "minzoom": 4, "metadata": {"holdmytrack:role": "focused"},
-         "paint": {"line-color": "#b07e2e", "line-width": 4.5}}]}]}
+         "paint": {"line-color": "#b07e2e", "line-width": 4.5}}]},
+      {"id": "route-bands", "layers": [
+        {"id": "route-bands-line", "type": "line", "source": "route-bands", "filter": ["has", "band"], "metadata": {"holdmytrack:role": "pace-bands"},
+         "paint": {"line-width": 6}}]}]}
     """.utf8))!)!
 
     @Test func theGroupIsDashedInTheTracksColorWithTheFocusedLookForThePickedOne() throws {
         let added = SyncLines.adding(to: document)
         let group = try #require(added.groups.last)
         #expect(group.id == SyncLines.group)
-        #expect(group.layers.map { $0["id"]?.string } == ["sync-candidates-halo", "sync-candidates-line", "sync-candidates-highlight"])
+        #expect(group.layers.map { $0["id"]?.string } == ["sync-candidates-halo", "sync-candidates-line", "sync-candidates-highlight", "sync-candidates-bands"])
+        #expect(group.layers[3]["source"] == .string(SyncLines.bandsSource))
+        #expect(group.layers[3]["filter"] == .array([.string("has"), .string("band")]), "only the runs, not the arrows' route")
         #expect(group.layers[0]["paint"]?["line-width"] == .number(7.5), "the halo is the casing")
         #expect(group.layers[1]["paint"]?["line-color"] == .string("#b07e2e"))
         #expect(group.layers[1]["paint"]?["line-dasharray"] != nil)
         #expect(group.layers[2]["paint"]?["line-width"] == .number(4.5), "the picked one is the focused line")
         #expect(group.layers.allSatisfy { $0["minzoom"] == .number(4) }, "from the zoom tracks start at")
+        #expect(group.sources.keys.sorted() == [SyncLines.group, SyncLines.bandsSource])
         #expect(SyncLines.adding(to: added).groups.count == added.groups.count, "added once")
     }
 
@@ -83,5 +89,12 @@ struct SyncLinesTests {
         #expect(SyncSimilar.count(sent, waiting: waiting, onMap: true) == 0, "none for one on its way")
         #expect(SyncSimilar.doubled([a, b, c], waiting: waiting) == 2)
         #expect(SyncSimilar.doubled([a, c], waiting: waiting) == 0, "a double left unticked isn't counted")
+    }
+
+    @Test func onlyThePickedRowIsBanded() {
+        let a = track("a", minutes: 0), b = track("b", minutes: 60)
+        #expect(SyncLines.bands([a, b], highlight: nil)["features"]?.array?.isEmpty == true)
+        let banded = SyncLines.bands([a, b], highlight: "b")["features"]?.array ?? []
+        #expect(banded.contains { $0["properties"]?["band"] != nil })
     }
 }

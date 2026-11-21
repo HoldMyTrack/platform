@@ -440,11 +440,13 @@ extension MapViewController {
 
     // MARK: The Sync tab's lines
 
-    /// The Sync tab's rows to draw, highlight picked out (SyncLines).
+    /// The Sync tab's rows to draw, highlight picked out in its pace bands (SyncLines).
     func drawSyncLines(_ tracks: [RecordedTrack], highlight: String?) {
         let features = SyncLines.features(tracks, highlight: highlight)
-        guard state.geojson[SyncLines.group] != features else { return }
+        let bands = SyncLines.bands(tracks, highlight: highlight)
+        guard state.geojson[SyncLines.group] != features || state.geojson[SyncLines.bandsSource] != bands else { return }
         state.geojson[SyncLines.group] = features
+        state.geojson[SyncLines.bandsSource] = bands
         render()
     }
 
