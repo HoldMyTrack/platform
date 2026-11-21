@@ -3748,17 +3748,6 @@
         }
       }
     },
-    "This version of the app is too old to use. Update it to keep using HoldMyTrack." : {
-      "comment" : "Update screen: the server turns this build away.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Эта версия приложения слишком старая. Обновите её, чтобы и дальше пользоваться HoldMyTrack."
-          }
-        }
-      }
-    },
     "To" : {
       "comment" : "Dates: the filter's last day.",
       "localizations" : {
@@ -4107,17 +4096,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Водопады"
-          }
-        }
-      }
-    },
-    "We sent a 6-digit code to %@. Enter it below to unlock your account — your map starts working as soon as you do." : {
-      "comment" : "Verify email screen: the placeholder is the account's email address.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Мы отправили 6-значный код на %@. Введите его ниже, чтобы открыть доступ к аккаунту, — карта заработает сразу после этого."
           }
         }
       }
@@ -9009,7 +8987,7 @@
       }
     },
     "or" : {
-      "comment" : "Sign-in screen: between email sign-in and the providers.",
+      "comment" : "Sign in: the divider before the email form, under the providers, and before the demo.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
@@ -10045,6 +10023,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ожидание GPS…"
+          }
+        }
+      }
+    },
+    "signIn.hidePassword" : {
+      "comment" : "Sign in: hide the password typed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide password"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрыть пароль"
+          }
+        }
+      }
+    },
+    "signIn.showPassword" : {
+      "comment" : "Sign in: show the password typed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show password"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать пароль"
           }
         }
       }
@@ -12269,6 +12283,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "недоступен"
+          }
+        }
+      }
+    },
+    "update.body" : {
+      "comment" : "The Update screen: why, and what waits.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This version of the app is too old to use. Update it to keep using HoldMyTrack. Anything waiting to sync stays on your phone until then."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта версия приложения слишком старая. Обновите её, чтобы и дальше пользоваться HoldMyTrack. Всё, что ждёт синхронизации, останется на телефоне до тех пор."
+          }
+        }
+      }
+    },
+    "verify.hint" : {
+      "comment" : "Verify your email: where the code went.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We sent a 6-digit code to %@. Enter it below to unlock your account — your map and sync start working as soon as you do."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мы отправили 6-значный код на %@. Введите его ниже, чтобы открыть доступ к аккаунту, — карта и синхронизация заработают сразу после этого."
           }
         }
       }

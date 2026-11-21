@@ -17,6 +17,23 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.secureTextFields["password"].exists)
         XCTAssertFalse(app.buttons["primary"].isEnabled, "Sign in waits for both fields")
+        XCTAssertTrue(app.buttons["showPassword"].exists, "the password's show toggle")
+        XCTAssertTrue(app.staticTexts["demoOr"].exists, "or before the demo")
+        // Shown and hidden again, the password keeps what was typed.
+        let password = app.secureTextFields["password"]
+        password.tap()
+        password.typeText("abc")
+        app.buttons["showPassword"].tap()
+        XCTAssertTrue(app.textFields["password"].waitForExistence(timeout: 2), "shown as plain text")
+        app.buttons["showPassword"].tap()
+        let hidden = app.secureTextFields["password"]
+        XCTAssertTrue(hidden.waitForExistence(timeout: 2))
+        hidden.typeText("d")
+        XCTAssertEqual((hidden.value as? String)?.count, 4, "nothing typed was lost")
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "Sign in"
+        shot.lifetime = .keepAlways
+        add(shot)
     }
 
     @MainActor

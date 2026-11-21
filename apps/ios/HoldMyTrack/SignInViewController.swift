@@ -25,7 +25,8 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
     private let primary = Controls.primaryButton(String(localized: "Sign in"), id: "primary")
     private let forgot = Controls.textButton(String(localized: "Forgot password?"), id: "forgot")
     private let signUp = Controls.textButton(String(localized: "Don't have an account? Create one"), id: "signUp")
-    private let or = Controls.body(String(localized: "or"))
+    /// "or" between the providers and the email form, shown with a provider.
+    private let or = SignInViewController.orDivider(id: "providersOr")
     /// Holds Apple's button, which is remade when the theme changes: its style is fixed when made.
     private let apple = UIView()
     private let google = Controls.secondaryButton(String(localized: "Continue with Google"), id: "google")
@@ -72,13 +73,21 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         demo.addAction(UIAction { [weak self] _ in self?.startDemo() }, for: .primaryActionTriggered)
         google.addAction(UIAction { [weak self] _ in self?.browserRoundTrip(.provider(.google)) }, for: .primaryActionTriggered)
         facebook.addAction(UIAction { [weak self] _ in self?.browserRoundTrip(.provider(.facebook)) }, for: .primaryActionTriggered)
-        or.textAlignment = .center
         for provider in [or, apple, google, facebook] { provider.isHidden = true }
         makeAppleButton()
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.makeAppleButton() }
 
-        let links = UIStackView(arrangedSubviews: [forgot, UIView(), signUp])
-        links.alignment = .center
+        // Android's order in one card: the providers, "or", the email form with Forgot under the
+        // password, Sign in, Create one, "or", the demo.
+        password.rightView = passwordToggle()
+        password.rightViewMode = .always
+        // Forgot under the password's right edge and Create one centred, by alignment alone.
+        let forgotRow = UIStackView(arrangedSubviews: [forgot])
+        forgotRow.axis = .vertical
+        forgotRow.alignment = .trailing
+        let signUpRow = UIStackView(arrangedSubviews: [signUp])
+        signUpRow.axis = .vertical
+        signUpRow.alignment = .center
         var top: [UIView] = [titleLabel]
         if let notice {
             let label = Controls.body(notice, color: UIColor(resource: .ink))
@@ -90,12 +99,75 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
             box.layer.cornerRadius = DesignTokens.Radius.md
             top.append(box)
         }
-        let column = Controls.column(top + [intro, email, password, errorLabel, primary, links, or, apple, google, facebook, demo])
-        column.setCustomSpacing(DesignTokens.Space.s24, after: intro)
-        column.setCustomSpacing(DesignTokens.Space.s24, after: links)
-        Controls.host(column, in: self)
+        let card = Controls.column(top + [intro, apple, google, facebook, or, email, password, forgotRow, errorLabel, primary, signUpRow,
+                                          Self.orDivider(id: "demoOr"), demo])
+        card.setCustomSpacing(DesignTokens.Space.s24, after: intro)
+        card.setCustomSpacing(DesignTokens.Space.s4, after: password)
+        card.isLayoutMarginsRelativeArrangement = true
+        card.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 20, leading: 16, bottom: 20, trailing: 16)
+        card.backgroundColor = UIColor(resource: .surface)
+        card.layer.cornerRadius = DesignTokens.Radius.lg
+        card.layer.borderWidth = 1
+        card.layer.borderColor = UIColor(resource: .border).resolvedColor(with: traitCollection).cgColor
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
+            card.layer.borderColor = UIColor(resource: .border).resolvedColor(with: self.traitCollection).cgColor
+        }
+        Controls.host(Controls.column([card]), in: self)
         updateEnabled()
         loadProviders()
+    }
+
+    /// "or" with a rule either side, as the web's and Android's dividers.
+    private static func orDivider(id: String) -> UIView {
+        func rule() -> UIView {
+            let line = UIView()
+            line.backgroundColor = UIColor(resource: .border)
+            line.heightAnchor.constraint(equalToConstant: 1).isActive = true
+            return line
+        }
+        let label = Controls.label(String(localized: "or"), font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.accessibilityIdentifier = id
+        let left = rule(), right = rule()
+        let row = UIStackView(arrangedSubviews: [left, label, right])
+        row.alignment = .center
+        row.spacing = DesignTokens.Space.s12
+        left.widthAnchor.constraint(equalTo: right.widthAnchor).isActive = true
+        return row
+    }
+
+    /// The password's show toggle, as Android's end icon. It holds nothing strongly: the field
+    /// holds it.
+    private func passwordToggle() -> UIButton {
+        let toggle = UIButton(type: .system)
+        toggle.tintColor = UIColor(resource: .inkSecondary)
+        toggle.accessibilityIdentifier = "showPassword"
+        Self.renderToggle(toggle, shown: false)
+        toggle.addAction(UIAction { [weak self, weak toggle] _ in
+            guard let self, let toggle else { return }
+            Self.flipSecure(self.password)
+            Self.renderToggle(toggle, shown: !self.password.isSecureTextEntry)
+        }, for: .primaryActionTriggered)
+        toggle.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
+        return toggle
+    }
+
+    private static func renderToggle(_ toggle: UIButton, shown: Bool) {
+        toggle.setImage(Controls.icon(UIImage(resource: shown ? .eyeOff : .eye), size: 18), for: .normal)
+        toggle.accessibilityLabel = shown ? String(localized: "signIn.hidePassword", defaultValue: "Hide password", comment: "Sign in: hide the password typed.")
+            : String(localized: "signIn.showPassword", defaultValue: "Show password", comment: "Sign in: show the password typed.")
+    }
+
+    /// Shows or hides what's typed, keeping it: a field secured again would otherwise clear
+    /// itself on the next keystroke. The cursor stays at the end.
+    private static func flipSecure(_ field: UITextField) {
+        let typed = field.text ?? ""
+        field.isSecureTextEntry.toggle()
+        if field.isSecureTextEntry {
+            field.text = nil
+            field.insertText(typed)
+        }
+        field.selectedTextRange = field.textRange(from: field.endOfDocument, to: field.endOfDocument)
     }
 
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
@@ -111,7 +183,7 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
     private func updateEnabled() {
         let filled = !(email.text ?? "").trimmingCharacters(in: .whitespaces).isEmpty && !(password.text ?? "").isEmpty
         primary.isEnabled = filled && !busy
-        for button in [demo, google, facebook, signUp] { button.isEnabled = !busy }
+        for button in [demo, google, facebook, signUp, forgot] { button.isEnabled = !busy }
         apple.isUserInteractionEnabled = !busy
         apple.alpha = busy ? 0.5 : 1
     }
