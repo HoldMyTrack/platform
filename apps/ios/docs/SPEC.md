@@ -101,7 +101,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-5.2), except as below.
 
-- The recordings aren't drawn on the map and no overlap is marked; a tap on a row ticks it.
+- The row picked out on the map is drawn solid, not in pace bands.
 - Download GPX goes to the share sheet, which saves to Files among its choices.
 
 ## 8. Non-Functional Requirements (summary)

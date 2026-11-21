@@ -9445,6 +9445,114 @@
         }
       }
     },
+    "similar.lead" : {
+      "comment" : "Similar tracks: the row asked about, its title and meta line.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@) covers the same time as:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@) приходится на то же время, что и:"
+          }
+        }
+      }
+    },
+    "similar.note" : {
+      "comment" : "Similar tracks: what sending both does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sending more than one gives you two tracks of the same journey. Nothing is chosen for you — tick the one you want."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Если отправить больше одного, у вас будут два трека одного и того же пути. Ничего не выбирается за вас — отметьте нужный."
+          }
+        }
+      }
+    },
+    "similar.onMap" : {
+      "comment" : "Similar tracks: the account's track.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already on your map"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже на карте"
+          }
+        }
+      }
+    },
+    "similar.show" : {
+      "comment" : "Similar tracks: a row, read out.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show %1$@, %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать: %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "similar.title" : {
+      "comment" : "Similar tracks: the sheet's title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hey, there are similar tracks"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Есть похожие треки"
+          }
+        }
+      }
+    },
+    "similar.waiting" : {
+      "comment" : "Similar tracks: the rows on this phone.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting here"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ждут здесь"
+          }
+        }
+      }
+    },
     "sync.deleteMessage" : {
       "comment" : "Sync: deleting a recording, why it asks.",
       "extractionState" : "manual",
@@ -9841,6 +9949,80 @@
         }
       }
     },
+    "sync.similarRow" : {
+      "comment" : "Sync: a row's ⓘ, read out with its title and how many tracks cover the same time.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$#@tracks@"
+          },
+          "substitutions" : {
+            "tracks" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg similar track"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg similar tracks"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$#@tracks@"
+          },
+          "substitutions" : {
+            "tracks" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg похожий трек"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg похожих трека"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg похожих треков"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg похожего трека"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "sync.stopped" : {
       "comment" : "Sync: a send cut short, and why.",
       "extractionState" : "manual",
@@ -9965,6 +10147,80 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмечено %1$lld из %2$lld · %3$@"
+          }
+        }
+      }
+    },
+    "sync.tickedSimilar" : {
+      "comment" : "Sync: how many rows are ticked, of how many can be, and how many of them cover the same time as another ticked one.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld ticked · %3$#@similar@"
+          },
+          "substitutions" : {
+            "similar" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg is similar"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg are similar"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отмечено %1$lld из %2$lld · %3$#@similar@"
+          },
+          "substitutions" : {
+            "similar" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "похожих: %arg"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "похожих: %arg"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "похожих: %arg"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "похожих: %arg"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

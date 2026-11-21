@@ -129,6 +129,7 @@ struct RecordingTests {
         #expect(!MapChrome.modeBarShown(recording: true, editOpen: false, selectionShown: false, onTracksTab: true))
         #expect(TabMode.hiddenGroups(recording: true) == ["tracks", "route-bands"])
         #expect(TabMode.hiddenGroups(recording: false).isEmpty)
+        #expect(TabMode.hiddenGroups(recording: false, syncing: true) == ["tracks", "route-bands"], "the Sync tab's lines stand alone")
         #expect(TabMode.shown(picked: .fog, onTracksTab: true) == .fog)
     }
 

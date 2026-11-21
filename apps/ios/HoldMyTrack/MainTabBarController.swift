@@ -70,6 +70,14 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
                     map.viewOnMap(track: track, day: day)
                 }
                 sync.pushViewController(page, animated: true)
+            case .lines(let tracks, let highlight):
+                map?.drawSyncLines(tracks, highlight: highlight)
+            case .frame(let box):
+                map?.fit(box, animated: true)
+            case .openOnMap(let track):
+                guard let map, let mapHost = self.viewControllers?.first, let day = track.day(accountZone: self.account.timezone) else { return }
+                self.selectedViewController = mapHost
+                map.viewOnMap(track: track.trackID, day: day)
             case .hid(let text, let undo):
                 map?.say(text, action: (String(localized: "sync.undo", defaultValue: "Undo", comment: "Sync: put a hidden row back, or hide it again."), undo))
             }

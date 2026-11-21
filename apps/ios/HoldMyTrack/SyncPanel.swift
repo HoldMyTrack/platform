@@ -6,7 +6,9 @@ import UIKit
 /// and only what's ticked and shown is sent. Type chips narrow the list and Select all ticks
 /// what's shown; a row swiped aside is hidden, with Undo, and Show hidden brings it back. One sent
 /// stays listed, on its way, until it lands. Under the list, Upload files and Sync history. Which
-/// rows are offered is SyncList's.
+/// rows are offered is SyncList's. The rows are drawn dashed on the map (SyncLines), the first
+/// showing framed; a tap on a row or its line picks it out, and ⓘ says what else covers its time
+/// (SyncSimilar, and the server for the account's tracks).
 @MainActor
 final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
@@ -14,6 +16,12 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         case history
         /// A row hidden or back: said over the map, with Undo.
         case hid(String, undo: () -> Void)
+        /// The rows to draw on the map, highlight picked out.
+        case lines([RecordedTrack], highlight: String?)
+        /// The camera onto this box.
+        case frame([Double])
+        /// The account's track a row overlaps, opened on the Tracks tab on its day.
+        case openOnMap(TrackOverlap)
     }
 
     var onEvent: ((Event) -> Void)?
@@ -41,6 +49,16 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var hidden: Set<String> = []
     /// The types last asked about, so a render asks again only when the list's types change.
     private var describedTypes: Set<String>?
+    /// The row picked out on the list and the map.
+    private var highlight: String?
+    /// The camera framed this showing's rows already.
+    private var framed = false
+    /// The other waiting rows each one overlaps, by id, as last rendered.
+    private var similar: [String: [RecordedTrack]] = [:]
+    /// The account's track each row overlaps, as the server last answered, and for which rows.
+    private var overlaps: [String: TrackOverlap] = [:]
+    private var overlapsAsked: Set<String>?
+    private var overlapsTask: Task<Void, Never>?
 
     private enum Item {
         case notice(String, id: String, failed: Bool)
@@ -99,6 +117,9 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     func start() {
         showing = true
         describedTypes = nil
+        highlight = nil
+        framed = false
+        overlapsAsked = nil
         recordings.ticked = []
         types = []
         showHidden = false
@@ -109,6 +130,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     func stop() {
         showing = false
+        overlapsTask?.cancel()
+        onEvent?(.lines([], highlight: nil))
     }
 
     private func changed() {
@@ -138,6 +161,10 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         list = SyncList.of(all, hidden: hidden, showHidden: showHidden, types: types, ticked: recordings.ticked,
                            isDemo: account.isDemo, inFlight: recordings.inFlight)
         types = list.pickedTypes(types)
+        // What another row can be a double of: not hidden, not on its way or being sent.
+        let offered = list.everything.filter { !hidden.contains($0.id) && !$0.sent && !list.inFlight.contains($0.id) }
+        similar = SyncSimilar.waiting(offered)
+        askOverlaps(offered)
 
         var items: [Item] = []
         if account.isDemo {
@@ -157,12 +184,39 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         self.items = items
         table.reloadData()
         renderBar()
+        let drawn = list.shown.filter { !$0.sent }
+        onEvent?(.lines(drawn, highlight: highlight))
+        if !framed, let box = SyncLines.box(drawn) {
+            framed = true
+            onEvent?(.frame(box))
+        }
+    }
+
+    /// The account's track each offered row overlaps (`POST /v2/tracks/overlaps`), asked again
+    /// when the rows change. A hint only: when the server can't say, the rows go without it.
+    private func askOverlaps(_ offered: [RecordedTrack]) {
+        let ids = Set(offered.map(\.id))
+        guard !account.isDemo, ids != overlapsAsked else { return }
+        overlapsAsked = ids
+        overlapsTask?.cancel()
+        overlapsTask = Task { [weak self, api] in
+            let answer = (try? await api.trackOverlaps(offered)) ?? [:]
+            guard !Task.isCancelled, let self else { return }
+            self.overlaps = answer
+            self.table.reloadData()
+        }
     }
 
     private func renderBar() {
         let sendable = list.sendable
+        // Two ticked copies of one walk: said in the bar, and still sent if the user goes on.
+        let sendingIDs = Set(sendable.map(\.id))
+        let doubled = sendable.filter { track in similar[track.id, default: []].contains { sendingIDs.contains($0.id) } }.count
         if recordings.sending {
             tickedLine.text = String(localized: "sync.progress", defaultValue: "Sent \(recordings.report?.sent ?? 0) of \(sendingTotal)…", comment: "Sync: a send in progress, how many so far of how many.")
+        } else if doubled > 0 {
+            tickedLine.text = String(localized: "sync.tickedSimilar", defaultValue: "\(sendable.count) of \(list.tickable.count) ticked · \(doubled) are similar",
+                                     comment: "Sync: how many rows are ticked, of how many can be, and how many of them cover the same time as another ticked one.")
         } else {
             let format = PanelFormat(account: account)
             tickedLine.text = String(localized: "sync.ticked", defaultValue: "\(sendable.count) of \(list.tickable.count) ticked · \(format.totalDistance(list.sendableMeters))",
@@ -221,7 +275,9 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             id: track.id, title: Self.title(track), meta: meta,
             note: track.sent ? String(localized: "sync.processing", defaultValue: "Adding to your map…", comment: "Sync: a sent row on its way to the map.") : nil,
             processing: track.sent, kind: TrackTypes.shared.kind(track.type), ticked: recordings.ticked.contains(track.id),
-            hidden: hidden, tickable: list.canTick(track), editable: list.canEdit(track)
+            hidden: hidden, tickable: list.canTick(track), editable: list.canEdit(track),
+            similar: track.sent ? 0 : similar[track.id, default: []].count + (overlaps[track.id] == nil ? 0 : 1),
+            highlighted: track.id == highlight
         )
     }
 
@@ -239,6 +295,52 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         guard list.canTick(track) else { return }
         if recordings.ticked.contains(track.id) { recordings.ticked.remove(track.id) } else { recordings.ticked.insert(track.id) }
         render()
+    }
+
+    /// A row tapped, or its ⓘ's pick: picked out on the list and the map, the camera on it.
+    private func pick(_ track: RecordedTrack) {
+        highlight = track.id
+        render()
+        if let box = SyncLines.box([track]) { onEvent?(.frame(box)) }
+        scroll(to: track.id)
+    }
+
+    /// A line tapped on the map: its row picked out and scrolled to.
+    func focus(_ id: String) {
+        highlight = id
+        render()
+        scroll(to: id)
+    }
+
+    private func scroll(to id: String) {
+        guard let index = items.firstIndex(where: { if case .row(let t) = $0 { t.id == id } else { false } }) else { return }
+        table.scrollToRow(at: IndexPath(row: index, section: 0), at: .middle, animated: true)
+    }
+
+    /// A row's ⓘ: what else covers its time, a waiting row picked out here, the account's track
+    /// opened on the map.
+    private func showSimilar(_ track: RecordedTrack) {
+        guard let host else { return }
+        let format = PanelFormat(account: account)
+        func meta(_ t: RecordedTrack) -> String {
+            [(t.name ?? "").isEmpty ? nil : Self.date(t), format.distance(t.meters), TrackTypes.shared.label(t.type),
+             String(localized: "sync.recorded", defaultValue: "Recorded on this phone", comment: "Sync: where a row comes from.")].compactMap { $0 }.joined(separator: " · ")
+        }
+        let waiting = similar[track.id, default: []].map { other in
+            SimilarTracksViewController.Item(kind: TrackTypes.shared.kind(other.type), title: Self.title(other), meta: meta(other)) { [weak self] in self?.pick(other) }
+        }
+        let onMap = overlaps[track.id].map { o in
+            let started = format.moment(o.startedAt, zone: o.timezone ?? "")
+            let named = !o.name.trimmingCharacters(in: .whitespaces).isEmpty
+            return SimilarTracksViewController.Item(kind: TrackTypes.shared.kind(o.trackType), title: named ? o.name : started,
+                                                    meta: [named ? started : nil, TrackTypes.shared.label(o.trackType)].compactMap { $0 }.joined(separator: " · ")) { [weak self] in
+                self?.onEvent?(.openOnMap(o))
+            }
+        }
+        let lead = String(localized: "similar.lead", defaultValue: "\(Self.title(track)) (\(meta(track))) covers the same time as:", comment: "Similar tracks: the row asked about, its title and meta line.")
+        let sheet = SimilarTracksViewController(lead: lead, waiting: waiting, onMap: onMap)
+        sheet.sheetPresentationController?.detents = [.medium(), .large()]
+        host.present(sheet, animated: true)
     }
 
     private func toggleType(_ type: String) {
@@ -311,6 +413,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             cell.onTick = { [weak self] in self?.toggle(track) }
             cell.onEdit = { [weak self] in self?.edit(track) }
             cell.onDelete = { [weak self] in self?.confirmDelete(track) }
+            cell.onSimilar = { [weak self] in self?.showSimilar(track) }
             return cell
         }
         if case .filters = item {
@@ -422,8 +525,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         switch items[indexPath.row] {
-        // The recordings aren't drawn on the map, so a tap ticks the row (apps/ios/docs/SPEC.md FR-5.2).
-        case .row(let track): toggle(track)
+        case .row(let track): pick(track)
         case .showHidden:
             showHidden.toggle()
             render()
