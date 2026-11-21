@@ -171,7 +171,10 @@ func (s *Server) handleGoogleToken(w http.ResponseWriter, r *http.Request) {
 		fail("id_token", err)
 		return
 	}
-	// A token without a nonce comes from a build before the nonce; root ROADMAP.md has requiring it.
+	if claims.Nonce == "" && s.minAndroidBuild >= googleNonceAndroidBuild {
+		fail("nonce", errNoGoogleNonce)
+		return
+	}
 	if claims.Nonce != "" {
 		if err := s.spendGoogleNonce(ctx, claims.Nonce); err != nil {
 			fail("nonce", err)
@@ -186,6 +189,13 @@ func (s *Server) handleGoogleToken(w http.ResponseWriter, r *http.Request) {
 	}
 	s.writeSession(w, r, userID, sessionTTL, http.StatusOK)
 }
+
+// googleNonceAndroidBuild is the first Android build that asks for a nonce. Once MIN_ANDROID_BUILD
+// reaches it, no build the server answers posts a token without one, so such a token is refused as
+// a copy; below it, an older build's token without a nonce still signs in.
+const googleNonceAndroidBuild = 2516
+
+var errNoGoogleNonce = errors.New("id_token carries no nonce")
 
 // googleClaims is the subset of Google's id_token payload this flow reads.
 type googleClaims struct {

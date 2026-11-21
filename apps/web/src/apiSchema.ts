@@ -712,7 +712,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Sign in with a Google id_token a native app got from the platform */
+        /**
+         * Sign in with a Google id_token a native app got from the platform
+         * @description The id_token carries an unspent nonce from auth_google_nonce, which this call spends. Once MIN_ANDROID_BUILD reaches the first build that asks for one, a token without a nonce is refused.
+         */
         post: {
             parameters: {
                 query?: never;
