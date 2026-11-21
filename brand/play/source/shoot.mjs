@@ -43,6 +43,11 @@ const SHOTS = {
     await focusTrack("Lake to Lake Trail", MAP);
     await tapView("card_focus");
     await sleep(3000);
+    // A third of a level closer than Zoom's fit, right of the callouts. Pinched low on the map,
+    // where its zoom-out taps miss the photos.
+    await pinch(540, 950, 0.85);
+    await drag(300, 600, 150, 140);
+    await sleep(1500);
   },
   "02-fog": async (locale) => {
     await layers({ satellite: false, roads: false });

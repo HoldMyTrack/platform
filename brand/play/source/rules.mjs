@@ -10,6 +10,10 @@ export function toPanel({ pw, ph, w, h }, x, y) {
   return [Math.round(((ox + x * s) / pw) * 32767), Math.round(((oy + y * s) / ph) * 32767)];
 }
 
+/** Whether screen pixel (x, y) is on the `w`×`h` screen. The emulator clamps a finger off it to
+ *  the edge, so a pinch reaching past the edge comes out short. */
+export const onScreen = ({ w, h }, x, y) => x >= 0 && x < w && y >= 0 && y < h;
+
 /** How to zoom by `levels` (fractional, negative to zoom out): a pinch of 2 to 3 levels either
  *  way, then `outTaps` two-finger taps of one level out or `inTaps` double taps of one level in.
  *  The map ignores a pinch whose fingers' spread changes by less than about 720 px, so a smaller

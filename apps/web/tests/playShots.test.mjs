@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fogRadio, panelExpanded, toPanel, zoomPlan } from '../../../brand/play/source/rules.mjs';
+import { fogRadio, onScreen, panelExpanded, toPanel, zoomPlan } from '../../../brand/play/source/rules.mjs';
 
 test('toPanel maps a full-panel screen corner to corner', () => {
   const g = { pw: 1080, ph: 2400, w: 1080, h: 2400 };
@@ -68,4 +68,13 @@ test('panelExpanded reads whether the panel list is on screen', () => {
   assert.equal(panelExpanded([{ id: 'panel_handle' }, { id: 'panel_summary' }]), false);
   assert.equal(panelExpanded([{ id: 'panel_handle' }, { id: 'panel_list' }]), true);
   assert.equal(panelExpanded([{ id: 'trips_list' }]), true);
+});
+
+test('onScreen takes the screen\'s pixels, 0 to one less than its size', () => {
+  const g = { w: 1080, h: 1920 };
+  assert.ok(onScreen(g, 0, 0));
+  assert.ok(onScreen(g, 1079, 1919));
+  assert.ok(!onScreen(g, 1080, 960));
+  assert.ok(!onScreen(g, 540, 1920));
+  assert.ok(!onScreen(g, -1, 960));
 });
