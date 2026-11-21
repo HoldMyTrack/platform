@@ -385,12 +385,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         guard let host else { return }
         let editor = RecordingEditViewController(track: track, account: account, recordings: recordings, api: api)
         editor.onGPX = { [weak self] track in self?.downloadGPX(track) }
-        editor.onDelete = { [weak self] track in self?.confirmDelete(track) }
         host.present(UINavigationController(rootViewController: editor), animated: true)
     }
-
-    /// The recording Stop just saved, opened for naming.
-    func open(_ track: RecordedTrack) { edit(track) }
 
     /// Delete asks first: the phone's copy is the only one.
     private func confirmDelete(_ track: RecordedTrack) {

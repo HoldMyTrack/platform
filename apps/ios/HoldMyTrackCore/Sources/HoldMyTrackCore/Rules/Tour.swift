@@ -133,7 +133,7 @@ public enum TourRules {
 }
 
 /// What a step points at, found by the app; nil points at nothing and puts the card at the bottom.
-public enum TourTarget: Sendable { case sheet, dates, layers, places, export, modes, fogLevel, record, page, youTour }
+public enum TourTarget: Sendable { case sheet, dates, layers, places, export, modes, fogLevel, record, youTour }
 
 /// A map menu the tour can hold open.
 public enum TourMenu: CaseIterable, Sendable { case layers, places, fogLevel }
@@ -214,7 +214,7 @@ public enum TourSteps {
             TourStep("export", .export),
         ] + fog + [
             TourStep("record", .record, text: isDemo ? "record_demo" : "record"),
-            TourStep("sync", .page, tab: .sync, text: isDemo ? "sync_demo" : "sync"),
+            TourStep("sync", .sheet, tab: .sync, sheet: true, text: isDemo ? "sync_demo" : "sync"),
             TourStep("done", .youTour, tab: .you),
         ]
     }

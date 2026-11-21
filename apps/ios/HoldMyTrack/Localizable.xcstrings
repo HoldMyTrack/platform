@@ -9085,6 +9085,24 @@
         }
       }
     },
+    "recording.distance" : {
+      "comment" : "A recording's Edit: its distance.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Расстояние"
+          }
+        }
+      }
+    },
     "recording.edit" : {
       "comment" : "A recording: edit its name, description and type.",
       "extractionState" : "manual",
@@ -9319,6 +9337,42 @@
         }
       }
     },
+    "recording.saveTitle" : {
+      "comment" : "The screen a Stop opens: the title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить запись"
+          }
+        }
+      }
+    },
+    "recording.savedUntilSync" : {
+      "comment" : "Recording: saved from the Save screen.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording saved. It will appear on the map after you sync."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись сохранена. Она появится на карте после синхронизации."
+          }
+        }
+      }
+    },
     "recording.stopButton" : {
       "comment" : "The recording's status over the map: stop, which asks first.",
       "localizations" : {
@@ -9387,6 +9441,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Идёт запись. Если смахнуть HoldMyTrack в переключателе приложений, запись остановится."
+          }
+        }
+      }
+    },
+    "recording.time" : {
+      "comment" : "A recording's Edit: its moving time.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Время"
           }
         }
       }

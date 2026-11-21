@@ -72,16 +72,23 @@ final class RecordingTests: XCTestCase {
 
         record.tap()
         XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))
-        // Stopped from another tab, it opens for naming on the Sync tab.
+        // Stopped from another tab, it opens on the Save screen over the map, with its time and
+        // distance; saved, it waits on the Sync tab.
         app.tabBars.buttons["tabYou"].tap()
         walk(for: 62)
         record.press(forDuration: 2.6)
         let name = app.textFields["recordingName"]
-        XCTAssertTrue(name.waitForExistence(timeout: 5), "Edit opens on the saved recording")
+        XCTAssertTrue(name.waitForExistence(timeout: 5), "the Save screen opens on the saved recording")
+        XCTAssertTrue(app.navigationBars["Save recording"].exists)
+        XCTAssertTrue(app.staticTexts["recordingTime"].label.hasPrefix("0:01:"), "the moving time")
+        XCTAssertTrue(app.staticTexts["recordingDistance"].exists)
+        XCTAssertTrue(app.buttons["recordingDiscard"].exists, "Discard in Download GPX's place")
+        XCTAssertFalse(app.buttons["recordingGPX"].exists)
         name.tap()
         name.typeText("Test walk")
         app.buttons["recordingSave"].tap()
-        XCTAssertTrue(app.tabBars.buttons["tabSync"].isSelected)
+        XCTAssertTrue(app.staticTexts["Recording saved. It will appear on the map after you sync."].waitForExistence(timeout: 5))
+        app.tabBars.buttons["tabSync"].tap()
         let row = app.cells.matching(identifier: "recordingRow").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         XCTAssertTrue(row.staticTexts["Test walk"].exists, "listed by its name")
@@ -167,10 +174,12 @@ final class RecordingTests: XCTestCase {
         let pastAMinute = NSPredicate(format: "label CONTAINS '0:01:'")
         XCTAssertTrue(status.wait(for: pastAMinute, timeout: 10), "the moving time goes on from where it was")
         record.press(forDuration: 2.6)
-        // Saved, it opens for naming; cancelled, it's listed, and its Delete deletes it, asked first.
+        // Saved, it opens on the Save screen; cancelled, it's kept and listed, and its Delete
+        // deletes it, asked first.
         let cancel = app.navigationBars.buttons["Cancel"]
         XCTAssertTrue(cancel.waitForExistence(timeout: 5))
         cancel.tap()
+        app.tabBars.buttons["tabSync"].tap()
         let row = app.cells.matching(identifier: "recordingRow").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.buttons["recordingDelete"].tap()
@@ -181,7 +190,7 @@ final class RecordingTests: XCTestCase {
     }
 
     /// While recording, the Live Activity shows outside the app; its Stop opens the app, which
-    /// asks first: Keep recording keeps it, Stop ends it into Edit.
+    /// asks first: Keep recording keeps it, Stop ends it.
     @MainActor
     func testTheLiveActivitysStopAsksFirst() throws {
         let base = try LaunchTests.requireDevStack(self)

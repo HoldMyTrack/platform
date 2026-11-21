@@ -34,7 +34,7 @@ extension MapViewController {
         case .places: [rail.places] + [placesMenu.content].compactMap { $0 }
         case .export: [rail.export]
         case .modes, .fogLevel: [modes] + [fogLevelMenu.content].compactMap { $0 }
-        case .page, .youTour, .record: []
+        case .youTour, .record: []
         }
     }
 

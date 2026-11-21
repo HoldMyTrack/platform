@@ -2,9 +2,11 @@ import HoldMyTrackCore
 import UIKit
 
 /// A recording's Edit (apps/android/docs/SPEC.md FR-5.2): its name, description and type, kept on the
-/// phone until it's sent; the type set becomes the account's for the next recording. The Type
-/// picker lists the account's types and this phone's waiting recordings', most used first, then
-/// the presets (TypeSearch.recordingKnown). Download GPX and Delete are here too.
+/// phone until it's sent, with its moving time and distance; the type set becomes the account's
+/// for the next recording. The Type picker lists the account's types and this phone's waiting
+/// recordings', most used first, then the presets (TypeSearch.recordingKnown). Download GPX is
+/// here too. Opened the moment a recording stops, the same form is "Save recording", with Discard,
+/// asked first, in Download GPX's place; Cancel keeps the recording as it is.
 final class RecordingEditViewController: UIViewController {
     private var track: RecordedTrack
     private let account: Account
@@ -12,21 +14,28 @@ final class RecordingEditViewController: UIViewController {
     private let api: APIClient
     /// The account's tracks by type, empty until read or when they couldn't be.
     private var serverCounts: [(type: String, count: Int)] = []
+    /// The Save screen a Stop opens, rather than a row's Edit.
+    private let justStopped: Bool
     var onGPX: ((RecordedTrack) -> Void)?
-    var onDelete: ((RecordedTrack) -> Void)?
+    /// Saved from the Save screen: it waits on the phone until Sync sends it, which the map it
+    /// returns to doesn't show.
+    var onSaved: (() -> Void)?
 
     private let name = Controls.field(String(localized: "recording.name", defaultValue: "Name", comment: "A recording's Edit: its name, optional."), id: "recordingName")
     private let about = UITextView()
     private let typeButton = Controls.secondaryButton("", id: "recordingType")
     private let error = Controls.error(id: "recordingError")
 
-    init(track: RecordedTrack, account: Account, recordings: RecordingsSync, api: APIClient) {
+    init(track: RecordedTrack, account: Account, recordings: RecordingsSync, api: APIClient, justStopped: Bool = false) {
         self.track = track
         self.account = account
         self.recordings = recordings
         self.api = api
+        self.justStopped = justStopped
         super.init(nibName: nil, bundle: nil)
-        title = String(localized: "recording.editTitle", defaultValue: "Edit recording", comment: "A recording's Edit: the screen's title.")
+        title = justStopped
+            ? String(localized: "recording.saveTitle", defaultValue: "Save recording", comment: "The screen a Stop opens: the title.")
+            : String(localized: "recording.editTitle", defaultValue: "Edit recording", comment: "A recording's Edit: the screen's title.")
     }
 
     @available(*, unavailable)
@@ -62,24 +71,59 @@ final class RecordingEditViewController: UIViewController {
             self?.serverCounts = read.counts
             self?.renderType()
         }
-        let gpx = Controls.secondaryButton(String(localized: "recording.gpx", defaultValue: "Download GPX", comment: "A recording: save its route as GPX."), id: "recordingGPX")
-        gpx.addAction(UIAction { [weak self] _ in
-            guard let self else { return }
-            self.onGPX?(self.track)
-        }, for: .primaryActionTriggered)
-        let delete = Controls.textButton(String(localized: "recording.delete", defaultValue: "Delete", comment: "A recording: delete it from the phone."), id: "recordingDelete")
-        delete.configuration?.baseForegroundColor = UIColor(resource: .danger)
-        delete.addAction(UIAction { [weak self] _ in
-            guard let self else { return }
-            self.onDelete?(self.track)
-        }, for: .primaryActionTriggered)
+        let last: UIButton
+        if justStopped {
+            last = Controls.textButton(String(localized: "recording.discard", defaultValue: "Discard", comment: "An unfinished recording: delete it."), id: "recordingDiscard")
+            last.configuration?.baseForegroundColor = UIColor(resource: .danger)
+            last.addAction(UIAction { [weak self] _ in self?.confirmDiscard() }, for: .primaryActionTriggered)
+        } else {
+            last = Controls.secondaryButton(String(localized: "recording.gpx", defaultValue: "Download GPX", comment: "A recording: save its route as GPX."), id: "recordingGPX")
+            last.addAction(UIAction { [weak self] _ in
+                guard let self else { return }
+                self.onGPX?(self.track)
+            }, for: .primaryActionTriggered)
+        }
         let column = Controls.column([
             Self.caption(String(localized: "recording.name", defaultValue: "Name", comment: "A recording's Edit: its name, optional.")), name,
             Self.caption(String(localized: "Type")), typeButton,
             Self.caption(String(localized: "recording.description", defaultValue: "Description (optional)", comment: "A recording's Edit: its description.")), about,
-            error, gpx, delete,
+            stats(), error, last,
         ])
         Controls.host(column, in: self)
+    }
+
+    /// Time and Distance side by side: the moving time and the distance recorded.
+    private func stats() -> UIView {
+        let format = PanelFormat(account: account)
+        func stat(_ label: String, _ value: String, id: String) -> UIView {
+            let number = Controls.label(value, font: Typeface.sans(DesignTokens.Text.xl, weight: DesignTokens.Weight.semibold, relativeTo: .title3), color: UIColor(resource: .ink))
+            number.accessibilityIdentifier = id
+            let column = Controls.column([Self.caption(label), number], spacing: DesignTokens.Space.s4)
+            column.isAccessibilityElement = true
+            column.accessibilityLabel = "\(label), \(value)"
+            return column
+        }
+        let row = UIStackView(arrangedSubviews: [
+            stat(String(localized: "recording.time", defaultValue: "Time", comment: "A recording's Edit: its moving time."), RecordingStatus.clock(track.movingSeconds), id: "recordingTime"),
+            stat(String(localized: "recording.distance", defaultValue: "Distance", comment: "A recording's Edit: its distance."), format.distance(track.meters), id: "recordingDistance"),
+        ])
+        row.distribution = .fillEqually
+        row.spacing = DesignTokens.Space.s16
+        return row
+    }
+
+    /// Discard asks first: the phone's copy is the only one.
+    private func confirmDiscard() {
+        let alert = UIAlertController(title: String(localized: "recording.discardTitle", defaultValue: "Discard this recording?", comment: "Discarding an unfinished recording: the question."),
+                                      message: String(localized: "recording.discardMessage", defaultValue: "The track will be deleted from this device. This can't be undone.", comment: "Discarding an unfinished recording: why it asks."),
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "recording.discard", defaultValue: "Discard", comment: "An unfinished recording: delete it."), style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            self.recordings.delete(self.track.id)
+            self.dismiss(animated: true)
+        })
+        present(alert, animated: true)
     }
 
     private func border() {
@@ -122,6 +166,7 @@ final class RecordingEditViewController: UIViewController {
         track.description = aboutText.isEmpty ? nil : aboutText
         recordings.update(track)
         recordings.setDefaultType(track.type)
-        dismiss(animated: true)
+        let saved = justStopped ? onSaved : nil
+        dismiss(animated: true) { saved?() }
     }
 }

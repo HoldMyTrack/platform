@@ -205,7 +205,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         recorder.onMessage = { [weak self] text in self?.map.say(text) }
         recorder.onRefused = { [weak self] in self?.offerLocationSettings() }
         recorder.onLeftover = { [weak self] left in self?.askAboutLeftover(left) }
-        // Stop opens the new recording for naming, on the Sync tab where it's listed.
+        // Stop opens the new recording on the Save screen.
         recorder.onSaved = { [weak self] track in self?.openRecording(track) }
         recordings.onLanded = { [weak self] in self?.map.recordingLanded() }
         recordings.onFailed = { [weak self] in
@@ -271,11 +271,16 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         recordings.stop()
     }
 
+    /// The Save screen over whatever shows, as Android opens it the moment a recording stops.
     private func openRecording(_ track: RecordedTrack) {
-        guard let sync = viewControllers?[3] as? UINavigationController else { return }
-        sync.popToRootViewController(animated: false)
-        selectedViewController = sync
-        map.syncPanel?.open(track)
+        let editor = RecordingEditViewController(track: track, account: account, recordings: recordings, api: flow.api, justStopped: true)
+        editor.onSaved = { [weak self] in
+            self?.map.say(String(localized: "recording.savedUntilSync", defaultValue: "Recording saved. It will appear on the map after you sync.", comment: "Recording: saved from the Save screen."))
+        }
+        let nav = UINavigationController(rootViewController: editor)
+        var top: UIViewController = self
+        while let presented = top.presentedViewController, !presented.isBeingDismissed { top = presented }
+        top.present(nav, animated: true)
     }
 
     /// The Sync tab's bar shows only over Upload and Sync history, never over its map.
@@ -320,14 +325,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
 
     func tourViews(_ target: TourTarget) -> [UIView] {
         switch target {
-        case .page:
-            guard let page = (selectedViewController as? UINavigationController)?.topViewController?.view else { return [] }
-            return [page]
         case .youTour: return youHome?.tourCell.map { [$0] } ?? []
         case .record: return [recordButton]
         default:
             // The map's controls only while a map tab shows it.
-            return tourTab == .map || tourTab == .trips ? map.tourViews(target) : []
+            return tourTab == .you ? [] : map.tourViews(target)
         }
     }
 

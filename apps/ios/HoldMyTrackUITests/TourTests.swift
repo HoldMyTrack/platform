@@ -19,7 +19,11 @@ final class TourTests: XCTestCase {
         for step in 2...15 {
             next.tap()
             XCTAssertTrue(app.staticTexts["\(step) of 15"].waitForExistence(timeout: 10), "step \(step)")
-            if step == 6 || step == 15 { attach("Tour step \(step)") }
+            if step == 6 || step == 14 || step == 15 { attach("Tour step \(step)") }
+            if step == 14 {
+                XCTAssertTrue(app.tabBars.buttons["tabSync"].isSelected, "Sync's step is on the Sync tab")
+                XCTAssertTrue(app.tables["sync"].exists, "with its sheet open")
+            }
         }
         XCTAssertTrue(app.cells["youTour"].exists, "the last step is on the You tab")
         next.tap()
