@@ -52,10 +52,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 - Trips is Normal mode's, as on Android; the Sync tab is a page with no map.
 
-### FR-2.3 Initial camera framing
-
-- An account with nothing on the map stays on the world view, never its Country's, and is pointed to Upload on the You tab.
-
 ### FR-2.6 Dates
 
 - Each end of Dates is picked in a calendar in a sheet, and applies at once.
@@ -63,7 +59,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 ### FR-2.7 Tracks panel
 
 - Leaving the Tracks tab drops the Private location editor's draft: iOS has no Back.
-- While any track is Pending, a notice over the map says so, including one the list no longer shows.
 
 ### FR-2.8 Spots
 

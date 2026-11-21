@@ -2080,13 +2080,13 @@
         }
       }
     },
-    "Nothing on your map yet. Upload a GPX, FIT or TCX file from the You tab to see it here." : {
-      "comment" : "Map notice: the account has no track with a route.",
+    "Nothing on your map yet. Record a walk with the button below." : {
+      "comment" : "Map notice: the account has no track with a route; its button opens the Sync tab.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "На карте пока ничего нет. Загрузите файл GPX, FIT или TCX на вкладке «Вы», чтобы увидеть его здесь."
+            "value" : "На карте пока ничего нет. Запишите прогулку кнопкой внизу."
           }
         }
       }
@@ -3011,17 +3011,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмечены некоторые"
-          }
-        }
-      }
-    },
-    "Some tracks are being processed. They'll show on the map when they're done." : {
-      "comment" : "Map notice: rows are Pending.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Некоторые треки обрабатываются. Они появятся на карте, когда обработка закончится."
           }
         }
       }

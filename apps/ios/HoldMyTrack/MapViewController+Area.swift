@@ -35,7 +35,7 @@ extension MapViewController {
                 }
             } else if MapChrome.emptyNoticeShown(empty: true, demo: account.isDemo, closed: EmptyNoticeDismissal.closed(account: accountKey)) {
                 let account = accountKey
-                notice(.empty, String(localized: "Nothing on your map yet. Upload a GPX, FIT or TCX file from the You tab to see it here.")) {
+                notice(.empty, String(localized: "Nothing on your map yet. Record a walk with the button below."), action: (String(localized: "Sync"), { [weak self] in self?.onWantsSync?() })) {
                     EmptyNoticeDismissal.close(account: account)
                 }
             }
