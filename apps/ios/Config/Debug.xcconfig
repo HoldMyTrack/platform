@@ -1,11 +1,12 @@
-// Debug: the build a developer runs against a dev stack. The API origin defaults to compose's
-// published port on this Mac, which a simulator reaches directly; Local.xcconfig, not committed,
-// sets another (Local.xcconfig.example). Plain HTTP to local addresses is allowed in this
-// configuration only (scripts/stamp-build.sh).
+// Debug: the build a developer runs against a dev stack. The origin defaults to the web's dev
+// server on this Mac, which a simulator reaches directly and which, like production, serves the
+// site's pages and the API from one origin, so the pages' forms save (docs/DEVELOPMENT.md);
+// Local.xcconfig, not committed, sets another (Local.xcconfig.example). Plain HTTP to local
+// addresses is allowed in this configuration only (scripts/stamp-build.sh).
 
 #include "Base.xcconfig"
 
-HMT_API_BASE_URL = http:$(SLASH)$(SLASH)localhost:8080
+HMT_API_BASE_URL = http:$(SLASH)$(SLASH)localhost:5173
 
 ONLY_ACTIVE_ARCH = YES
 DEBUG_INFORMATION_FORMAT = dwarf
