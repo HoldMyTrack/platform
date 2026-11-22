@@ -70,23 +70,24 @@ jobs:
       # The palette, scales, fonts and icons are written from the web's and Android's files.
       - name: Design files up to date
         run: scripts/make-design.py --check
-      # The package needs no simulator, so a broken rule fails here in seconds. The test
-      # bundle's name differs between Swift releases, so it is found rather than named.
+      # The package needs no simulator, so a broken rule fails here in seconds.
       - name: Package tests
         working-directory: apps/ios/HoldMyTrackCore
+        run: swift test --enable-code-coverage
+      # Coverage is informational (codecov.yml): an export that fails warns, never failing the
+      # job. The test bundle's name differs between Swift releases, so it is found rather than named.
+      - name: Package coverage
+        id: pkgcov
+        working-directory: apps/ios/HoldMyTrackCore
         run: |
-          swift test --enable-code-coverage
           bin=$(swift build --show-bin-path)
           xctest=$(find "$bin" -maxdepth 1 -name '*.xctest' | head -1)
-          xcrun llvm-cov export -format=lcov "$xctest/Contents/MacOS/$(basename "$xctest" .xctest)" \
-            -instr-profile "$bin/codecov/default.profdata" -ignore-filename-regex='/(Tests|\.build)/' > coverage.lcov
-      # Under its own `swift` flag, carried forward on runs this workflow skips (codecov.yml).
-      # Informational, like the other uploads.
-      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
-        with:
-          files: apps/ios/HoldMyTrackCore/coverage.lcov
-          flags: swift
-          token: ${{ secrets.CODECOV_TOKEN }}
+          if [ -n "$xctest" ] && xcrun llvm-cov export -format=lcov "$xctest/Contents/MacOS/$(basename "$xctest" .xctest)" \
+            -instr-profile "$bin/codecov/default.profdata" -ignore-filename-regex='/(Tests|\.build)/' > coverage.lcov; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::llvm-cov couldn't export the package's coverage"
+          fi
       # The runner's simulator names change with each image, so take its newest iOS's last iPhone.
       - name: Pick a simulator
         id: sim
@@ -95,22 +96,40 @@ jobs:
           udid=$(xcrun simctl list devices available -j |
             jq -r '[.devices | to_entries | sort_by(.key)[] | select(.key | test("iOS")) | .value[] | select(.name | startswith("iPhone"))] | last | .udid')
           echo "udid=$udid" >> "$GITHUB_OUTPUT"
-      # Coverage of the app target's own files; HoldMyTrackCore's come from the package tests
-      # above, so each file is measured once. The code is in the app's debug dylib.
       - name: Unit tests
         run: |
           set -o pipefail
-          dd="$RUNNER_TEMP/dd"
           xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
             -destination "id=${{ steps.sim.outputs.udid }}" -only-testing:HoldMyTrackTests \
-            -clonedSourcePackagesDirPath ~/spm -derivedDataPath "$dd" -enableCodeCoverage YES | tail -n 100
-          profdata=$(find "$dd/Build/ProfileData" -name Coverage.profdata | head -1)
-          xcrun llvm-cov export -format=lcov "$dd/Build/Products/Debug-iphonesimulator/HoldMyTrack.app/HoldMyTrack.debug.dylib" \
-            -instr-profile "$profdata" -ignore-filename-regex='/(HoldMyTrackCore|HoldMyTrackTests|HoldMyTrackUITests|DerivedSources)/' > app-coverage.lcov
-      # The app's lines join the package's under the same `swift` flag, as Kotlin's cover the
-      # whole Android app.
-      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+            -clonedSourcePackagesDirPath ~/spm -derivedDataPath "$RUNNER_TEMP/dd" -enableCodeCoverage YES | tail -n 100
+      # Coverage of the app target's own files; HoldMyTrackCore's come from the package tests
+      # above, so each file is measured once. A Debug build keeps the app's code in a debug dylib
+      # beside a stub executable, or in the executable when that split is off. A missing profile
+      # or binary warns, as the package's export does.
+      - name: App coverage
+        id: appcov
+        run: |
+          dd="$RUNNER_TEMP/dd"
+          app="$dd/Build/Products/Debug-iphonesimulator/HoldMyTrack.app"
+          binary="$app/HoldMyTrack.debug.dylib"
+          [ -f "$binary" ] || binary="$app/HoldMyTrack"
+          profdata=$(find "$dd/Build/ProfileData" -name Coverage.profdata 2>/dev/null | head -1)
+          if [ -z "$profdata" ] || [ ! -f "$binary" ]; then
+            echo "::warning::No app coverage: profile '${profdata:-none}', binary '$binary'"
+            exit 0
+          fi
+          if xcrun llvm-cov export -format=lcov "$binary" -instr-profile "$profdata" \
+            -ignore-filename-regex='/(HoldMyTrackCore|HoldMyTrackTests|HoldMyTrackUITests|DerivedSources)/' > app-coverage.lcov; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::llvm-cov couldn't export the app's coverage"
+          fi
+      # The package's and the app's lines together under the `swift` flag, as Kotlin's cover the
+      # whole Android app. Only both: one alone would read as the whole app's figure, while
+      # skipping the upload carries the last full one forward (codecov.yml).
+      - if: steps.pkgcov.outputs.ready == 'true' && steps.appcov.outputs.ready == 'true'
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
-          files: apps/ios/app-coverage.lcov
+          files: apps/ios/HoldMyTrackCore/coverage.lcov,apps/ios/app-coverage.lcov
           flags: swift
           token: ${{ secrets.CODECOV_TOKEN }}
