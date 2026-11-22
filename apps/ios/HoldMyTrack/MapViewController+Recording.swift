@@ -31,6 +31,9 @@ extension MapViewController {
             applyTabMode()
             render()
             renderPanel()
+            // The list didn't follow the camera while recording (MapChrome.listFollows): it asks
+            // about the view where the recording ended, as Android does.
+            if !active { followArea(always: true) }
             if !active, !tourBlocked { onMapFreed?() }
         }
         drawRecording(points)

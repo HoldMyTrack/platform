@@ -50,6 +50,19 @@ public enum MapChrome {
         normal && (!recording || onSync) && !editing
     }
 
+    /// A flight a list or Dates asked for, taken unless a recording is live: the recording owns the
+    /// camera, and its next fix would pan straight back. The caller consumes the ask either way,
+    /// so Stop doesn't fly to it later.
+    public static func flies(asked: Bool, recording: Bool) -> Bool { asked && !recording }
+
+    /// The opening view, taken unless a flight was asked for, which frames instead, or a recording
+    /// is live, whose camera is on the live track.
+    public static func opens(flightAsked: Bool, recording: Bool) -> Bool { !flightAsked && !recording }
+
+    /// The list follows a settled camera unless the app moved it (a focused row, a Trip) or a
+    /// recording is live, whose camera moves with every fix.
+    public static func listFollows(appFlight: Bool, recording: Bool) -> Bool { !appFlight && !recording }
+
     /// The rail, hidden while an editor has the map or rows are checked.
     public static func railShown(editing: Bool, selectionShown: Bool) -> Bool { !editing && !selectionShown }
 

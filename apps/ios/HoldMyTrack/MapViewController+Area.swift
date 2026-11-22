@@ -29,7 +29,7 @@ extension MapViewController {
             let boxes = FitBoxes.of(newest.tracks)
             if let view = OpeningView.of(boxes, width: mapView.bounds.width, height: mapView.bounds.height) {
                 hideNotice(.empty)
-                if !session.flyRequest {
+                if MapChrome.opens(flightAsked: session.flyRequest, recording: recordingLive) {
                     appFlying = true
                     mapView.setCenter(CLLocationCoordinate2D(latitude: view.lat, longitude: view.lon), zoomLevel: view.zoom, animated: false)
                     DispatchQueue.main.async { [weak self] in self?.appFlying = false }
@@ -48,10 +48,11 @@ extension MapViewController {
 
     /// The camera settled: from zoom 4 the list follows it once it has been still for a moment, so
     /// a pan in steps asks once. The app's own flights (a focused row, a Trip) leave the list as
-    /// it is, or focusing a row would shrink the list to that row's track.
+    /// it is, or focusing a row would shrink the list to that row's track; so does a recording,
+    /// whose camera moves with every fix (MapChrome.listFollows).
     func cameraSettled() {
         settleTask?.cancel()
-        guard !appFlying else { return }
+        guard MapChrome.listFollows(appFlight: appFlying, recording: recordingLive) else { return }
         settleTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
@@ -124,7 +125,7 @@ extension MapViewController {
         datesSheet?.update(session.dates)
         renderDates()
         updateTracksQuery()
-        if session.consumeFly() { datesFlight() } else { loadList() }
+        if MapChrome.flies(asked: session.consumeFly(), recording: recordingLive) { datesFlight() } else { loadList() }
     }
 
     func renderDates() {
@@ -147,6 +148,8 @@ extension MapViewController {
         Task {
             let read = try? await flow.api.areaList(box: nil, dates: dates)
             guard dates == session.dates else { return }
+            // A recording started while the tracks were read has the camera.
+            guard MapChrome.flies(asked: true, recording: recordingLive) else { return loadList() }
             guard let box = MapFraming.union(FitBoxes.of(read?.tracks ?? [])) else { return loadList() }
             fit(box, animated: true) { [weak self] in
                 guard let self else { return }

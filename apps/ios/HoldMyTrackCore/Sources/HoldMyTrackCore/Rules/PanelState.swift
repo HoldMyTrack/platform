@@ -141,7 +141,8 @@ public struct PanelState: Equatable, Sendable {
 /// Which tracks the map's list and tracks show, the visible area under Dates or a Trip, and
 /// the rules between that scope, the panel's selection and the camera (root docs/SPEC.md FR-5.11,
 /// FR-5.12, FR-13.6): Dates and the area keep the selection, which the next list prunes
-/// (PanelState.setTracks); setting Dates or opening a Trip moves the camera once (consumeFly).
+/// (PanelState.setTracks); setting Dates or opening a Trip moves the camera once (consumeFly), unless a recording is live
+/// (MapChrome.flies).
 public struct MapSession: Equatable, Sendable {
     public var panel = PanelState()
     /// The Dates filter; all time until set.
