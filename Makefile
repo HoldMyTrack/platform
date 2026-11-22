@@ -105,14 +105,15 @@ e2e-web: verify verify-build ## Web end-to-end: the Playwright map checks, dev s
 e2e-android: e2e-stack test-android-device ## Android instrumented tests with the dev stack: the UI Automator flows and the recording stores
 
 # with-android-emulator.sh starts an emulator when no device is attached, and stops it after.
-# The emulator reaches the host's API at 10.0.2.2; -P rebuilds the debug app against it. Gradle
+# The debug app talks to the web's dev server at localhost:5173, which every debug build forwards
+# to the emulator with adb reverse (app/build.gradle.kts). Gradle
 # uninstalls both APKs after a run, and the app's data with them, unless told to leave them.
 # Gradle passes when the APK fails to install and no test runs, so the result files are read:
 # at least one test per device, none failed.
 ANDROID_TEST_RESULTS := apps/android/holdmytrack/app/build/outputs/androidTest-results/connected/debug
 test-android-device: ## Android instrumented tests on an emulator, no dev stack: the flows need e2e-android (ANDROID_TESTS narrows, ANDROID_AVD picks the AVD)
 	rm -rf $(ANDROID_TEST_RESULTS)
-	cd apps/android/holdmytrack && ../../../scripts/with-android-emulator.sh ./gradlew :app:connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:$(API_PORT) \
+	cd apps/android/holdmytrack && ../../../scripts/with-android-emulator.sh ./gradlew :app:connectedDebugAndroidTest \
 	  -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true \
 	  $(if $(ANDROID_TESTS),-Pandroid.testInstrumentationRunnerArguments.class=$(ANDROID_TESTS))
 	@for f in $(ANDROID_TEST_RESULTS)/TEST-*.xml; do \
