@@ -69,6 +69,6 @@ RUN npm run build
 # Caddy serves the built static assets *and* reverse-proxies API/tile requests to `api` —
 # one container doing both jobs, matching compose.prod.yml's minimal 4-service topology
 # (web, api, worker, db) rather than a separate reverse-proxy service.
-FROM caddy:2-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5 AS serve
+FROM caddy:2-alpine@sha256:003a97808e781aa9f7e75cc2f43d34d461099031faf5e20faefb9f61126836f0 AS serve
 COPY --from=build /app/dist /srv/web
 COPY docker/Caddyfile /etc/caddy/Caddyfile
