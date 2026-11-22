@@ -42,14 +42,14 @@ Phase 0 has lead times outside anyone's control, so it starts first and runs bes
 - [x] **0.1 Apple Developer Program enrollment** ($99 a year, by D6)
   - An individual is approved in a day or two. An organization needs a D-U-N-S number first, up to a week, then a few days of review.
   - Done when: the account is active and two-factor authentication is on for the Apple ID that holds it.
-- [ ] **0.2 App ID and capabilities**
+- [x] **0.2 App ID and capabilities**
   - Register D5's bundle ID with HealthKit and Sign in with Apple. Register a Services ID for Sign in with Apple on the web (2.2), with `holdmytrack.com` and its return URL, and create a Sign in with Apple key (`.p8`). Keep the key out of the repository, beside the server's other secrets (`docs/DEPLOY.md`).
   - Done when: both identifiers exist and the key is stored where production reads its secrets.
-- [ ] **0.3 Private Email Relay**
-  - Register `holdmytrack.com` and the address verification mail is sent from, and publish SPF for it, under Sign in with Apple's email communication settings. Without it, mail to a hidden `@privaterelay.appleid.com` address bounces, and such an account can never verify (`docs/SPEC.md` FR-1.8).
+- [x] **0.3 Private Email Relay**
+  - Register `holdmytrack.com` and the address mail is sent from (`SMTP_FROM`), and publish SPF for it, under Sign in with Apple's email communication settings. Without it, every email to a hidden `@privaterelay.appleid.com` address bounces: a data download, a Trip copy, a password reset.
   - Done when: a test message from production's sender reaches a relay address.
-- [ ] **0.4 App Store Connect record**
-  - Create the app with the name HoldMyTrack, the bundle ID and an SKU. Accept the Free Apps agreement; no banking or tax forms are needed for a free app. File the Digital Services Act trader-status declaration, which the EU storefronts need. Set `UpdateViewController.listing` to the listing, which gives the Update screen its button.
+- [x] **0.4 App Store Connect record**
+  - Create the app with the name HoldMyTrack, the bundle ID and an SKU. Accept the Free Apps agreement; no banking or tax forms are needed for a free app. File the Digital Services Act trader-status declaration, which the EU storefronts need.
   - Done when: the record exists and no agreement is pending.
 
 ## Phase 1 — Device probes
@@ -73,15 +73,15 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Recognize `HoldMyTrack-iOS/<version> (<sha>; <build>)` beside the Android agent (`app_outdated.go`), with `MIN_IOS_BUILD` refusing older builds with `426 app_outdated`, `/healthz` reporting `min_ios_build`, and the admin stats counting iOS builds as they count Android's. Extend `scripts/check-contract-release.sh` to `ios/<build>` tags.
   - Docs: root `docs/IMPLEMENTATION.md` §4.33 covers both platforms; `docs/DEPLOY.md` §10 gets the iOS procedure.
   - Done when: a request with an iOS agent below the minimum gets `426`, and the server tests cover it.
-- [ ] **2.2 Sign in with Apple**
-  - Built (root `docs/SPEC.md` FR-1.11): the web flow, `POST /v2/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications. Left: configure it on production once 0.1–0.3 are done (`docs/DEPLOY.md` §4).
+- [x] **2.2 Sign in with Apple**
+  - Root `docs/SPEC.md` FR-1.11: the web flow, `POST /v2/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications, configured on production (`docs/DEPLOY.md` §4).
   - Done when: a new account, an existing verified email and a relay email each sign in on the web, and deleting the account revokes the token.
 - [x] **2.3 Pages tell the platforms apart**
   - Set `hmt_app` to `android` or `ios` and let a page say the platform's words: Health Connect or Health, Google Play or the App Store. Audit Help, About, Privacy and the in-app pages for Android-only wording.
   - Done when: each in-app page read with `hmt_app=ios` has no Android wording, and the public cache key still separates the values.
 - [ ] **2.4 The native OAuth round trip from iOS**
-  - Check that Google's and Facebook's flows complete in `ASWebAuthenticationSession` with `holdmytrack://oauth` as callback, against a dev stack and production. No server change was needed. Google completes against a dev stack (2026-11-08); left: Facebook, and both against production.
-  - Done when: both providers return a code that `POST /v2/auth/handoff` redeems.
+  - Check that Google's and Facebook's flows complete in `ASWebAuthenticationSession` with `holdmytrack://oauth` as callback, against a dev stack and production. No server change was needed. Google completes against a dev stack (2026-11-08); left: Google against production, and Facebook once production offers it.
+  - Done when: each provider production offers returns a code that `POST /v2/auth/handoff` redeems.
 
 ## Phase 3 — Project skeleton
 
@@ -184,6 +184,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [ ] **7c.1 Settings › Sync and access**
   - A switch per account, off at first. Turning it on asks for workouts and workout routes and nothing else; never heart rate or any other body signal (ADR-0017). `NSHealthShareUsageDescription` says only the routes are read, with its Russian in an `InfoPlist.xcstrings` the Check translations build phase is given.
   - Readiness differs from Android's six states: HealthKit never says whether reading was denied. States: unavailable, not yet asked, asked. When asked and nothing is found, the list says where to check access (Settings › Health › Data Access & Devices).
+  - The privacy policy, `docs/DPIA.md`, Help and `PrivacyInfo.xcprivacy` name HealthKit and what is read from it.
   - Done when: the readiness rule is a pure function with tests, and no health type beyond the two is in the entitlement or the request.
 - [ ] **7c.2 Load and the list**
   - Load reads workouts started in the last 90 days with a route of at least 2 points, in the foreground only, with no `HKObserverQuery` or background delivery. External id is the workout's UUID. `POST /v2/sync/known` leaves out what the account has; overlaps are marked as a hint; swiping hides a row (`apps/android/docs/SPEC.md` FR-3.2, FR-3.5).
@@ -228,7 +229,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [ ] **8.1 Accessibility and layout**: VoiceOver labels on every control, 44-point targets, Dynamic Type with rows stacking at large sizes, landscape clear of the notch and home indicator, iPhone SE to Pro Max. Done when: every screen can be used with VoiceOver alone.
 - [ ] **8.2 Privacy declarations**
   - `PrivacyInfo.xcprivacy` with the required-reason APIs the app and its packages use; App Privacy answers in App Store Connect (location, email, name, photos, user content; nothing for tracking); `ITSAppUsesNonExemptEncryption` false (HTTPS only).
-  - The privacy policy, `docs/DPIA.md` and Help name HealthKit and what is read from it.
+  - The privacy policy and `docs/DPIA.md` name the iOS app and what it reads: location, the photos picked, the camera for the avatar. `PrivacyInfo.xcprivacy`, `ITSAppUsesNonExemptEncryption`, the policy and the DPIA are done; left: the App Privacy answers.
   - Done when: an archive uploads with no privacy-manifest warning, and the declarations match the DPIA.
 - [ ] **8.3 Listing**: description and keywords naming no other platform and promising no device Apple's or HealthKit's data can't deliver; 6.9-inch iPhone screenshots in English and Russian with no real account's details; age rating; support URL `https://holdmytrack.com/contacts`; privacy policy URL. Done when: the listing is complete in both languages.
 - [ ] **8.4 Review notes**: a reviewer account, verified and holding tracks, kept apart from the demo account; a short screen recording of HealthKit sync and of recording in the background, since the reviewer has neither a watch history nor a walk; one line on each permission's use. Done when: the notes are in App Store Connect.
@@ -241,4 +242,4 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 ## Phase 10 — Release
 
 - [ ] **10.1 Submit for review**: manual release, phased over 7 days. A rejection is answered in Resolution Center or fixed in a new build, and the reason goes into this plan's phase 8 for next time. Done when: approved.
-- [ ] **10.2 Release**: tag the commit `ios/<build>`; `MIN_IOS_BUILD` stays 0 until a contract break needs it (`docs/DEPLOY.md` §10). Root `docs/ROADMAP.md` drops the iOS item; `apps/android/docs/SPEC.md` §9 drops "No iOS app". Done when: the app is on the App Store in every storefront chosen, and this file holds only what remains.
+- [ ] **10.2 Release**: set `UpdateViewController.listing` to the App Store listing, which gives the Update screen its button; tag the commit `ios/<build>`; `MIN_IOS_BUILD` stays 0 until a contract break needs it (`docs/DEPLOY.md` §10). Root `docs/ROADMAP.md` drops the iOS item; `apps/android/docs/SPEC.md` §9 drops "No iOS app". Done when: the app is on the App Store in every storefront chosen, and this file holds only what remains.

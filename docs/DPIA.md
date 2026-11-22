@@ -1,6 +1,6 @@
 # HoldMyTrack: Data Protection Impact Assessment
 
-Last updated: 2026-11-07.
+Last updated: 2026-11-22.
 
 ## Summary
 
@@ -10,7 +10,7 @@ HoldMyTrack launches outside the EU. Its website is open to EU users; the app is
 
 **Controller:** Nikolai Poriadin, the operator, personally, named in the privacy policy with hello@holdmytrack.com. HoldMyTrack runs at holdmytrack.com. The operator lives outside the EU; GDPR applies to a non-EU controller serving EU users (Art. 3(2)), who appoints an EU representative (Art. 27) (section 7).
 
-**What is assessed:** the web app, the server and its storage, and the Android app as they ship, with all the data in section 2. Planned cloud connectors and the iOS app are out of scope (section 7, review triggers).
+**What is assessed:** the web app, the server and its storage, and the Android and iOS apps as they ship, with all the data in section 2. Planned cloud connectors and HealthKit sync are out of scope (section 7, review triggers).
 
 ## 1. Why a DPIA is needed
 
@@ -56,7 +56,7 @@ HoldMyTrack keeps the outdoor tracks a user chooses to bring in and draws them a
 | Private locations (circles around home, work) | User | Database | Until deleted |
 | Trips, names, descriptions | User | Database | Until deleted |
 | Photos, resized and stripped of EXIF | User | Cloudflare R2 | Until deleted |
-| Spot captures (place and time, not position) | Android app | Database | Until deleted |
+| Spot captures (place and time, not position) | The apps | Database | Until deleted |
 | Import records | System | Database | 90 days after the import finishes |
 | Sessions, data download links, and emailed links with a pending address | System | Database | Until expiry: 30 days, links 1 day |
 | The day an account last used the service, the website and each app, and the app's version | System | Database | Until the account is deleted |
@@ -81,7 +81,7 @@ Cloudflare's CDN (basemap tiles, so which areas are viewed), Cloudflare Turnstil
 | Processing | Lawful basis (GDPR Art. 6) |
 | --- | --- |
 | Account, tracks, Private locations, Trips, photos, captures | (1)(b) contract: the service the user signed up for |
-| Reading Health Connect and the phone's location | (1)(a) consent, withdrawable in Android settings or Health Connect |
+| Reading Health Connect and the phone's location | (1)(a) consent, withdrawable in the phone's settings or Health Connect |
 | Server logs, backups, sign-in rate limits, the sign-up bot check, the visitor count | (1)(f) legitimate interest in a working, secure service |
 | Account emails (confirm address, reset password, data download, Trip copy) | (1)(b) contract |
 
@@ -92,6 +92,7 @@ No Article 9 special-category data is processed. Heart rate and other body data 
 - **Only what the user ticks comes in.** No source starts ticked, and nothing is imported in bulk (ADR-0039).
 - **No background location outside a recording, and no continuous location log.** Location is read in the background only between the user's start and stop of a recording, under the system's indicator: Android's foreground service notification, iOS's location indicator. Health Connect reads and Spot captures happen only in the foreground.
 - **No health data.** Only exercise sessions and their routes are read from Health Connect, one declared data type.
+- **The iOS app sees only the photos the user picks.** The system's picker hands over those alone, and the library is only ever written to, with exported map images.
 - **Photos are stored stripped.** The file is re-encoded before upload, without EXIF. Its capture time and position are sent to place it; only the time is kept.
 - **A Spot capture sends the place and the time,** not the user's position.
 - **Logs leave the server scrubbed.** Routes, places, names, emails and IP addresses are removed first.
@@ -102,12 +103,12 @@ Users exercise most rights in the product, and the rest by email to hello@holdmy
 
 | Right | How it is met |
 | --- | --- |
-| Information (Art. 13) | Privacy policy at `/privacy`, linked from the site, the app and the Health Connect rationale |
+| Information (Art. 13) | Privacy policy at `/privacy`, linked from the site, the apps and the Health Connect rationale |
 | Access and portability (Art. 15, 20) | Settings › Download your data: originals, GPX routes, photos and `account.json` |
 | Rectification (Art. 16) | Settings and the Edit window; anything else by email |
 | Erasure (Art. 17) | Settings › Delete account on the web and in the app, gone within minutes; by email if the user cannot sign in. Backups hold it for up to 8 weeks. |
 | Restriction and objection (Art. 18, 21) | By email |
-| Withdrawing consent (Art. 7(3)) | Android settings or Health Connect; data already sent stays until the user deletes it |
+| Withdrawing consent (Art. 7(3)) | The phone's settings or Health Connect; data already sent stays until the user deletes it |
 | Complaint to an authority (Art. 77) | Stated in the privacy policy |
 
 **Trip copies limit erasure:** an accepted copy is the recipient's, so deleting the sender's account leaves it (section 2, R6).
@@ -163,7 +164,7 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 - [ ] Re-check that the cookies and browser storage the site sets still match the Cookies list on `/privacy`.
 - [x] Align `VISION.md` §7 with the privacy policy's lawful basis (section 3) (2026-10-31).
 
-**Review this DPIA** before a cloud connector or the iOS app ships, when an admin can see routes, or when the user base becomes large-scale. At large scale, systematic monitoring as a core activity also makes a Data Protection Officer mandatory (Art. 37(1)(b)).
+**Review this DPIA** before a cloud connector or HealthKit sync ships, when an admin can see routes, or when the user base becomes large-scale. At large scale, systematic monitoring as a core activity also makes a Data Protection Officer mandatory (Art. 37(1)(b)).
 
 ### Sign-off
 
