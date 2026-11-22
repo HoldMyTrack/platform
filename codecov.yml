@@ -1,6 +1,6 @@
 # Codecov settings for .github/workflows/ci.yml's coverage uploads: Go (flag `go`), the
 # Android app's Kotlin (flag `kotlin`) and the web app's TypeScript (flag `typescript`); and
-# ios.yml's of the iOS package's Swift (flag `swift`).
+# ios.yml's of the iOS app's Swift, its package and its app target (flag `swift`).
 # Coverage is reported, not enforced: this project verifies most behavior live rather than
 # through unit tests (docs/DEVELOPMENT.md, "Verification"), so a percentage threshold would
 # gate on the wrong thing. Both status checks stay informational and never block a merge.
