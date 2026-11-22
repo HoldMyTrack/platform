@@ -113,14 +113,6 @@
   --fm-shadow-xl: 0 24px 60px rgb(var(--fm-shadow-rgb) / 25%); /* dialogs */
 }
 
-/* Touch screens: iOS zooms into a focused input under 16 px and can leave the page shifted
-   sideways after, so form text is 16 px there. */
-@media (pointer: coarse) {
-  :root {
-    --fm-text-lg: 16px;
-  }
-}
-
 /* The dark palette — colors only; every scale above is shared. It is written twice, once per
    way of asking for it: data-theme="dark" (the account menu's explicit choice) and the OS's
    dark preference when no explicit choice overrides it. Keep the two copies identical.

@@ -1388,14 +1388,18 @@ button.year-grid__cell:focus-visible {
   margin-bottom: 12px;
 }
 
-@media (max-width: 768px) {
-  /* iOS Safari zooms the page in on focusing a text field under 16px and doesn't zoom back
-     out; the sign-in and settings fields are 14px. The map app's own inputs get the same
-     rule in apps/web's index.css. */
-  :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file']), select, textarea) {
+/* iOS zooms the page in on focusing a text field under 16px and can leave it shifted sideways
+   after; the sign-in, settings and search-picker fields are 14px. Phones, and any touch screen
+   such as an iPad, get 16px. `html` lifts the rule above a component's own `.x input`, which
+   loads later (search-picker.css) and would win a tie. The map app's inputs get the same rule
+   in apps/web's index.css. */
+@media (max-width: 768px), (any-pointer: coarse) {
+  html :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file']), select, textarea) {
     font-size: 16px;
   }
+}
 
+@media (max-width: 768px) {
   .page-main {
     padding: 36px 16px 24px;
   }
