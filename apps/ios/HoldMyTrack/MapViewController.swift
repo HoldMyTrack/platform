@@ -92,7 +92,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var tracksVersion = 0
     var editOpen = false {
         didSet {
-            renderTopRow()
+            // The Tracks sheet goes while the Edit sheet is up (MapChrome.sheetShown); renderPanel
+            // renders the top row too.
+            renderPanel()
             if oldValue && !tourBlocked { onMapFreed?() }
         }
     }

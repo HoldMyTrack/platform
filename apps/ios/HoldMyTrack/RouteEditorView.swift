@@ -15,6 +15,8 @@ final class RouteEditorView: UIView {
     var onDraw: ((RouteEditDrawing.Shape?) -> Void)?
     /// The session changed, or finished loading: the window's tab and Save follow it.
     var onChange: (() -> Void)?
+    /// The route's points arrived and the editor shows them: its height is final.
+    var onLoaded: (() -> Void)?
 
     private(set) var session: RouteEditSession?
     private var loading = false
@@ -117,6 +119,7 @@ final class RouteEditorView: UIView {
                 self.note.isHidden = true
                 self.render()
                 self.onChange?()
+                self.onLoaded?()
             } catch {
                 self.note.text = (error as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved.")
                 self.note.textColor = UIColor(resource: .danger)

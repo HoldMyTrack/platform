@@ -503,13 +503,38 @@
         }
       }
     },
-    "Changing the type changes it for every one of them." : {
-      "comment" : "Edit window, for a group: what the Type field does.",
+    "edit.multiSubtitle" : {
+      "comment" : "Edit over several tracks: what the window changes.",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type and Trips apply to every checked track; name and description are per-track."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Новый тип будет задан всем выбранным путешествиям."
+            "value" : "Тип и путешествия применяются ко всем отмеченным трекам; название и описание у каждого свои."
+          }
+        }
+      }
+    },
+    "edit.photosCheckOne" : {
+      "comment" : "Edit over several tracks: why the Photos tab can't be opened.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos belong to one track — check just one to add or change them."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фотографии относятся к одному треку — отметьте только один, чтобы добавить или изменить их."
           }
         }
       }

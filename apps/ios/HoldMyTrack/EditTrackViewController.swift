@@ -10,9 +10,14 @@ import UniformTypeIdentifiers
 /// Photos tab (PhotosTabView), each open only when the server allows it (EditAvailability); the
 /// same Save writes the fields, then the photos, then the route edit.
 ///
-/// A sheet that stops at half height with the map live above it, so the track's edits and the
-/// Photos tab's slider show on the route in sight.
-final class EditTrackViewController: UIViewController, PHPickerViewControllerDelegate {
+/// A sheet as tall as its content up to EditSheet's share, with the map live above it, so the
+/// track's edits and the Photos tab's slider show on the route in sight. Route and Photos show
+/// for several tracks too, dimmed like a tab the server doesn't allow; a tap on one says why
+/// under the tabs and stays where it is.
+final class EditTrackViewController: UIViewController, PHPickerViewControllerDelegate, UIGestureRecognizerDelegate {
+    /// The sheet's own detent, sized by fittingHeight.
+    static let fitted = UISheetPresentationController.Detent.Identifier("editFitted")
+
     private let api: APIClient
     private let group: [Track]
     /// The range's types with their counts, the Type picker's list.
@@ -28,9 +33,15 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
     private let routeBlock: String?
     private let photosBlock: String?
     private let blocked = Controls.body()
-    private let onRouteOpened: () -> Void
+    /// The Route tab opened: the map frames the track above the sheet's height (covered).
+    private let onRouteOpened: (_ covered: CGFloat) -> Void
     private let tabs = UISegmentedControl()
     private let fields = UIStackView()
+    private var column: UIStackView?
+    /// The fitting height last handed to the sheet, so a layout pass resizes it only on a change.
+    private var lastFitting: CGFloat = 0
+    /// The Route tab just opened: the map frames the track once the sheet has its new height.
+    private var framePending = false
     private let status = Controls.body()
 
     private var type: String
@@ -43,7 +54,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
 
     init(api: APIClient, group: [Track], facets: [TypeFacet], format: PanelFormat, images: PhotoImages,
          onOverlay: @escaping (PhotoMarkerOverlay?) -> Void, onRouteDraw: @escaping (RouteEditDrawing.Shape?) -> Void,
-         onRouteOpened: @escaping () -> Void, onDone: @escaping ([String], Bool) -> Void) {
+         onRouteOpened: @escaping (CGFloat) -> Void, onDone: @escaping ([String], Bool) -> Void) {
         self.api = api
         self.group = group
         self.facets = facets
@@ -51,8 +62,13 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         self.onDone = onDone
         self.onRouteOpened = onRouteOpened
         let single = group.count == 1 ? group[0] : nil
-        let routeBlock = EditAvailability.route(group).map(EditTrackViewController.message)
-        let photosBlock = EditAvailability.photos(group).map(EditTrackViewController.message)
+        let routeBlock = EditAvailability.route(group).map {
+            EditTrackViewController.message($0, checkOne: String(localized: "Check exactly one track to edit its route"))
+        }
+        let photosBlock = EditAvailability.photos(group).map {
+            EditTrackViewController.message($0, checkOne: String(localized: "edit.photosCheckOne", defaultValue: "Photos belong to one track — check just one to add or change them.",
+                                                                 comment: "Edit over several tracks: why the Photos tab can't be opened."))
+        }
         self.routeBlock = routeBlock
         self.photosBlock = photosBlock
         routeEditor = single.flatMap { routeBlock == nil ? RouteEditorView(api: api, format: format, track: $0) : nil }
@@ -78,7 +94,8 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         navigationItem.rightBarButtonItem = save
         isModalInPresentation = true
 
-        let subtitle = Controls.body(single.map(format.label) ?? String(localized: "Changing the type changes it for every one of them."))
+        let subtitle = Controls.body(single.map(format.label) ?? String(localized: "edit.multiSubtitle", defaultValue: "Type and Trips apply to every checked track; name and description are per-track.",
+                                                                        comment: "Edit over several tracks: what the window changes."))
         var config = UIButton.Configuration.bordered()
         config.baseForegroundColor = UIColor(resource: .ink)
         config.image = Controls.icon(UIImage(resource: .chevronDown), size: 12)
@@ -119,55 +136,119 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         for v in views { fields.addArrangedSubview(v) }
         fields.axis = .vertical
         fields.spacing = DesignTokens.Space.s12
-        var column: [UIView] = [subtitle]
-        if single != nil {
-            tabs.insertSegment(withTitle: String(localized: "Track"), at: 0, animated: false)
-            tabs.insertSegment(withTitle: String(localized: "Route"), at: 1, animated: false)
-            tabs.insertSegment(withTitle: String(localized: "Photos"), at: 2, animated: false)
-            tabs.selectedSegmentIndex = 0
-            tabs.accessibilityIdentifier = "editTabs"
-            tabs.addAction(UIAction { [weak self] _ in self?.showTab() }, for: .valueChanged)
-            photos?.onPick = { [weak self] in self?.pick() }
-            photos?.onChange = { [weak self] in self?.renderTabs() }
-            routeEditor?.onChange = { [weak self] in self?.renderTabs() }
-            blocked.accessibilityIdentifier = "editTabBlocked"
-            column += [tabs, fields, routeEditor, photos, blocked].compactMap { $0 }
-            showTab()
-        } else {
-            column.append(fields)
+        tabs.insertSegment(withTitle: String(localized: "Track"), at: 0, animated: false)
+        tabs.insertSegment(withTitle: String(localized: "Route"), at: 1, animated: false)
+        tabs.insertSegment(withTitle: String(localized: "Photos"), at: 2, animated: false)
+        tabs.selectedSegmentIndex = 0
+        tabs.setEnabled(routeBlock == nil, forSegmentAt: 1)
+        tabs.setEnabled(photosBlock == nil, forSegmentAt: 2)
+        tabs.accessibilityIdentifier = "editTabs"
+        let reasons = [routeBlock, photosBlock].compactMap { $0 }
+        tabs.accessibilityHint = reasons.isEmpty ? nil : reasons.joined(separator: " ")
+        tabs.addAction(UIAction { [weak self] _ in self?.showTab() }, for: .valueChanged)
+        // A disabled segment takes no tap of its own; this one hears it and says why.
+        let blockedTap = UITapGestureRecognizer(target: self, action: #selector(tappedTabs(_:)))
+        blockedTap.cancelsTouchesInView = false
+        blockedTap.delegate = self
+        tabs.addGestureRecognizer(blockedTap)
+        photos?.onPick = { [weak self] in self?.pick() }
+        photos?.onChange = { [weak self] in self?.renderTabs() }
+        routeEditor?.onChange = { [weak self] in self?.renderTabs() }
+        routeEditor?.onLoaded = { [weak self] in
+            if self?.tabs.selectedSegmentIndex == 1 { self?.frameRoute() }
         }
+        blocked.accessibilityIdentifier = "editTabBlocked"
+        blocked.textColor = UIColor(resource: .inkSecondary)
+        blocked.isHidden = true
         status.isHidden = true
-        column += [status, error]
-        Controls.host(Controls.column(column), in: self)
+        let content = Controls.column([subtitle, tabs, blocked, fields, routeEditor, photos, status, error].compactMap { $0 })
+        column = content
+        Controls.host(content, in: self)
+        showTab()
         renderType()
         renderTabs()
     }
 
     /// The tab picked: the Route tab draws its edit on the map and the Photos tab its draft while
-    /// each shows; one the server doesn't allow says why in its place.
+    /// each shows. A tab that can't apply is disabled, so it's never the one picked.
     private func showTab() {
         let tab = tabs.selectedSegmentIndex
         view.endEditing(true)
+        blocked.isHidden = true
         fields.isHidden = tab != 0
         routeEditor?.isHidden = tab != 1
         photos?.isHidden = tab != 2
         photos?.active = tab == 2
         if tab == 1, let routeEditor {
             routeEditor.open()
-            onRouteOpened()
+            // Framed once the editor has its points and the sheet its height (onLoaded).
+            if routeEditor.session != nil { frameRoute() }
         } else {
             routeEditor?.hide()
         }
-        let reason = tab == 1 ? routeBlock : tab == 2 ? photosBlock : nil
+    }
+
+    /// The map frames the track above the sheet after the next layout, which sizes the sheet.
+    private func frameRoute() {
+        framePending = true
+        view.setNeedsLayout()
+    }
+
+    /// A tap on a disabled tab: its reason under the tabs, read out, the tab picked unchanged.
+    @objc private func tappedTabs(_ tap: UITapGestureRecognizer) {
+        let width = tabs.bounds.width / CGFloat(tabs.numberOfSegments)
+        guard width > 0 else { return }
+        let index = min(tabs.numberOfSegments - 1, max(0, Int(tap.location(in: tabs).x / width)))
+        guard !tabs.isEnabledForSegment(at: index), let reason = index == 1 ? routeBlock : index == 2 ? photosBlock : nil else { return }
         blocked.text = reason
-        blocked.isHidden = reason == nil
+        blocked.isHidden = false
+        UIAccessibility.post(notification: .announcement, argument: reason)
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
+
+    /// The most the sheet's detent may take on this screen, as the sheet last said.
+    var detentMaximum: CGFloat = 0
+
+    /// The least the fitted detent takes, about one field, so the one being typed into stays in sight.
+    private static let minimumSheet: CGFloat = 160
+
+    /// The fitted detent's height for the content now (EditSheet).
+    var detentHeight: CGFloat {
+        CGFloat(EditSheet.height(content: Double(fittingHeight), maximum: Double(detentMaximum), minimum: Double(Self.minimumSheet)))
+    }
+
+    /// How much of the map the fitted sheet takes, the home indicator's inset under it included;
+    /// expanded, it covers the map anyway, and the track waits above where it comes back down to.
+    private var coveredHeight: CGFloat {
+        detentHeight + (view.window?.safeAreaInsets.bottom ?? 0)
+    }
+
+    /// The sheet's content height: the navigation bar and the column with its margins.
+    var fittingHeight: CGFloat {
+        guard isViewLoaded, let column, view.bounds.width > 0 else { return 0 }
+        let width = column.bounds.width > 0 ? column.bounds.width : view.readableContentGuide.layoutFrame.width
+        let body = column.systemLayoutSizeFitting(CGSize(width: width, height: 0), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel).height
+        return (navigationController?.navigationBar.frame.maxY ?? 56) + body + 2 * DesignTokens.Space.s32
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // A tab or a note changing the content resizes the sheet to it.
+        let height = fittingHeight
+        if abs(height - lastFitting) > 1, let sheet = navigationController?.sheetPresentationController {
+            lastFitting = height
+            sheet.animateChanges { sheet.invalidateDetents() }
+        }
+        // The height the sheet is about to take, not its frame mid-change.
+        guard framePending else { return }
+        framePending = false
+        onRouteOpened(coveredHeight)
     }
 
     /// The tabs' labels: Route and Photos marked while they have unsaved changes, Photos with
     /// the count Save would leave.
     private func renderTabs() {
-        // Several tracks have no tabs: there's nothing to label.
-        guard tabs.numberOfSegments == 3 else { return }
         let routeChanged = routeEditor?.session?.changed == true
         tabs.setTitle(routeChanged ? String(localized: "Route •", comment: "Edit window's tab with unsaved route changes.") : String(localized: "Route"), forSegmentAt: 1)
         if let photos {
@@ -182,9 +263,9 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
     }
 
     /// Why a tab can't be used, in the server's terms (EditAvailability).
-    private static func message(_ block: EditBlock) -> String {
+    private static func message(_ block: EditBlock, checkOne: String) -> String {
         switch block {
-        case .checkOne: String(localized: "Check exactly one track to edit its route")
+        case .checkOne: checkOne
         case .pending: String(localized: "This track is still being processed")
         case .isPrivate: String(localized: "Entirely inside one of your private locations, so it isn't on the map and has no distance. Moving or removing that location brings it back.")
         case .noOriginal: String(localized: "This track's original recording isn't stored, so its route can't be edited")
