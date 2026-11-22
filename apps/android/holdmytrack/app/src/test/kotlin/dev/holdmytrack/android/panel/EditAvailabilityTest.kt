@@ -32,4 +32,12 @@ class EditAvailabilityTest {
         assertEquals(EditBlock.PRIVATE, EditAvailability.photos(listOf(track(photos = "private"))))
         assertNull(EditAvailability.photos(listOf(track(routeEdit = "pending"))))
     }
+
+    @Test
+    fun `a tap on a blocked tab gives its own reason and the Track tab always opens`() {
+        assertEquals("one", EditAvailability.tapped(EditTab.ROUTE, route = "one", photos = "photos"))
+        assertEquals("photos", EditAvailability.tapped(EditTab.PHOTOS, route = "one", photos = "photos"))
+        assertNull(EditAvailability.tapped(EditTab.TRACK, route = "one", photos = "photos"))
+        assertNull(EditAvailability.tapped<String>(EditTab.ROUTE, route = null, photos = "photos"))
+    }
 }

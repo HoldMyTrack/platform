@@ -2,6 +2,9 @@ package dev.holdmytrack.android.panel
 
 import dev.holdmytrack.android.net.Track
 
+/** The Edit window's tabs. */
+enum class EditTab { TRACK, ROUTE, PHOTOS }
+
 /** Why the Edit window's Track or Photos tab can't be used ([EditAvailability]). */
 enum class EditBlock { CHECK_ONE, PENDING, PRIVATE, NO_ORIGINAL, BAD_TIMES }
 
@@ -23,6 +26,14 @@ object EditAvailability {
     fun photos(selection: List<Track>): EditBlock? {
         val single = selection.singleOrNull() ?: return EditBlock.CHECK_ONE
         return block(single.photos)
+    }
+
+    /** A tap on [tab]: why it can't open, from the Route and Photos tabs' own reasons, shown
+     *  under the tabs while the open tab stays; null opens it. The Track tab always opens. */
+    fun <T : Any> tapped(tab: EditTab, route: T?, photos: T?): T? = when (tab) {
+        EditTab.TRACK -> null
+        EditTab.ROUTE -> route
+        EditTab.PHOTOS -> photos
     }
 
     /** A code the app doesn't know, from a newer server, is left to the server to refuse. */
