@@ -6,8 +6,8 @@ import UniformTypeIdentifiers
 /// Edit (root docs/SPEC.md FR-5.5, apps/android/docs/SPEC.md FR-2.7) over the toolbar's target:
 /// one track's type, name and description, or a group's type alone. Save writes only what
 /// changed, one track at a time (EditPlan); a group of mixed types starts with Type empty, and
-/// leaving it empty keeps each its own. One track also has a Route tab (RouteEditorView) and a
-/// Photos tab (PhotosTabView), each open only when the server allows it (EditAvailability); the
+/// leaving it empty keeps each its own. A Route tab (RouteEditorView) and a Photos tab
+/// (PhotosTabView) open for one track only when the server allows it (EditAvailability); the
 /// same Save writes the fields, then the photos, then the route edit.
 ///
 /// A sheet as tall as its content up to EditSheet's share, with the map live above it, so the
@@ -29,7 +29,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
     private let photos: PhotosTabView?
     /// One track's Route tab, else nil; the map hands it Delete point's and Move point's touches.
     let routeEditor: RouteEditorView?
-    /// Why the Track or Photos tab can't be used, shown in its place.
+    /// Why the Route or Photos tab can't be used, shown under the tabs when it's tapped.
     private let routeBlock: String?
     private let photosBlock: String?
     private let blocked = Controls.body()
@@ -144,7 +144,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         tabs.setEnabled(photosBlock == nil, forSegmentAt: 2)
         tabs.accessibilityIdentifier = "editTabs"
         let reasons = [routeBlock, photosBlock].compactMap { $0 }
-        tabs.accessibilityHint = reasons.isEmpty ? nil : reasons.joined(separator: " ")
+        tabs.accessibilityHint = reasons.isEmpty ? nil : reasons.map(EditSheet.sentence).joined(separator: " ")
         tabs.addAction(UIAction { [weak self] _ in self?.showTab() }, for: .valueChanged)
         // A disabled segment takes no tap of its own; this one hears it and says why.
         let blockedTap = UITapGestureRecognizer(target: self, action: #selector(tappedTabs(_:)))
@@ -154,7 +154,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         photos?.onPick = { [weak self] in self?.pick() }
         photos?.onChange = { [weak self] in self?.renderTabs() }
         routeEditor?.onChange = { [weak self] in self?.renderTabs() }
-        routeEditor?.onLoaded = { [weak self] in
+        routeEditor?.onSettled = { [weak self] in
             if self?.tabs.selectedSegmentIndex == 1 { self?.frameRoute() }
         }
         blocked.accessibilityIdentifier = "editTabBlocked"
@@ -181,8 +181,9 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         photos?.active = tab == 2
         if tab == 1, let routeEditor {
             routeEditor.open()
-            // Framed once the editor has its points and the sheet its height (onLoaded).
-            if routeEditor.session != nil { frameRoute() }
+            // While the points load, framed once they or the error show and the sheet has its
+            // height (onSettled).
+            if !routeEditor.loading { frameRoute() }
         } else {
             routeEditor?.hide()
         }
@@ -196,9 +197,8 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
 
     /// A tap on a disabled tab: its reason under the tabs, read out, the tab picked unchanged.
     @objc private func tappedTabs(_ tap: UITapGestureRecognizer) {
-        let width = tabs.bounds.width / CGFloat(tabs.numberOfSegments)
-        guard width > 0 else { return }
-        let index = min(tabs.numberOfSegments - 1, max(0, Int(tap.location(in: tabs).x / width)))
+        guard let index = EditSheet.segment(at: tap.location(in: tabs).x, width: tabs.bounds.width, count: tabs.numberOfSegments,
+                                            rightToLeft: tabs.effectiveUserInterfaceLayoutDirection == .rightToLeft) else { return }
         guard !tabs.isEnabledForSegment(at: index), let reason = index == 1 ? routeBlock : index == 2 ? photosBlock : nil else { return }
         blocked.text = reason
         blocked.isHidden = false
@@ -220,7 +220,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
 
     /// How much of the map the fitted sheet takes, the home indicator's inset under it included;
     /// expanded, it covers the map anyway, and the track waits above where it comes back down to.
-    private var coveredHeight: CGFloat {
+    var coveredHeight: CGFloat {
         detentHeight + (view.window?.safeAreaInsets.bottom ?? 0)
     }
 

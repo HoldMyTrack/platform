@@ -66,22 +66,22 @@ final class RouteEditTests: XCTestCase {
         app.buttons["routeDeletePoint"].tap()
         let map = app.otherElements["map"]
         var hit: XCUICoordinate?
-        // Taps in a row come a third of the map apart, never close enough to be the map's double
-        // tap, which would zoom the track away mid-search.
-        let grid = Array(stride(from: 0.1, through: 0.9, by: 0.025))
-        let third = (grid.count + 2) / 3
-        let columns = (0..<third).flatMap { i in [i, i + third, i + 2 * third].filter { $0 < grid.count }.map { grid[$0] } }
-        search: for row in stride(from: 0.2, through: 0.45, by: 0.025) {
-            for column in columns {
-                let at = map.coordinate(withNormalizedOffset: CGVector(dx: column, dy: row))
-                at.tap()
-                // The map holds a single tap until its double tap can't follow, so the count
-                // changes a moment after the tap returns; this tap is the one waited for.
-                Thread.sleep(forTimeInterval: 0.5)
-                if count.label != before {
-                    hit = at
-                    break search
-                }
+        // The camera centres the track in the band above the sheet, so the search starts there and
+        // works outward, hitting within a few taps instead of sweeping from a corner.
+        let rows = Array(stride(from: 0.2, through: 0.45, by: 0.025))
+        let columns = Array(stride(from: 0.1, through: 0.9, by: 0.025))
+        let centre = (dx: 0.5, dy: (rows.first! + rows.last!) / 2)
+        let spots = rows.flatMap { row in columns.map { CGVector(dx: $0, dy: row) } }
+            .sorted { hypot($0.dx - centre.dx, $0.dy - centre.dy) < hypot($1.dx - centre.dx, $1.dy - centre.dy) }
+        for spot in spots {
+            let at = map.coordinate(withNormalizedOffset: spot)
+            at.tap()
+            // The map holds a single tap until its double tap can't follow, so the count changes a
+            // moment after the tap returns; the wait also keeps the next tap from being a double tap.
+            Thread.sleep(forTimeInterval: 0.5)
+            if count.label != before {
+                hit = at
+                break
             }
         }
         let point = try XCTUnwrap(hit, "a tap on the track deletes a point")

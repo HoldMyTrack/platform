@@ -19,7 +19,7 @@ extension MapViewController {
         if was != (shape != nil) { panelChanged() }
     }
 
-    /// The Route tab opened: the camera onto the track, clear of the half-height sheet.
+    /// The Route tab opened: the camera onto the track, clear of the Edit sheet.
     /// covered: how much of the map's bottom the Edit sheet takes once it has its new height.
     func frameEditedTrack(_ track: Track, covered: CGFloat) {
         guard let box = track.bbox else { return }

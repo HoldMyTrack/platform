@@ -279,7 +279,7 @@ extension MapViewController {
         notices.aside = MapChrome.areaNoticesShown(recording: recordingLive, onSync: panelTab == .sync) ? [] : [Notice.empty.rawValue, Notice.capped.rawValue]
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
         sheet.isHidden = !MapChrome.sheetShown(normal: state.mode == .normal, recording: recordingLive, onSync: panelTab == .sync,
-                                               editing: editOpen || privateLocations.open)
+                                               editing: editWindow != nil || privateLocations.open)
         sheet.setNeedsLayout()
         // The map's credit sits above the sheet (placeAttribution), and the row's controls follow it.
         view.setNeedsLayout()
@@ -502,6 +502,7 @@ extension MapViewController {
             onRouteOpened: { [weak self] covered in self?.frameEditedTrack(group[0], covered: covered) }
         ) { [weak self] written, photosSaved in
             guard let self else { return }
+            self.editWindow = nil
             self.editOpen = false
             self.setRouteEdit(nil)
             self.photosEditClosed(saved: photosSaved)
@@ -510,7 +511,6 @@ extension MapViewController {
             self.watchPending()
             self.loadList()
         }
-        editWindow = editor
         let nav = UINavigationController(rootViewController: editor)
         // As tall as its content up to EditSheet's share, with the map live above, so the Photos
         // tab's slider moves a photo in sight; still expandable.
@@ -525,6 +525,7 @@ extension MapViewController {
             sheet.prefersScrollingExpandsWhenScrolledToEdge = false
         }
         present(nav, animated: true)
+        editWindow = editor
     }
 
     /// Delete over the toolbar's target (root docs/SPEC.md FR-5.6), confirmed first, one at a

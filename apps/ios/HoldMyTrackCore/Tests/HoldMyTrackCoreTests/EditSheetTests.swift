@@ -19,6 +19,21 @@ struct EditSheetTests {
         #expect(EditSheet.height(content: 0, maximum: 100, minimum: 160) == 100)
     }
 
+    @Test func aTapFindsItsSegmentEitherWay() {
+        #expect(EditSheet.segment(at: 10, width: 300, count: 3, rightToLeft: false) == 0)
+        #expect(EditSheet.segment(at: 250, width: 300, count: 3, rightToLeft: false) == 2)
+        #expect(EditSheet.segment(at: 10, width: 300, count: 3, rightToLeft: true) == 2)
+        #expect(EditSheet.segment(at: 250, width: 300, count: 3, rightToLeft: true) == 0)
+        #expect(EditSheet.segment(at: 300, width: 300, count: 3, rightToLeft: false) == 2)
+        #expect(EditSheet.segment(at: -5, width: 300, count: 3, rightToLeft: false) == 0)
+        #expect(EditSheet.segment(at: 10, width: 0, count: 3, rightToLeft: false) == nil)
+    }
+
+    @Test func reasonsEndAsSentences() {
+        #expect(EditSheet.sentence("Check exactly one track to edit its route") == "Check exactly one track to edit its route.")
+        #expect(EditSheet.sentence("Photos belong to one track.") == "Photos belong to one track.")
+    }
+
     @Test func theTracksSheetHidesWhileAnEditorIsOpen() {
         #expect(MapChrome.sheetShown(normal: true, recording: false, onSync: false, editing: false))
         #expect(!MapChrome.sheetShown(normal: true, recording: false, onSync: false, editing: true))
