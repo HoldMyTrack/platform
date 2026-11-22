@@ -63,7 +63,7 @@ For the admin panel (`/admin`, `IMPLEMENTATION.md` §4.20), sign up locally and 
 
 `worker` takes the daily statistics (`IMPLEMENTATION.md` §4.32) within an hour of midnight UTC and at its start. `docker compose run --rm api stats` prints the newest day, `stats 2026-10-13` one day, `stats tracks_by_source --days 90` a key's (or prefix's) series. `stats --take [day]` writes a snapshot now, yesterday by default, but with today's state values, so use it only locally. To retake a day, delete its `daily_stats` rows.
 
-The Android and iOS apps show Settings, Profile, Sync and About as these pages in a web view. Against the stock dev stack their forms get `403`: a form must come from `APP_BASE_URL`'s origin (`localhost:5173`), while the emulator reaches `10.0.2.2:8080`. To try them, run `adb reverse tcp:8080 tcp:8080` and set `APP_BASE_URL=http://localhost:8080` for `api` and `holdmytrack.apiBaseUrl=http://localhost:8080` for the app. An iOS simulator reaches `localhost`, so an iOS Debug build talks to `http://localhost:5173` (`apps/ios/README.md`) and posts its pages from `APP_BASE_URL` with no change to `api`: Vite proxies the API's `/v2`, `/tiles` and `/healthz` to it.
+The Android and iOS apps show Settings, Profile, Sync and About as these pages in a web view. A form must come from `APP_BASE_URL`'s origin (`localhost:5173`), so the apps' debug builds talk to the web's dev server there, which proxies the API's `/v2`, `/tiles` and `/healthz`, and their pages save with no change to `api`. An iOS simulator reaches `localhost` directly (`apps/ios/README.md`). The Android emulator, or a phone over USB, reaches it through `adb reverse tcp:5173 tcp:5173`, which every Android debug build sets up on each connected device (`apps/android/holdmytrack/app/build.gradle.kts`).
 
 ### Dev uses the planet basemap from `tiles.holdmytrack.com`
 
@@ -115,7 +115,7 @@ Each client's flows run against the dev stack, which `make e2e-stack` rebuilds f
 | Android | `make e2e-android` | an Android emulator image (AVD), JDK 17 and the Android SDK | no |
 | iOS | `make e2e-ios` | Xcode and an iPhone simulator (`IOS_DESTINATION=…` names another) | no |
 
-- The Android flows rebuild and install the debug app against `10.0.2.2:$API_PORT`; a debug build installed for other work points there afterwards.
+- The Android flows rebuild and install the debug app, which talks to `localhost:5173` through `adb reverse`, as every debug build does.
 - With no device attached, `make e2e-android` starts the AVD headless and shuts it down after the run, saving no snapshot; `ANDROID_AVD=<name>` picks one when there are several. An emulator already running is used and left running.
 - Both APKs stay installed after a run, so the emulator keeps its recordings: the store tests open a throwaway database file each, and the flows only sign out whoever was signed in. `make test-android-device ANDROID_TESTS=dev.holdmytrack.android.recording.db.RecordingStoresTest` runs the store tests without the dev stack.
 - `make e2e-ios` passes `HMT_API_BASE_URL` on the command line, which outranks `Config/Local.xcconfig`. Run from Xcode, the UI tests use the xcconfig's origin and skip when it doesn't answer. `IOS_UI_TESTS=HoldMyTrackUITests/LaunchTests` runs one class.
