@@ -30,10 +30,11 @@ import dev.holdmytrack.android.recording.TypeSearch
  *  - **Track**: one track edits Type, Name and Description; several edit Type only —
  *    Name and Description have nothing to set consistently across different tracks, so
  *    they're disabled with a note saying why rather than silently skipped.
- *  - **Track** ([RouteEditor]): one track with a finished track, else disabled saying why.
+ *  - **Route** ([RouteEditor]): one track with a finished track, else dimmed, a tap saying
+ *    why under the tabs.
  *    Opening it the first time starts the map's track session ([onStartRoute]: the other
  *    tracks away, the camera on this one), which lasts until the window closes.
- *  - **Photos** ([PhotosTab]): one track with a track, else disabled saying why. Its
+ *  - **Photos** ([PhotosTab]): one track with a track, else dimmed like Route. Its
  *    changes are a draft, like the route edit, written by the same Save.
  *
  * Save writes what changed — the fields first (one `PATCH /v2/tracks/{id}` each, one after
@@ -84,6 +85,7 @@ class EditTrackWindow(
     private val tabPhotos: TextView = card.findViewById(R.id.edit_tab_photos)
     private val photosCount: TextView = card.findViewById(R.id.edit_tab_photos_count)
     private val photosDot: View = card.findViewById(R.id.edit_tab_photos_dot)
+    private val tabBlocked: TextView = card.findViewById(R.id.edit_tab_blocked)
     private val trackPanel: View = card.findViewById(R.id.edit_track_panel)
     private val routePanel: View = card.findViewById(R.id.edit_route_panel)
     private val photosPanel: View = card.findViewById(R.id.edit_photos_panel)
@@ -145,9 +147,16 @@ class EditTrackWindow(
         tabPhotos.setOnClickListener { showTab(Tab.PHOTOS) }
     }
 
+    /** A tab that can't be used says why under the tabs, and the open one stays. */
     private fun showTab(next: Tab) {
-        if (next == Tab.ROUTE && trackUnavailable != null) return
-        if (next == Tab.PHOTOS && photosUnavailable != null) return
+        val reason = when (next) {
+            Tab.ROUTE -> trackUnavailable
+            Tab.PHOTOS -> photosUnavailable
+            Tab.TRACK -> null
+        }
+        tabBlocked.text = reason
+        tabBlocked.visibility = if (reason != null) View.VISIBLE else View.GONE
+        if (reason != null) return
         tab = next
         if (next == Tab.ROUTE) {
             val single = tracks.single()
@@ -167,7 +176,8 @@ class EditTrackWindow(
     }
 
     /** The selected tab underlined, the others dimmed; one that can't apply dimmer still,
-     *  saying why — the web's disabled tab and its title. */
+     *  saying why on a long press and in its description, as the web's disabled tab and its
+     *  title. It stays enabled, so a tap reaches [showTab] and says why too. */
     private fun renderTabs() {
         val unavailable = mapOf(Tab.ROUTE to trackUnavailable, Tab.PHOTOS to photosUnavailable)
         for ((view, which) in listOf(tabTrack to Tab.TRACK, tabRoute to Tab.ROUTE, tabPhotos to Tab.PHOTOS)) {
@@ -180,7 +190,6 @@ class EditTrackWindow(
             }
             view.isSelected = selected
         }
-        tabRoute.isEnabled = trackUnavailable == null
         tabRoute.contentDescription = trackUnavailable?.let { res.getString(R.string.edit_tab_route) + ". " + it }
             ?: if (routeEditor.changed) res.getString(R.string.edit_route_unsaved) else null
         TooltipCompat.setTooltipText(tabRoute, trackUnavailable)
@@ -188,7 +197,6 @@ class EditTrackWindow(
 
         val photosChanged = !photosTab.draft.isEmpty
         val count = photosTab.count
-        tabPhotos.isEnabled = photosUnavailable == null
         tabPhotos.contentDescription = photosUnavailable?.let { res.getString(R.string.photos_tab) + ". " + it }
             ?: listOfNotNull(
                 res.getString(if (photosChanged) R.string.photos_unsaved else R.string.photos_tab),
@@ -242,6 +250,7 @@ class EditTrackWindow(
         photosUnavailable = EditAvailability.photos(group)?.let { res.getString(blockMessage(it, R.string.photos_check_one)) }
         trackStarted = false
         tab = Tab.TRACK
+        tabBlocked.visibility = View.GONE
         showError(null)
         renderBusy()
         renderTabs()

@@ -41,13 +41,37 @@ import kotlin.concurrent.thread
 /**
  * End-to-end flows over the map's state rules, on an emulator against the dev stack the app was
  * built for (`docs/DEVELOPMENT.md`, "Android verification"): new Dates keeping Checked and Hidden
- * on the tracks still listed, a Trip opened from the Trips tab and closed by Back, a recording
+ * on the tracks still listed, a dimmed Edit tab saying why on a tap, a Trip opened from the Trips
+ * tab and closed by Back, a recording
  * reaching the Sync sheet, and the keyboard covering the map without shortening it. One fresh
  * account ([TestAccount]) serves the class, in method-name order.
  */
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class MapFlowsTest {
+
+    /** Edit over two tracks: a tap on the dimmed Route tab says why under the tabs and leaves
+     *  the Track tab open. Its rows are unchecked again for the next flow. */
+    @Test
+    fun a_aDimmedEditTabSaysWhyOnATap() {
+        signIn()
+        expandSheet()
+        atLeast(id("track_tile_target"), 2)
+        for (row in 0..1) {
+            tapUntil({ device.findObjects(id("track_tile_target"))[row] }) { checkedRows() > row }
+        }
+        tapUntil({ still(id("panel_edit")) }) { device.hasObject(id("edit_tab_route")) }
+        need(id("edit_tab_route")).click()
+        val reason = context.getString(R.string.edit_route_check_one)
+        expect("the Route tab's reason", device.wait(Until.hasObject(id("edit_tab_blocked").text(reason)), TIMEOUT_MS))
+        need(id("edit_track_panel"))
+        need(id("edit_cancel")).click()
+        assertTrue("Edit closed", device.wait(Until.gone(id("edit_tab_route")), TIMEOUT_MS))
+        expandSheet()
+        for (row in 1 downTo 0) {
+            tapUntil({ device.findObjects(id("track_tile_target"))[row] }) { checkedRows() == row }
+        }
+    }
 
     /** `docs/SPEC.md` FR-5.8: a list reloaded for new Dates keeps Checked and Hidden on the tracks
      *  still listed. */
