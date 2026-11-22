@@ -128,7 +128,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
             about.alpha = 0.5
             about.isSelectable = false
             about.accessibilityTraits.insert(.notEnabled)
-            let note = Controls.body(String(localized: "edit.multiReason", defaultValue: "Name and description are per-track: check one track to set them.",
+            let note = Controls.body(String(localized: "edit.multiReason", defaultValue: "Name and description are per-track: check only one track to set them.",
                                             comment: "Edit over several tracks: why Name and Description are greyed out."))
             note.accessibilityIdentifier = "editMultiNote"
             views.append(note)

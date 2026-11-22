@@ -505,7 +505,7 @@
     </plurals>
     <string name="edit_title_one">Edit track</string>
     <string name="edit_multi_subtitle">Type applies to every checked track.</string>
-    <string name="edit_multi_reason">Name and description are per-track: check one track to set them.</string>
+    <string name="edit_multi_reason">Name and description are per-track: check only one track to set them.</string>
     <string name="edit_type">Type</string>
     <string name="edit_name">Name</string>
     <string name="edit_name_placeholder">Optional — shown instead of the date in the Tracks list</string>

@@ -136,7 +136,7 @@ export const en = {
   'edit.deleted_message': 'A track in the Edit window was deleted elsewhere, so the window closed. Changes you hadn\'t saved were lost.',
   'edit.discard': 'Discard',
   'edit.keep_editing': 'Keep editing',
-  'edit.multi_reason': 'Name and description are per-track: check one track to set them.',
+  'edit.multi_reason': 'Name and description are per-track: check only one track to set them.',
   'edit.multi_subtitle': 'Type applies to every checked track.',
   'edit.name': 'Name',
   'edit.name_placeholder': 'Optional — shown instead of the date in the Tracks list',

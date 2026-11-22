@@ -2458,13 +2458,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Name and description are per-track: check one track to set them."
+            "value" : "Name and description are per-track: check only one track to set them."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Название и описание у каждого трека свои: отметьте один трек, чтобы их изменить."
+            "value" : "Название и описание у каждого трека свои: отметьте только один трек, чтобы их изменить."
           }
         }
       }
