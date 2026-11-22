@@ -45,8 +45,8 @@ Phase 0 has lead times outside anyone's control, so it starts first and runs bes
 - [x] **0.2 App ID and capabilities**
   - Register D5's bundle ID with HealthKit and Sign in with Apple. Register a Services ID for Sign in with Apple on the web (2.2), with `holdmytrack.com` and its return URL, and create a Sign in with Apple key (`.p8`). Keep the key out of the repository, beside the server's other secrets (`docs/DEPLOY.md`).
   - Done when: both identifiers exist and the key is stored where production reads its secrets.
-- [ ] **0.3 Private Email Relay**
-  - Register `holdmytrack.com` and the address verification mail is sent from, and publish SPF for it, under Sign in with Apple's email communication settings. Without it, mail to a hidden `@privaterelay.appleid.com` address bounces, and such an account can never verify (`docs/SPEC.md` FR-1.8).
+- [x] **0.3 Private Email Relay**
+  - Register `holdmytrack.com` and the address mail is sent from (`SMTP_FROM`), and publish SPF for it, under Sign in with Apple's email communication settings. Without it, every email to a hidden `@privaterelay.appleid.com` address bounces: a data download, a Trip copy, a password reset.
   - Done when: a test message from production's sender reaches a relay address.
 - [x] **0.4 App Store Connect record**
   - Create the app with the name HoldMyTrack, the bundle ID and an SKU. Accept the Free Apps agreement; no banking or tax forms are needed for a free app. File the Digital Services Act trader-status declaration, which the EU storefronts need.
