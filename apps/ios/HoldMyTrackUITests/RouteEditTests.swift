@@ -68,11 +68,15 @@ final class RouteEditTests: XCTestCase {
         var hit: XCUICoordinate?
         // The camera centres the track in the band above the sheet, so the search starts there and
         // works outward, hitting within a few taps instead of sweeping from a corner.
-        let rows = Array(stride(from: 0.2, through: 0.45, by: 0.025))
-        let columns = Array(stride(from: 0.1, through: 0.9, by: 0.025))
-        let centre = (dx: 0.5, dy: (rows.first! + rows.last!) / 2)
-        let spots = rows.flatMap { row in columns.map { CGVector(dx: $0, dy: row) } }
-            .sorted { hypot($0.dx - centre.dx, $0.dy - centre.dy) < hypot($1.dx - centre.dx, $1.dy - centre.dy) }
+        let rows: [CGFloat] = Array(stride(from: 0.2, through: 0.45, by: 0.025))
+        let columns: [CGFloat] = Array(stride(from: 0.1, through: 0.9, by: 0.025))
+        let centre = CGVector(dx: 0.5, dy: 0.325)
+        func away(_ spot: CGVector) -> CGFloat { hypot(spot.dx - centre.dx, spot.dy - centre.dy) }
+        var spots: [CGVector] = []
+        for row in rows {
+            for column in columns { spots.append(CGVector(dx: column, dy: row)) }
+        }
+        spots.sort { away($0) < away($1) }
         for spot in spots {
             let at = map.coordinate(withNormalizedOffset: spot)
             at.tap()
