@@ -46,8 +46,6 @@ import dev.holdmytrack.android.recording.TypeSearch
  */
 class EditTrackWindow(
     private val card: View,
-    /** The edit bar over the top of the map — Cancel, the title, Save — shown with [card]. */
-    private val bar: View,
     /** The Route tab opened on [Track] for the first time. */
     private val onStartRoute: (Track) -> Unit,
     /** The route editor's overlay — see [RouteEditor]. */
@@ -66,8 +64,8 @@ class EditTrackWindow(
     private val context = card.context
     private val res = context.resources
 
-    private val title: TextView = bar.findViewById(R.id.edit_title)
-    private val subtitle: TextView = bar.findViewById(R.id.edit_subtitle)
+    private val title: TextView = card.findViewById(R.id.edit_title)
+    private val subtitle: TextView = card.findViewById(R.id.edit_subtitle)
     private val typeLayout: TextInputLayout = card.findViewById(R.id.edit_type_layout)
     private val typeField: TextInputEditText = card.findViewById(R.id.edit_type)
     private val nameLayout: TextInputLayout = card.findViewById(R.id.edit_name_layout)
@@ -76,8 +74,8 @@ class EditTrackWindow(
     private val descriptionField: TextInputEditText = card.findViewById(R.id.edit_description)
     private val multiNote: View = card.findViewById(R.id.edit_multi_note)
     private val error: TextView = card.findViewById(R.id.edit_error)
-    private val cancel: Button = bar.findViewById(R.id.edit_cancel)
-    private val save: Button = bar.findViewById(R.id.edit_save)
+    private val cancel: Button = card.findViewById(R.id.edit_cancel)
+    private val save: Button = card.findViewById(R.id.edit_save)
     private val tabTrack: TextView = card.findViewById(R.id.edit_tab_track)
     private val tabRoute: TextView = card.findViewById(R.id.edit_tab_route)
     private val routeDot: View = card.findViewById(R.id.edit_tab_route_dot)
@@ -250,7 +248,6 @@ class EditTrackWindow(
         renderBusy()
         renderTabs()
         card.visibility = View.VISIBLE
-        bar.visibility = View.VISIBLE
     }
 
     /** [block]'s message; [checkOne] is the tab's own for a group. */
@@ -437,7 +434,6 @@ class EditTrackWindow(
         val photosSaved = photosTab.photosSaved
         photosTab.close()
         card.visibility = View.GONE
-        bar.visibility = View.GONE
         onClose(fieldsSaved || trackApplied, trackApplied, photosSaved)
     }
 

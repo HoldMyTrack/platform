@@ -1,34 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Edit window (panel/EditTrackWindow.kt), after the web's EditTrackWindow.tsx: a card
-     along the bottom of the map, the map left showing between it and the edit bar at the top
-     (fragment_map's edit_bar: Cancel, the title and whose it is, Save), rather than a modal
-     dialog, so its Route and Photos tabs can edit on the map. The Track, Route and Photos tabs
-     — Type, Name and Description on the first, the route editor (panel/RouteEditor) on the
-     second, the photos (panel/PhotosTab) on the third — then an error line. It scrolls past most
-     of the screen's height, and its bottom margin clears the gesture bar or the keyboard (map/ChromeInsets
-     .placeEditors). Clickable, so a touch on it never reaches the map. -->
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- The Edit window (panel/EditTrackWindow.kt), after the web's EditTrackWindow.tsx: a sheet along
+     the bottom of the map, the map live above it, so its Route and Photos tabs can edit on the
+     map. Its header stays put: Cancel, the title and whose it is, Save. Under it the Track, Route
+     and Photos tabs — Type, Name and Description on the first, the route editor (panel/RouteEditor)
+     on the second, the photos (panel/PhotosTab) on the third — then an error line, scrolling past
+     most of the screen's height. It reaches the screen's bottom edge, its padding clearing the
+     gesture bar, or rides on the keyboard while it's up (map/ChromeInsets.placeEditors). Clickable,
+     so a touch on it never reaches the map. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/edit_window"
-    style="@style/Widget.HoldMyTrack.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
-    android:layout_marginStart="@dimen/hmt_space_10"
-    android:layout_marginEnd="@dimen/hmt_space_10"
-    android:layout_marginBottom="@dimen/hmt_space_10"
+    android:background="@drawable/bg_sheet"
     android:clickable="true"
     android:elevation="10dp"
     android:focusable="false"
-    android:visibility="gone"
-    app:cardElevation="10dp"
-    app:contentPadding="@dimen/hmt_space_16">
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <!-- The header: Cancel, the window's title and whose it is, Save. -->
+    <LinearLayout
+        android:id="@+id/edit_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/hmt_space_4"
+        android:paddingTop="@dimen/hmt_space_8"
+        android:paddingEnd="@dimen/hmt_space_12"
+        android:paddingBottom="@dimen/hmt_space_4">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/edit_cancel"
+            style="@style/Widget.HoldMyTrack.Button.Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/edit_cancel" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/hmt_space_4"
+            android:layout_marginEnd="@dimen/hmt_space_4"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/edit_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.HoldMyTrack.TitleMedium"
+                tools:text="Edit track" />
+
+            <!-- Two lines, so several tracks' sentence and a long name show whole. -->
+            <TextView
+                android:id="@+id/edit_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="center_horizontal"
+                android:maxLines="2"
+                android:textColor="@color/hmt_ink_meta"
+                android:textSize="@dimen/hmt_text_sm"
+                tools:text="Sep 24, 2026, 4:00 AM" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/edit_save"
+            style="@style/Widget.HoldMyTrack.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/edit_save" />
+    </LinearLayout>
 
     <dev.holdmytrack.android.panel.MaxHeightScrollView
         android:id="@+id/edit_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/hmt_space_16"
+        android:paddingEnd="@dimen/hmt_space_16"
+        android:paddingBottom="@dimen/hmt_space_16"
+        android:clipToPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -234,4 +292,4 @@
 
         </LinearLayout>
     </dev.holdmytrack.android.panel.MaxHeightScrollView>
-</com.google.android.material.card.MaterialCardView>
+</LinearLayout>
