@@ -3210,14 +3210,6 @@ button.tracks-panel__trip-badge:hover {
     height: 100dvh;
   }
 
-  /* iOS Safari zooms the page in on focusing any text field under 16px and doesn't zoom back
-     out, leaving the fixed sheet and date slider off-screen — the interface's inputs are 14px
-     (--fm-text-lg). `:is()` takes its most specific argument's weight, (0,1,1), so this
-     outranks the single-class input rules above it without naming each one. */
-  :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file']), select, textarea) {
-    font-size: 16px;
-  }
-
   :root {
     --phone-sheet-peek: 49px;
   }
@@ -3390,4 +3382,14 @@ button.tracks-panel__trip-badge:hover {
 .private-locations__window:focus,
 .export-viewfinder:focus {
   outline: none;
+}
+
+/* iOS and iPadOS zoom the page in on focusing a text field under 16px and don't zoom back out,
+   leaving the fixed sheet and date slider off-screen; the interface's inputs are 12-14px. Only
+   iOS's WebKit knows -webkit-touch-callout, so only there do fields take 16px, whatever their
+   own rule says. The site's pages get the same rule in services/server's pages.css. */
+@supports (-webkit-touch-callout: none) {
+  :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file']), select, textarea) {
+    font-size: 16px !important;
+  }
 }
