@@ -529,10 +529,12 @@ extension MapViewController {
         let group = targets
         guard !group.isEmpty, !account.isDemo else { return }
         let format = format
-        let name = group.count == 1 ? format.label(group[0]) : String(localized: "Checked: \(group.count)")
+        let name = group.count == 1 ? format.label(group[0]) : String(localized: "panel.checkedCount", defaultValue: "\(group.count) checked tracks", comment: "Tracks tab: the checked tracks an action applies to.")
         let summary = "\(name) (\(format.totalDistance(group.compactMap(\.distanceMeters).reduce(0, +))))"
-        let title = group.count == 1 ? String(localized: "Delete this track?") : String(localized: "Delete these tracks?")
-        let message = String(localized: "\(summary) will be deleted for good, with its route and its part of Fog of War.")
+        let title = group.count == 1 ? String(localized: "Delete this track?") : String(localized: "Delete this group?")
+        let message = group.count == 1
+            ? String(localized: "\(summary) will be permanently deleted — its route, fog coverage, and any performance records it contributed to. This can't be undone.")
+            : String(localized: "\(summary) will be permanently deleted — their routes, fog coverage, and any performance records they contributed to. This can't be undone.")
         var done: [String] = []
         TripDialogs.confirm(over: view, title: title, message: message, action: String(localized: "Delete")) { [weak self] in
             guard let self else { return nil }

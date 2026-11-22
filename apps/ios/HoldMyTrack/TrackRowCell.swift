@@ -120,7 +120,7 @@ final class TrackRowCell: UITableViewCell {
 
         remove.isHidden = onRemove == nil
         remove.isEnabled = !demo
-        remove.accessibilityLabel = demo ? String(localized: "The demo account can't change a Trip") : String(localized: "Take \(label) out of this Trip")
+        remove.accessibilityLabel = demo ? String(localized: "Not available for demo accounts — create an account to change trips") : String(localized: "Remove \(label) from the trip")
         self.onRemove = onRemove
 
         accessibilityIdentifier = "trackRow"
@@ -133,15 +133,15 @@ final class TrackRowCell: UITableViewCell {
     }
 
     private func tripBadge(_ trips: [TripRef], onOpenTrip: @escaping (String) -> Void) -> UIButton {
-        let text = trips.count == 1 ? String(localized: "Trip") : String(localized: "Trips: \(trips.count)")
+        let text = trips.count == 1 ? String(localized: "Trip") : String(localized: "panel.tripBadge", defaultValue: "\(trips.count) trips", comment: "Tracks tab: a row's badge for several Trips.")
         let button = Self.badge(text, id: "badgeTrip", icon: UIImage(resource: .bookOpen), accent: true)
         if trips.count == 1 {
             button.addAction(UIAction { _ in onOpenTrip(trips[0].id) }, for: .primaryActionTriggered)
-            button.accessibilityLabel = String(localized: "Open the Trip \(trips[0].name)")
+            button.accessibilityLabel = String(localized: "Open “\(trips[0].name)”")
         } else {
             button.menu = UIMenu(children: trips.map { ref in UIAction(title: ref.name) { _ in onOpenTrip(ref.id) } })
             button.showsMenuAsPrimaryAction = true
-            button.accessibilityLabel = String(localized: "In Trips: \(trips.map(\.name).joined(separator: ", "))")
+            button.accessibilityLabel = String(localized: "panel.inTrips", defaultValue: "In \(trips.count) trips: \(trips.map(\.name).joined(separator: ", "))", comment: "Tracks tab: a row's badge for several Trips, read out with their names.")
         }
         return button
     }

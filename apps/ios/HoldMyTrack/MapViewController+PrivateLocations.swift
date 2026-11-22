@@ -154,7 +154,7 @@ extension MapViewController {
             } catch {
                 guard editing.opening == opening else { return }
                 editing.busy = false
-                editing.editor.show(error: (error as? APIError)?.serverMessage ?? String(localized: "The Private location couldn't be saved."))
+                editing.editor.show(error: (error as? APIError)?.serverMessage ?? String(localized: "The private location couldn't be saved."))
                 renderPrivateEditor()
             }
         }
@@ -163,7 +163,7 @@ extension MapViewController {
     private func confirmPrivateDelete() {
         guard let id = privateLocations.draft?.id else { return }
         let alert = UIAlertController(
-            title: String(localized: "Delete this Private location?"),
+            title: String(localized: "Delete this private location?"),
             message: String(localized: "Tracks that start or end inside it will show those parts again once they're reprocessed.",
                             comment: "Private location editor: what deleting a Private location brings back."),
             preferredStyle: .alert)
@@ -189,7 +189,7 @@ extension MapViewController {
             } catch {
                 guard editing.opening == opening else { return }
                 editing.busy = false
-                editing.editor.show(error: (error as? APIError)?.serverMessage ?? String(localized: "The Private location couldn't be deleted."))
+                editing.editor.show(error: (error as? APIError)?.serverMessage ?? String(localized: "The private location couldn't be deleted."))
                 renderPrivateEditor()
             }
         }

@@ -59,7 +59,7 @@ final class RouteEditTests: XCTestCase {
         openRouteTab(app)
         XCTAssertTrue(app.otherElements["routeRange"].waitForExistence(timeout: 15))
         sleep(2) // the camera onto the track
-        let count = app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Points:'")).firstMatch
+        let count = app.staticTexts["routePointCount"]
         let before = count.label
 
         // A grid of taps over the map above the sheet until one lands on a point.

@@ -44,7 +44,7 @@ enum TripDialogs {
 
     /// FR-13.7: a copy to an email address; the server never says whether it has an account.
     static func sendCopy(over view: UIView, trip: Trip, email: String = "", error: String? = nil, run: @escaping (String) async -> Outcome) {
-        let message = error ?? String(localized: "If the address has a HoldMyTrack account, it gets a copy of “\(trip.name)” to accept.")
+        let message = error ?? String(localized: "They get their own copy of this trip and its tracks in their HoldMyTrack account, once they accept it. It's theirs from then on: what you change later doesn't reach it. Sending again later adds only the tracks they don't have yet.")
         let alert = UIAlertController(title: String(localized: "Send a copy"), message: message, preferredStyle: .alert)
         alert.addTextField {
             $0.placeholder = String(localized: "Email")
@@ -63,7 +63,7 @@ enum TripDialogs {
                 if let failure {
                     Self.sendCopy(over: view, trip: trip, email: typed, error: failure, run: run)
                 } else {
-                    Self.inform(over: view, String(localized: "Sent. If \(typed) has an account, the copy waits on their Trips tab."))
+                    Self.inform(over: view, String(localized: "Sent to \(typed). If that address has a HoldMyTrack account, they'll find the copy in their Trips tab."))
                 }
             }
         })
@@ -95,20 +95,20 @@ enum TripDialogs {
                                added: @escaping (Trip, _ created: Bool) -> Void) -> UIMenu {
         let create = UIAction(title: String(localized: "New trip…"), image: UIImage(resource: .plus)) { [weak view] _ in
             guard let view else { return }
-            name(over: view, title: String(localized: "New trip"), name: "", description: "", action: String(localized: "Create")) { name, description in
+            name(over: view, title: String(localized: "Create trip"), name: "", description: "", action: String(localized: "Create trip")) { name, description in
                 do {
                     let read = try await api.createTrip(name: name, description: description, trackIDs: targets())
                     added(read.trip, true)
                     return nil
                 } catch {
-                    return TripsPanel.message(error, String(localized: "The Trip couldn't be saved."))
+                    return TripsPanel.message(error, String(localized: "Could not save the trip"))
                 }
             }
         }
         let trips = UIDeferredMenuElement.uncached { [weak view] completion in
             Task { @MainActor in
                 guard let read = try? await api.trips() else {
-                    completion([UIAction(title: String(localized: "Trips couldn't load."), attributes: .disabled) { _ in }])
+                    completion([UIAction(title: String(localized: "Could not load your trips"), attributes: .disabled) { _ in }])
                     return
                 }
                 completion(read.map { item in
@@ -118,7 +118,7 @@ enum TripDialogs {
                                 let changed = try await api.changeTripTracks(item.trip.id, trackIDs: targets(), add: true)
                                 added(changed.trip, false)
                             } catch {
-                                if let view { inform(over: view, TripsPanel.message(error, String(localized: "The Trip couldn't be saved."))) }
+                                if let view { inform(over: view, TripsPanel.message(error, String(localized: "Could not save the trip"))) }
                             }
                         }
                     }

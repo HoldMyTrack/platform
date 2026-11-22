@@ -180,6 +180,6 @@ final class PanelSheetView: UIView, UIGestureRecognizerDelegate {
     }
 
     private func updateHandleLabel() {
-        handle.accessibilityLabel = detent == .collapsed ? String(localized: "Open the panel") : String(localized: "Close the panel")
+        handle.accessibilityLabel = detent == .collapsed ? String(localized: "Expand the panel") : String(localized: "Collapse the panel")
     }
 }

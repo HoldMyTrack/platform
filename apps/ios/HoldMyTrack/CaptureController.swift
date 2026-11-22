@@ -277,7 +277,7 @@ final class CaptureController: NSObject, @preconcurrency CLLocationManagerDelega
             renderArrow()
         case let .holding(held, _):
             banner.title.text = String(localized: "Stay here")
-            banner.detail.text = String(localized: "Seconds left: \(SpotCapture.secondsLeft(heldMs: held))")
+            banner.detail.text = String(localized: "\(SpotCapture.secondsLeft(heldMs: held)) s left")
             banner.progress.isHidden = false
             banner.progress.setProgress(Float(held) / Float(SpotCapture.holdMs), animated: true)
         case .captured:

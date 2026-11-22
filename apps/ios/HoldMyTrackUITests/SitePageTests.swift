@@ -41,7 +41,7 @@ final class SitePageTests: XCTestCase {
         account.signIn(app)
         let page = app.webViews["webPage"]
         XCTAssertTrue(page.waitForExistence(timeout: 15))
-        XCTAssertTrue(app.navigationBars["Set up your account"].exists)
+        XCTAssertTrue(app.navigationBars["Welcome — set up your account"].exists)
         XCTAssertFalse(app.tabBars.firstMatch.exists, "no map behind the first run")
         XCTAssertTrue(page.staticTexts.matching(NSPredicate(format: "label ==[c] 'Country'")).firstMatch.waitForExistence(timeout: 15))
 

@@ -64,10 +64,10 @@ final class Uploads: NSObject, URLSessionDataDelegate {
         let plan = UploadPlan.of(picked)
         for refusal in plan.refusals {
             let text = switch refusal {
-            case .zip(let name): String(localized: "\(name): archives aren't imported. Upload the GPX, FIT or TCX files inside it.")
-            case .wrongType(let name): String(localized: "\(name) isn't a GPX, FIT or TCX file.")
-            case .tooMany(let count): String(localized: "You picked \(count) track files. Upload at most \(UploadPlan.maxFiles) at a time.")
-            case .tooLarge(let name): String(localized: "\(name) is over \(UploadPlan.maxFileBytes >> 20) MB.")
+            case .zip(let name): String(localized: "\(name) is a .zip archive, which can't be imported. Upload the GPX, FIT or TCX files inside it instead.")
+            case .wrongType(let name): String(localized: "\(name) isn't a .gpx, .fit or .tcx file, so it wasn't sent.")
+            case .tooMany(let count): String(localized: "Too many files selected (\(count)): choose up to \(UploadPlan.maxFiles) at a time.")
+            case .tooLarge(let name): String(localized: "\(name) is too large: at most \(UploadPlan.maxFileBytes >> 20) MB.")
             }
             notes.append(Note(text: text, error: true))
         }
@@ -83,7 +83,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
                 try UploadBody.write(file: url, name: name, boundary: boundary, to: body)
                 deleteIfInbox([url])
             } catch {
-                notes.append(Note(text: String(localized: "\(name) couldn't be read."), error: true))
+                notes.append(Note(text: String(localized: "\(name): the file couldn't be read"), error: true))
                 continue
             }
             let task = session.uploadTask(with: api.uploadRequest(boundary: boundary), fromFile: body)
@@ -165,10 +165,10 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             sentCount += 1
             switch APIClient.uploadOutcome(error: error, status: status, body: body) {
             case .sent: break
-            case .unreachable: notes.append(Note(text: String(localized: "\(name) wasn't sent: the server couldn't be reached."), error: true))
-            case .already: notes.append(Note(text: String(localized: "\(name) was imported before."), error: false))
+            case .unreachable: notes.append(Note(text: String(localized: "\(name): \(String(localized: "the server couldn't be reached"))"), error: true))
+            case .already: notes.append(Note(text: String(localized: "\(name) was already uploaded before."), error: false))
             case .refused(let reason):
-                notes.append(Note(text: String(localized: "\(name) wasn't sent: \(reason.isEmpty ? String(localized: "the server refused it.") : reason)"), error: true))
+                notes.append(Note(text: String(localized: "\(name): \(reason.isEmpty ? String(localized: "the server refused it") : reason)"), error: true))
             }
             changed()
         }

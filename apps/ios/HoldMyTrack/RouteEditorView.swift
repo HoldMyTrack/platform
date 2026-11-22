@@ -75,6 +75,7 @@ final class RouteEditorView: UIView {
         let ends = UIStackView(arrangedSubviews: [start, count, end])
         ends.distribution = .equalSpacing
         count.textAlignment = .center
+        count.accessibilityIdentifier = "routePointCount"
         func row(_ views: [UIView]) -> UIStackView {
             let row = UIStackView(arrangedSubviews: views)
             row.spacing = DesignTokens.Space.s8
@@ -190,7 +191,7 @@ final class RouteEditorView: UIView {
         readout.text = String(localized: "\(format.distanceValue(distances[lo])) – \(format.distanceValue(distances[hi])) \(format.unit) · \(clock(visible[lo].t))–\(clock(visible[hi].t))",
                               comment: "Route editor: the range's distances along the route, its unit, and the times at its ends.")
         start.text = format.distance(0)
-        count.text = String(localized: "Points: \(format.count(visible.count))", comment: "Route editor: how many points the route has, written as label: N.")
+        count.text = String(localized: "edit.routePoints", defaultValue: "\(visible.count) \(format.count(visible.count)) points", comment: "Route editor: how many points the route has: the number for the plural, then as written.")
         end.text = format.distance(distances[visible.count - 1])
 
         let splitting = session.splitAt

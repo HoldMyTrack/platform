@@ -70,7 +70,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .bg)
         let single = group.count == 1 ? group[0] : nil
-        title = single != nil ? String(localized: "Edit track") : String(localized: "Edit tracks: \(group.count)")
+        title = single != nil ? String(localized: "Edit track") : String(localized: "edit.titleMany", defaultValue: "Edit \(group.count) tracks", comment: "Edit window's title for several tracks.")
         navigationItem.leftBarButtonItem = UIBarButtonItem(systemItem: .cancel, primaryAction: UIAction { [weak self] _ in self?.cancel() })
         let save = UIBarButtonItem(title: String(localized: "Save"), primaryAction: UIAction { [weak self] _ in self?.save() })
         save.style = .done
@@ -235,7 +235,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
 
     private func renderType() {
         var config = typeButton.configuration
-        config?.title = type.isEmpty ? String(localized: "Mixed types") : TrackTypes.shared.label(type)
+        config?.title = type.isEmpty ? String(localized: "Mixed types — pick one to set it for all") : TrackTypes.shared.label(type)
         typeButton.configuration = config
     }
 
@@ -260,10 +260,10 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         }
         if let invalid = EditPlan.invalid(group: group, type: type, name: nameText, description: aboutText) {
             let message = switch invalid {
-            case .typeRequired: String(localized: "Pick a type.")
-            case .typeTooLong: String(localized: "The type can be at most \(EditPlan.maxType) characters.")
-            case .nameTooLong: String(localized: "The name can be at most \(EditPlan.maxName) characters.")
-            case .descriptionTooLong: String(localized: "The description can be at most \(EditPlan.maxDescription) characters.")
+            case .typeRequired: String(localized: "Type is required.")
+            case .typeTooLong: String(localized: "edit.typeTooLong", defaultValue: "Type must be \(EditPlan.maxType) characters or fewer.", comment: "Edit: the type is past its limit.")
+            case .nameTooLong: String(localized: "edit.nameTooLong", defaultValue: "Name must be \(EditPlan.maxName) characters or fewer.", comment: "Edit: the name is past its limit.")
+            case .descriptionTooLong: String(localized: "edit.descriptionTooLong", defaultValue: "Description must be \(EditPlan.maxDescription) characters or fewer.", comment: "Edit: the description is past its limit.")
             }
             show(message)
             return
