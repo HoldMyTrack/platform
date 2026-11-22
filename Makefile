@@ -120,10 +120,10 @@ test-android-device: ## Android instrumented tests on an emulator, no dev stack:
 	done
 
 # HMT_API_BASE_URL on the command line outranks Config/Local.xcconfig, so the tests reach the
-# stack e2e-stack checked rather than skipping.
+# stack e2e-stack checked rather than skipping: the web's dev server, as a Debug build does.
 e2e-ios: e2e-stack ## iOS end-to-end: the UI tests on a simulator (IOS_DESTINATION, IOS_UI_TESTS narrow it)
 	cd apps/ios && xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
-	  -destination '$(IOS_DESTINATION)' -only-testing:$(IOS_UI_TESTS) HMT_API_BASE_URL=http://localhost:$(API_PORT)
+	  -destination '$(IOS_DESTINATION)' -only-testing:$(IOS_UI_TESTS) HMT_API_BASE_URL=http://localhost:5173
 
 clean: ## Stop and drop every volume (database, object store, node_modules)
 	$(COMPOSE) down -v

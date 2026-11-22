@@ -16,7 +16,7 @@ xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack -destination 
 
 The code with no UIKit in it is the `HoldMyTrackCore` package, and its tests need no simulator: `swift test` in `HoldMyTrackCore/`.
 
-A Debug build talks to `http://localhost:8080`, compose's API port on this Mac, which the simulator reaches directly. When `.env` sets another `API_PORT`, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set it there. To save the site's pages from the simulator, set it to `http://localhost:5173` (`docs/DEVELOPMENT.md`). Release always talks to `https://holdmytrack.com`. A Debug build's You tab shows the build and whether the API answers.
+A Debug build talks to `http://localhost:5173`, the web's dev server on this Mac, which the simulator reaches directly and which serves the site's pages and the API from one origin, as production does, so the pages save (`docs/DEVELOPMENT.md`). To point it elsewhere, such as this Mac's `name.local` for a phone on the same network, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set it there. Release always talks to `https://holdmytrack.com`. A Debug build's You tab shows the build and whether the API answers.
 
 The UI tests run against the dev stack: `make e2e-ios` from the repository root (`docs/DEVELOPMENT.md`, "End-to-end suites"). Run from Xcode they reach the same origin as the app and skip when it doesn't answer; `web` must be running too (`apps/ios/docs/IMPLEMENTATION.md` §3.5).
 

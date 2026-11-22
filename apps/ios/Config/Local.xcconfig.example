@@ -1,5 +1,5 @@
-// Copy to Local.xcconfig (not committed) to point Debug builds at another API origin: compose's
-// API_PORT when .env changes it, the web's dev server (http://localhost:5173), from the simulator
-// only, for the site's pages to save, or this Mac's name.local for a phone on the same network.
+// Copy to Local.xcconfig (not committed) to point Debug builds at another origin than the web's
+// dev server (Debug.xcconfig): compose's API port, or this Mac's name.local for a phone on the
+// same network, since the dev server listens on this Mac alone. The site's pages don't save there.
 
-HMT_API_BASE_URL = http:$(SLASH)$(SLASH)localhost:8081
+HMT_API_BASE_URL = http:$(SLASH)$(SLASH)localhost:8080
