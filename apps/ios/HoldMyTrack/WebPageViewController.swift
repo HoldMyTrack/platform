@@ -28,6 +28,10 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
     private var leaving = false
     private var failed = false
     private var loadedOnce = false
+    /// The page was left (WebPageExit), so its return reloads it.
+    private var left = false
+    /// A form this page sent is loading its answer: once it finishes, the account is read again.
+    private var posting = false
 
     init(flow: AppFlow, page: SitePage, onboarding: Bool = false) {
         self.flow = flow
@@ -96,15 +100,21 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if loadedOnce && page.refreshOnReturn && !failed { web.reload() }
+        if loadedOnce && left && page.refreshOnReturn && !failed { web.reload() }
         loadedOnce = true
+        left = false
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        // Settings may have changed the units, the name, the Country or the language. Read again
-        // on any way out, a switch to another tab included, which only hides the page.
-        flow.refreshAccount()
+        let navigation = navigationController
+        left = WebPageExit.left(
+            popped: isMovingFromParent, dismissed: isBeingDismissed || navigation?.isBeingDismissed == true,
+            tabLeft: tabBarController.map { $0.selectedViewController !== navigation } ?? false,
+            covered: presentedViewController != nil || navigation?.presentedViewController != nil,
+            onboarding: onboarding)
+        // Settings may have changed the units, the name, the Country or the language.
+        if left { flow.refreshAccount() }
     }
 
     /// The cookies first, then the page.
@@ -184,7 +194,10 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
             openOutside(url)
             return .cancel
         }
-        return route(url, post: action.request.httpMethod == "POST") ? .cancel : .allow
+        let post = action.request.httpMethod == "POST"
+        if route(url, post: post) { return .cancel }
+        if post && !onboarding { posting = true }
+        return .allow
     }
 
     /// A form's redirect, Settings' first-run save going on to `/`, is checked here too.
@@ -194,6 +207,11 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         spinner.stopAnimating()
+        // A save answered: read it now, or a tab switched to before it landed keeps the old units.
+        if posting {
+            posting = false
+            flow.refreshAccount()
+        }
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {

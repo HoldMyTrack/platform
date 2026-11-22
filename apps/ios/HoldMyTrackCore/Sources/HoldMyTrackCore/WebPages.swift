@@ -52,3 +52,14 @@ public enum WebPageSession {
         return url.port.map { "\(host):\($0)" } ?? host
     }
 }
+
+/// Whether a site page that went out of sight was left: popped, dismissed, or its tab no
+/// longer the selected one. A screen the page opened over itself (the avatar's photo picker)
+/// doesn't count, nor first-run Settings replaced by the map, whose arrival reads the account
+/// itself (AppFlow.check). A left page reads the account again and, on return, reloads.
+public enum WebPageExit {
+    public static func left(popped: Bool, dismissed: Bool, tabLeft: Bool, covered: Bool, onboarding: Bool) -> Bool {
+        guard !onboarding, !covered else { return false }
+        return popped || dismissed || tabLeft
+    }
+}
