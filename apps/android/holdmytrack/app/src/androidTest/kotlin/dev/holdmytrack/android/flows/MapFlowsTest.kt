@@ -60,16 +60,24 @@ class MapFlowsTest {
         for (row in 0..1) {
             tapUntil({ device.findObjects(id("track_tile_target"))[row] }) { checkedRows() > row }
         }
-        tapUntil({ still(id("panel_edit")) }) { device.hasObject(id("edit_tab_route")) }
-        need(id("edit_tab_route")).click()
-        val reason = context.getString(R.string.edit_route_check_one)
-        expect("the Route tab's reason", device.wait(Until.hasObject(id("edit_tab_blocked").text(reason)), TIMEOUT_MS))
-        need(id("edit_track_panel"))
-        need(id("edit_cancel")).click()
-        assertTrue("Edit closed", device.wait(Until.gone(id("edit_tab_route")), TIMEOUT_MS))
-        expandSheet()
-        for (row in 1 downTo 0) {
-            tapUntil({ device.findObjects(id("track_tile_target"))[row] }) { checkedRows() == row }
+        try {
+            tapUntil({ still(id("panel_edit")) }) { device.hasObject(id("edit_tab_route")) }
+            need(id("edit_tab_route")).click()
+            val reason = context.getString(R.string.edit_route_check_one)
+            expect("the Route tab's reason", device.wait(Until.hasObject(id("edit_tab_blocked").text(reason)), TIMEOUT_MS))
+            need(id("edit_track_panel"))
+        } finally {
+            // Out of Edit and nothing checked, whatever failed, so the next flow starts as before;
+            // a cleanup that fails too leaves the first failure the one reported.
+            runCatching {
+                device.findObject(id("edit_cancel"))?.click()
+                device.wait(Until.gone(id("edit_tab_route")), TIMEOUT_MS)
+                expandSheet()
+                while (checkedRows() > 0) {
+                    val checked = checkedRows()
+                    tapUntil({ device.findObject(checkedTiles()) }) { checkedRows() < checked }
+                }
+            }
         }
     }
 

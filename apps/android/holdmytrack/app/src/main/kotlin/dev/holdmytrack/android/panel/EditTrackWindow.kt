@@ -63,7 +63,6 @@ class EditTrackWindow(
      *  photo was written, so the map reads them again. */
     private val onClose: (saved: Boolean, trackApplied: Boolean, photosSaved: Boolean) -> Unit,
 ) {
-    private enum class Tab { TRACK, ROUTE, PHOTOS }
     private val context = card.context
     private val res = context.resources
 
@@ -100,7 +99,7 @@ class EditTrackWindow(
         if (!saving) showError(null)
     }
 
-    private var tab = Tab.TRACK
+    private var tab = EditTab.TRACK
     private var trackStarted = false
 
     /** Why the Route tab can't open, or null when it can. */
@@ -131,7 +130,7 @@ class EditTrackWindow(
 
     /** The Route tab is the one showing — the photos are off the map meanwhile. */
     val showingRoute: Boolean
-        get() = isOpen && tab == Tab.ROUTE
+        get() = isOpen && tab == EditTab.ROUTE
 
     /** The one track the window is open on, or null for a group. */
     val single: Track?
@@ -142,23 +141,19 @@ class EditTrackWindow(
         typeLayout.setEndIconOnClickListener { openTypePicker() }
         cancel.setOnClickListener { close() }
         save.setOnClickListener { save() }
-        tabTrack.setOnClickListener { showTab(Tab.TRACK) }
-        tabRoute.setOnClickListener { showTab(Tab.ROUTE) }
-        tabPhotos.setOnClickListener { showTab(Tab.PHOTOS) }
+        tabTrack.setOnClickListener { showTab(EditTab.TRACK) }
+        tabRoute.setOnClickListener { showTab(EditTab.ROUTE) }
+        tabPhotos.setOnClickListener { showTab(EditTab.PHOTOS) }
     }
 
     /** A tab that can't be used says why under the tabs, and the open one stays. */
-    private fun showTab(next: Tab) {
-        val reason = when (next) {
-            Tab.ROUTE -> trackUnavailable
-            Tab.PHOTOS -> photosUnavailable
-            Tab.TRACK -> null
-        }
+    private fun showTab(next: EditTab) {
+        val reason = EditAvailability.tapped(next, route = trackUnavailable, photos = photosUnavailable)
         tabBlocked.text = reason
         tabBlocked.visibility = if (reason != null) View.VISIBLE else View.GONE
         if (reason != null) return
         tab = next
-        if (next == Tab.ROUTE) {
+        if (next == EditTab.ROUTE) {
             val single = tracks.single()
             if (!trackStarted) {
                 trackStarted = true
@@ -168,8 +163,8 @@ class EditTrackWindow(
         } else {
             routeEditor.hide()
         }
-        if (next == Tab.PHOTOS) photosTab.open(tracks.single())
-        photosTab.active = next == Tab.PHOTOS
+        if (next == EditTab.PHOTOS) photosTab.open(tracks.single())
+        photosTab.active = next == EditTab.PHOTOS
         hideKeyboard()
         renderTabs()
         onTabChanged()
@@ -179,8 +174,8 @@ class EditTrackWindow(
      *  saying why on a long press and in its description, as the web's disabled tab and its
      *  title. It stays enabled, so a tap reaches [showTab] and says why too. */
     private fun renderTabs() {
-        val unavailable = mapOf(Tab.ROUTE to trackUnavailable, Tab.PHOTOS to photosUnavailable)
-        for ((view, which) in listOf(tabTrack to Tab.TRACK, tabRoute to Tab.ROUTE, tabPhotos to Tab.PHOTOS)) {
+        val unavailable = mapOf(EditTab.ROUTE to trackUnavailable, EditTab.PHOTOS to photosUnavailable)
+        for ((view, which) in listOf(tabTrack to EditTab.TRACK, tabRoute to EditTab.ROUTE, tabPhotos to EditTab.PHOTOS)) {
             val selected = tab == which
             if (selected) view.setBackgroundResource(R.drawable.bg_panel_tab_selected) else view.background = null
             view.alpha = when {
@@ -208,9 +203,9 @@ class EditTrackWindow(
         photosCount.alpha = tabPhotos.alpha
         photosDot.visibility = if (photosChanged) View.VISIBLE else View.GONE
 
-        trackPanel.visibility = if (tab == Tab.TRACK) View.VISIBLE else View.GONE
-        routePanel.visibility = if (tab == Tab.ROUTE) View.VISIBLE else View.GONE
-        photosPanel.visibility = if (tab == Tab.PHOTOS) View.VISIBLE else View.GONE
+        trackPanel.visibility = if (tab == EditTab.TRACK) View.VISIBLE else View.GONE
+        routePanel.visibility = if (tab == EditTab.ROUTE) View.VISIBLE else View.GONE
+        photosPanel.visibility = if (tab == EditTab.PHOTOS) View.VISIBLE else View.GONE
     }
 
     /**
@@ -249,7 +244,7 @@ class EditTrackWindow(
         trackUnavailable = EditAvailability.track(group)?.let { res.getString(blockMessage(it, R.string.edit_route_check_one)) }
         photosUnavailable = EditAvailability.photos(group)?.let { res.getString(blockMessage(it, R.string.photos_check_one)) }
         trackStarted = false
-        tab = Tab.TRACK
+        tab = EditTab.TRACK
         tabBlocked.visibility = View.GONE
         showError(null)
         renderBusy()
@@ -315,13 +310,13 @@ class EditTrackWindow(
         }
         if (invalid != null) {
             showError(invalid)
-            showTab(Tab.TRACK)
+            showTab(EditTab.TRACK)
             return
         }
         // Every new photo needs its place before anything is written, and a caption in bounds.
         photosTab.invalid()?.let {
             showError(it)
-            showTab(Tab.PHOTOS)
+            showTab(EditTab.PHOTOS)
             return
         }
         val changed = if (single != null) {
