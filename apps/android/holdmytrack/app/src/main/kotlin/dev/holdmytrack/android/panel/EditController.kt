@@ -55,7 +55,6 @@ class EditController(
 
     val window: EditTrackWindow = EditTrackWindow(
         windowView,
-        root.findViewById(R.id.edit_bar),
         onStartRoute = ::startRoute,
         onDrawRoute = ::drawRoute,
         onPickPhotos = photos::pick,

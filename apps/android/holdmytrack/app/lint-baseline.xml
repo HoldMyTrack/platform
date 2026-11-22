@@ -532,17 +532,6 @@
     <issue
         id="RtlSymmetry"
         message="When you define `paddingEnd` you should probably also define `paddingStart` for right-to-left symmetry"
-        errorLine1="                    android:paddingEnd=&quot;@dimen/hmt_space_8&quot;"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/fragment_map.xml"
-            line="276"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="RtlSymmetry"
-        message="When you define `paddingEnd` you should probably also define `paddingStart` for right-to-left symmetry"
         errorLine1="        android:paddingEnd=&quot;@dimen/hmt_space_8&quot;>"
         errorLine2="        ~~~~~~~~~~~~~~~~~~">
         <location

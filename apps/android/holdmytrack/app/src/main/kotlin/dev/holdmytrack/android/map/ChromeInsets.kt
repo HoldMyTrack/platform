@@ -8,7 +8,6 @@ import android.view.WindowInsets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
-import com.google.android.material.card.MaterialCardView
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.panel.MaxHeightScrollView
 import dev.holdmytrack.android.panel.TracksPanel
@@ -34,7 +33,8 @@ class ChromeInsets(
     private val map: () -> MapLibreMap?,
 ) {
     /** The Edit window and the Private location editor, along the bottom of the map. */
-    private val editWindow: MaterialCardView = root.findViewById(R.id.edit_window)
+    private val editWindow: View = root.findViewById(R.id.edit_window)
+    private val editHeader: View = root.findViewById(R.id.edit_header)
     private val privateEditor: View = root.findViewById(R.id.private_editor)
     private val editors: List<View> = listOf(editWindow, privateEditor)
     private val editScroll: MaxHeightScrollView = root.findViewById(R.id.edit_scroll)
@@ -80,6 +80,11 @@ class ChromeInsets(
         // The Private location editor is fitted to its height, which grows with its error line
         // and Delete, and is 0 the first time it opens.
         privateEditor.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            if (bottom - top != oldBottom - oldTop) placeEditorsAfterLayout()
+        }
+        // The Edit sheet's cap takes off its header, whose height is 0 until it first lays out
+        // and grows with a subtitle that wraps.
+        editHeader.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop) placeEditorsAfterLayout()
         }
         // The compass sits below the top row and any notice under it, whose heights are only
@@ -166,14 +171,15 @@ class ChromeInsets(
         icon.setPadding(0, padY, padX, 0)
     }
 
-    /** The editors sit at the screen's bottom edge (the bottom bar hides meanwhile), so their
-     *  margin clears the gesture bar, or the keyboard over it ([EditorPlacement]): the Edit
-     *  window scrolls within what's left under the edit bar, and the Private location editor
-     *  rises only as far as keeps its top on screen. Only while one is open: each runs this as it
-     *  opens, and it runs again when the map's height, the top chrome or that editor's height
-     *  changes. While the Edit window is open the top chrome draws over it, so a card held at its
-     *  scroll floor slides under the edit bar and leaves Cancel and Save showing. */
+    /** The editors sit along the screen's bottom (the bottom bar hides meanwhile) ([EditorPlacement]):
+     *  the Edit window as a sheet reaching the edge, its padding clearing the gesture bar, or
+     *  riding on the keyboard, its fields scrolling within what's left under the top row; the
+     *  Private location editor as a card above the gesture bar or the keyboard, rising only as far
+     *  as keeps its top on screen. Only while one is open: each runs this as it opens, and it runs
+     *  again when the map's height, the top chrome or that editor's height changes. */
     fun placeEditors() {
+        // The top row holds only its notices and banners while editing: drawn over the sheet,
+        // so a sheet held at its scroll floor reaching under the row doesn't hide them.
         topChrome.translationZ = if (editWindow.isVisible) editWindow.elevation + root.resources.displayMetrics.density else 0f
         if (editors.none { it.isVisible }) return
         val res = root.resources
@@ -184,12 +190,17 @@ class ChromeInsets(
         // The bottom of the top row and every notice and banner under it, in the map's own
         // coordinates.
         val top = maxOf(bottomIn(topChrome), systemBarInsetTop) + space
-        setBottomMargin(editWindow, bottom)
+        val sheet = EditorPlacement.sheet(gesture, keyboard)
+        setBottomMargin(editWindow, sheet.margin)
+        if (editWindow.paddingBottom != sheet.padding) {
+            editWindow.setPadding(editWindow.paddingLeft, editWindow.paddingTop, editWindow.paddingRight, sheet.padding)
+        }
         setBottomMargin(privateEditor, EditorPlacement.fitted(bottom, space + gesture, screen, fullHeight(privateEditor), top))
         editScroll.maxHeight = EditorPlacement.scrollCap(
             res.displayMetrics.heightPixels,
-            room = screen - bottom - top,
-            padding = editWindow.contentPaddingTop + editWindow.contentPaddingBottom,
+            room = screen - sheet.margin - top,
+            // The scroll's own padding sits inside its capped height.
+            chrome = editHeader.height + sheet.padding,
             min = (EditorPlacement.MIN_SCROLL_DP * res.displayMetrics.density).toInt(),
         )
     }
