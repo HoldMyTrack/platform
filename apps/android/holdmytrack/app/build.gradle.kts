@@ -1,3 +1,5 @@
+import java.net.URI
+
 // AGP 9 has built-in Kotlin support; the separate org.jetbrains.kotlin.android plugin is
 // not applied here and applying it is an error (see kotl.in/gradle/agp-built-in-kotlin).
 plugins {
@@ -125,6 +127,35 @@ tasks.withType<Test>().configureEach {
         .withPropertyName("mapDocuments")
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
+
+/**
+ * The debug build talks to the web's dev server on this Mac's localhost (gradle.properties), which
+ * a device reaches only through `adb reverse`, and a reboot drops it. So every debug build sets it
+ * up on each connected device: Android Studio's Run, `installDebug` and the instrumented tests
+ * alike. A base that isn't localhost, no adb or no device leaves the build as it is.
+ */
+val adbReverse = tasks.register("adbReverseDevServer") {
+    val base = providers.gradleProperty("holdmytrack.apiBaseUrl")
+    val sdk = androidComponents.sdkComponents.sdkDirectory
+    doLast {
+        val uri = URI(base.get())
+        if (uri.host != "localhost" && uri.host != "127.0.0.1") return@doLast
+        val port = if (uri.port > 0) uri.port else 80
+        val adb = sdk.get().asFile.resolve("platform-tools/adb")
+        if (!adb.canExecute()) return@doLast logger.lifecycle("adb reverse skipped: no adb at $adb")
+        val devices = runCatching {
+            ProcessBuilder(adb.path, "devices").start().inputStream.bufferedReader().readLines()
+        }.getOrDefault(emptyList()).drop(1).mapNotNull { line ->
+            line.split('\t').takeIf { it.size == 2 && it[1] == "device" }?.first()
+        }
+        for (serial in devices) {
+            runCatching { ProcessBuilder(adb.path, "-s", serial, "reverse", "tcp:$port", "tcp:$port").start().waitFor() }
+        }
+        logger.lifecycle("adb reverse tcp:$port on ${devices.size} device(s)")
+    }
+}
+tasks.matching { it.name == "assembleDebug" }.configureEach { finalizedBy(adbReverse) }
+tasks.matching { it.name == "installDebug" || it.name == "connectedDebugAndroidTest" }.configureEach { dependsOn(adbReverse) }
 
 dependencies {
     implementation(libs.maplibre)
