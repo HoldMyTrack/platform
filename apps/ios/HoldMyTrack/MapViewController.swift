@@ -110,7 +110,11 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Photos on the map (MapViewController+Photos).
     var photos = PhotosState()
     /// The Edit window while it's open, and the track it edits (MapViewController+RouteEdit).
-    weak var editWindow: EditTrackViewController?
+    /// Set once the window is presented, so the Tracks sheet stays up while its tracks load and
+    /// goes only once the Edit sheet takes its place (MapChrome.sheetShown).
+    weak var editWindow: EditTrackViewController? {
+        didSet { renderPanel() }
+    }
     var routeEdit = RouteEditState()
     lazy var photoViews = PhotoViews(api: flow.api, format: { [unowned self] in self.format }, onOpen: { [weak self] in self?.openPhotos($0) })
     /// Capture of a place (CaptureController), which lives no longer than the map.
@@ -391,7 +395,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     func fit(_ box: [Double], animated: Bool, maxZoom: Double = MapFraming.maxZoom, completion: (() -> Void)? = nil) {
         let bounds = MLNCoordinateBounds(sw: CLLocationCoordinate2D(latitude: box[1], longitude: box[0]),
                                          ne: CLLocationCoordinate2D(latitude: box[3], longitude: box[2]))
-        let bottom = (sheet.isHidden ? 0 : sheet.restingHeight) + 48
+        // The Edit sheet stands where the Tracks sheet was while it's up.
+        let bottom = (editWindow?.coveredHeight ?? (sheet.isHidden ? 0 : sheet.restingHeight)) + 48
         let padding = UIEdgeInsets(top: 120, left: 48, bottom: bottom, right: 48)
         // One move, so the list knows when the app's flight is over (cameraSettled): a box that
         // would zoom in past maxZoom is widened about its centre to what maxZoom shows instead.

@@ -19,12 +19,13 @@ extension MapViewController {
         if was != (shape != nil) { panelChanged() }
     }
 
-    /// The Route tab opened: the camera onto the track, clear of the half-height sheet.
-    func frameEditedTrack(_ track: Track) {
+    /// The Route tab opened: the camera onto the track, clear of the Edit sheet.
+    /// covered: how much of the map's bottom the Edit sheet takes once it has its new height.
+    func frameEditedTrack(_ track: Track, covered: CGFloat) {
         guard let box = track.bbox else { return }
         let bounds = MLNCoordinateBounds(sw: CLLocationCoordinate2D(latitude: box[1], longitude: box[0]),
                                          ne: CLLocationCoordinate2D(latitude: box[3], longitude: box[2]))
-        let padding = UIEdgeInsets(top: chromeBottom + 16, left: 32, bottom: view.bounds.height / 2 + 24, right: 32)
+        let padding = UIEdgeInsets(top: chromeBottom + 16, left: 32, bottom: covered + 24, right: 32)
         mapView.setVisibleCoordinateBounds(bounds, edgePadding: padding, animated: true, completionHandler: nil)
     }
 

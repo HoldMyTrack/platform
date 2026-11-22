@@ -15,9 +15,11 @@ final class RouteEditorView: UIView {
     var onDraw: ((RouteEditDrawing.Shape?) -> Void)?
     /// The session changed, or finished loading: the window's tab and Save follow it.
     var onChange: (() -> Void)?
+    /// The route's load finished, its points or the error shown: the editor's height is final.
+    var onSettled: (() -> Void)?
 
     private(set) var session: RouteEditSession?
-    private var loading = false
+    private(set) var loading = false
     private var preview = EditPreview.chop
     /// Delete point is on: a tap on a point on the map deletes it.
     private(set) var deleteMode = false
@@ -122,6 +124,7 @@ final class RouteEditorView: UIView {
                 self.note.textColor = UIColor(resource: .danger)
             }
             self.loading = false
+            self.onSettled?()
         }
     }
 

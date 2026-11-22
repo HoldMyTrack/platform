@@ -90,6 +90,14 @@ final class PanelTests: XCTestCase {
         app.buttons["barEdit"].tap()
         XCTAssertTrue(app.staticTexts["editMultiNote"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.textFields["editName"].isEnabled)
+        // Route and Photos show dimmed; a tap on Route says why and leaves Track picked.
+        let route = app.segmentedControls["editTabs"].buttons["Route"]
+        XCTAssertFalse(route.isEnabled)
+        XCTAssertFalse(app.staticTexts["editTabBlocked"].exists)
+        route.tap()
+        XCTAssertTrue(app.staticTexts["editTabBlocked"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["editMultiNote"].exists)
+        XCTAssertFalse(app.buttons["panelHandle"].exists, "the Tracks sheet is away while Edit is open")
         app.navigationBars.buttons["Cancel"].tap()
         app.buttons["endSelecting"].tap()
         app.staticTexts["Renamed by iOS"].tap()

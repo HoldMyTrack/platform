@@ -43,6 +43,13 @@ public enum MapChrome {
         onTracksTab && !recording && !editOpen && !selectionShown
     }
 
+    /// The sheet: Normal mode's, and the Sync tab's even while recording, so what's on the phone
+    /// can be sent mid-walk; hidden while the Edit window or the Private location editor is open,
+    /// so the map above the Edit sheet stays clear.
+    public static func sheetShown(normal: Bool, recording: Bool, onSync: Bool, editing: Bool) -> Bool {
+        normal && (!recording || onSync) && !editing
+    }
+
     /// The rail, hidden while an editor has the map or rows are checked.
     public static func railShown(editing: Bool, selectionShown: Bool) -> Bool { !editing && !selectionShown }
 

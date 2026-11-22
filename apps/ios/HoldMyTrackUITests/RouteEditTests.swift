@@ -66,14 +66,26 @@ final class RouteEditTests: XCTestCase {
         app.buttons["routeDeletePoint"].tap()
         let map = app.otherElements["map"]
         var hit: XCUICoordinate?
-        search: for row in stride(from: 0.2, through: 0.45, by: 0.025) {
-            for column in stride(from: 0.1, through: 0.9, by: 0.025) {
-                let at = map.coordinate(withNormalizedOffset: CGVector(dx: column, dy: row))
-                at.tap()
-                if count.label != before {
-                    hit = at
-                    break search
-                }
+        // The camera centres the track in the band above the sheet, so the search starts there and
+        // works outward, hitting within a few taps instead of sweeping from a corner.
+        let rows: [CGFloat] = Array(stride(from: 0.2, through: 0.45, by: 0.025))
+        let columns: [CGFloat] = Array(stride(from: 0.1, through: 0.9, by: 0.025))
+        let centre = CGVector(dx: 0.5, dy: 0.325)
+        func away(_ spot: CGVector) -> CGFloat { hypot(spot.dx - centre.dx, spot.dy - centre.dy) }
+        var spots: [CGVector] = []
+        for row in rows {
+            for column in columns { spots.append(CGVector(dx: column, dy: row)) }
+        }
+        spots.sort { away($0) < away($1) }
+        for spot in spots {
+            let at = map.coordinate(withNormalizedOffset: spot)
+            at.tap()
+            // The map holds a single tap until its double tap can't follow, so the count changes a
+            // moment after the tap returns; the wait also keeps the next tap from being a double tap.
+            Thread.sleep(forTimeInterval: 0.5)
+            if count.label != before {
+                hit = at
+                break
             }
         }
         let point = try XCTUnwrap(hit, "a tap on the track deletes a point")

@@ -278,8 +278,8 @@ extension MapViewController {
         syncPanel?.content.isHidden = panelTab != .sync
         notices.aside = MapChrome.areaNoticesShown(recording: recordingLive, onSync: panelTab == .sync) ? [] : [Notice.empty.rawValue, Notice.capped.rawValue]
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
-        // The Sync tab's sheet stays up while recording, as on Android.
-        sheet.isHidden = state.mode != .normal || privateLocations.open || (recordingLive && panelTab != .sync)
+        sheet.isHidden = !MapChrome.sheetShown(normal: state.mode == .normal, recording: recordingLive, onSync: panelTab == .sync,
+                                               editing: editWindow != nil || privateLocations.open)
         sheet.setNeedsLayout()
         // The map's credit sits above the sheet (placeAttribution), and the row's controls follow it.
         view.setNeedsLayout()
@@ -499,9 +499,10 @@ extension MapViewController {
             api: flow.api, group: group, facets: facets, format: format, images: photoViews.images,
             onOverlay: { [weak self] in self?.setPhotoOverlay($0) },
             onRouteDraw: { [weak self] in self?.setRouteEdit($0) },
-            onRouteOpened: { [weak self] in self?.frameEditedTrack(group[0]) }
+            onRouteOpened: { [weak self] covered in self?.frameEditedTrack(group[0], covered: covered) }
         ) { [weak self] written, photosSaved in
             guard let self else { return }
+            self.editWindow = nil
             self.editOpen = false
             self.setRouteEdit(nil)
             self.photosEditClosed(saved: photosSaved)
@@ -510,17 +511,21 @@ extension MapViewController {
             self.watchPending()
             self.loadList()
         }
-        editWindow = editor
         let nav = UINavigationController(rootViewController: editor)
-        // Half height with the map live above, so the Photos tab's slider moves a photo in sight.
+        // As tall as its content up to EditSheet's share, with the map live above, so the Photos
+        // tab's slider moves a photo in sight; still expandable.
         nav.modalPresentationStyle = .pageSheet
         if let sheet = nav.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
-            sheet.largestUndimmedDetentIdentifier = .medium
+            sheet.detents = [.custom(identifier: EditTrackViewController.fitted) { [weak editor] context in
+                editor?.detentMaximum = context.maximumDetentValue
+                return editor?.detentHeight ?? context.maximumDetentValue / 2
+            }, .large()]
+            sheet.largestUndimmedDetentIdentifier = EditTrackViewController.fitted
             sheet.prefersGrabberVisible = true
             sheet.prefersScrollingExpandsWhenScrolledToEdge = false
         }
         present(nav, animated: true)
+        editWindow = editor
     }
 
     /// Delete over the toolbar's target (root docs/SPEC.md FR-5.6), confirmed first, one at a
