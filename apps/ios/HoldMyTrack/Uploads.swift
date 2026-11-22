@@ -165,7 +165,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             sentCount += 1
             switch APIClient.uploadOutcome(error: error, status: status, body: body) {
             case .sent: break
-            case .unreachable: notes.append(Note(text: String(localized: "\(name): \(String(localized: "the server couldn't be reached"))"), error: true))
+            case .unreachable: notes.append(Note(text: String(localized: "\(name): the server couldn't be reached"), error: true))
             case .already: notes.append(Note(text: String(localized: "\(name) was already uploaded before."), error: false))
             case .refused(let reason):
                 notes.append(Note(text: String(localized: "\(name): \(reason.isEmpty ? String(localized: "the server refused it") : reason)"), error: true))

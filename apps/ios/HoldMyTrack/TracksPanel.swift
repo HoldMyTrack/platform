@@ -32,7 +32,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private let distanceButton = UIButton(type: .system)
     /// The Dates filter (root docs/SPEC.md FR-5.12), its sheet the map's (DatesViewController).
     let datesButton = UIButton(type: .system)
-    private let resetButton = Controls.textButton(String(localized: "Reset"), id: "resetFilters")
+    private let resetButton = Controls.textButton(String(localized: "panel.resetFilters", defaultValue: "Reset", comment: "Tracks tab: clears the Type and Distance filters."), id: "resetFilters")
     /// While rows are checked, the map shows it in the mode toggle's place (MapViewController+TopRow).
     let selectionBar = UIView()
     private let checkAllButton = UIButton(type: .system)
@@ -416,7 +416,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         button.accessibilityLabel = switch use {
         case .demo: demo ?? ready
         case .noTarget: String(localized: "Tap a track, or check some, first")
-        case .pending: String(localized: "This track is still being processed")
+        case .pending: String(localized: "panel.deletePending", defaultValue: "Can't delete while a track is being processed", comment: "Tracks tab: why Delete is off while a checked or focused track is still being processed.")
         case .ready: ready
         }
     }

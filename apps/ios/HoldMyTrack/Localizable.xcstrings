@@ -90,12 +90,23 @@
       }
     },
     "%@: %@" : {
-      "comment" : "Upload: a file that failed, and why.",
+      "comment" : "A file that couldn't be added, and why: a picked photo on the Photos tab, or an upload.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@: %@"
+          }
+        }
+      }
+    },
+    "%@: the server couldn't be reached" : {
+      "comment" : "Upload: a file that wasn't sent because the server didn't answer.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: не удалось связаться с сервером"
           }
         }
       }
@@ -617,6 +628,42 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "panel.deletePending" : {
+      "comment" : "Tracks tab: why Delete is off while a checked or focused track is still being processed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can't delete while a track is being processed"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нельзя удалить, пока трек обрабатывается"
+          }
+        }
+      }
+    },
+    "panel.resetFilters" : {
+      "comment" : "Tracks tab: clears the Type and Distance filters.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сбросить"
           }
         }
       }
@@ -3085,7 +3132,7 @@
       }
     },
     "Reset" : {
-      "comment" : "Tracks tab: clear the type and distance filters.",
+      "comment" : "Route editor: back to the track as recorded.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
@@ -13125,17 +13172,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приблизить карту: %@"
-          }
-        }
-      }
-    },
-    "the server couldn't be reached" : {
-      "comment" : "Upload: why a file failed, after its name and a colon.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "не удалось связаться с сервером"
           }
         }
       }
