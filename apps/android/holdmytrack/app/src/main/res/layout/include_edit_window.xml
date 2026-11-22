@@ -134,6 +134,16 @@
                     android:background="@color/hmt_hairline" />
             </FrameLayout>
 
+            <!-- Why the Route or Photos tab can't be used, after a tap on it. -->
+            <TextView
+                android:id="@+id/edit_tab_blocked"
+                style="@style/Widget.HoldMyTrack.Hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/hmt_space_6"
+                android:accessibilityLiveRegion="polite"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:id="@+id/edit_track_panel"
                 android:layout_width="match_parent"
