@@ -94,7 +94,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         navigationItem.rightBarButtonItem = save
         isModalInPresentation = true
 
-        let subtitle = Controls.body(single.map(format.label) ?? String(localized: "edit.multiSubtitle", defaultValue: "Type and Trips apply to every checked track; name and description are per-track.",
+        let subtitle = Controls.body(single.map(format.label) ?? String(localized: "edit.multiSubtitle", defaultValue: "Type applies to every checked track.",
                                                                         comment: "Edit over several tracks: what the window changes."))
         var config = UIButton.Configuration.bordered()
         config.baseForegroundColor = UIColor(resource: .ink)
@@ -128,7 +128,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
             about.alpha = 0.5
             about.isSelectable = false
             about.accessibilityTraits.insert(.notEnabled)
-            let note = Controls.body(String(localized: "edit.multiReason", defaultValue: "Editing multiple tracks changes their type and Trips — name and description are per-track.",
+            let note = Controls.body(String(localized: "edit.multiReason", defaultValue: "Name and description are per-track: check one track to set them.",
                                             comment: "Edit over several tracks: why Name and Description are greyed out."))
             note.accessibilityIdentifier = "editMultiNote"
             views.append(note)

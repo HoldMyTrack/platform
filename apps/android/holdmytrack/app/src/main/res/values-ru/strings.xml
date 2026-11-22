@@ -524,8 +524,8 @@
         <item quantity="other">%1$d точки</item>
     </plurals>
     <string name="edit_title_one">Редактировать трек</string>
-    <string name="edit_multi_subtitle">Тип и путешествия применяются ко всем отмеченным трекам; название и описание у каждого свои.</string>
-    <string name="edit_multi_reason">При редактировании нескольких треков меняются тип и путешествия — название и описание у каждого трека свои.</string>
+    <string name="edit_multi_subtitle">Тип меняется у всех отмеченных треков.</string>
+    <string name="edit_multi_reason">Название и описание у каждого трека свои: отметьте один трек, чтобы их изменить.</string>
     <string name="edit_type">Тип</string>
     <string name="edit_name">Название</string>
     <string name="edit_name_placeholder">Необязательно — показывается вместо даты в списке треков</string>

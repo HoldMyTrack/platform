@@ -510,13 +510,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Type and Trips apply to every checked track; name and description are per-track."
+            "value" : "Type applies to every checked track."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Тип и путешествия применяются ко всем отмеченным трекам; название и описание у каждого свои."
+            "value" : "Тип меняется у всех отмеченных треков."
           }
         }
       }
@@ -2458,13 +2458,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Editing multiple tracks changes their type and Trips — name and description are per-track."
+            "value" : "Name and description are per-track: check one track to set them."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "При редактировании нескольких треков меняются тип и путешествия — название и описание у каждого трека свои."
+            "value" : "Название и описание у каждого трека свои: отметьте один трек, чтобы их изменить."
           }
         }
       }
