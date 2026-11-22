@@ -102,8 +102,9 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        // Settings may have changed the units, the name, the Country or the language.
-        if isMovingFromParent || isBeingDismissed || navigationController?.isBeingDismissed == true { flow.refreshAccount() }
+        // Settings may have changed the units, the name, the Country or the language. Read again
+        // on any way out, a switch to another tab included, which only hides the page.
+        flow.refreshAccount()
     }
 
     /// The cookies first, then the page.
