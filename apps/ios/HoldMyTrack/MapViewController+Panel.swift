@@ -157,6 +157,9 @@ extension MapViewController {
                 guard !Task.isCancelled else { return }
                 listLoading = false
                 listError = (error as? APIError)?.serverMessage ?? String(localized: "Tracks couldn't load.")
+                // The flight asked for goes with the read, as on Android, or a later read would
+                // take it after Stop.
+                _ = session.consumeFly()
                 renderPanel()
                 // A failed read doesn't end the polling: a Pending row still has to be seen finishing.
                 watchPending()
@@ -165,7 +168,7 @@ extension MapViewController {
     }
 
     /// A fresh list: what of the selection still exists stays, a finished reprocess fetches the
-    /// tracks again, and a picked range or an opened Trip flies onto it.
+    /// tracks again, and a picked range or an opened Trip flies onto it unless a recording is live.
     private func listed(_ next: [Track]) {
         let change = PendingDiff.of(previous: pendingIDs, now: Set(next.filter(\.pending).map(\.id)), awaiting: awaiting, listed: Set(next.map(\.id)))
         pendingIDs = change.pending
@@ -175,14 +178,14 @@ extension MapViewController {
         listError = nil
         session.panel.setTracks(next.map(\.summary))
         renderCap()
-        if session.consumeFly() {
+        if MapChrome.flies(asked: session.consumeFly(), recording: recordingLive) {
             let hidden = session.panel.mapHidden
             if let box = MapFraming.union(FitBoxes.of(next.filter { !hidden.contains($0.id) })) { fit(box, animated: true) }
         }
         if let id = focusWhenListed, next.contains(where: { $0.id == id }) {
             focusWhenListed = nil
             session.panel.focus(id)
-            fly([id])
+            if MapChrome.flies(asked: true, recording: recordingLive) { fly([id]) }
         }
         panelChanged()
         if change.finished { reprocessFinished(change.landed.union(change.left)) }
