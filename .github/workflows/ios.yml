@@ -95,9 +95,22 @@ jobs:
           udid=$(xcrun simctl list devices available -j |
             jq -r '[.devices | to_entries | sort_by(.key)[] | select(.key | test("iOS")) | .value[] | select(.name | startswith("iPhone"))] | last | .udid')
           echo "udid=$udid" >> "$GITHUB_OUTPUT"
+      # Coverage of the app target's own files; HoldMyTrackCore's come from the package tests
+      # above, so each file is measured once. The code is in the app's debug dylib.
       - name: Unit tests
         run: |
           set -o pipefail
+          dd="$RUNNER_TEMP/dd"
           xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
             -destination "id=${{ steps.sim.outputs.udid }}" -only-testing:HoldMyTrackTests \
-            -clonedSourcePackagesDirPath ~/spm | tail -n 100
+            -clonedSourcePackagesDirPath ~/spm -derivedDataPath "$dd" -enableCodeCoverage YES | tail -n 100
+          profdata=$(find "$dd/Build/ProfileData" -name Coverage.profdata | head -1)
+          xcrun llvm-cov export -format=lcov "$dd/Build/Products/Debug-iphonesimulator/HoldMyTrack.app/HoldMyTrack.debug.dylib" \
+            -instr-profile "$profdata" -ignore-filename-regex='/(HoldMyTrackCore|HoldMyTrackTests|HoldMyTrackUITests|DerivedSources)/' > app-coverage.lcov
+      # The app's lines join the package's under the same `swift` flag, as Kotlin's cover the
+      # whole Android app.
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: apps/ios/app-coverage.lcov
+          flags: swift
+          token: ${{ secrets.CODECOV_TOKEN }}
