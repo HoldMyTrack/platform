@@ -99,3 +99,21 @@ public enum TrackZone {
         [own, account].lazy.compactMap { $0 }.first { !$0.isEmpty && TimeZone(identifier: $0) != nil }
     }
 }
+
+/// The Distance slider's whole steps between the list's shortest and longest track. An end step
+/// is that end exactly, so both knobs at the ends read as no filter (nextDistanceFilter).
+public enum DistanceSteps {
+    public static let count = 1000
+
+    public static func meters(_ step: Int, bounds: DistanceRange) -> Double {
+        if step <= 0 { return bounds.min }
+        if step >= count { return bounds.max }
+        return bounds.min + (bounds.max - bounds.min) * Double(step) / Double(count)
+    }
+
+    public static func step(_ meters: Double, bounds: DistanceRange) -> Int {
+        guard bounds.max > bounds.min else { return 0 }
+        let f = (meters - bounds.min) / (bounds.max - bounds.min)
+        return Swift.min(Swift.max(Int((f * Double(count)).rounded()), 0), count)
+    }
+}

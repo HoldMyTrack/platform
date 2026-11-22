@@ -5041,6 +5041,24 @@
         }
       }
     },
+    "filter.distance" : {
+      "comment" : "Tracks tab: the Distance filter's heading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Расстояние"
+          }
+        }
+      }
+    },
     "follows the zoom" : {
       "comment" : "Fog's level control: under Auto.",
       "localizations" : {
