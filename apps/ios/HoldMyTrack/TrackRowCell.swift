@@ -111,7 +111,11 @@ final class TrackRowCell: UITableViewCell {
         config.image = ticked ? UIImage(resource: .check) : TrackTypes.icon(types.kind(track.trackType))
         config.baseBackgroundColor = ticked ? UIColor(resource: .accent) : UIColor(resource: .surfaceTint)
         config.baseForegroundColor = ticked ? UIColor(resource: .onAccent) : UIColor(resource: .inkSecondary)
-        tile.configuration = config
+        // Set at once: a reused cell would otherwise fade from the look of the row it last showed.
+        UIView.performWithoutAnimation {
+            tile.configuration = config
+            tile.layoutIfNeeded()
+        }
         // A Pending row can't be checked until its reprocess lands; a checked one can be unchecked.
         let checkable = onCheck != nil && (!track.pending || row.checked)
         tile.isEnabled = checkable
