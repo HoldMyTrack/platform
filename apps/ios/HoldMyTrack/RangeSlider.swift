@@ -1,7 +1,7 @@
 import UIKit
 
-/// A slider with two knobs over whole steps 0...maximum, the route editor's range: UIKit has no
-/// two-knob slider. A drag moves the knob nearer the finger, never past the other; valueChanged
+/// A slider with two knobs over whole steps 0...maximum, the route editor's range and the
+/// Distance filter's (DistanceSteps): UIKit has no two-knob slider. A drag moves the knob nearer the finger, never past the other; valueChanged
 /// fires on every step. VoiceOver reads each knob as its own adjustable element.
 final class RangeSlider: UIControl {
     private(set) var lower = 0
@@ -16,6 +16,8 @@ final class RangeSlider: UIControl {
 
     /// Each knob's spoken value: a point's place, as the readout writes it.
     var describe: ((Int) -> String)?
+    /// How far one VoiceOver swipe moves a knob, for a range of many fine steps.
+    var accessibilityStep = 1
 
     init() {
         super.init(frame: .zero)
@@ -28,6 +30,12 @@ final class RangeSlider: UIControl {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    /// What VoiceOver calls each knob.
+    func label(lower: String, upper: String) {
+        lowerKnob.accessibilityLabel = lower
+        upperKnob.accessibilityLabel = upper
+    }
 
     func set(lower: Int, upper: Int, maximum: Int) {
         self.maximum = max(maximum, 1)
@@ -66,7 +74,9 @@ final class RangeSlider: UIControl {
 
     override func cancelTracking(with event: UIEvent?) { dragging = nil }
 
-    fileprivate func move(_ knob: Knob, to next: Int) {
+    fileprivate func move(_ knob: Knob, to target: Int) {
+        // A VoiceOver step can overshoot the rail's end: the knob stops there.
+        let next = min(max(target, 0), maximum)
         let (lo, hi) = knob == .lower ? (min(next, upper), upper) : (lower, max(next, lower))
         guard lo != lower || hi != upper else { return }
         lower = lo
@@ -116,8 +126,8 @@ final class RangeSlider: UIControl {
             accessibilityTraits = .adjustable
         }
 
-        override func accessibilityIncrement() { step(1) }
-        override func accessibilityDecrement() { step(-1) }
+        override func accessibilityIncrement() { step(slider?.accessibilityStep ?? 1) }
+        override func accessibilityDecrement() { step(-(slider?.accessibilityStep ?? 1)) }
 
         private func step(_ by: Int) {
             guard let slider, slider.isEnabled else { return }
