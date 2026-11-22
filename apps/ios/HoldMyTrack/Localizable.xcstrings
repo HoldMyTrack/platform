@@ -12,35 +12,35 @@
         }
       }
     },
-    "%@ couldn't be read." : {
+    "%@: the file couldn't be read" : {
       "comment" : "Upload: a picked file couldn't be read; the placeholder is its name.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось прочитать %@."
+            "value" : "%@: не удалось прочитать файл"
           }
         }
       }
     },
-    "%@ is over %lld MB." : {
+    "%@ is too large: at most %lld MB." : {
       "comment" : "Upload: a file past the size limit: its name and the limit.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ больше %lld МБ."
+            "value" : "%@ слишком большой: не больше %lld МБ."
           }
         }
       }
     },
-    "%@ isn't a GPX, FIT or TCX file." : {
+    "%@ isn't a .gpx, .fit or .tcx file, so it wasn't sent." : {
       "comment" : "Upload: a picked file of another kind; the placeholder is its name.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ — не файл GPX, FIT или TCX."
+            "value" : "%@ — не файл .gpx, .fit или .tcx, он не отправлен."
           }
         }
       }
@@ -67,18 +67,18 @@
         }
       }
     },
-    "%@ sent you a copy of “%@” (%@)." : {
+    "%@ sent you a copy of “%@” · %@" : {
       "comment" : "Trips tab: a copy waiting: who sent it, the Trip's name, and its track count.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ отправляет вам копию «%@» (%@)."
+            "value" : "%@ отправляет вам копию «%@» · %@"
           }
         }
       }
     },
-    "%@ was imported before." : {
+    "%@ was already uploaded before." : {
       "comment" : "Upload: the server had this exact file already.",
       "localizations" : {
         "ru" : {
@@ -89,35 +89,24 @@
         }
       }
     },
-    "%@ wasn't sent: %@" : {
-      "comment" : "Upload: the server refused a file: its name and the reason.",
+    "%@: %@" : {
+      "comment" : "A file that couldn't be added, and why: a picked photo on the Photos tab, or an upload.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ не отправлен: %@"
+            "value" : "%@: %@"
           }
         }
       }
     },
-    "%@ wasn't sent: the server couldn't be reached." : {
-      "comment" : "Upload: a file's upload had no answer.",
+    "%@: the server couldn't be reached" : {
+      "comment" : "Upload: a file that wasn't sent because the server didn't answer.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ не отправлен: не удалось связаться с сервером."
-          }
-        }
-      }
-    },
-    "%@ will be deleted for good, with its route and its part of Fog of War." : {
-      "comment" : "Tracks panel: Delete's confirmation; the placeholder names what is deleted and its distance.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ — будет удалён навсегда вместе с маршрутом и его вкладом в «туман войны»."
+            "value" : "%@: не удалось связаться с сервером"
           }
         }
       }
@@ -144,24 +133,13 @@
         }
       }
     },
-    "%@: %@" : {
-      "comment" : "Photos tab: a picked file that couldn't be added, and why.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@: %@"
-          }
-        }
-      }
-    },
-    "%@: archives aren't imported. Upload the GPX, FIT or TCX files inside it." : {
+    "%@ is a .zip archive, which can't be imported. Upload the GPX, FIT or TCX files inside it instead." : {
       "comment" : "Upload: a picked .zip; the placeholder is its name.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@: архивы не загружаются. Загрузите файлы GPX, FIT или TCX из него."
+            "value" : "%@ — zip-архив, его импортировать нельзя. Загрузите файлы GPX, FIT или TCX из него."
           }
         }
       }
@@ -276,7 +254,7 @@
         }
       }
     },
-    "Add %@ to a Trip" : {
+    "Add %@ to a trip" : {
       "comment" : "Tracks panel: Add to trip's label; the placeholder names the target.",
       "localizations" : {
         "ru" : {
@@ -437,13 +415,13 @@
         }
       }
     },
-    "Can't delete while it's being processed" : {
-      "comment" : "Tracks panel: why Delete is off: a target is Pending.",
+    "This track is still being processed" : {
+      "comment" : "Edit window: why the Track or Photos tab can't be used yet.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Нельзя удалить, пока путешествие обрабатывается"
+            "value" : "Этот трек ещё обрабатывается"
           }
         }
       }
@@ -580,13 +558,112 @@
         }
       }
     },
-    "Checked: %lld" : {
-      "comment" : "Tracks panel: names the checked group, written as label: N.",
+    "panel.checkedCount" : {
+      "comment" : "Tracks tab: the checked tracks an action applies to.",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg checked track"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg checked tracks"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отмечено: %lld"
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg отмеченный трек"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg отмеченных трека"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg отмеченных треков"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg отмеченного трека"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "panel.deletePending" : {
+      "comment" : "Tracks tab: why Delete is off while a checked or focused track is still being processed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can't delete while a track is being processed"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нельзя удалить, пока трек обрабатывается"
+          }
+        }
+      }
+    },
+    "panel.resetFilters" : {
+      "comment" : "Tracks tab: clears the Type and Distance filters.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сбросить"
           }
         }
       }
@@ -602,13 +679,13 @@
         }
       }
     },
-    "Choose files" : {
+    "Choose files…" : {
       "comment" : "Upload: opens the document picker.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выбрать файлы"
+            "value" : "Выбрать файлы…"
           }
         }
       }
@@ -668,7 +745,7 @@
         }
       }
     },
-    "Close the panel" : {
+    "Collapse the panel" : {
       "comment" : "The sheet's handle while it's open.",
       "localizations" : {
         "ru" : {
@@ -921,17 +998,6 @@
         }
       }
     },
-    "Create" : {
-      "comment" : "Trips tab: creates a new Trip.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Создать"
-          }
-        }
-      }
-    },
     "Cut" : {
       "comment" : "Route editor: removes the part between the knobs.",
       "localizations" : {
@@ -1009,18 +1075,18 @@
         }
       }
     },
-    "Delete these tracks?" : {
+    "Delete this group?" : {
       "comment" : "Tracks panel: Delete's confirmation title for a group.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Удалить эти треки?"
+            "value" : "Удалить эту группу?"
           }
         }
       }
     },
-    "Delete this Private location?" : {
+    "Delete this private location?" : {
       "comment" : "Private location editor: confirming a delete.",
       "localizations" : {
         "ru" : {
@@ -1185,13 +1251,13 @@
         }
       }
     },
-    "Drag the centre to move it. Don't centre it exactly on your door: a circle's middle is the first place anyone looks." : {
+    "Drag the center to move it. Don't center it exactly on your door — a circle's middle is the first place anyone looks." : {
       "comment" : "Private location editor: how to move the circle, and why not onto the door.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Перетащите центр, чтобы сдвинуть круг. Не ставьте центр прямо на свою дверь: середину круга проверят в первую очередь."
+            "value" : "Перетащите центр, чтобы сдвинуть круг. Не ставьте центр прямо на свою дверь — середину круга проверят в первую очередь."
           }
         }
       }
@@ -1224,18 +1290,81 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Изменить трек"
+            "value" : "Редактировать трек"
           }
         }
       }
     },
-    "Edit tracks: %lld" : {
-      "comment" : "Edit window's title for a group, written as label: N.",
+    "edit.titleMany" : {
+      "comment" : "Edit window's title for several tracks.",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Edit %arg track"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Edit %arg tracks"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Изменить треки: %lld"
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Редактировать %arg трек"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Редактировать %arg трека"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Редактировать %arg треков"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Редактировать %arg трека"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1279,7 +1408,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Целиком внутри одного из ваших приватных мест, поэтому его нет на карте и у него нет расстояния. Если сдвинуть или удалить это место, оно вернётся."
+            "value" : "Целиком внутри одного из ваших приватных мест, поэтому его нет на карте и у него нет расстояния. Если сдвинуть или удалить это место, он вернётся."
           }
         }
       }
@@ -1361,17 +1490,6 @@
         }
       }
     },
-    "Fly to %@" : {
-      "comment" : "Tracks panel: the fly-to label; the placeholder names the target or a row.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Показать на карте: %@"
-          }
-        }
-      }
-    },
     "Fog" : {
       "comment" : "Map: the Fog of War mode.",
       "localizations" : {
@@ -1449,13 +1567,13 @@
         }
       }
     },
-    "GPX, FIT or TCX files, up to %lld at a time and %lld MB each. They keep going if you leave this screen. Finished imports are in Sync history on the web." : {
+    ".gpx, .fit or .tcx files, up to %lld at a time." : {
       "comment" : "Upload: the screen's explanation: the file cap and size limit.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Файлы GPX, FIT или TCX — до %lld за раз и до %lld МБ каждый. Загрузка продолжится, даже если уйти с этого экрана. Готовые загрузки — в истории синхронизации на сайте."
+            "value" : "Файлы .gpx, .fit или .tcx, до %lld за раз."
           }
         }
       }
@@ -1488,7 +1606,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Помощь"
+            "value" : "Справка"
           }
         }
       }
@@ -1511,17 +1629,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрыть"
-          }
-        }
-      }
-    },
-    "Hide %@" : {
-      "comment" : "Tracks panel: Hide's label; the placeholder names the target.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скрыть: %@"
           }
         }
       }
@@ -1559,24 +1666,76 @@
         }
       }
     },
-    "If the address has a HoldMyTrack account, it gets a copy of “%@” to accept." : {
-      "comment" : "Trips tab: Send a copy's explanation; the placeholder is the Trip's name.",
+    "panel.inTrips" : {
+      "comment" : "Tracks tab: a row's badge for several Trips, read out with their names.",
+      "extractionState" : "manual",
       "localizations" : {
-        "ru" : {
+        "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Если у адреса есть аккаунт HoldMyTrack, туда придёт копия «%@», которую можно будет принять."
+            "value" : "%1$#@n@: %2$@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "In %arg trip"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "In %arg trips"
+                    }
+                  }
+                }
+              }
+            }
           }
-        }
-      }
-    },
-    "In Trips: %@" : {
-      "comment" : "Tracks panel: a row's Trip badge for several Trips; the placeholder lists their names.",
-      "localizations" : {
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В путешествиях: %@"
+            "value" : "%1$#@n@: %2$@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "В %arg путешествии"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "В %arg путешествиях"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "В %arg путешествиях"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "В %arg путешествиях"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1757,13 +1916,13 @@
         }
       }
     },
-    "Mixed types" : {
+    "Mixed types — pick one to set it for all" : {
       "comment" : "Edit window: the Type of a group of mixed types, until one is picked.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разные типы"
+            "value" : "Разные типы — выберите один, чтобы задать его всем"
           }
         }
       }
@@ -1845,7 +2004,7 @@
         }
       }
     },
-    "New Private location" : {
+    "New private location" : {
       "comment" : "Privacy: the add dialog's title.",
       "localizations" : {
         "ru" : {
@@ -1856,13 +2015,13 @@
         }
       }
     },
-    "New trip" : {
-      "comment" : "Trips tab: the button and the dialog that make a Trip.",
+    "Create trip" : {
+      "comment" : "New trip: the dialog's title and its button.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Новое путешествие"
+            "value" : "Создать путешествие"
           }
         }
       }
@@ -2318,24 +2477,24 @@
         }
       }
     },
-    "No tracks in this range." : {
+    "No tracks in this part of the map." : {
       "comment" : "Tracks panel: the range has no tracks.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В этом диапазоне нет треков."
+            "value" : "В этой части карты нет треков."
           }
         }
       }
     },
-    "No tracks match these filters." : {
+    "No tracks here match the current filters." : {
       "comment" : "Tracks panel: the filters leave no row.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Нет треков, подходящих под фильтры."
+            "value" : "Здесь нет треков, подходящих под фильтры."
           }
         }
       }
@@ -2384,13 +2543,13 @@
         }
       }
     },
-    "Nothing to act on: focus or check a track" : {
+    "Tap a track, or check some, first" : {
       "comment" : "Tracks panel: why a toolbar action is off: no target.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не с чем работать: выберите или отметьте трек"
+            "value" : "Сначала нажмите на трек или отметьте несколько"
           }
         }
       }
@@ -2417,18 +2576,18 @@
         }
       }
     },
-    "Open the Trip %@" : {
+    "Open “%@”" : {
       "comment" : "Tracks panel: a row's Trip badge; the placeholder is the Trip's name.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Открыть путешествие %@"
+            "value" : "Открыть «%@»"
           }
         }
       }
     },
-    "Open the panel" : {
+    "Expand the panel" : {
       "comment" : "The sheet's handle while it's closed.",
       "localizations" : {
         "ru" : {
@@ -2478,7 +2637,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Обрабатывается"
+            "value" : "Ожидает"
           }
         }
       }
@@ -2560,13 +2719,13 @@
         }
       }
     },
-    "Pick a type." : {
+    "Type is required." : {
       "comment" : "Edit window: Save with no type.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выберите тип."
+            "value" : "Укажите тип."
           }
         }
       }
@@ -2637,13 +2796,76 @@
         }
       }
     },
-    "Places in this area: %@" : {
-      "comment" : "Map: what Show in this area found; the placeholder is the count.",
+    "spots.inAreaCount" : {
+      "comment" : "Spots: how many places Show in this area found: the number for the plural, then as written.",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ %1$#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "place in this area"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "places in this area"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Мест в этой области: %@"
+            "value" : "%2$@ %1$#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "место в этой области"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "места в этой области"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "мест в этой области"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "места в этой области"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2670,13 +2892,76 @@
         }
       }
     },
-    "Points: %@" : {
-      "comment" : "Route editor: how many points the route has, written as label: N.",
+    "edit.routePoints" : {
+      "comment" : "Route editor: how many points the route has: the number for the plural, then as written.",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ %1$#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "point"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "points"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Точки: %@"
+            "value" : "%2$@ %1$#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "точка"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "точки"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "точек"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "точки"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2742,18 +3027,18 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Приватное"
+            "value" : "Приватный"
           }
         }
       }
     },
-    "Private location" : {
+    "Edit private location" : {
       "comment" : "Privacy: the edit dialog's title.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Приватное место"
+            "value" : "Изменить приватное место"
           }
         }
       }
@@ -2780,17 +3065,6 @@
         }
       }
     },
-    "Private: inside a Private location, so it has no route or numbers." : {
-      "comment" : "Tracks panel: the focused track's card for a private one.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Приватный: он внутри приватного места, поэтому у него нет маршрута и показателей."
-          }
-        }
-      }
-    },
     "Radius" : {
       "comment" : "Private location editor: VoiceOver's name for the radius slider.",
       "localizations" : {
@@ -2802,13 +3076,13 @@
         }
       }
     },
-    "Radius: %lld m" : {
+    "Radius · %lld m" : {
       "comment" : "Privacy: a row's radius, written as label: N.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Радиус: %lld м"
+            "value" : "Радиус · %lld м"
           }
         }
       }
@@ -2864,17 +3138,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сбросить"
-          }
-        }
-      }
-    },
-    "Reset filters" : {
-      "comment" : "Tracks panel: clears the Type and Distance filters.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сбросить фильтры"
           }
         }
       }
@@ -2989,13 +3252,13 @@
         }
       }
     },
-    "Seconds left: %lld" : {
+    "%lld s left" : {
       "comment" : "Capture: how long is left to stay inside.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Осталось секунд: %lld"
+            "value" : "Ещё %lld с"
           }
         }
       }
@@ -3033,24 +3296,24 @@
         }
       }
     },
-    "Sent. If %@ has an account, the copy waits on their Trips tab." : {
+    "Sent to %@. If that address has a HoldMyTrack account, they'll find the copy in their Trips tab." : {
       "comment" : "Trips tab: a copy was sent; the placeholder is the email address.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отправлено. Если у %@ есть аккаунт, копия появится на вкладке «Путешествия»."
+            "value" : "Отправлено на %@. Если у этого адреса есть аккаунт HoldMyTrack, копия появится у него на вкладке «Путешествия»."
           }
         }
       }
     },
-    "Set up your account" : {
+    "Welcome — set up your account" : {
       "comment" : "Site page: the first run's Settings title.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Настройка аккаунта"
+            "value" : "Добро пожаловать! Настройте аккаунт"
           }
         }
       }
@@ -3084,17 +3347,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Самое короткое"
-          }
-        }
-      }
-    },
-    "Show %@" : {
-      "comment" : "Tracks panel: Show's label; the placeholder names the target.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Показать: %@"
           }
         }
       }
@@ -3358,12 +3610,12 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Как в системе"
+            "value" : "Системная"
           }
         }
       }
     },
-    "Take %@ out of this Trip" : {
+    "Remove %@ from the trip" : {
       "comment" : "Trips tab: a row's ×; the placeholder is the row's title.",
       "localizations" : {
         "ru" : {
@@ -3407,7 +3659,7 @@
         }
       }
     },
-    "The Private location couldn't be deleted." : {
+    "The private location couldn't be deleted." : {
       "comment" : "Privacy: delete failed and the server gave no reason.",
       "localizations" : {
         "ru" : {
@@ -3418,7 +3670,7 @@
         }
       }
     },
-    "The Private location couldn't be saved." : {
+    "The private location couldn't be saved." : {
       "comment" : "Privacy: save failed and the server gave no reason.",
       "localizations" : {
         "ru" : {
@@ -3429,24 +3681,24 @@
         }
       }
     },
-    "The Trip couldn't be deleted." : {
+    "Could not delete the trip" : {
       "comment" : "Trips tab: delete failed and the server gave no reason.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось удалить путешествие."
+            "value" : "Не удалось удалить путешествие"
           }
         }
       }
     },
-    "The Trip couldn't be saved." : {
+    "Could not save the trip" : {
       "comment" : "Trips tab: a change failed and the server gave no reason.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось сохранить путешествие."
+            "value" : "Не удалось сохранить путешествие"
           }
         }
       }
@@ -3495,57 +3747,120 @@
         }
       }
     },
-    "The demo account can't change a Trip" : {
+    "Not available for demo accounts — create an account to change trips" : {
       "comment" : "Why a Trip action is off for the demo account.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В демо-аккаунте нельзя менять путешествия"
+            "value" : "Недоступно в демо-аккаунте — создайте аккаунт, чтобы изменять путешествия"
           }
         }
       }
     },
-    "The demo account can't delete tracks" : {
+    "Not available for demo accounts — create an account to delete tracks" : {
       "comment" : "Tracks panel: why Delete is off for the demo account.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В демо-аккаунте нельзя удалять треки"
+            "value" : "Недоступно в демо-аккаунте — создайте аккаунт, чтобы удалять треки"
           }
         }
       }
     },
-    "The demo account can't edit tracks" : {
+    "Not available for demo accounts — create an account to edit tracks" : {
       "comment" : "Tracks panel: why Edit is off for the demo account.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В демо-аккаунте нельзя изменять треки"
+            "value" : "Недоступно в демо-аккаунте — создайте аккаунт, чтобы редактировать треки"
           }
         }
       }
     },
-    "The demo account can't upload. Sign up to add your own tracks." : {
+    "Not available for demo accounts — create an account to upload your own tracks." : {
       "comment" : "You tab: a file was opened in the app on the demo account.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В демо-аккаунте нельзя загружать файлы. Зарегистрируйтесь, чтобы добавить свои треки."
+            "value" : "Недоступно в демо-аккаунте — создайте аккаунт, чтобы загружать свои треки."
           }
         }
       }
     },
-    "The description can be at most %lld characters." : {
-      "comment" : "Edit window: the description is too long.",
+    "edit.descriptionTooLong" : {
+      "comment" : "Edit: the description is past its limit.",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Description must be %arg character or fewer."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Description must be %arg characters or fewer."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Описание может быть не длиннее %lld символов."
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Описание должно быть не длиннее %arg символа."
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Описание должно быть не длиннее %arg символов."
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Описание должно быть не длиннее %arg символов."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Описание должно быть не длиннее %arg символов."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3583,13 +3898,76 @@
         }
       }
     },
-    "The name can be at most %lld characters." : {
-      "comment" : "Edit window: the name is too long.",
+    "edit.nameTooLong" : {
+      "comment" : "Edit: the name is past its limit.",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Name must be %arg character or fewer."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Name must be %arg characters or fewer."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Название может быть не длиннее %lld символов."
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Название должно быть не длиннее %arg символа."
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Название должно быть не длиннее %arg символов."
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Название должно быть не длиннее %arg символов."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Название должно быть не длиннее %arg символов."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3638,13 +4016,76 @@
         }
       }
     },
-    "The type can be at most %lld characters." : {
-      "comment" : "Edit window: the type is too long.",
+    "edit.typeTooLong" : {
+      "comment" : "Edit: the type is past its limit.",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Type must be %arg character or fewer."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Type must be %arg characters or fewer."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Тип может быть не длиннее %lld символов."
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Тип должен быть не длиннее %arg символа."
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Тип должен быть не длиннее %arg символов."
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Тип должен быть не длиннее %arg символов."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Тип должен быть не длиннее %arg символов."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3660,13 +4101,13 @@
         }
       }
     },
-    "This Trip no longer exists." : {
+    "This trip doesn't exist, or isn't yours." : {
       "comment" : "Trips tab: the open Trip was deleted elsewhere.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Этого путешествия больше нет."
+            "value" : "Такого путешествия нет, или оно не ваше."
           }
         }
       }
@@ -3682,13 +4123,13 @@
         }
       }
     },
-    "This page couldn't load. Check your connection and try again." : {
+    "Couldn't load this page. Check your connection and try again." : {
       "comment" : "Site page: a page failed to load.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось загрузить страницу. Проверьте подключение и попробуйте ещё раз."
+            "value" : "Не удалось загрузить страницу. Проверьте подключение и попробуйте снова."
           }
         }
       }
@@ -3722,17 +4163,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "У этого трека нет маршрута, на который можно поместить фотографии."
-          }
-        }
-      }
-    },
-    "This track is still being processed" : {
-      "comment" : "Edit window: why the Track or Photos tab can't be used yet.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Этот трек ещё обрабатывается"
           }
         }
       }
@@ -3858,24 +4288,87 @@
         }
       }
     },
-    "Trips couldn't load." : {
+    "Could not load your trips" : {
       "comment" : "Trips tab: the list's read failed and the server gave no reason.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось загрузить путешествия."
+            "value" : "Не удалось загрузить путешествия"
           }
         }
       }
     },
-    "Trips: %lld" : {
-      "comment" : "Tracks panel: a row's badge for several Trips, written as label: N.",
+    "panel.tripBadge" : {
+      "comment" : "Tracks tab: a row's badge for several Trips.",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg trip"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg trips"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Путешествия: %lld"
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg путешествие"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg путешествия"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg путешествий"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg путешествия"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -4133,13 +4626,13 @@
         }
       }
     },
-    "You picked %lld track files. Upload at most %lld at a time." : {
+    "Too many files selected (%lld): choose up to %lld at a time." : {
       "comment" : "Upload: too many files: how many were picked and the cap.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выбрано файлов треков: %lld. За раз можно загрузить не больше %lld."
+            "value" : "Выбрано слишком много файлов (%lld): выбирайте до %lld за раз."
           }
         }
       }
@@ -11149,13 +11642,13 @@
         }
       }
     },
-    "the server refused it." : {
+    "the server refused it" : {
       "comment" : "Upload: the end of a refusal with no reason from the server.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "сервер его не принял."
+            "value" : "сервер его не принял"
           }
         }
       }
@@ -11797,13 +12290,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your recordings wait here until you tick and send them: only what you tick is sent. Upload files and see how each import went from here too."
+            "value" : "Bring in this phone's recordings. Nothing is ticked to start with: only what you tick is sent. You don't need to bring everything, only the journeys you want to keep."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ваши записи ждут здесь, пока вы не отметите и не отправите их: отправляется только отмеченное. Здесь же загрузка файлов и история импорта."
+            "value" : "Записи с этого телефона. Сначала ничего не отмечено: отправляется только то, что вы отметите. Вы не обязаны добавлять всё подряд — только те треки, которые хотите сохранить."
           }
         }
       }
@@ -12591,6 +13084,105 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Треки"
+          }
+        }
+      }
+    },
+    "%@ will be permanently deleted — its route, fog coverage, and any performance records it contributed to. This can't be undone." : {
+      "comment" : "Delete: one track, named with its distance.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ будет удалён навсегда — вместе с маршрутом, покрытием «тумана войны» и всеми рекордами, в которые он входил. Это нельзя отменить."
+          }
+        }
+      }
+    },
+    "%@ will be permanently deleted — their routes, fog coverage, and any performance records they contributed to. This can't be undone." : {
+      "comment" : "Delete: several checked tracks, counted with their distance.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ будут удалены навсегда — вместе с маршрутами, покрытием «тумана войны» и всеми рекордами, в которые они входили. Это нельзя отменить."
+          }
+        }
+      }
+    },
+    "Edit %@: type, name, description and route" : {
+      "comment" : "Tracks tab: Edit's label for one track.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить тип, название, описание и маршрут: %@"
+          }
+        }
+      }
+    },
+    "Edit type for %@" : {
+      "comment" : "Tracks tab: Edit's label for several checked tracks.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить тип: %@"
+          }
+        }
+      }
+    },
+    "Hide %@ from the map" : {
+      "comment" : "Tracks tab: Hide's label; the placeholder names the target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрыть с карты: %@"
+          }
+        }
+      }
+    },
+    "Show %@ on the map" : {
+      "comment" : "Tracks tab: Show's label; the placeholder names the target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать на карте: %@"
+          }
+        }
+      }
+    },
+    "They get their own copy of this trip and its tracks in their HoldMyTrack account, once they accept it. It's theirs from then on: what you change later doesn't reach it. Sending again later adds only the tracks they don't have yet." : {
+      "comment" : "Send a copy: what the copy is.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Когда человек примет копию, в его аккаунте HoldMyTrack появится собственная копия этого путешествия и его треков. С этого момента она его: ваши дальнейшие изменения до неё не дойдут. Если отправить ещё раз позже, добавятся только треки, которых у него ещё нет."
+          }
+        }
+      }
+    },
+    "Zoom to %@" : {
+      "comment" : "Tracks tab: Zoom's label; the placeholder names the target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приблизить карту: %@"
+          }
+        }
+      }
+    },
+    "“%@”" : {
+      "comment" : "Tracks tab: one track named as an action's target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@»"
           }
         }
       }

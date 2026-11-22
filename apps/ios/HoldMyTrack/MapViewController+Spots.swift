@@ -161,7 +161,7 @@ extension MapViewController {
         case .failed: (String(localized: "Couldn't load places — try again"), true)
         case .none: (String(localized: "No places in this area"), false)
         case let .truncated(shown, total): (String(localized: "Showing \(format(shown)) of \(format(total)) places — zoom in for the rest"), false)
-        case let .count(n): (String(localized: "Places in this area: \(format(n))"), false)
+        case let .count(n): (String(localized: "spots.inAreaCount", defaultValue: "\(n) \(format(n)) places in this area", comment: "Spots: how many places Show in this area found: the number for the plural, then as written."), false)
         }
         button.configuration?.title = title
         button.configuration?.image = offer ? Controls.icon(UIImage(resource: .mapPin), size: 14) : nil

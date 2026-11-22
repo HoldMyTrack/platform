@@ -30,7 +30,7 @@ final class PrivateLocationTests: XCTestCase {
         let top = app.otherElements["modes"].frame.maxY, bottom = editor.frame.minY
         let handle = map.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: map.frame.midX, dy: (top + bottom) / 2))
         handle.press(forDuration: 0.1, thenDragTo: handle.withOffset(CGVector(dx: 40, dy: 30)))
-        attach("New Private location")
+        attach("New private location")
         app.buttons["locationSave"].tap()
         XCTAssertTrue(editor.waitForNonExistence(timeout: 15))
         let saved = account.privateLocations()

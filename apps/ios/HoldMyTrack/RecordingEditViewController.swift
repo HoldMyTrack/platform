@@ -155,8 +155,8 @@ final class RecordingEditViewController: UIViewController {
         let aboutText = about.text.trimmingCharacters(in: .whitespacesAndNewlines)
         if let invalid = EditPlan.invalid(group: [], type: track.type, name: nameText, description: aboutText) {
             error.text = switch invalid {
-            case .typeRequired: String(localized: "Pick a type.")
-            case .typeTooLong: String(localized: "The type can be at most \(EditPlan.maxType) characters.")
+            case .typeRequired: String(localized: "Type is required.")
+            case .typeTooLong: String(localized: "edit.typeTooLong", defaultValue: "Type must be \(EditPlan.maxType) characters or fewer.", comment: "Edit: the type is past its limit.")
             default: String(localized: "recording.tooLong", defaultValue: "The name or the description is too long.", comment: "A recording's Edit: a field past its limit.")
             }
             error.isHidden = false

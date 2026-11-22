@@ -11,7 +11,7 @@ final class PrivateLocationEditorView: UIView {
     private let radius = Controls.label("", font: Typeface.sans(DesignTokens.Text.md), color: UIColor(resource: .ink))
     private let slider = UISlider()
     private let note = Controls.label(
-        String(localized: "Drag the centre to move it. Don't centre it exactly on your door: a circle's middle is the first place anyone looks.",
+        String(localized: "Drag the center to move it. Don't center it exactly on your door — a circle's middle is the first place anyone looks.",
                comment: "Private location editor: how to move the circle, and why not onto the door."),
         font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     private let error = Controls.error(id: "locationError")
@@ -76,7 +76,7 @@ final class PrivateLocationEditorView: UIView {
 
     /// A draft opening: its name goes into the field, which the user types into from then.
     func open(_ draft: PrivateLocationEditing.Draft) {
-        title.text = draft.id == nil ? String(localized: "New Private location") : String(localized: "Private location")
+        title.text = draft.id == nil ? String(localized: "New private location") : String(localized: "Edit private location")
         name.text = draft.name
         show(error: nil)
         isHidden = false
@@ -84,7 +84,7 @@ final class PrivateLocationEditorView: UIView {
     }
 
     func render(_ draft: PrivateLocationEditing.Draft, dirty: Bool, busy: Bool) {
-        radius.text = String(localized: "Radius: \(draft.radiusM) m")
+        radius.text = String(localized: "Radius · \(draft.radiusM) m")
         if !slider.isTracking { slider.value = Float(draft.radiusM) }
         slider.accessibilityValue = radius.text
         delete.isHidden = draft.id == nil

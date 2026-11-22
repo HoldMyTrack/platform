@@ -38,8 +38,8 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .bg)
-        let about = Controls.body(String(localized: "GPX, FIT or TCX files, up to \(UploadPlan.maxFiles) at a time and \(UploadPlan.maxFileBytes >> 20) MB each. They keep going if you leave this screen. Finished imports are in Sync history on the web."))
-        let pick = Controls.primaryButton(String(localized: "Choose files"), id: "chooseFiles")
+        let about = Controls.body(String(localized: ".gpx, .fit or .tcx files, up to \(UploadPlan.maxFiles) at a time."))
+        let pick = Controls.primaryButton(String(localized: "Choose files…"), id: "chooseFiles")
         pick.addAction(UIAction { [weak self] _ in self?.choose() }, for: .primaryActionTriggered)
         running.accessibilityIdentifier = "runningImports"
         Controls.host(Controls.column([sharedSection, about, pick, transfers, notes, running]), in: self)

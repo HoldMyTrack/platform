@@ -32,7 +32,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private let distanceButton = UIButton(type: .system)
     /// The Dates filter (root docs/SPEC.md FR-5.12), its sheet the map's (DatesViewController).
     let datesButton = UIButton(type: .system)
-    private let resetButton = Controls.textButton(String(localized: "Reset filters"), id: "resetFilters")
+    private let resetButton = Controls.textButton(String(localized: "panel.resetFilters", defaultValue: "Reset", comment: "Tracks tab: clears the Type and Distance filters."), id: "resetFilters")
     /// While rows are checked, the map shows it in the mode toggle's place (MapViewController+TopRow).
     let selectionBar = UIView()
     private let checkAllButton = UIButton(type: .system)
@@ -54,7 +54,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private let cardMoving = TracksPanel.statValue("cardMoving")
     private let cardPace = TracksPanel.statValue("cardPace")
     private let cardPaceLabel = TracksPanel.statLabel("")
-    private let cardPrivate = Controls.label(String(localized: "Private: inside a Private location, so it has no route or numbers."),
+    private let cardPrivate = Controls.label(String(localized: "Entirely inside one of your private locations, so it isn't on the map and has no distance. Moving or removing that location brings it back."),
                                              font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     /// The pace bands' legend, slowest first, while the map draws them.
     private let cardBands = UIStackView()
@@ -293,7 +293,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             note.text = loadNote.text
             note.textColor = UIColor(resource: loadNote.failed ? .danger : .inkSecondary)
         } else {
-            note.text = listed.isEmpty && !tracks.isEmpty ? String(localized: "No tracks match these filters.") : listed.isEmpty ? String(localized: "No tracks in this range.") : nil
+            note.text = listed.isEmpty && !tracks.isEmpty ? String(localized: "No tracks here match the current filters.") : listed.isEmpty ? String(localized: "No tracks in this part of the map.") : nil
             note.textColor = UIColor(resource: .inkSecondary)
         }
         note.isHidden = note.text == nil
@@ -367,7 +367,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     private func targetName(_ targets: [Track]) -> String {
-        state.checked.isEmpty ? format.label(targets[0]) : String(localized: "Checked: \(targets.count)")
+        state.checked.isEmpty ? String(localized: "“\(format.label(targets[0]))”", comment: "Tracks tab: one track named as an action's target.") : String(localized: "panel.checkedCount", defaultValue: "\(targets.count) checked tracks", comment: "Tracks tab: the checked tracks an action applies to.")
     }
 
     private func renderToolbar() {
@@ -392,11 +392,11 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let name = targets.isEmpty ? nil : targetName(targets)
         for actions in [barActions!, cardActions!] {
             describe(actions.visibility, use.visibility, image: UIImage(resource: anyHidden ? .eyeOff : .eye),
-                     anyHidden ? String(localized: "Show \(name ?? "")") : String(localized: "Hide \(name ?? "")"))
-            describe(actions.edit, use.edit, demo: String(localized: "The demo account can't edit tracks"), String(localized: "Edit \(name ?? "")"))
-            describe(actions.addToTrip, use.addToTrip, demo: String(localized: "The demo account can't change a Trip"), String(localized: "Add \(name ?? "") to a Trip"))
-            describe(actions.delete, use.delete, demo: String(localized: "The demo account can't delete tracks"), String(localized: "Delete \(name ?? "")"))
-            describe(actions.focus, use.focus, String(localized: "Fly to \(name ?? "")"))
+                     anyHidden ? String(localized: "Show \(name ?? "") on the map") : String(localized: "Hide \(name ?? "") from the map"))
+            describe(actions.edit, use.edit, demo: String(localized: "Not available for demo accounts — create an account to edit tracks"), targets.count == 1 ? String(localized: "Edit \(name ?? ""): type, name, description and route") : String(localized: "Edit type for \(name ?? "")"))
+            describe(actions.addToTrip, use.addToTrip, demo: String(localized: "Not available for demo accounts — create an account to change trips"), String(localized: "Add \(name ?? "") to a trip"))
+            describe(actions.delete, use.delete, demo: String(localized: "Not available for demo accounts — create an account to delete tracks"), String(localized: "Delete \(name ?? "")"))
+            describe(actions.focus, use.focus, String(localized: "Zoom to \(name ?? "")"))
         }
         cardActions.visibility.configuration?.title = anyHidden
             ? String(localized: "card.show", defaultValue: "Show", comment: "The focused track's card: show a hidden track on the map.")
@@ -415,8 +415,8 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
         button.accessibilityLabel = switch use {
         case .demo: demo ?? ready
-        case .noTarget: String(localized: "Nothing to act on: focus or check a track")
-        case .pending: String(localized: "Can't delete while it's being processed")
+        case .noTarget: String(localized: "Tap a track, or check some, first")
+        case .pending: String(localized: "panel.deletePending", defaultValue: "Can't delete while a track is being processed", comment: "Tracks tab: why Delete is off while a checked or focused track is still being processed.")
         case .ready: ready
         }
     }

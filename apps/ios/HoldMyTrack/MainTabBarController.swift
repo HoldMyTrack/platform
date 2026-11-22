@@ -382,7 +382,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         guard let sync = viewControllers?[3] as? UINavigationController else { return }
         selectedViewController = sync
         guard !account.isDemo else {
-            TripDialogs.inform(over: view, String(localized: "The demo account can't upload. Sign up to add your own tracks."))
+            TripDialogs.inform(over: view, String(localized: "Not available for demo accounts — create an account to upload your own tracks."))
             return
         }
         Uploads.shared.share(files)

@@ -34,7 +34,7 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
         self.page = page
         self.onboarding = onboarding
         super.init(nibName: nil, bundle: nil)
-        title = onboarding ? String(localized: "Set up your account") : Self.title(page)
+        title = onboarding ? String(localized: "Welcome — set up your account") : Self.title(page)
     }
 
     @available(*, unavailable)
@@ -211,7 +211,7 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
         guard code != NSURLErrorCancelled, code != 102 /* WebKitErrorFrameLoadInterruptedByPolicyChange */ else { return }
         failed = true
         web.isHidden = true
-        errorText.text = String(localized: "This page couldn't load. Check your connection and try again.")
+        errorText.text = String(localized: "Couldn't load this page. Check your connection and try again.")
         errorView.isHidden = false
     }
 }

@@ -67,8 +67,9 @@ final class MapTests: XCTestCase {
         XCTAssertEqual(app.buttons["layers"].label, layers, "places count on their own button")
         let area = app.buttons["showInArea"]
         XCTAssertTrue(area.waitForExistence(timeout: 10))
+        let offer = area.label
         area.tap()
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier == 'showInArea' AND label CONTAINS ':'")).firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier == 'showInArea' AND label != %@ AND NOT label ENDSWITH '…'", offer)).firstMatch.waitForExistence(timeout: 10))
         app.setPlaygrounds(false)
         XCTAssertTrue(area.waitForNonExistence(timeout: 5))
         XCTAssertEqual(places.label, before)

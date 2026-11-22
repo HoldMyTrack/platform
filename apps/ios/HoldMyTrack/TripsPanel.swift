@@ -122,7 +122,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 ready = true
                 if openID == nil, let newest = trips.first { onEvent?(.open(newest.id, collapse: false)) }
             } catch {
-                self.error = Self.message(error, String(localized: "Trips couldn't load."))
+                self.error = Self.message(error, String(localized: "Could not load your trips"))
             }
             render()
         }
@@ -174,9 +174,9 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 guard id == openID else { return }
                 openTrip = nil
                 if case APIError.http(status: 404, _, _) = error {
-                    openError = String(localized: "This Trip no longer exists.")
+                    openError = String(localized: "This trip doesn't exist, or isn't yours.")
                 } else {
-                    openError = Self.message(error, String(localized: "Trips couldn't load."))
+                    openError = Self.message(error, String(localized: "Could not load your trips"))
                 }
             }
             render()
@@ -221,7 +221,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             if let rowsNote {
                 next.append(.note(rowsNote.text, failed: rowsNote.failed))
             } else if rows.isEmpty {
-                next.append(.note(trip.stats.count == 0 ? String(localized: "trips.noTracks", defaultValue: "No tracks in this trip.", comment: "An open Trip with no tracks.") : String(localized: "No tracks match these filters."), failed: false))
+                next.append(.note(trip.stats.count == 0 ? String(localized: "trips.noTracks", defaultValue: "No tracks in this trip.", comment: "An open Trip with no tracks.") : String(localized: "No tracks here match the current filters."), failed: false))
             }
         }
         // The whole Trip's numbers, and each type's share, under its rows (Android's footer).
@@ -313,7 +313,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         case .folder(let trip, let open):
             return folderCell(trip, open: open)
         case .send(let send):
-            return inboxCell(String(localized: "\(send.from) sent you a copy of “\(send.tripName)” (\(format.trackCount(send.trackCount))).") , send: send)
+            return inboxCell(String(localized: "\(send.from) sent you a copy of “\(send.tripName)” · \(format.trackCount(send.trackCount))") , send: send)
         case .copying(let copy):
             return inboxCell(String(localized: "Copying “\(copy.tripName)” from \(copy.from)…"), send: nil)
         case .text(let text, let small):
@@ -367,7 +367,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         cell.accessibilityValue = open ? String(localized: "Open") : String(localized: "Folded")
 
         // Each named for its Trip, since VoiceOver reads a folder's buttons on their own.
-        func named(_ action: String) -> String { demo ? String(localized: "The demo account can't change a Trip") : "\(action): \(trip.name)" }
+        func named(_ action: String) -> String { demo ? String(localized: "Not available for demo accounts — create an account to change trips") : "\(action): \(trip.name)" }
         let edit = Self.chip(.pencil, named(String(localized: "trips.edit", defaultValue: "Edit name and description", comment: "A Trip's folder: rename it.")), id: "tripEdit")
         let send = Self.chip(.send, named(String(localized: "trips.send", defaultValue: "Send a copy", comment: "A Trip's folder: send someone a copy.")), id: "tripSend")
         let delete = Self.chip(.trash2, named(String(localized: "trips.delete", defaultValue: "Delete trip", comment: "A Trip's folder: delete it.")), id: "tripDelete")
@@ -433,7 +433,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         render()
         Task {
             do { try await api.answerTripSend(send.id, accept: accept) } catch {
-                answerError = Self.message(error, String(localized: "The Trip couldn't be saved."))
+                answerError = Self.message(error, String(localized: "Could not save the trip"))
             }
             answering = false
             render()
@@ -451,7 +451,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 if read.trip.id == openID { openTrip = read.trip }
                 onEvent?(.removed(trackID))
             } catch {
-                removeError = Self.message(error, String(localized: "The Trip couldn't be saved."))
+                removeError = Self.message(error, String(localized: "Could not save the trip"))
             }
             render()
         }
@@ -468,7 +468,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 self.render()
                 return nil
             } catch {
-                return Self.message(error, String(localized: "The Trip couldn't be saved."))
+                return Self.message(error, String(localized: "Could not save the trip"))
             }
         }
     }
@@ -493,7 +493,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             do {
                 try await self.api.deleteTrip(trip.id)
             } catch {
-                return Self.message(error, String(localized: "The Trip couldn't be deleted."))
+                return Self.message(error, String(localized: "Could not delete the trip"))
             }
             self.trips.removeAll { $0.id == trip.id }
             self.onEvent?(.tripsChanged)
