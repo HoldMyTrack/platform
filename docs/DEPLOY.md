@@ -333,13 +333,13 @@ Something wrong before step 4's upgrade: put the old tag back and `… up -d db`
 
 ## 10. App releases
 
-The Android app ships only through Google Play, as the release-signed bundle built from a deployed commit (`apps/android/holdmytrack/README.md`, Release build).
+The Android app ships only through Google Play, as the release-signed bundle built from a deployed commit (`apps/android/holdmytrack/README.md`, Release build). The iOS app goes to TestFlight with `apps/ios/scripts/upload-testflight.sh`, run from a deployed commit on a Mac with Xcode signed in to the team's account; its header says why it signs the way it does.
 
 **Release number.** Each app has its own `major.minor.patch`: `versionName` in `apps/android/holdmytrack/app/build.gradle.kts` and `MARKETING_VERSION` in `apps/ios/Config/Base.xcconfig`, written nowhere else. It is raised in every pull request that changes what the app does, its code or resources outside `docs/` and tests: patch by 1 for a fix, or minor by 1 with patch back to 0 for a feature. So `main` always carries the number the next release goes out with, and a release may skip numbers. When two such pull requests are open, the second to merge takes the number after the first's. Major stays 0 until the app is offered widely (North America, the EU, Asia) and enough people use it to have found the obvious bugs.
 
 **End-to-end first.** A build goes to Google Play or TestFlight only after its client's suite passes on the commit it is built from: `make e2e-android` or `make e2e-ios` (`DEVELOPMENT.md`, "End-to-end suites"). CI runs neither.
 
-**Tagging.** Tag every build that reaches Play, for the release contract check (`DEVELOPMENT.md`, "CI"): `git tag android/<versionCode> <sha>`, then `git push origin android/<versionCode>`.
+**Tagging.** Tag every build that reaches Play or TestFlight, for the release contract check (`DEVELOPMENT.md`, "CI"): `git tag android/<versionCode> <sha>` or `git tag ios/<build> <sha>`, then push the tag.
 
 **Turning away older builds.** Needed when `scripts/check-contract-release.sh --needed-floor <deployed sha>` raises a minimum, and only once the release it names is live on Google Play:
 
@@ -347,7 +347,7 @@ The Android app ships only through Google Play, as the release-signed bundle bui
 2. `docker compose -f compose.prod.yml --env-file .env.prod up -d api`
 3. Check: `curl -s -o /dev/null -w '%{http_code}\n' -A 'HoldMyTrack-Android/0.1 (x; 1)' https://<your-domain>/v2/auth/providers` prints `426`.
 
-An iOS build is turned away the same way, with `MIN_IOS_BUILD`, checked with `-A 'HoldMyTrack-iOS/0.1 (x; 1)'`. iOS builds are tagged `ios/<build>`.
+An iOS build is turned away the same way, with `MIN_IOS_BUILD`, checked with `-A 'HoldMyTrack-iOS/0.1 (x; 1)'`.
 
 ## 11. Backups and the restore drill
 
