@@ -30,6 +30,8 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private let footer = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     private let typeButton = UIButton(type: .system)
     private let distanceButton = UIButton(type: .system)
+    /// The Distance popover while it's open.
+    private weak var distancePicker: DistanceFilterViewController?
     /// The Dates filter (root docs/SPEC.md FR-5.12), its sheet the map's (DatesViewController).
     let datesButton = UIButton(type: .system)
     private let resetButton = Controls.textButton(String(localized: "panel.resetFilters", defaultValue: "Reset", comment: "Tracks tab: clears the Type and Distance filters."), id: "resetFilters")
@@ -133,6 +135,8 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             config.image = Controls.icon(UIImage(resource: .chevronDown), size: 12)
             config.imagePlacement = .trailing
             config.imagePadding = 4
+            // One line, cut short with an ellipsis, as on Android and the web.
+            config.titleLineBreakMode = .byTruncatingTail
             config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
                 var a = a
                 a.font = Typeface.sans(DesignTokens.Text.md, relativeTo: .subheadline)
@@ -146,6 +150,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         datesButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.dates) }, for: .primaryActionTriggered)
         setDates(String(localized: "Dates"), set: false)
         resetButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.resetFilters) }, for: .primaryActionTriggered)
+        resetButton.configuration?.titleLineBreakMode = .byTruncatingTail
         let filters = UIStackView(arrangedSubviews: [typeButton, datesButton, distanceButton, resetButton, UIView()])
         filters.spacing = DesignTokens.Space.s8
         filters.alignment = .center
@@ -364,6 +369,11 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
         distanceButton.configuration = d
         resetButton.isHidden = !state.hasActiveFilters
+        // A list reloaded under the open popover moves its ends with it, or both knobs at the ends
+        // would set a filter at the old ones.
+        if let picker = distancePicker {
+            if let bounds, bounds.min < bounds.max { picker.update(bounds: bounds, current: state.distanceFilter) } else { picker.dismiss(animated: true) }
+        }
     }
 
     private func targetName(_ targets: [Track]) -> String {
@@ -477,6 +487,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let picker = DistanceFilterViewController(bounds: bounds, current: state.distanceFilter, format: format) { [weak self] next in
             self?.onEvent?(.distance(next))
         }
+        distancePicker = picker
         picker.modalPresentationStyle = .popover
         picker.popoverPresentationController?.sourceView = distanceButton
         picker.popoverPresentationController?.delegate = picker
@@ -520,16 +531,20 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 }
 
-/// The Distance filter's two knobs (root docs/SPEC.md FR-5.3), each a slider between the list's
-/// shortest and longest distance; both back at the ends is no filter (TrackFacets).
+/// The Distance filter (root docs/SPEC.md FR-5.3), as Android's: one two-knob slider between the
+/// list's shortest and longest track, those two under its ends; both knobs back at the ends is no
+/// filter (TrackFacets).
 final class DistanceFilterViewController: UIViewController, UIPopoverPresentationControllerDelegate {
-    private let bounds: DistanceRange
+    private var bounds: DistanceRange
     private var current: DistanceRange?
     private let format: PanelFormat
     private let onChange: (DistanceRange?) -> Void
-    private let low = UISlider()
-    private let high = UISlider()
-    private let readout = Controls.body(color: UIColor(resource: .ink))
+    private let slider = RangeSlider()
+    private let shortest = Controls.body("")
+    private let longest = Controls.body("")
+    /// The knobs' steps as last drawn, so a move changes only the knob that moved.
+    private var lower = 0
+    private var upper = DistanceSteps.count
 
     init(bounds: DistanceRange, current: DistanceRange?, format: PanelFormat, onChange: @escaping (DistanceRange?) -> Void) {
         self.bounds = bounds
@@ -537,7 +552,6 @@ final class DistanceFilterViewController: UIViewController, UIPopoverPresentatio
         self.format = format
         self.onChange = onChange
         super.init(nibName: nil, bundle: nil)
-        preferredContentSize = CGSize(width: 300, height: 170)
     }
 
     @available(*, unavailable)
@@ -546,49 +560,63 @@ final class DistanceFilterViewController: UIViewController, UIPopoverPresentatio
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .surface)
-        for (slider, label, id) in [(low, String(localized: "Shortest"), "distanceMin"), (high, String(localized: "Longest"), "distanceMax")] {
-            slider.minimumValue = Float(bounds.min)
-            slider.maximumValue = Float(bounds.max)
-            slider.minimumTrackTintColor = UIColor(resource: .accent)
-            slider.accessibilityLabel = label
-            slider.accessibilityIdentifier = id
-            slider.addAction(UIAction { [weak self] _ in self?.moved(slider) }, for: .valueChanged)
+        let title = Controls.body(String(localized: "filter.distance", defaultValue: "Distance", comment: "Tracks tab: the Distance filter's heading."), color: UIColor(resource: .ink))
+        slider.label(lower: String(localized: "Shortest"), upper: String(localized: "Longest"))
+        slider.accessibilityStep = DistanceSteps.count / 20
+        slider.describe = { [weak self] step in
+            guard let self else { return "" }
+            return self.format.distance(DistanceSteps.meters(step, bounds: self.bounds))
         }
-        let band = current ?? bounds
-        low.value = Float(band.min)
-        high.value = Float(band.max)
-        let column = Controls.column([readout, low, high], spacing: DesignTokens.Space.s12)
+        slider.accessibilityIdentifier = "distanceRange"
+        slider.addAction(UIAction { [weak self] _ in self?.moved() }, for: .valueChanged)
+        for end in [shortest, longest] { end.font = Typeface.sans(DesignTokens.Text.xs) }
+        longest.textAlignment = .right
+        let ends = UIStackView(arrangedSubviews: [shortest, longest])
+        ends.distribution = .fillEqually
+        let column = Controls.column([title, slider, ends], spacing: DesignTokens.Space.s4)
         column.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(column)
         NSLayoutConstraint.activate([
-            column.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: DesignTokens.Space.s16),
+            column.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: DesignTokens.Space.s12),
             column.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: DesignTokens.Space.s16),
             column.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -DesignTokens.Space.s16),
         ])
         render()
+        // As tall as its content, which grows with the text size.
+        let width: CGFloat = 300
+        let fitted = column.systemLayoutSizeFitting(CGSize(width: width - 2 * DesignTokens.Space.s16, height: 0),
+                                                    withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
+        preferredContentSize = CGSize(width: width, height: fitted.height + DesignTokens.Space.s12 + DesignTokens.Space.s16)
+    }
+
+    /// A list reloaded under the popover: its ends and the filter as they are now.
+    func update(bounds: DistanceRange, current: DistanceRange?) {
+        guard bounds != self.bounds || current != self.current else { return }
+        self.bounds = bounds
+        self.current = current
+        if isViewLoaded { render() }
+    }
+
+    /// The knobs on the filter, and the ends under them.
+    private func render() {
+        let band = current ?? bounds
+        lower = DistanceSteps.step(band.min, bounds: bounds)
+        upper = DistanceSteps.step(band.max, bounds: bounds)
+        slider.set(lower: lower, upper: upper, maximum: DistanceSteps.count)
+        shortest.text = format.distance(bounds.min)
+        longest.text = format.distance(bounds.max)
     }
 
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle { .none }
 
-    private func moved(_ slider: UISlider) {
-        // A Float can't carry every distance exactly: a knob at an end snaps onto that end.
-        func snap(_ value: Float) -> Double {
-            let v = Double(value)
-            if abs(v - bounds.min) < 1 { return bounds.min }
-            if abs(v - bounds.max) < 1 { return bounds.max }
-            return v
-        }
-        let knob: DistanceKnob = slider === low ? .min : .max
-        current = TrackFacets.nextDistanceFilter(bounds: bounds, current: current ?? bounds, knob: knob, value: snap(slider.value))
-        let band = current ?? bounds
-        low.value = Float(band.min)
-        high.value = Float(band.max)
-        render()
+    /// The knob that moved, alone: the other end keeps its exact distance, which needn't sit on a
+    /// step. Both knobs back at the ends is no filter.
+    private func moved() {
+        let knob: DistanceKnob = slider.lower != lower ? .min : .max
+        let step = knob == .min ? slider.lower : slider.upper
+        lower = slider.lower
+        upper = slider.upper
+        current = TrackFacets.nextDistanceFilter(bounds: bounds, current: current ?? bounds, knob: knob, value: DistanceSteps.meters(step, bounds: bounds))
         onChange(current)
-    }
-
-    private func render() {
-        let band = current ?? bounds
-        readout.text = current == nil ? String(localized: "Any distance") : "\(format.distance(band.min)) – \(format.distance(band.max))"
     }
 }
