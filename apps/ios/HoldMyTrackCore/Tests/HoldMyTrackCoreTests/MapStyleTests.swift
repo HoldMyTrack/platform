@@ -189,6 +189,18 @@ struct MapStyleTests {
         #expect(document.levels[1] == FogLevels.Level(level: "region", from: 4, below: 8, layers: ["region-fog-fill"], word: "state"))
     }
 
+    @Test func aRecordingKeepsTheCameraFromAskedFlights() {
+        #expect(MapChrome.flies(asked: true, recording: false))
+        #expect(!MapChrome.flies(asked: true, recording: true))
+        #expect(!MapChrome.flies(asked: false, recording: false))
+        #expect(MapChrome.opens(flightAsked: false, recording: false))
+        #expect(!MapChrome.opens(flightAsked: true, recording: false))
+        #expect(!MapChrome.opens(flightAsked: false, recording: true))
+        #expect(MapChrome.listFollows(appFlight: false, recording: false))
+        #expect(!MapChrome.listFollows(appFlight: true, recording: false))
+        #expect(!MapChrome.listFollows(appFlight: false, recording: true))
+    }
+
     @Test func theEmptyNoticeShowsForARealAccountWithNothingOnTheMapUntilClosed() {
         #expect(MapChrome.emptyNoticeShown(empty: true, demo: false, closed: false))
         #expect(!MapChrome.emptyNoticeShown(empty: true, demo: false, closed: true))
