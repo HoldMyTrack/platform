@@ -240,6 +240,8 @@
   "admin.accounts_title": "Аккаунты",
   "admin.back_to_stats": "← Статистика",
   "admin.stats_intro": "Одно значение на сутки по UTC, из ежедневного снимка. День без снимка остаётся пустым. Демо-аккаунт не учитывается.",
+  "admin.stats_last_snapshot": "Последний снимок сделан {time} ({zone}).",
+  "admin.stats_no_snapshot": "Снимков пока нет.",
   "admin.stats_range": "Период",
   "admin.stats_days.one": "{n} день",
   "admin.stats_days.few": "{n} дня",

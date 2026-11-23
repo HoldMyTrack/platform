@@ -14,7 +14,7 @@ import (
 )
 
 func TestParseStatsRange(t *testing.T) {
-	for q, want := range map[string]int{"": 90, "30": 30, "90": 90, "365": 365, "7": 90, "abc": 90, "-30": 90} {
+	for q, want := range map[string]int{"": 30, "30": 30, "90": 90, "365": 365, "7": 30, "abc": 30, "-30": 30} {
 		if got := parseStatsRange(q); got != want {
 			t.Errorf("parseStatsRange(%q) = %d, want %d", q, got, want)
 		}
@@ -24,8 +24,8 @@ func TestParseStatsRange(t *testing.T) {
 func TestStatsRangesMarkCurrentAndDropDefaultFromHref(t *testing.T) {
 	got := statsRanges(30)
 	want := []adminStatsRange{
-		{Days: 30, Href: "/admin?days=30", Current: true},
-		{Days: 90, Href: "/admin"},
+		{Days: 30, Href: "/admin", Current: true},
+		{Days: 90, Href: "/admin?days=90"},
 		{Days: 365, Href: "/admin?days=365"},
 	}
 	if len(got) != len(want) {
@@ -161,11 +161,30 @@ func TestAdminStatsPageRenders(t *testing.T) {
 	chart := statsChartView(l, adminStatsChart{titleKey: "admin.stats_signups", key: "signups", flow: true}, buildSeries(map[time.Time]float64{from: 3}, from, 2))
 	rec := httptest.NewRecorder()
 	s.pages.Render(rec, http.StatusOK, "admin-stats", web.PageData{Title: "Statistics", Path: "/admin", NoIndex: true, User: &web.User{Email: "admin@example.com", IsAdmin: true},
-		Page: adminStatsView{Ranges: statsRanges(90), Charts: []adminStatsChartView{chart}}})
+		Page: adminStatsView{Ranges: statsRanges(30), Charts: []adminStatsChartView{chart}, LastSnapshot: "Last snapshot taken Nov 22, 01:04 (Europe/Berlin)."}})
 	body := rec.Body.String()
-	for _, want := range []string{"Signups", "<title>2026-10-01: 3</title>", "<strong>90 days</strong>", `href="/admin?days=30"`, `href="/admin/users"`, `viewBox="0 0 720 160"`} {
+	for _, want := range []string{"Signups", "<title>2026-10-01: 3</title>", "<strong>30 days</strong>", `href="/admin?days=90"`, `href="/admin/users"`, `viewBox="0 0 720 160"`, "Last snapshot taken Nov 22, 01:04 (Europe/Berlin)."} {
 		if !strings.Contains(body, want) {
 			t.Errorf("stats page: missing %q", want)
+		}
+	}
+}
+
+func TestStatsLastSnapshot(t *testing.T) {
+	l := i18n.Get("")
+	at := time.Date(2026, 11, 22, 0, 4, 0, 0, time.UTC)
+	for _, c := range []struct {
+		at   *time.Time
+		zone string
+		want string
+	}{
+		{&at, "Europe/Berlin", "Last snapshot taken Nov 22, 01:04 (Europe/Berlin)."},
+		{&at, "America/New_York", "Last snapshot taken Nov 21, 19:04 (America/New_York)."},
+		{&at, "Not/AZone", "Last snapshot taken Nov 22, 00:04 (UTC)."},
+		{nil, "Europe/Berlin", "No snapshot taken yet."},
+	} {
+		if got := statsLastSnapshot(l, c.at, c.zone); got != c.want {
+			t.Errorf("statsLastSnapshot(%v, %q) = %q, want %q", c.at, c.zone, got, c.want)
 		}
 	}
 }

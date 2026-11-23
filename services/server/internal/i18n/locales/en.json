@@ -236,6 +236,8 @@
   "admin.accounts_title": "Accounts",
   "admin.back_to_stats": "← Statistics",
   "admin.stats_intro": "One value per UTC day, from the daily snapshot. A day without a snapshot is left blank. The demo account isn't counted.",
+  "admin.stats_last_snapshot": "Last snapshot taken {time} ({zone}).",
+  "admin.stats_no_snapshot": "No snapshot taken yet.",
   "admin.stats_range": "Range",
   "admin.stats_days.one": "{n} day",
   "admin.stats_days.other": "{n} days",
