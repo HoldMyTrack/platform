@@ -7,3 +7,7 @@
 # ignores keys it does not know, and no iOS build reads it.
 GET /map/layers removed the required property `views/plain/heatmap` from the response with the `200` status
 GET /map/layers removed the required property `views/satellite/heatmap` from the response with the `200` status
+
+# 2026-11: Library's page bounds count each type, for the Type filter's counts. `bounds` came with
+# Library's pages days before, and only the web, deployed with the server, reads it.
+GET /tracks the `bounds/types/items/` response's property `type` changed from `string` to `object` for status `200`
