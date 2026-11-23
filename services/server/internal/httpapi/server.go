@@ -95,6 +95,7 @@ type Server struct {
 	tileLimiter        *fixedWindowLimiter
 	syncLimiter        *fixedWindowLimiter
 	routePointsLimiter *fixedWindowLimiter
+	gpxLimiter         *fixedWindowLimiter
 	statsCardLimiter   *fixedWindowLimiter
 	syncTrackLimiter   *fixedWindowLimiter
 	signupLimiter      *fixedWindowLimiter
@@ -125,6 +126,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		tileLimiter:           newFixedWindowLimiter(defaultTilesPerMinute, time.Minute),
 		syncLimiter:           newFixedWindowLimiter(syncRequestsPerHour, time.Hour),
 		routePointsLimiter:    newFixedWindowLimiter(routePointsPerHour, time.Hour),
+		gpxLimiter:            newFixedWindowLimiter(gpxDownloadsPerHour, time.Hour),
 		statsCardLimiter:      newFixedWindowLimiter(statsCardsPerHour, time.Hour),
 		syncTrackLimiter:      newFixedWindowLimiter(syncTracksPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
@@ -191,6 +193,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("POST", "/tracks/upload"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleUpload)))
 	s.mux.HandleFunc(route("GET", "/tracks"), s.requireVerified(s.handleListTracks))
 	s.mux.HandleFunc(route("GET", "/tracks/area"), s.requireVerified(s.handleListArea))
+	s.mux.HandleFunc(route("GET", "/tracks/gpx"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleTracksGPX)))
 	s.mux.HandleFunc(route("GET", "/tracks/{id}"), s.requireVerified(s.handleGetTrack))
 	s.mux.HandleFunc(route("GET", "/track-types"), s.requireVerified(s.handleTrackTypes))
 	s.mux.HandleFunc(route("PATCH", "/tracks/{id}"), s.requireNotDemo(s.handleUpdateTrack))
@@ -259,6 +262,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/map/style/{flavor}"), s.handleMapStyle)
 	s.mux.HandleFunc(route("GET", "/map/imagery"), s.handleMapImagery)
 	s.mux.HandleFunc("GET /healthz", s.handleHealthz)
+	removeStaleGPXFiles(log)
 	return s
 }
 

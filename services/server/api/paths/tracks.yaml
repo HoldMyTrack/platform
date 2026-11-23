@@ -150,6 +150,48 @@ tracks_area:
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
+tracks_gpx:
+  get:
+    summary: Tracks as GPX, as the map shows them; one as a .gpx file, several as a zip of them
+    description: Refused whole, naming the first track it applies to, when any track is Pending, entirely inside Private locations, without an original, or with one that no longer reads.
+    parameters:
+      - name: ids
+        in: query
+        required: true
+        description: Track ids, comma-separated, at most 100.
+        schema: { type: string }
+    responses:
+      "200":
+        description: The file, as an attachment
+        content:
+          application/gpx+xml:
+            schema: { type: string, format: binary }
+          application/zip:
+            schema: { type: string, format: binary }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+      "409":
+        description: A track can't be exported
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: "../components/schemas.yaml#/Error" }
+                - properties:
+                    error: { enum: [gpx_pending, gpx_all_private, gpx_no_original, gpx_unreadable] }
+      "413":
+        description: The tracks' originals hold more points than one download takes
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: "../components/schemas.yaml#/Error" }
+                - properties:
+                    error: { enum: [gpx_too_large] }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+      "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
 tracks_id:
   parameters:
     - $ref: "../components/parameters.yaml#/TrackID"

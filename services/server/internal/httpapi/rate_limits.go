@@ -55,6 +55,10 @@ const defaultSignupsPerHour = 5
 // editor a few times an hour at most.
 const routePointsPerHour = 120
 
+// gpxDownloadsPerHour bounds `GET /v2/tracks/gpx` per account: each request parses up to
+// maxGPXPoints of originals, and a person downloads a handful of times in a sitting.
+const gpxDownloadsPerHour = 60
+
 // statsCardsPerHour bounds `POST /v2/tracks/stats-card` per account. A client asks again
 // after each pause in changing the frame's size, theme or checked set, a few dozen times in one
 // export at most; each is a query and a PNG drawn in memory.

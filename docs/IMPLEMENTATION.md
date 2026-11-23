@@ -62,7 +62,7 @@ No `tier` column (`VISION.md` §6.1). The demo account is a row recognized by it
 
 ### 3.3 `tracks`
 
-Idempotency is `idx_tracks_dedupe` on `(user_id, source, external_id)` plus the persist step's `ON CONFLICT` (§4.0). `trajectory` is simplified display geometry, and coverage never comes from it. Its M is epoch seconds, which photos are placed by (§3.22), and its longitudes continue past ±180 (§4.1). A NULL `trajectory` has one cause: the route lies entirely inside Private locations. `hidden_by` is then the location the track is listed under (§7), and NULL whenever `trajectory` isn't. `split_group` and `origin_id` have no foreign key: a split group outlives its first row (§4.7.8) and a copy outlives its original (§3.25). No bbox column: PostGIS has no default GiST operator class for `box2d`, and the GiST index on `trajectory` already serves `&&`.
+Idempotency is `idx_tracks_dedupe` on `(user_id, source, external_id)` plus the persist step's `ON CONFLICT` (§4.0). `trajectory` is simplified display geometry, and coverage never comes from it. Its M is epoch seconds, which photos are placed by (§3.22), and its longitudes continue past ±180 (§4.1). A NULL `trajectory` has one cause: the route lies entirely inside Private locations. `hidden_by` is then the location the track is listed under (§7), and NULL whenever `trajectory` isn't. `split_group` and `origin_id` have no foreign key: a split group outlives its first row (§4.7.8) and a copy outlives its original (§3.25). No bbox column: PostGIS has no default GiST operator class for `box2d`, and the GiST index on `trajectory` already serves `&&`. `raw_points` is the original's point count, which bounds a GPX download (§4.35).
 
 ### 3.6 `fog_tiles`
 
@@ -615,6 +615,10 @@ Traps:
 ### 4.34 Design tokens
 
 `tokens.css` is the one source of the palette and the spacing, radius, type and elevation scales, loaded by the page layout and the map shell alike right after `fonts.css`, the self-hosted typefaces; every colour has a light and a dark value. The Android theme carries the same palette, fonts, scales and Lucide icon set (`apps/android/docs/IMPLEMENTATION.md` §6), so a change to either needs the matching change there. The iOS app's are written from these files and Android's by `apps/ios/scripts/make-design.py`, which CI runs with `--check`.
+
+### 4.35 GPX download (FR-5.14)
+
+`GET /v2/tracks/gpx` writes each track from `DisplayedPoints` with the data download's `WriteGPX` and file names, so the two can't differ. **Every check needing no parse runs before any original is read**: ownership, state and size, and only a request passing them counts against the hourly limit. Size is `tracks.raw_points`, the original's point count, since parsing originals is the cost and the simplified `trajectory` undercounts it. Ingest sets it and a split piece copies it. A track kept before it existed is counted as the download parses it, the count stored for every track sharing the original, and the request refused once the total passes the cap; a `count_points` job per account (migration 0064, main lane) counts the rest in the background, skipping an original it can't read. **The file is built in a temporary file and sent with its length**, so an original that no longer reads refuses the whole request instead of cutting a download short, and memory holds one track's points at a time. The server deletes a temporary file a crash left behind when it next starts. It is a GET, so a browser can download it with the session cookie and no script.
 
 ## 5. Engineering Risks & Mitigations
 

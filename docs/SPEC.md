@@ -474,6 +474,13 @@ Every track the account keeps, as one list not tied to the map's area.
 - Each page says how many tracks pass the filters. The filters' bounds cover every track, whatever is filtered.
 - Pending tracks are listed with their badge (FR-5.8).
 
+### FR-5.14 Download tracks as GPX
+
+- Up to 100 tracks at once: one as a GPX file, several as a zip of them. A demo session can download.
+- Each file is the track as the map shows it: route edits applied and the ends inside Private locations removed, with the account's Private locations as they are at download (FR-7.1). Positions, elevation, times and the type, nothing else.
+- A request is refused whole, naming the track, when any of them is Pending, entirely inside Private locations, or has no readable original; and when their originals hold more than 2,000,000 points together.
+- At most 60 downloads an hour per account.
+
 ## 8. FR-6 — Track Graph (Profile)
 
 ### FR-6.1 Contribution grid

@@ -547,6 +547,14 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 		return tripcopy.Process(ctx, pool, store, sj)
 	case "export":
 		return runExport(ctx, pool, store, log, j.id, j.payload)
+	case "count_points":
+		var cj ingest.CountPointsJob
+		if err := json.Unmarshal(j.payload, &cj); err != nil {
+			return fmt.Errorf("unmarshal count_points job: %w", err)
+		}
+		// An account's every original is parsed, which can outlast claimLease.
+		defer keepClaimed(ctx, pool, log, j.id)()
+		return ingest.CountPoints(ctx, pool, store, cj)
 	default:
 		return fmt.Errorf("unhandled job kind %q", j.kind)
 	}

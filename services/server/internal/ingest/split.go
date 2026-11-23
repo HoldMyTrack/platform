@@ -50,14 +50,21 @@ func (r SplitRange) Apply(points []parse.Point, zones []Zone) []parse.Point {
 // editor shows and the split check counts — plus the zones they were clipped with. Nil points
 // when the piece lies entirely inside Private locations.
 func LoadPiecePoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, sourceDetail, rawKey string, rng SplitRange) ([]parse.Point, []Zone, error) {
-	_, points, zones, err := loadClippedPoints(ctx, pool, store, userID, sourceDetail, rawKey)
+	points, zones, _, err := loadPiecePoints(ctx, pool, store, userID, sourceDetail, rawKey, rng)
+	return points, zones, err
+}
+
+// loadPiecePoints is LoadPiecePoints, also returning how many points the whole original holds
+// (tracks.raw_points).
+func loadPiecePoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, sourceDetail, rawKey string, rng SplitRange) ([]parse.Point, []Zone, int, error) {
+	act, points, zones, err := loadClippedPoints(ctx, pool, store, userID, sourceDetail, rawKey)
 	if err != nil || points == nil {
-		return nil, zones, err
+		return nil, zones, len(act.Points), err
 	}
 	if points = rng.Apply(points, zones); len(points) < 2 {
-		return nil, zones, nil
+		return nil, zones, len(act.Points), nil
 	}
-	return points, zones, nil
+	return points, zones, len(act.Points), nil
 }
 
 // ErrSplitTooClose is a split leaving one side with less than a line.
@@ -123,13 +130,13 @@ func insertSplitPiece(ctx context.Context, tx pgx.Tx, userID, trackID string, at
 	if err := tx.QueryRow(ctx, `
 		INSERT INTO tracks (
 			user_id, source, source_detail, external_id, track_type, started_at,
-			raw_payload_key, raw_bytes, name, description, route_edit, edit_pending,
+			raw_payload_key, raw_bytes, raw_points, name, description, route_edit, edit_pending,
 			split_group, split_from, split_to, timezone
 		)
 		SELECT user_id, source, source_detail,
 		       CASE WHEN external_id IS NULL THEN NULL
 		            ELSE left(split_part(external_id, '#split:', 1), 200) || '#split:' || $3::bigint::text END,
-		       track_type, to_timestamp($3::bigint / 1000.0), raw_payload_key, raw_bytes, name, description,
+		       track_type, to_timestamp($3::bigint / 1000.0), raw_payload_key, raw_bytes, raw_points, name, description,
 		       route_edit, true, COALESCE(split_group, id), $3::bigint, split_to, timezone
 		FROM tracks WHERE id = $1 AND user_id = $2
 		RETURNING id

@@ -1620,6 +1620,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tracks/gpx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tracks as GPX, as the map shows them; one as a .gpx file, several as a zip of them
+         * @description Refused whole, naming the first track it applies to, when any track is Pending, entirely inside Private locations, without an original, or with one that no longer reads.
+         */
+        get: {
+            parameters: {
+                query: {
+                    /** @description Track ids, comma-separated, at most 100. */
+                    ids: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The file, as an attachment */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/gpx+xml": string;
+                        "application/zip": string;
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+                404: components["responses"]["Error"];
+                /** @description A track can't be exported */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"] & {
+                            /** @enum {unknown} */
+                            error?: "gpx_pending" | "gpx_all_private" | "gpx_no_original" | "gpx_unreadable";
+                        };
+                    };
+                };
+                /** @description The tracks' originals hold more points than one download takes */
+                413: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"] & {
+                            /** @enum {unknown} */
+                            error?: "gpx_too_large";
+                        };
+                    };
+                };
+                429: components["responses"]["Error"];
+                503: components["responses"]["DailyCapacity"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tracks/{id}": {
         parameters: {
             query?: never;
