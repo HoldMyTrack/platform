@@ -259,7 +259,15 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 			return fmt.Errorf("seed demo customer: %w", err)
 		}
 	}
+	if err := seedDemoAccount(ctx, pool, store, log, fsys, names, manifest, DemoCustomerUserID); err != nil {
+		return fmt.Errorf("seed demo customer: %w", err)
+	}
+	return nil
+}
 
+// seedDemoAccount ingests demo_data/'s files into userID with the manifest's names, photos,
+// Trips and captures: the Demo Customer's history, or a copy of it (SeedDemoCopy).
+func seedDemoAccount(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, fsys fs.FS, names []string, manifest demoManifest, userID string) error {
 	var ingested, skipped, failed int
 	// Each file's track, for the Trips below.
 	trackIDs := make(map[string]string, len(names))
@@ -273,7 +281,7 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 
 		ext := path.Ext(filename)
 		externalID := "demo-customer-" + strings.TrimSuffix(filename, ext)
-		rawKey := "raw/" + DemoCustomerUserID + "/demo-history/" + externalID + ext
+		rawKey := "raw/" + userID + "/demo-history/" + externalID + ext
 		if err := store.Put(ctx, rawKey, bytes.NewReader(b), int64(len(b))); err != nil {
 			log.Error("demo customer seed: upload failed", "err", err, "file", filename)
 			failed++
@@ -282,7 +290,7 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 
 		entry := manifest.Tracks[filename]
 		job := ingest.Job{
-			UserID:        DemoCustomerUserID,
+			UserID:        userID,
 			Source:        "demo-customer-history",
 			SourceDetail:  filename,
 			ExternalID:    externalID,
@@ -316,29 +324,29 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 				failed++
 			}
 		}
-		if err := seedDemoPhotos(ctx, pool, store, fsys, DemoCustomerUserID, result.TrackID, entry.Photos); err != nil {
+		if err := seedDemoPhotos(ctx, pool, store, fsys, userID, result.TrackID, entry.Photos); err != nil {
 			log.Error("demo customer seed: photos failed", "err", err, "file", filename)
 			failed++
 		}
 	}
 
 	if failed == 0 {
-		if err := seedDemoTrips(ctx, pool, DemoCustomerUserID, manifest.Trips, trackIDs); err != nil {
-			return fmt.Errorf("seed demo customer: %w", err)
+		if err := seedDemoTrips(ctx, pool, userID, manifest.Trips, trackIDs); err != nil {
+			return err
 		}
 	}
-	missing, err := seedDemoCaptures(ctx, pool, DemoCustomerUserID, manifest.SpotCaptures)
+	missing, err := seedDemoCaptures(ctx, pool, userID, manifest.SpotCaptures)
 	if err != nil {
-		return fmt.Errorf("seed demo customer: %w", err)
+		return err
 	}
 	for _, c := range missing {
 		log.Warn("demo customer seed: captured place not loaded here, skipped", "osm_type", c.OSMType, "osm_id", c.OSMID, "name", c.Name)
 	}
 
-	log.Info("demo customer seed: done", "ingested", ingested, "already_present", skipped, "failed", failed, "total", len(names), "trips", len(manifest.Trips),
+	log.Info("demo customer seed: done", "user_id", userID, "ingested", ingested, "already_present", skipped, "failed", failed, "total", len(names), "trips", len(manifest.Trips),
 		"captures", len(manifest.SpotCaptures)-len(missing))
 	if failed > 0 {
-		return fmt.Errorf("seed demo customer: %d of %d files failed", failed, len(names))
+		return fmt.Errorf("%d of %d files failed", failed, len(names))
 	}
 	return nil
 }
