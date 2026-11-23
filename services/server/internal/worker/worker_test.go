@@ -97,11 +97,11 @@ func TestClaimSkipsAJobStillRunningAndFailsOneThatKeptCrashing(t *testing.T) {
 	fresh := time.Now()
 	stale := time.Now().Add(-2 * claimLease)
 	running := insertJob(t, pool, otherID, "2000-01-01T00:00:00Z", 1, &fresh)
-	crashed := insertJob(t, pool, userID, "2000-01-02T00:00:00Z", maxAttempts, &stale)
+	crashed := insertJob(t, pool, userID, "2000-01-02T00:00:00Z", maxCrashes, &stale)
 	next := insertJob(t, pool, userID, "2000-01-03T00:00:00Z", 0, nil)
 
 	// First claim: the running job is passed over, and the one that took its worker down
-	// maxAttempts times is failed without being run again.
+	// maxCrashes times is failed without being run again.
 	if processed, err := claimAndRunOne(ctx, pool, nil, log); err != nil || !processed {
 		t.Fatalf("claim 1: processed=%v err=%v", processed, err)
 	}

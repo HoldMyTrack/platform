@@ -188,8 +188,8 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 - The clients send at most 20 files at a time and refuse a larger selection whole.
 - Each file is processed on its own; one failing doesn't affect the others.
 - At most 100 files an hour per account, refused and duplicate ones included, checked before the file is read.
-- An empty file, another type, a file too large or one past the account's limits (FR-1.14) is refused at once.
-- A file that can't be read, has no timestamps (a planned route), has no positioned point, has fewer than 2 points or more than 200,000 fails in processing, with the reason on the Sync page. Untimed points inside a timed route are dropped.
+- A file is refused at once with the reason when it is empty, another type, too large or past the account's limits (FR-1.14), or when it can't become a track: it can't be read, has no timestamps (a planned route), has no positioned point, has fewer than 2 points or more than 200,000, crosses more than 20,000 map squares of about 2.4 km, names a type over 50 characters, or has a distance, climb or duration beyond any real track. Untimed points inside a timed route are dropped.
+- A file taken becomes a track. A failure on the server's side is retried while the import stays processing; only a server fault no retry can mend fails it, with the reason on the Sync page.
 - The track reaches the list, map and totals without a reload; Fog follows once redrawn (FR-4.2).
 
 ### FR-3.2 Import status
@@ -212,6 +212,7 @@ The Android app sends the Health Connect sessions and recordings (FR-3.6) the us
 - Each track is idempotent on its source and id. Types map onto HoldMyTrack's names (`biking` becomes `cycling`).
 - Per account: at most 60 sync requests and 1,000 tracks sent an hour (every track sent counts, taken or not; a refused request counts none).
 - Tracks past the account's limits are refused one by one in the order sent; what fits is taken.
+- A track that can't become one is refused with the reason, by the file rules of FR-3.1, and a track taken becomes one in the same way.
 
 ### FR-3.5 Overlap hint
 
@@ -225,7 +226,7 @@ A candidate on the phone covering the same time as an account track, or another 
 
 The Android app records GPS-only tracks on the phone; nothing reaches the server until the user ticks a recording and sends it (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
 
-- Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. A type over 50 characters is refused with the reason.
+- Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. It is refused or taken by the rules of FR-3.4.
 - It is the only path that sets a name and description at ingest.
 - A recording the server takes is deleted from the phone once it is on the map, and listed again if its ingest fails; a refused one stays.
 

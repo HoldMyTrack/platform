@@ -11,7 +11,9 @@ import (
 // English diagnostic. The worker writes a job's failure long before anyone reads it, and not
 // knowing in which language, so it stores a code; the handlers that list jobs render
 // "ingest_error.<code>" from the catalog in the reader's language (IMPLEMENTATION.md §4.21).
-// Every code but FailInternal is the person's file rather than a fault here.
+// Every code but FailInternal is the person's file rather than a fault here: a request refuses
+// such a file with the same code's message (Check), so the worker stores one only for a job no
+// request checked (Job.Checked).
 const (
 	FailUnsupportedFormat = "unsupported_format"
 	FailUnreadableFile    = "unreadable_file"
@@ -20,6 +22,8 @@ const (
 	FailNoTimestamps      = "no_timestamps"
 	FailTooLarge          = "too_large"
 	FailTooManyPoints     = "too_many_points"
+	FailTypeTooLong       = "type_too_long"
+	FailImplausible       = "implausible"
 	FailInternal          = "internal"
 )
 
@@ -51,6 +55,10 @@ func FailureCode(err error) string {
 		return FailTooLarge
 	case errors.Is(err, parse.ErrTooManyPoints):
 		return FailTooManyPoints
+	case errors.Is(err, ErrTypeTooLong):
+		return FailTypeTooLong
+	case errors.Is(err, errImplausible):
+		return FailImplausible
 	case errors.As(err, &pe):
 		return FailUnreadableFile
 	default:

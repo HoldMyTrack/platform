@@ -456,3 +456,70 @@ func TestSyncKnownAnswersWhatTheAccountHas(t *testing.T) {
 		t.Errorf("demo: %d, want 403", rec.Code)
 	}
 }
+
+// A file or synced track that can't become a track is refused when sent, with its reason, and
+// leaves no job: anything accepted becomes a track.
+func TestTracksThatCantBecomeOneAreRefusedWhenSent(t *testing.T) {
+	d := newDBTestWithS3(t, newMemS3())
+	me := d.newAccount(false)
+	ctx := context.Background()
+
+	planned := `<gpx><trk><trkseg><trkpt lat="50" lon="10"/><trkpt lat="50.01" lon="10.01"/></trkseg></trk></gpx>`
+	longType := strings.Replace(resumeGPX, "<trk>", "<trk><type>"+strings.Repeat("a", 51)+"</type>", 1)
+	for _, c := range []struct{ name, file, code, message string }{
+		{"planned.gpx", planned, "no_timestamps", "no timestamps"},
+		{"typed.gpx", longType, "track_type_too_long", "50 characters"},
+	} {
+		rec := d.uploadRaw(me, c.name, []byte(c.file))
+		var body apiErrorBody
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if rec.Code != http.StatusUnprocessableEntity || body.Error != c.code || !strings.Contains(body.Message, c.message) {
+			t.Errorf("%s: %d %+v, want 422 %s", c.name, rec.Code, body, c.code)
+		}
+	}
+
+	ele := func(m float64) map[string]any {
+		return map[string]any{"lat": 50.0, "lon": 10.0, "time": "2026-05-01T10:00:00Z", "elevation_m": m}
+	}
+	corrupt := []map[string]any{ele(0), {"lat": 50.001, "lon": 10.001, "time": "2026-05-01T10:01:00Z", "elevation_m": 1e7}}
+	var resp syncTracksResponse
+	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", map[string]any{"source": "recorded", "tracks": []map[string]any{
+		{"external_id": "corrupt", "track_type": "walk", "points": corrupt},
+	}}), http.StatusOK, &resp)
+	if r := resp.Results[0]; r.Status != "rejected" || !strings.Contains(r.Error, "beyond any real one") {
+		t.Errorf("synced track with a corrupt elevation: %+v, want rejected as implausible", r)
+	}
+	walk := []map[string]any{ele(0), {"lat": 50.001, "lon": 10.001, "time": "2026-05-01T10:01:00Z"}}
+	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", map[string]any{"source": "recorded", "tracks": []map[string]any{
+		{"external_id": "nul", "track_type": "walk", "name": "a\u0000b", "points": walk},
+	}}), http.StatusOK, &resp)
+	if r := resp.Results[0]; r.Status != "rejected" || !strings.Contains(r.Error, "NUL") {
+		t.Errorf("synced track named with a NUL: %+v, want rejected", r)
+	}
+
+	// Past the uploads waiting to be checked, one more is refused as busy, and isn't counted
+	// against the account's hourly uploads.
+	d.srv.SetUploadsPerHour(1)
+	waits := d.srv.fileWaits
+	d.srv.fileWaits = make(chan struct{})
+	if rec := d.uploadRaw(me, "ride.gpx", []byte(resumeGPX)); rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), "upload_busy") {
+		t.Errorf("upload with no room to wait: %d %s, want 429 upload_busy", rec.Code, rec.Body.String())
+	}
+	d.srv.fileWaits = waits
+	if rec := d.uploadRaw(me, "ride.gpx", []byte(resumeGPX)); rec.Code != http.StatusAccepted {
+		t.Errorf("upload after a busy refusal: %d %s, want 202", rec.Code, rec.Body.String())
+	}
+	if _, err := d.pool.Exec(ctx, `DELETE FROM jobs WHERE user_id = $1`, me.id); err != nil {
+		t.Fatal(err)
+	}
+
+	var jobs int
+	if err := d.pool.QueryRow(ctx, `SELECT count(*) FROM jobs WHERE user_id = $1 AND kind = 'ingest'`, me.id).Scan(&jobs); err != nil {
+		t.Fatal(err)
+	}
+	if jobs != 0 {
+		t.Errorf("%d ingest jobs, want none", jobs)
+	}
+}

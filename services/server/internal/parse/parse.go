@@ -130,6 +130,11 @@ func ParseJSON(r io.Reader) (Track, error) {
 	if err := json.NewDecoder(r).Decode(&a); err != nil {
 		return Track{}, fmt.Errorf("parse: decode json: %w", err)
 	}
+	return a.Track(), nil
+}
+
+// Track is a as ParseJSON reads it back: what a sync request checks before storing it.
+func (a JSONTrack) Track() Track {
 	points := make([]Point, len(a.Points))
 	for i, p := range a.Points {
 		points[i] = Point{Lat: p.Lat, Lon: p.Lon, Elevation: p.ElevationM, Time: p.Time}
@@ -138,7 +143,7 @@ func ParseJSON(r io.Reader) (Track, error) {
 	if trackType == "" {
 		trackType = "unknown"
 	}
-	return Track{TrackType: trackType, Points: points, Name: a.Name, Description: a.Description}, nil
+	return Track{TrackType: trackType, Points: points, Name: a.Name, Description: a.Description}
 }
 
 // WrapLon brings a longitude into −180…180 (180 itself stays 180): a point of a track stored

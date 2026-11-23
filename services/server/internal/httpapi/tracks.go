@@ -135,7 +135,7 @@ const trackTripsColumn = `COALESCE((
 // over-length value here is a clearer 400 than letting Postgres reject the UPDATE. These limits
 // count characters (runes), as VARCHAR and SPEC FR-5.5 do, not bytes: a Cyrillic name takes
 // two bytes a letter.
-const maxTrackTypeLen = 50
+const maxTrackTypeLen = ingest.MaxTrackTypeLen
 
 // maxTrackDescriptionLen is a generous free-text bound (about the length of a couple of
 // paragraphs), not a claim that anyone needs that much — the same "reject an obvious mistake,

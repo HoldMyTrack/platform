@@ -9,6 +9,12 @@
 // locked_at keeps other loops off and a stale one (past claimLease) means its worker died; long
 // jobs refresh it (keepClaimed).
 //
+// # Retries
+//
+// A job failing on something passing runs again after retryDelays, counted in jobs.retries; an
+// ingest without limit (retryDelay). attempts counts claims, so attempts - retries is the runs
+// its worker died in, which maxCrashes bounds.
+//
 // # Lanes
 //
 // Three lanes, so a minutes-long render or export never holds up an upload: render (render_fog,

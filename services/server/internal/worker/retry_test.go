@@ -2,8 +2,13 @@ package worker
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/metrics"
 )
 
 func TestRetryable(t *testing.T) {
@@ -21,6 +26,9 @@ func TestRetryable(t *testing.T) {
 		{"edit_route", outage, false},
 		{"reprivacy", outage, false},
 		{"trip_copy", panicError{"nil map"}, false},
+		{"ingest", fmt.Errorf("ingest: persist track: %w", &pgconn.PgError{Code: "22021"}), false},
+		{"ingest", fmt.Errorf("ingest: persist track: %w", &pgconn.PgError{Code: "23503"}), false},
+		{"ingest", fmt.Errorf("ingest: persist track: %w", &pgconn.PgError{Code: "40P01"}), true},
 		{"test_unknown", outage, false},
 	} {
 		if got := retryable(tc.kind, tc.err); got != tc.want {
@@ -31,20 +39,24 @@ func TestRetryable(t *testing.T) {
 
 func TestRetryDelay(t *testing.T) {
 	for _, tc := range []struct {
-		attempt int
+		kind    string
+		retries int
 		want    time.Duration
 		ok      bool
 	}{
-		{0, 0, false},
-		{1, time.Minute, true},
-		{4, 2 * time.Hour, true},
-		{5, 0, false},
+		{"export", -1, 0, false},
+		{"export", 0, time.Minute, true},
+		{"export", 3, 2 * time.Hour, true},
+		{"export", 4, 0, false},
+		{"ingest", 0, time.Minute, true},
+		{"ingest", 4, 2 * time.Hour, true},
+		{"ingest", 1000, 2 * time.Hour, true},
 	} {
-		if got, ok := retryDelay(tc.attempt); got != tc.want || ok != tc.ok {
-			t.Errorf("retryDelay(%d) = %v, %v, want %v, %v", tc.attempt, got, ok, tc.want, tc.ok)
+		if got, ok := retryDelay(tc.kind, tc.retries); got != tc.want || ok != tc.ok {
+			t.Errorf("retryDelay(%s, %d) = %v, %v, want %v, %v", tc.kind, tc.retries, got, ok, tc.want, tc.ok)
 		}
 	}
-	if maxAttempts != len(retryDelays)+1 {
-		t.Errorf("maxAttempts %d, want one run more than the %d retries", maxAttempts, len(retryDelays))
+	if metrics.ScheduledRetries != len(retryDelays) {
+		t.Errorf("metrics.ScheduledRetries %d, want the %d retryDelays", metrics.ScheduledRetries, len(retryDelays))
 	}
 }

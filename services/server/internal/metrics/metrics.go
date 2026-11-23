@@ -60,6 +60,14 @@ var (
 		Help: "Jobs finished by the worker, by kind, outcome and failure code.",
 	}, []string{"kind", "outcome", "code"})
 
+	// IngestRefused counts the files and synced tracks a request refused for their own content
+	// (ingest.Check), by ingest.FailureCode and what they came as: an upload's format ("gpx",
+	// "fit", "tcx") or a sync's source. It shows which formats the parsers read badly.
+	IngestRefused = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "holdmytrack_ingest_refused_total",
+		Help: "Files and synced tracks refused for their content, by reason and format or source.",
+	}, []string{"reason", "from"})
+
 	// R2Operations counts the requests this process made to the object store, by the class R2
 	// bills them as: "A" (writes, listings) or "B" (reads); deletes are free and not counted
 	// (internal/storage's countingTransport).
@@ -97,7 +105,7 @@ func init() {
 	Registry.MustRegister(
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-		HTTPRequests, HTTPDuration, HTTPPanics, JobsFinished, JobDuration, R2Operations, MailSent, MailUp,
+		HTTPRequests, HTTPDuration, HTTPPanics, JobsFinished, JobDuration, IngestRefused, R2Operations, MailSent, MailUp,
 	)
 	MailSent.WithLabelValues("sent")
 	MailSent.WithLabelValues("failed")
@@ -113,14 +121,20 @@ func StatusClass(status int) string {
 // is stuck.
 var JobKinds = []string{"ingest", "render_fog", "edit_route", "reprivacy", "trip_copy", "export", "count_points"}
 
+// ScheduledRetries is how many reruns a failing job gets before only an ingest goes on
+// (internal/worker's retryDelays, whose test holds the two equal).
+const ScheduledRetries = 4
+
 // queueCollector reads the queue from the database on every scrape: how many jobs are
-// runnable now, and how long the oldest has waited, by kind. `serve` registers it rather
+// runnable now, how long the oldest has waited, and how many have failed on our side through
+// every scheduled retry and still retry (an ingest, internal/worker/retry.go), by kind. `serve` registers it rather
 // than `work`, so the numbers keep coming while the worker is down, which is when they grow.
 type queueCollector struct {
-	pool   *pgxpool.Pool
-	log    *slog.Logger
-	jobs   *prometheus.Desc
-	oldest *prometheus.Desc
+	pool     *pgxpool.Pool
+	log      *slog.Logger
+	jobs     *prometheus.Desc
+	oldest   *prometheus.Desc
+	retrying *prometheus.Desc
 }
 
 // RegisterQueue adds the queue gauges to Registry.
@@ -132,27 +146,33 @@ func RegisterQueue(pool *pgxpool.Pool, log *slog.Logger) {
 			"Pending jobs whose run_after has passed, by kind.", []string{"kind"}, nil),
 		oldest: prometheus.NewDesc("holdmytrack_jobs_oldest_runnable_age_seconds",
 			"How long the oldest runnable job has waited, by kind; 0 with none.", []string{"kind"}, nil),
+		retrying: prometheus.NewDesc("holdmytrack_jobs_retrying_past_schedule",
+			"Pending jobs that failed on our side through every scheduled retry, about 2.5 hours, and retry still, by kind.", []string{"kind"}, nil),
 	})
 }
 
 func (c *queueCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.jobs
 	ch <- c.oldest
+	ch <- c.retrying
 }
 
 func (c *queueCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	type row struct {
-		count int64
-		age   float64
+		count    int64
+		age      float64
+		retrying int64
 	}
 	byKind := map[string]row{}
 	// idx_jobs_runnable covers the WHERE, so this reads only the queue, not the job history.
 	rows, err := c.pool.Query(ctx, `
-		SELECT kind, count(*), EXTRACT(EPOCH FROM NOW() - min(run_after))::float8
-		FROM jobs WHERE state = 'pending' AND run_after <= NOW()
-		GROUP BY kind`)
+		SELECT kind, count(*) FILTER (WHERE run_after <= NOW()),
+			COALESCE(EXTRACT(EPOCH FROM NOW() - min(run_after) FILTER (WHERE run_after <= NOW())), 0)::float8,
+			count(*) FILTER (WHERE retries > $1)
+		FROM jobs WHERE state = 'pending'
+		GROUP BY kind`, ScheduledRetries)
 	if err != nil {
 		// No sample at all, rather than zeros that would read as an empty queue.
 		c.log.Error("metrics: read job queue", "err", err)
@@ -161,7 +181,7 @@ func (c *queueCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var kind string
 		var r row
-		if err := rows.Scan(&kind, &r.count, &r.age); err != nil {
+		if err := rows.Scan(&kind, &r.count, &r.age, &r.retrying); err != nil {
 			c.log.Error("metrics: read job queue", "err", err)
 			rows.Close()
 			return
@@ -182,6 +202,7 @@ func (c *queueCollector) Collect(ch chan<- prometheus.Metric) {
 		r := byKind[kind]
 		ch <- prometheus.MustNewConstMetric(c.jobs, prometheus.GaugeValue, float64(r.count), kind)
 		ch <- prometheus.MustNewConstMetric(c.oldest, prometheus.GaugeValue, r.age, kind)
+		ch <- prometheus.MustNewConstMetric(c.retrying, prometheus.GaugeValue, float64(r.retrying), kind)
 	}
 }
 

@@ -1513,7 +1513,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Upload one track file; parsing happens in a job */
+        /** Upload one track file; checked here, stored as a track in a job */
         post: {
             parameters: {
                 query?: never;
@@ -1557,6 +1557,15 @@ export interface paths {
                 409: components["responses"]["OverLimit"];
                 413: components["responses"]["Error"];
                 415: components["responses"]["Error"];
+                /** @description The file can't become a track; error says why: unreadable_file, no_track, no_timestamps, too_few_points, too_many_points, too_large, implausible or track_type_too_long. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
                 429: components["responses"]["Error"];
                 503: components["responses"]["DailyCapacity"];
             };

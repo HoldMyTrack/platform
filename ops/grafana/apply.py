@@ -68,6 +68,13 @@ RULES = [
          expr=f'max by (kind) (holdmytrack_jobs_oldest_runnable_age_seconds{{{D}}})',
          op=">", threshold=1800, for_="5m", nodata="OK",
          summary="The oldest runnable {{ $labels.kind }} job has waited {{ humanizeDuration $values.A.Value }}. Is the worker running?"),
+    # An ingest that fails on our side retries every 2 hours without end (internal/worker/retry.go),
+    # its import processing meanwhile. The other kinds give up after their scheduled retries and
+    # alert as failed.
+    dict(uid="hmt-jobs-retrying", title="Jobs retrying for hours",
+         expr=f'max by (kind) (holdmytrack_jobs_retrying_past_schedule{{{D}}})',
+         op=">", threshold=0, for_="0m", nodata="OK",
+         summary="{{ $values.A.Value }} {{ $labels.kind }} jobs have failed on our side for about 2.5 hours and keep retrying; their imports stay processing. Logs: {service=\"worker\"} |= \"will retry\"."),
     dict(uid="hmt-app-down", title="api or worker not answering",
          expr=f'max by (service) (up{{{D}, job="prometheus.scrape.app"}})',
          op="<", threshold=1, for_="5m", nodata="OK",
