@@ -39,7 +39,7 @@ var adminStatsCharts = []adminStatsChart{
 // adminStatsRanges are the page's ?days= choices, adminStatsDefaultDays when there's none.
 var adminStatsRanges = []int{30, 90, 365}
 
-const adminStatsDefaultDays = 90
+const adminStatsDefaultDays = 30
 
 // The chart's SVG coordinates: the viewBox scales to the page's width.
 const (
@@ -51,6 +51,8 @@ const (
 type adminStatsView struct {
 	Ranges []adminStatsRange
 	Charts []adminStatsChartView
+	// LastSnapshot says when the newest snapshot was taken, in the admin's timezone.
+	LastSnapshot string
 }
 
 type adminStatsRange struct {
@@ -115,7 +117,13 @@ func (s *Server) handleAdminStatsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	view := adminStatsView{Ranges: statsRanges(days)}
+	takenAt, err := s.adminStatsTakenAt(r.Context())
+	if err != nil {
+		s.log.Error("admin stats page failed", "err", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	view := adminStatsView{Ranges: statsRanges(days), LastSnapshot: statsLastSnapshot(l, takenAt, acct.info.timezone)}
 	for _, c := range adminStatsCharts {
 		view.Charts = append(view.Charts, statsChartView(l, c, buildSeries(values[c.key], from, days)))
 	}
@@ -147,6 +155,31 @@ func (s *Server) adminStatsValues(ctx context.Context, from time.Time) (map[stri
 		values[key][utcDay(day)] = v
 	}
 	return values, rows.Err()
+}
+
+// adminStatsTakenAt is when the newest snapshot was taken, nil before the first. A snapshot
+// writes its rows in one transaction, so any row of the newest day carries its time.
+func (s *Server) adminStatsTakenAt(ctx context.Context) (*time.Time, error) {
+	var at *time.Time
+	err := s.pool.QueryRow(ctx, `SELECT max(taken_at) FROM daily_stats WHERE day = (SELECT max(day) FROM daily_stats)`).Scan(&at)
+	if err != nil {
+		return nil, fmt.Errorf("admin stats: last snapshot: %w", err)
+	}
+	return at, nil
+}
+
+// statsLastSnapshot is "Last snapshot taken Nov 22, 01:04 (Europe/Berlin)." in zone, or in UTC
+// when zone can't be loaded, since the rest of the page counts UTC days.
+func statsLastSnapshot(l *i18n.Localizer, takenAt *time.Time, zone string) string {
+	if takenAt == nil {
+		return l.T("admin.stats_no_snapshot")
+	}
+	at := web.LocalTime(l, *takenAt, zone)
+	if at == "" {
+		zone = "UTC"
+		at = web.LocalTime(l, *takenAt, zone)
+	}
+	return l.T("admin.stats_last_snapshot", "time", at, "zone", zone)
 }
 
 // parseStatsRange is ?days=, one of adminStatsRanges, else the default.

@@ -3,6 +3,7 @@
   <a class="settings__back" href="/">{{t "common.back_to_map"}}</a>
   <h1 class="settings__title">{{t "admin.stats_title"}}</h1>
   <p class="profile__subtext">{{t "admin.stats_intro"}} <a href="/admin/users">{{t "admin.accounts_link"}}</a></p>
+  <p class="profile__subtext">{{.LastSnapshot}}</p>
 
   <nav class="admin__pager" aria-label="{{t "admin.stats_range"}}">
     {{range .Ranges}}{{if .Current}}<strong>{{tn "admin.stats_days" .Days}}</strong>{{else}}<a href="{{.Href}}">{{tn "admin.stats_days" .Days}}</a>{{end}}{{end}}
