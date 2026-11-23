@@ -85,6 +85,8 @@ paths:
     $ref: "paths/tracks.yaml#/tracks_upload"
   /tracks/area:
     $ref: "paths/tracks.yaml#/tracks_area"
+  /tracks/gpx:
+    $ref: "paths/tracks.yaml#/tracks_gpx"
   /tracks/{id}:
     $ref: "paths/tracks.yaml#/tracks_id"
   /tracks/overlaps:

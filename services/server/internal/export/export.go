@@ -106,11 +106,7 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 	originals := map[string]string{} // raw key -> its file in the archive
 	for i := range doc.Tracks {
 		act := &doc.Tracks[i]
-		label := act.Type
-		if act.Name != "" {
-			label = act.Name
-		}
-		base := uniqueName(names, act.StartedAt.In(locationOf(act.Timezone)).Format("2006-01-02 1504")+" "+Slug(label))
+		base := UniqueName(names, TrackFileBase(act.StartedAt.In(locationOf(act.Timezone)), act.Name, act.Type))
 
 		if act.rawKey != "" {
 			if file, ok := originals[act.rawKey]; ok {
@@ -188,8 +184,18 @@ func waitForEdits(ctx context.Context, pool *pgxpool.Pool, userID string) error 
 	}
 }
 
-// uniqueName is base, or base 2, base 3… — the first not yet taken.
-func uniqueName(taken map[string]bool, base string) string {
+// TrackFileBase is a track's file name before its extension: its local start, then its name, or
+// its type when it has none. startedAt is in the track's own zone (IMPLEMENTATION.md §4.30).
+func TrackFileBase(startedAt time.Time, name, trackType string) string {
+	label := trackType
+	if name != "" {
+		label = name
+	}
+	return startedAt.Format("2006-01-02 1504") + " " + Slug(label)
+}
+
+// UniqueName is base, or base 2, base 3… — the first not yet taken.
+func UniqueName(taken map[string]bool, base string) string {
 	name := base
 	for n := 2; taken[name]; n++ {
 		name = fmt.Sprintf("%s %d", base, n)

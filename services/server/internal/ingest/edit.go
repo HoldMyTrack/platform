@@ -243,6 +243,20 @@ func processRouteEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 // nothing is left to show. Used by the demo export (httpapi's ExportDemoTracks), which
 // must never carry what the owner's zones and edits removed.
 func DisplayedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, trackID string) ([]parse.Point, error) {
+	points, _, err := DisplayedPointsCounted(ctx, pool, store, trackID)
+	return points, err
+}
+
+// ErrTrackNotFound is a track that doesn't exist, or no longer does.
+var ErrTrackNotFound = errors.New("track not found")
+
+// ErrEditPending is a track whose route edit or Private location change is still being
+// applied: its stored trajectory and edit may disagree until the job lands.
+var ErrEditPending = errors.New("an edit or Private location change is still being applied")
+
+// DisplayedPointsCounted is DisplayedPoints, also returning how many points the whole original
+// holds (tracks.raw_points), which it parsed to get them.
+func DisplayedPointsCounted(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, trackID string) ([]parse.Point, int, error) {
 	var userID, sourceDetail string
 	var rawKey *string
 	var storedEdit []byte
@@ -254,33 +268,32 @@ func DisplayedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 		FROM tracks WHERE id = $1
 	`, trackID).Scan(&userID, &sourceDetail, &rawKey, &storedEdit, &editPending, &rng.From, &rng.To)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, errors.New("not found")
+		return nil, 0, ErrTrackNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if rawKey == nil {
-		return nil, errors.New("no raw payload stored")
+		return nil, 0, errors.New("no raw payload stored")
 	}
 	if editPending {
-		// The stored trajectory and the stored spec may disagree until the job lands.
-		return nil, errors.New("an edit or Private location change is still being applied")
+		return nil, 0, ErrEditPending
 	}
-	points, zones, err := LoadPiecePoints(ctx, pool, store, userID, sourceDetail, *rawKey, rng)
+	points, zones, rawPoints, err := loadPiecePoints(ctx, pool, store, userID, sourceDetail, *rawKey, rng)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if storedEdit != nil && points != nil {
 		var edit RouteEdit
 		if err := json.Unmarshal(storedEdit, &edit); err != nil {
-			return nil, fmt.Errorf("stored track edit unreadable: %w", err)
+			return nil, rawPoints, fmt.Errorf("stored track edit unreadable: %w", err)
 		}
 		points = edit.ApplyClipped(points, zones)
 	}
 	if len(points) < 2 {
-		return nil, nil
+		return nil, rawPoints, nil
 	}
-	return points, nil
+	return points, rawPoints, nil
 }
 
 // errFewPointsAfterEdit is a user's edit leaving less than a line — rejected, unlike a Private

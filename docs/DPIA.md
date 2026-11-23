@@ -65,6 +65,7 @@ HoldMyTrack keeps the outdoor tracks a user chooses to bring in and draws them a
 | A web visitor's hash of address and browser under a random daily salt, for the unique-visitor count | System | Database | Deleted with the salt once that day's statistics are taken, within 2 days |
 | Nightly backups: database dump, originals, photos, avatars | System | Cloudflare R2 | Up to 8 weeks after deletion; newest 3 dumps also on the server |
 | Data download archive | User's request | Cloudflare R2 | 7 days |
+| A GPX download of chosen tracks, clipped as the map shows them | User's request | The server's disk, while it is sent | Deleted once the request ends; one a crash leaves, when the server next starts |
 | Photos and the avatar the Android app has shown | System | The phone, in the app's cache | Until the photo is deleted, the account signs out, or newer images push it out of 64 MB |
 
 **Who can see it:**
@@ -124,7 +125,7 @@ Risks to users, rated before the measures in section 6 on the ICO template's sca
 | R3 | A software bug shows one user's routes or tiles to another | Possible | Severe | High |
 | R4 | Someone takes over an account and reads its history | Possible | Significant | Medium |
 | R5 | The operator, or someone with operator access, looks at a user's data without need | Remote | Significant | Low |
-| R6 | An exported map image, or a Trip copy sent to someone, reveals more than the user meant | Possible | Significant | Medium |
+| R6 | An exported map image, a downloaded GPX file, or a Trip copy sent to someone, reveals more than the user meant | Possible | Significant | Medium |
 | R7 | Data of EU users stored in the US is accessed by US authorities | Remote | Significant | Medium |
 | R8 | A processor misuses or mishandles data, or one is used without a data processing agreement | Remote | Significant | Medium |
 | R9 | Data is kept long after it is needed, for example in a dormant account, increasing what any breach exposes | Probable | Significant | Medium |
@@ -136,11 +137,11 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 | # | Measures in place | Still missing | Residual |
 | --- | --- | --- | --- |
 | R1 | Private locations applied at ingest, before routes or tiles are stored (ADR-0002). TLS everywhere through Caddy. Separate R2 token for backups, with no access to the app bucket. No public profiles, so there is nothing to scrape. | Encryption at rest of the VPS disk, which holds the database and the newest dumps (section 7) | Low |
-| R2 | Originals sit in a private R2 bucket, never publicly addressable. Exports and Trip copies are built from clipped routes, never from originals. | A decision on how long originals are kept, after launch (`docs/ROADMAP.md`, "After launch") | Medium |
+| R2 | Originals sit in a private R2 bucket, never publicly addressable. Exports, GPX downloads and Trip copies are built from clipped routes, never from originals. | A decision on how long originals are kept, after launch (`docs/ROADMAP.md`, "After launch") | Medium |
 | R3 | The tile and API endpoints take the user from the session, never from a parameter; a data download link's random token stands for one part of one archive. Server tests check handlers against the API contract. | A test that one account cannot read another's tracks, tiles or photos, if none exists | Low |
 | R4 | bcrypt password hashes. HttpOnly, SameSite=Lax session cookie for up to 30 days. Sign-in rate limits. Email verification. | Optional second factor; not needed for launch | Low |
 | R5 | The admin panel never shows routes (section 2). Admin rights can be set only from the server's own command line. The daily statistics hold only aggregates (section 2). | An audit log, needed once an admin can see or change a route | Low |
-| R6 | Exports leave out Private locations and draw only clipped routes, whose ends stop a secret, random distance past each circle so many routes together don't outline it. A Trip copy needs the recipient to accept it and carries the sender's Private locations. The policy warns that a copy is the recipient's. | — | Low |
+| R6 | Exports and GPX downloads leave out Private locations and carry only clipped routes, whose ends stop a secret, random distance past each circle so many routes together don't outline it. A Trip copy needs the recipient to accept it and carries the sender's Private locations. The policy warns that a copy is the recipient's. | — | Low |
 | R7 | Transfers rely on the processors' Standard Contractual Clauses or EU–US Data Privacy Framework certification, stated in the privacy policy, and are assessed in section 8. | — | Low |
 | R8 | Processors are named in the privacy policy. Logs are scrubbed before they reach Grafana (section 3). | Accepted DPAs with DigitalOcean, Cloudflare, Grafana Labs and Zoho on file | Medium |
 | R9 | Deletion is complete within minutes and reaches backups within 8 weeks; the rest expires as section 2 lists. | — | Medium |

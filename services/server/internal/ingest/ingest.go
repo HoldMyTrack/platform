@@ -153,7 +153,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 				elevation_gain_m, started_at,
 				trajectory, raw_payload_key, name, description, ingest_complete,
 				timezone, recorded_started_at, recorded_ended_at, raw_bytes,
-				editable_times, hidden_by
+				editable_times, hidden_by, raw_points
 			) VALUES (
 				$1, $2, $3, $4,
 				$5, $6, $7, $8,
@@ -162,7 +162,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 				$14, NULLIF($15, ''), NULLIF($16, ''), $17,
 				`+geo.TimezoneAtSQL("$18::float8", "$19::float8", "$1")+`,
 				$20, $21, NULLIF($22::bigint, 0),
-				$23, NULLIF($24, '')::uuid
+				$23, NULLIF($24, '')::uuid, $25
 			)
 			ON CONFLICT (user_id, source, external_id) WHERE external_id IS NOT NULL DO NOTHING
 			RETURNING id
@@ -181,7 +181,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 		job.RawPayloadKey, act.Name, act.Description, hidden,
 		act.Points[0].Lon, act.Points[0].Lat,
 		recStart, recEnd, job.RawBytes,
-		EditableTimestamps(points) == nil, hiddenBy,
+		EditableTimestamps(points) == nil, hiddenBy, len(act.Points),
 	).Scan(&trackID, &inserted, &complete)
 	if err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: persist track: %w", err)

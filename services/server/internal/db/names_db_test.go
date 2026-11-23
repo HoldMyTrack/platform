@@ -142,6 +142,8 @@ func TestMigrationRenamesStoredValues(t *testing.T) {
 		`ingest {"source": "upload", "raw_payload_key": "raw/u/f.fit"} 0e10ff`,
 		// 0062 reprocesses every track with no route, as both of these are, to list it.
 		`reprivacy {"user_id": "00000000-0000-0000-0000-0000000000a1", "track_ids": ["00000000-0000-0000-0000-0000000000b1", "00000000-0000-0000-0000-0000000000b2"]}`,
+		// 0064 counts the originals of every account that has one.
+		`count_points {"user_id": "00000000-0000-0000-0000-0000000000a1"}`,
 	}
 	for _, w := range want {
 		found := false
