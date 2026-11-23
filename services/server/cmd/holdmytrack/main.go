@@ -55,7 +55,7 @@ func main() {
 	slog.SetDefault(log)
 
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|export-demo-tracks|seed-admin-boundaries|build-admin-tiles|seed-timezones|rerender-coverage|import-spots|import-bike-paths|set-admin|stats>")
+		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|seed-demo-copy|export-demo-tracks|seed-admin-boundaries|build-admin-tiles|seed-timezones|rerender-coverage|import-spots|import-bike-paths|set-admin|stats>")
 		os.Exit(2)
 	}
 
@@ -223,6 +223,24 @@ func main() {
 			os.Exit(1)
 		}
 		log.Info("seed-demo-customer: done")
+
+	case "seed-demo-copy":
+		// Fills a fresh, verified account with the Demo Customer's history and Private
+		// locations, for an account someone else signs in to, such as App Review's.
+		if len(os.Args) != 3 {
+			fmt.Fprintln(os.Stderr, "usage: holdmytrack seed-demo-copy <email>")
+			os.Exit(2)
+		}
+		store, err := storage.New(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket)
+		if err != nil {
+			log.Error("storage", "err", err)
+			os.Exit(1)
+		}
+		if err := httpapi.SeedDemoCopy(ctx, pool, store, log, os.Args[2]); err != nil {
+			log.Error("seed-demo-copy", "err", err)
+			os.Exit(1)
+		}
+		log.Info("seed-demo-copy: done", "email", os.Args[2])
 
 	case "export-demo-tracks":
 		// Writes picked tracks out of this deployment, as their owner sees them, as demo_data/ GPX files for
@@ -478,7 +496,7 @@ func main() {
 		}
 
 	default:
-		fmt.Fprintf(os.Stderr, "unknown subcommand %q; want serve, work, migrate, seed-demo-customer, export-demo-tracks, rerender-coverage, seed-admin-boundaries, build-admin-tiles, seed-timezones, import-spots, import-bike-paths, set-admin, or stats\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "unknown subcommand %q; want serve, work, migrate, seed-demo-customer, seed-demo-copy, export-demo-tracks, rerender-coverage, seed-admin-boundaries, build-admin-tiles, seed-timezones, import-spots, import-bike-paths, set-admin, or stats\n", os.Args[1])
 		os.Exit(2)
 	}
 	// What a one-off subcommand asked of the object store counts toward the day's R2 budget

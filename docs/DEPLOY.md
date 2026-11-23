@@ -164,6 +164,8 @@ mkdir -p /tmp/demo-export && chmod 777 /tmp/demo-export
 
 Copy the GPX files into `demo_data/`, `photos/` into `demo_data/photos/`, and merge `manifest.json`'s `tracks` into the one there (`httpapi.ExportDemoTracks` says what it writes). Review every route and photo before committing: the repository is public.
 
+**An account with the demo's history**, such as App Review's: sign the account up and verify it, then `… run --rm api seed-demo-copy <email>`. It copies the Demo Customer's Private locations and loads `demo_data/` into the account, and refuses one that has tracks or Private locations.
+
 **Load or refresh Spots** (`SPEC.md` FR-14), about once a quarter; until the first load no category in the Places menu shows anything.
 
 1. Off the server, with osmium-tool and ~100 GB free (the planet download is ~95 GB, about 1.5 hours; a re-run resumes it):
