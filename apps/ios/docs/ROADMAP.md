@@ -49,8 +49,8 @@ Phase 0 has lead times outside anyone's control, so it starts first and runs bes
   - Register `holdmytrack.com` and the address mail is sent from (`SMTP_FROM`), and publish SPF for it, under Sign in with Apple's email communication settings. Without it, every email to a hidden `@privaterelay.appleid.com` address bounces: a data download, a Trip copy, a password reset.
   - Done when: a test message from production's sender reaches a relay address.
 - [x] **0.4 App Store Connect record**
-  - Create the app with the name HoldMyTrack, the bundle ID and an SKU. Accept the Free Apps agreement; no banking or tax forms are needed for a free app. File the Digital Services Act trader-status declaration, which the EU storefronts need.
-  - Done when: the record exists and no agreement is pending.
+  - Create the app with the name HoldMyTrack, the bundle ID and an SKU. A free app needs no agreement beyond the Developer Program's, and no banking or tax forms.
+  - Done when: the record exists (Apple ID 6838033479).
 
 ## Phase 1 — Device probes
 
@@ -85,11 +85,11 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 3 — Project skeleton
 
-- [ ] **3.1 The Xcode project** (D1–D5)
+- [x] **3.1 The Xcode project** (D1–D5)
   - `apps/ios/HoldMyTrack.xcodeproj` with an app target, a unit-test target and a UI-test target; MapLibre Native iOS through SPM, pinned to an exact version that reads `pmtiles://` (6.10.0 or later).
   - Configurations: Debug reads the API origin from an `.xcconfig` the developer sets (a simulator reaches the host's `localhost:8081` directly) and allows cleartext to it alone; Release is fixed to `https://holdmytrack.com`, and no Debug value can leak into it.
   - The build number from `git rev-list --count` (D9) and the short SHA, written by a build phase; the User-Agent from phase 2.1.
-  - Done when: a Release archive validates in Xcode's Organizer, and a Debug build on the simulator reaches a dev stack's `/healthz`.
+  - Done when: a Release build uploads to App Store Connect, and a Debug build on the simulator reaches a dev stack's `/healthz`.
   - Built, with MapLibre 6.31.0; the simulator half is met. Left: the archive, once 0.1 gives a team.
 - [x] **3.2 Visual language**
   - The web's `--fm-*` tokens as an asset catalog of named colors with light and dark values, Inter and Fraunces bundled with Source Serif 4 for Russian headings, and the Lucide icons as template images (`docs/ARCHITECTURE.md` §1.1). Root `docs/IMPLEMENTATION.md` §4.34 covers iOS.
@@ -236,10 +236,10 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 9 — TestFlight
 
-- [ ] **9.1 Internal testing**: builds uploaded from Xcode's Organizer (or `xcodebuild -exportArchive` with an App Store Connect API key, documented in `docs/DEPLOY.md` §10); the owner and developers as internal testers. Done when: a build installs from TestFlight and passes phases 5–7 on a device.
+- [ ] **9.1 Internal testing**: builds uploaded with `apps/ios/scripts/upload-testflight.sh` (`docs/DEPLOY.md` §10); the owner, developers and a few people added to the team as internal testers. 0.25.6 (2847) uploaded on 2026-11-22. Done when: a build installs from TestFlight and passes phases 5–7 on a device.
 - [ ] **9.2 External testing**: a public TestFlight link after Beta App Review. Apple sets no minimum number of testers or days; run until the app has been tested on at least two iPhone models and one Apple Watch history. Done when: no open issue blocks release.
 
 ## Phase 10 — Release
 
-- [ ] **10.1 Submit for review**: manual release, phased over 7 days. A rejection is answered in Resolution Center or fixed in a new build, and the reason goes into this plan's phase 8 for next time. Done when: approved.
+- [ ] **10.1 Submit for review**: file the Digital Services Act trader-status declaration, which the EU storefronts need; manual release, phased over 7 days. A rejection is answered in Resolution Center or fixed in a new build, and the reason goes into this plan's phase 8 for next time. Done when: approved.
 - [ ] **10.2 Release**: set `UpdateViewController.listing` to the App Store listing, which gives the Update screen its button; tag the commit `ios/<build>`; `MIN_IOS_BUILD` stays 0 until a contract break needs it (`docs/DEPLOY.md` §10). Root `docs/ROADMAP.md` drops the iOS item; `apps/android/docs/SPEC.md` §9 drops "No iOS app". Done when: the app is on the App Store in every storefront chosen, and this file holds only what remains.
