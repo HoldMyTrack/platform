@@ -16,8 +16,8 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 )
 
-// RawItem is one file or synced track a request hands to the worker: its bytes as they
-// arrived, and what the `ingest` job needs to know about them.
+// RawItem is one file or synced track a request hands to the worker, after Check passed it:
+// its bytes as they arrived, and what the `ingest` job needs to know about them.
 type RawItem struct {
 	// "upload" (an uploaded file) or a phone sync's source — the
 	// `tracks.source` column's own provenance value, not just a label.
@@ -119,6 +119,7 @@ func EnqueueRaw(ctx context.Context, db Querier, userID string, items []RawItem)
 			ExternalID:    ids[i],
 			RawPayloadKey: keys[i],
 			RawBytes:      int64(len(it.Data)),
+			Checked:       true,
 			Batch:         it.Batch,
 		})
 		if err != nil {

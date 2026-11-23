@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
@@ -244,22 +245,21 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrack
 	if !syncExternalIDPattern.MatchString(act.ExternalID) {
 		return ingest.RawItem{}, l.T("error.sync_external_id_invalid")
 	}
-	// Same >= 2 raw points floor ingest.Process itself enforces on the raw points
-	// (internal/ingest.Process) — a coarse pre-check here, not a claim that every track
-	// clearing it will also survive the trim; that deeper rejection still happens
-	// asynchronously in the worker, exactly as it already does for Path 3 uploads.
-	if len(act.Points) < 2 {
-		return ingest.RawItem{}, l.T("error.sync_too_few_points")
-	}
 	if len(act.Points) > maxSyncPointsPerTrack {
 		return ingest.RawItem{}, l.T("error.sync_too_many_points", "n", len(act.Points), "max", maxSyncPointsPerTrack)
 	}
-	// The bounds handleUpdateTrack enforces, checked here: a client can send any custom
-	// track_type (GPS Logger's free-text field), and an over-long value would otherwise fail
-	// on the column's width in the worker instead of being refused here.
-	if utf8.RuneCountInString(act.TrackType) > maxTrackTypeLen {
-		return ingest.RawItem{}, l.T("error.track_type_too_long", "max", maxTrackTypeLen)
+	// Everything ingest would fail on for the track's own sake, so a track taken always
+	// becomes one (ingest.Check). A client can send any custom track_type (GPS Logger's
+	// free-text field), which the check bounds by the column's width.
+	if err := ingest.Check(act.payload().Track()); err != nil {
+		return ingest.RawItem{}, refusalMessage(l, err, s.refused(err, source))
 	}
+	// Postgres's text can't hold a NUL, which JSON can carry; refused rather than stored by a
+	// job that would fail on it.
+	if strings.ContainsRune(act.TrackType+act.Name+act.Description, 0) {
+		return ingest.RawItem{}, l.T("error.sync_text_nul")
+	}
+	// The bounds handleUpdateTrack enforces.
 	if utf8.RuneCountInString(act.Name) > maxTrackNameLen {
 		return ingest.RawItem{}, l.T("error.track_name_too_long", "max", maxTrackNameLen)
 	}

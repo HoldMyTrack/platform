@@ -74,7 +74,7 @@ Private locations (FR-7.1). `salt` seeds each clipped end's stretch (§4.1); onl
 
 ### 3.8 `jobs`
 
-The queue (§4.1); there is no broker. A running job stays `pending`, with `locked_at` marking it taken. Finished rows are kept as the import history (§4.0), so partial indexes keep the claim and per-account reads cheap. `raw` holds an ingest's payload until the worker stores it. `error_code` is a failed ingest's reason, translated when read (§4.21); `last_error` is an English diagnostic.
+The queue (§4.1); there is no broker. A running job stays `pending`, with `locked_at` marking it taken. Finished rows are kept as the import history (§4.0), so partial indexes keep the claim and per-account reads cheap. `raw` holds an ingest's payload until the worker stores it. `error_code` is a failed ingest's reason, translated when read (§4.21); `last_error` is an English diagnostic. `attempts` counts claims and `retries` the reruns scheduled after a failure, so `attempts - retries` is the runs a worker died in.
 
 ### 3.9 `sessions`
 
@@ -228,7 +228,7 @@ sequenceDiagram
 ```
 
 The order matters:
-1. **Receive.** Validate, check `(user_id, source, external_id)`, and enqueue with the bytes in `jobs.raw`, a column of its own because the import history reads `payload` on every row. A request writes nothing to object storage, so a 100-track sync answers as fast as one file; writing to R2 concurrently in the request would still grow with the batch. The worker stores the bytes before parsing (`ingest.PromoteRaw`); a retry after a failed write finds them still in the row.
+1. **Receive.** Validate, run `ingest.Check`, check `(user_id, source, external_id)`, and enqueue with the bytes in `jobs.raw`, a column of its own because the import history reads `payload` on every row. A request writes nothing to object storage, so a 100-track sync answers as fast as one file; writing to R2 concurrently in the request would still grow with the batch. The worker stores the bytes before parsing (`ingest.PromoteRaw`); a retry after a failed write finds them still in the row. **Every rule a file can fail is in `Check`**: steps 2–4 and the bounds of the columns step 6 fills, on the points before clipping, which only shrinks a route. So a job fails only on our side, and the worker retries an ingest without limit. An upload's parse holds about 30 MiB for a quarter of a second at the 200,000-point cap, so the API parses one upload per CPU at a time and refuses one as busy past four waiting per CPU; a sync's points are decoded already. The worker runs `Check` on a job no request checked (`ingest.Job.Checked`): a Trip copy or the demo seed.
 2. **Parse**, streamed: a 100-mile ride at 1 Hz is 36,000+ points. Parsers don't check ranges, so `keepValid` and `keepTimed` filter what they return, and `ParseGPX` reads only the recorded line in time order, since step 3 clips from whichever points come first and last.
 3. **Clip** against the account's Private locations, read when the job runs, before anything is stored (§7).
 4. **Coverage** from the raw points: the touched z14 tiles, by segment. A route past `maxTrackTiles` fails, since a zigzag between far points could reach millions; a 10,000 km trip is about 12,000.
@@ -243,7 +243,7 @@ The order matters:
 **The queue** (`internal/worker`, whose package comment covers the claim, the three lanes and fairness): a render or export never holds up an upload, and a new user's upload goes ahead of someone's thousandth file.
 - One account's lanes run side by side. That is safe because of `dirty_gen` (§3.6), `EnqueueRenderFog` queuing behind a claimed render, and Pending tracks staying out of composites (§4.2.5). Renders inside a job (route edit, reprivacy) take a per-account advisory lock (`lockRenders`), since a stale pass storing after a fresher one would leave its tile stale.
 - A deleted account's jobs are never claimed (§4.28). `worker_test.go` pins the fairness and lane rules.
-- A job failing on a database or storage error stays `pending` and reruns with growing delays for about 2.5 h (`worker/retry.go`); a bad file, a panic, a route edit and `reprivacy` (§4.2.5) fail at once.
+- A job failing on a database or storage error stays `pending` and reruns with growing delays for about 2.5 h, an ingest every 2 h after that without end (`worker/retry.go`); a bad file, a panic, a value Postgres refuses (SQLSTATE class 22 or 23), a route edit and `reprivacy` (§4.2.5) fail at once. A job whose worker died with it three times fails as abandoned.
 
 ### 4.2 Fog of War — precomputed raster mask
 
@@ -476,7 +476,7 @@ In the app, reusing sessions, renderer and formatting, and showing the product's
 
 No i18n library: each surface has flat `key → message` catalogs with `{name}` placeholders and plural forms as sibling keys, and a test per surface checks every catalog against English for keys, plural forms and placeholders. A language needing gender agreement or nested selects is when to adopt one. **The language is decided once, by the server** (`i18n.Resolve`); the map app reads `<html lang>`, and the style, emails and errors take the request's, so no two parts of a page disagree. The menu's choice is a cookie because the server needs it with the request (exempt from consent under ePrivacy Art. 5(3)), and signup doesn't copy it into the account. Automatic is never shown checked, since a cached signed-out page can't tell a choice from the browser's language. One URL serves every language, so crawlers index English.
 - About and Help have whole-page Russian files: **a change to an English section needs the same change in its `.ru.html`**.
-- The worker stores `jobs.error_code` from ingest's sentinel errors, rendered in the reader's language. **A new user-visible failure needs a code and an `ingest_error.<code>` message in every catalog.**
+- The worker stores `jobs.error_code` from ingest's sentinel errors, rendered in the reader's language; a request refusing a file with `ingest.Check` sends the same code's message. **A new user-visible failure needs a code and an `ingest_error.<code>` message in every catalog.**
 - `ru.ts` is typed over `en.ts`'s keys, so a missing translation fails `tsc`.
 - The served style is one document per language and flavor, picked by `?lang=` rather than `Accept-Language`, so MapLibre's URL-keyed cache never mixes languages; a test holds the two language lists together.
 - Android sends its locale as `Accept-Language`.

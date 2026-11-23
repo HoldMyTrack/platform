@@ -13,8 +13,9 @@ import (
 )
 
 // An ingest that fails on something passing (its original can't be read) stays pending and runs
-// again after retryDelays; once they're spent it fails for good.
-func TestJobFailingOnAnOutageIsRetriedThenFails(t *testing.T) {
+// again after retryDelays, then every longest delay without end: an accepted file is never
+// failed for our fault.
+func TestIngestFailingOnAnOutageIsRetriedWithoutEnd(t *testing.T) {
 	pool, userID := testPool(t)
 	ctx := context.Background()
 	srv := httptest.NewServer(storagetest.New())
@@ -31,27 +32,32 @@ func TestJobFailingOnAnOutageIsRetriedThenFails(t *testing.T) {
 		t.Fatal(err)
 	}
 	var state string
-	var attempts int
+	var attempts, retries int
 	var locked bool
 	var secs float64
-	if err := pool.QueryRow(ctx, `
-		SELECT state, attempts, locked_at IS NOT NULL, EXTRACT(EPOCH FROM run_after - NOW())::float8
-		FROM jobs WHERE id = $1`, id).Scan(&state, &attempts, &locked, &secs); err != nil {
-		t.Fatal(err)
+	read := func() time.Duration {
+		t.Helper()
+		if err := pool.QueryRow(ctx, `
+			SELECT state, attempts, retries, locked_at IS NOT NULL, EXTRACT(EPOCH FROM run_after - NOW())::float8
+			FROM jobs WHERE id = $1`, id).Scan(&state, &attempts, &retries, &locked, &secs); err != nil {
+			t.Fatal(err)
+		}
+		return time.Duration(secs * float64(time.Second))
 	}
-	wait := time.Duration(secs * float64(time.Second))
-	if state != "pending" || attempts != 1 || locked || wait < 50*time.Second || wait > retryDelays[0] {
-		t.Fatalf("after the first failure: %s, attempt %d, locked %v, runs in %v; want pending, unlocked, in about %v", state, attempts, locked, wait, retryDelays[0])
+	if wait := read(); state != "pending" || attempts != 1 || retries != 1 || locked || wait < 50*time.Second || wait > retryDelays[0] {
+		t.Fatalf("after the first failure: %s, attempt %d, retry %d, locked %v, runs in %v; want pending, unlocked, in about %v", state, attempts, retries, locked, wait, retryDelays[0])
 	}
 
-	// Its last retry: spent, so it fails.
-	if _, err := pool.Exec(ctx, `UPDATE jobs SET attempts = $2, run_after = '2000-01-01' WHERE id = $1`, id, len(retryDelays)); err != nil {
+	// Past every delay, and more runs than maxCrashes: still retried, since none crashed.
+	n := len(retryDelays) + maxCrashes
+	if _, err := pool.Exec(ctx, `UPDATE jobs SET attempts = $2, retries = $2, run_after = '2000-01-01' WHERE id = $1`, id, n); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := claimAndRunOne(ctx, pool, store, log); err != nil {
 		t.Fatal(err)
 	}
-	if r := readJob(t, pool, id); r.state != "failed" || r.attempts != maxAttempts {
-		t.Errorf("after the last retry: %+v, want failed on attempt %d", r, maxAttempts)
+	last := retryDelays[len(retryDelays)-1]
+	if wait := read(); state != "pending" || retries != n+1 || wait < last-time.Minute || wait > last {
+		t.Errorf("after %d retries: %s, retry %d, runs in %v; want pending, in about %v", n, state, retries, wait, last)
 	}
 }

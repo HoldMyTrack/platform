@@ -33,12 +33,12 @@ const pollInterval = 500 * time.Millisecond
 // any job should run, so a slow one isn't handed to a second worker while the first is busy.
 const claimLease = 30 * time.Minute
 
-// maxAttempts bounds how many times a job is claimed: its first run and one per retry
-// (retryDelays). Attempts count at claim time, so a job that kills its worker every time it
-// runs (a file that panics a parser below the recover, or exhausts memory) is failed on its next
-// claim instead of being handed out first again on every restart, stalling the queue for every
-// account behind it.
-var maxAttempts = len(retryDelays) + 1
+// maxCrashes bounds how many runs of a job may end with the worker dying: claims counted in
+// jobs.attempts that no retry (jobs.retries) or release accounts for. A job that kills its
+// worker every time it runs (a file that panics a parser below the recover, or exhausts
+// memory) is failed on its next claim instead of being handed out first again on every
+// restart, stalling the queue for every account behind it.
+var maxCrashes = 3
 
 // accountPurgeInterval is how long a deleted account's data can outlast the request that
 // deleted it (account_purge.go), plus however long a job of its takes to finish.
@@ -324,7 +324,7 @@ const claimQuery = `
 			 WHERE s.user_id = h.user_id AND (s.kind = ANY($2)) = NOT $3) AS served
 		FROM heads h
 	)
-	SELECT j.id, j.kind, COALESCE(j.user_id::text, ''), j.payload, j.attempts
+	SELECT j.id, j.kind, COALESCE(j.user_id::text, ''), j.payload, j.attempts - j.retries, j.retries
 	FROM jobs j JOIN ranked r ON r.id = j.id
 	WHERE j.state = 'pending'
 	  AND (j.locked_at IS NULL OR j.locked_at < NOW() - make_interval(secs => $1))
@@ -340,8 +340,8 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op if already committed
 
 	var j job
-	var attempts int
-	err = tx.QueryRow(ctx, claimQuery, claimLease.Seconds(), l.kinds, l.rest).Scan(&j.id, &j.kind, &j.userID, &j.payload, &attempts)
+	var crashes, retries int
+	err = tx.QueryRow(ctx, claimQuery, claimLease.Seconds(), l.kinds, l.rest).Scan(&j.id, &j.kind, &j.userID, &j.payload, &crashes, &retries)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
@@ -349,14 +349,14 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 		return false, fmt.Errorf("worker: claim: %w", err)
 	}
 
-	if attempts >= maxAttempts {
-		// Every earlier claim ended without the job being marked done or failed: the worker
-		// running it died each time.
-		log.Error("job abandoned", "job_id", j.id, "kind", j.kind, "attempts", attempts)
+	if crashes >= maxCrashes {
+		// That many earlier claims ended without the job being marked done, failed or retried:
+		// the worker running it died each time.
+		log.Error("job abandoned", "job_id", j.id, "kind", j.kind, "crashes", crashes)
 		if _, err := tx.Exec(ctx, `
 			UPDATE jobs SET state = 'failed', last_error = $2, error_code = $3, finished_at = NOW()
 			WHERE id = $1
-		`, j.id, fmt.Sprintf("worker stopped while running this job %d times", attempts), failureCode(j.kind, nil)); err != nil {
+		`, j.id, fmt.Sprintf("worker stopped while running this job %d times", crashes), failureCode(j.kind, nil)); err != nil {
 			return false, fmt.Errorf("worker: mark abandoned: %w", err)
 		}
 		if err := tx.Commit(ctx); err != nil {
@@ -397,10 +397,11 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 
 	// Something passing (a database or storage error): run it again later, still pending, its
 	// bytes and state kept (retryable).
-	if delay, ok := retryDelay(attempts + 1); runErr != nil && ok && retryable(j.kind, runErr) {
-		log.Warn("job failed, will retry", "job_id", j.id, "kind", j.kind, "attempt", attempts+1, "in", delay, "err", runErr)
+	if delay, ok := retryDelay(j.kind, retries); runErr != nil && ok && retryable(j.kind, runErr) {
+		log.Warn("job failed, will retry", "job_id", j.id, "kind", j.kind, "retry", retries+1, "in", delay, "err", runErr)
 		_, uerr := pool.Exec(wctx, `
-			UPDATE jobs SET locked_at = NULL, last_error = $2, run_after = NOW() + make_interval(secs => $3)
+			UPDATE jobs SET locked_at = NULL, last_error = $2, run_after = NOW() + make_interval(secs => $3),
+				retries = retries + 1
 			WHERE id = $1 AND state = 'pending'
 		`, j.id, runErr.Error(), delay.Seconds())
 		if uerr != nil {

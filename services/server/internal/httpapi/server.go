@@ -6,12 +6,10 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log/slog"
 	"net/http"
-	"path/filepath"
+	"runtime"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,27 +17,12 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/budget"
 	"github.com/HoldMyTrack/platform/services/server/internal/config"
-	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 	"github.com/HoldMyTrack/platform/services/server/internal/mail"
 	"github.com/HoldMyTrack/platform/services/server/internal/mapstyle"
 	"github.com/HoldMyTrack/platform/services/server/internal/metrics"
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
 )
-
-// maxUploadBytes bounds an uploaded file, which handleUpload reads into memory before the
-// worker streams it from object storage (IMPLEMENTATION.md §5.1). A track of a few hours is
-// a few MB of GPX or TCX and far less as FIT; only a day or more recorded once a second as GPX
-// or TCX comes near this, and such a file has to be split or sent as FIT.
-const maxUploadBytes = 16 << 20 // 16 MiB
-
-// maxUploadBodyBytes is an upload's whole multipart body: the file and 1 MiB of overhead.
-// ParseMultipartForm keeps all of it in memory, so no upload is written to a temp file.
-const maxUploadBodyBytes = maxUploadBytes + 1<<20
-
-// uploadExts is the track file types an upload may be. A `.zip` is refused with a message
-// of its own: archives aren't imported (ADR-0039).
-var uploadExts = map[string]bool{".gpx": true, ".fit": true, ".tcx": true}
 
 // devOrigins lists the origins a credentialed cross-origin request may come from in local
 // development, where the app's dev server and the API are separate origins: a cookie session
@@ -87,11 +70,15 @@ type Server struct {
 	google                googleOAuth
 	facebook              facebookOAuth
 	// visitors counts unique web visitors (visitors.go); nil without a database.
-	visitors           *visitorCounter
-	apple              appleOAuth
-	turnstile          turnstile
-	pages              *web.Renderer
-	uploadLimiter      *fixedWindowLimiter
+	visitors      *visitorCounter
+	apple         appleOAuth
+	turnstile     turnstile
+	pages         *web.Renderer
+	uploadLimiter *fixedWindowLimiter
+	// fileChecks bounds the uploads parsed at once, fileWaits those holding or waiting for a
+	// parse (checkUpload).
+	fileChecks         chan struct{}
+	fileWaits          chan struct{}
 	tileLimiter        *fixedWindowLimiter
 	syncLimiter        *fixedWindowLimiter
 	routePointsLimiter *fixedWindowLimiter
@@ -123,6 +110,8 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		apple:                 newAppleOAuth(apple),
 		pages:                 pages,
 		uploadLimiter:         newFixedWindowLimiter(defaultUploadsPerHour, time.Hour),
+		fileChecks:            make(chan struct{}, runtime.GOMAXPROCS(0)),
+		fileWaits:             make(chan struct{}, 4*runtime.GOMAXPROCS(0)),
 		tileLimiter:           newFixedWindowLimiter(defaultTilesPerMinute, time.Minute),
 		syncLimiter:           newFixedWindowLimiter(syncRequestsPerHour, time.Hour),
 		routePointsLimiter:    newFixedWindowLimiter(routePointsPerHour, time.Hour),
@@ -528,88 +517,6 @@ func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, healthzResponse{Status: "ok", Version: s.version, MinAndroidBuild: s.minAndroidBuild, MinIOSBuild: s.minIOSBuild})
-}
-
-type uploadResponse struct {
-	Status     string `json:"status"` // "enqueued" | "already_processed"
-	ExternalID string `json:"external_id"`
-	Filename   string `json:"filename"`
-}
-
-// handleUpload is §4.1 step 1 only: validate, then enqueue an `ingest` job carrying the raw
-// payload (ingest.EnqueueRaw), return. No parsing happens here — see internal/ingest,
-// run by cmd/holdmytrack work.
-func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
-	// Before the body is read, so a refused request costs no memory. Every request counts,
-	// a refused or already-imported file too.
-	if !s.uploadLimiter.allow(userIDFromContext(r.Context())) {
-		httpErrorT(w, r, http.StatusTooManyRequests, "error.upload_rate_limit", "max", s.uploadLimiter.limit)
-		return
-	}
-	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBodyBytes)
-	if err := r.ParseMultipartForm(maxUploadBodyBytes); err != nil {
-		httpErrorT(w, r, http.StatusRequestEntityTooLarge, "error.upload_too_large")
-		return
-	}
-	defer r.MultipartForm.RemoveAll() //nolint:errcheck // best effort; net/http also cleans up
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		httpErrorT(w, r, http.StatusBadRequest, "error.upload_missing")
-		return
-	}
-	defer file.Close()
-
-	ext := strings.ToLower(filepath.Ext(header.Filename))
-	if ext == ".zip" {
-		httpErrorT(w, r, http.StatusUnsupportedMediaType, "error.upload_zip")
-		return
-	}
-	if !uploadExts[ext] {
-		httpErrorT(w, r, http.StatusUnsupportedMediaType, "error.upload_type", "type", strconv.Quote(ext))
-		return
-	}
-
-	// Refused rather than cut off at the limit, which would have been ingested as a file
-	// that ends mid-track, or reported as unreadable.
-	if header.Size > maxUploadBytes {
-		httpErrorT(w, r, http.StatusRequestEntityTooLarge, "error.upload_too_large")
-		return
-	}
-	// Read once into memory (bounded by maxUploadBytes above) so the same bytes can be
-	// hashed and then uploaded with a known Content-Length. See the maxUploadBytes doc
-	// comment for why this is a deliberate, bounded exception to "never buffer a file."
-	data, err := io.ReadAll(io.LimitReader(file, maxUploadBytes))
-	if err != nil {
-		httpErrorT(w, r, http.StatusBadRequest, "error.upload_read")
-		return
-	}
-	if len(data) == 0 {
-		httpErrorT(w, r, http.StatusBadRequest, "error.upload_empty")
-		return
-	}
-	if s.refuseOverLimit(w, r, userIDFromContext(r.Context()), int64(len(data))) {
-		return
-	}
-
-	res, err := ingest.EnqueueRaw(r.Context(), s.pool, userIDFromContext(r.Context()), []ingest.RawItem{
-		{Source: "upload", Filename: header.Filename, Ext: ext, Data: data},
-	})
-	if err != nil {
-		s.log.Error("upload enqueue failed", "err", err)
-		writeAPIError(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	if res[0].AlreadyProcessed {
-		writeJSON(w, http.StatusOK, uploadResponse{Status: "already_processed", ExternalID: res[0].ExternalID, Filename: header.Filename})
-		return
-	}
-	writeJSON(w, http.StatusAccepted, uploadResponse{Status: "enqueued", ExternalID: res[0].ExternalID, Filename: header.Filename})
-}
-
-// SetUploadsPerHour replaces the per-account upload limit (defaultUploadsPerHour), starting
-// every account's count afresh.
-func (s *Server) SetUploadsPerHour(n int) {
-	s.uploadLimiter = newFixedWindowLimiter(n, time.Hour)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

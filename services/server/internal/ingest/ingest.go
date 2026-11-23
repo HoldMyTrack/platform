@@ -44,6 +44,9 @@ type Job struct {
 	// the parsed value". A copy of a Trip (tripcopy) and the demo seed set it: their GPX
 	// carries no type of its own, and they already know the track's.
 	TrackType string `json:"track_type,omitempty"`
+	// Checked is a job whose file a request ran Check on before enqueuing it (EnqueueRaw), so
+	// Process doesn't run it again. A Trip copy or the demo seed leaves it false.
+	Checked bool `json:"checked,omitempty"`
 	// Batch groups the jobs one request enqueued together — a phone sync's tracks — so the
 	// header's Upload menu can show them as one row however the page was reloaded meanwhile.
 	// Empty for a single uploaded file, which is its own row.
@@ -63,6 +66,15 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 	act, err := loadRecorded(ctx, store, job.SourceDetail, job.RawPayloadKey, parse.MaxPoints)
 	if err != nil {
 		return Result{}, err
+	}
+	if !job.Checked {
+		trackType := act.TrackType
+		if job.TrackType != "" {
+			trackType = job.TrackType
+		}
+		if err := checkRecorded(trackType, act.Points); err != nil {
+			return Result{}, err
+		}
 	}
 	// Continuous across the antimeridian, as loadClippedPoints leaves them.
 	act.Points = unwrapLons(act.Points)
@@ -280,11 +292,8 @@ func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKe
 		}
 		return parse.Track{}, parseError{err}
 	}
-	if act.Points, err = keepTimed(keepValid(act.Points)); err != nil {
+	if act.Points, err = recordedPoints(act.Points); err != nil {
 		return parse.Track{}, err
-	}
-	if len(act.Points) < 2 {
-		return parse.Track{}, fmt.Errorf("ingest: %w (%d)", errTooFewPoints, len(act.Points))
 	}
 	return act, nil
 }
