@@ -36,3 +36,11 @@ test('the web applies the limits the API contract declares', () => {
     assert.equal(limits[name], contract, `${name}: the web has ${limits[name]}, the contract ${contract}`);
   }
 });
+
+// The contract states the download's id limit in words, since the ids are one comma-separated
+// string; this keeps the web's copy (Download's disabled state) the server's.
+test("the web's download limit is the one the contract states", () => {
+  const ids = paths('tracks').tracks_gpx.get.parameters.find((p) => p.name === 'ids');
+  const stated = Number(/at most (\d+)/.exec(ids.description)?.[1]);
+  assert.equal(limits.MAX_DOWNLOAD_TRACKS, stated, `the web has ${limits.MAX_DOWNLOAD_TRACKS}, the contract ${stated}`);
+});

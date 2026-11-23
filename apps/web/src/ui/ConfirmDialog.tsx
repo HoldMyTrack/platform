@@ -32,16 +32,19 @@ export function ConfirmDialog({
   onClose,
 }: ConfirmDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  // With no Cancel, focus starts on the one button there is.
+  const confirmRef = useRef<HTMLButtonElement>(null);
   const { busy, error, run } = useDialogAction();
 
   return (
-    <ModalDialog title={title} testId="confirm-dialog" busy={busy} onClose={onClose} initialFocus={cancelRef}>
+    <ModalDialog title={title} testId="confirm-dialog" busy={busy} onClose={onClose} initialFocus={cancelLabel === null ? confirmRef : cancelRef}>
       {(close) => (
         <>
           <p className="confirm-dialog__message">{message}</p>
           {error && <p className="settings-page__error">{error}</p>}
           <div className="settings-page__save-row">
             <button
+              ref={confirmRef}
               type="button"
               className="confirm-dialog__confirm"
               disabled={busy}

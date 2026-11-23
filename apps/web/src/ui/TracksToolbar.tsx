@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Eye, EyeOff, Focus, Pencil, Trash2 } from 'lucide-react';
+import { Download, Eye, EyeOff, Focus, Pencil, Trash2 } from 'lucide-react';
 import { CheckAllMenu } from './CheckAllMenu.tsx';
-import { deleteTrack, type Track, type Trip } from '../api.ts';
+import { deleteTrack, downloadTracksGpx, type Track, type Trip } from '../api.ts';
+import { downloadBlock, MAX_DOWNLOAD_TRACKS } from './downloadTarget.ts';
+import { saveFile } from './saveFile.ts';
 import { rowLabel } from './TrackRow.tsx';
 import { AddToTripMenu } from './AddToTripMenu.tsx';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
@@ -30,8 +32,8 @@ interface TracksToolbarProps {
 
 /**
  * The header toolbar right above the row list (TracksPanel.tsx says what it acts on): the
- * master checkbox and its ▾ menu (All, None, Invert), then Show/hide, Edit, Add to trip and
- * Delete over the target, and, set off by a divider, Focus on map. Each tooltip names the target
+ * master checkbox and its ▾ menu (All, None, Invert), then Show/hide, Edit, Add to trip,
+ * Download and Delete over the target, and, set off by a divider, Focus on map. Each tooltip names the target
  * ("3 checked tracks", or the focused row's own label), so which one applies is never a guess.
  */
 export function TracksToolbar({
@@ -52,6 +54,9 @@ export function TracksToolbar({
 }: TracksToolbarProps) {
   // The toolbar's Delete is the only delete entry point, for one track or many.
   const [deletingGroup, setDeletingGroup] = useState(false);
+  // Download's request under way, and the server's refusal to show, naming the track.
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const system = useUnitSystem();
   const checkedCount = tracks.filter((a) => checked.has(a.id)).length;
@@ -88,6 +93,27 @@ export function TracksToolbar({
       : t(targetTracks.length === 1 ? 'tracks.edit_one' : 'tracks.edit_many', { target: targetName });
   const deleteTitle = targetName === null ? noTarget : t('tracks.delete_target', { target: targetName });
   const focusTitle = targetName === null ? noTarget : t('tracks.focus_target', { target: targetName });
+  const block = downloadBlock(targetTracks);
+  const downloadTitle = downloading
+    ? t('tracks.downloading')
+    : targetName === null
+      ? noTarget
+      : block === null
+        ? t('tracks.download_target', { target: targetName })
+        : block.kind === 'too_many'
+          ? t('tracks.download_too_many', { max: MAX_DOWNLOAD_TRACKS, n: block.count })
+          : t(block.kind === 'pending' ? 'tracks.download_pending' : 'tracks.download_private', { label: rowLabel(block.track) });
+  const download = async () => {
+    setDownloading(true);
+    try {
+      const { blob, name } = await downloadTracksGpx(targetTracks.map((a) => a.id));
+      saveFile(blob, name);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <>
@@ -131,6 +157,16 @@ export function TracksToolbar({
       />
       <button
         type="button"
+        className="tracks-panel__download"
+        disabled={!hasTarget || block !== null || downloading}
+        onClick={() => void download()}
+        aria-label={downloadTitle}
+        title={downloadTitle}
+      >
+        <Download size={16} />
+      </button>
+      <button
+        type="button"
         className="tracks-panel__delete"
         disabled={readOnly || !hasTarget || groupHasPending}
         onClick={() => setDeletingGroup(true)}
@@ -151,6 +187,16 @@ export function TracksToolbar({
         <Focus size={16} />
       </button>
     </div>
+    {downloadError !== null && (
+      <ConfirmDialog
+        title={t('tracks.download_failed')}
+        message={downloadError}
+        confirmLabel={t('common.ok')}
+        cancelLabel={null}
+        onConfirm={async () => {}}
+        onClose={() => setDownloadError(null)}
+      />
+    )}
     {deletingGroup && (
       <ConfirmDialog
         title={targetTracks.length === 1 ? t('tracks.delete_one_title') : t('tracks.delete_title')}
