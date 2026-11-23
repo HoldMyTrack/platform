@@ -9,6 +9,7 @@ import { dateFilterBounds, setDateFilter } from '../ui/dateFilter.ts';
 import { todayIn } from '../ui/dateMath.ts';
 import { formatDistance, formatDuration, formatShortDate, formatTotalDistance, formatTrackType } from '../ui/format.ts';
 import { rowLabel } from '../ui/TrackRow.tsx';
+import { saveFile } from '../ui/saveFile.ts';
 import { FilterDropdown, TrackFilters } from '../ui/TrackFilters.tsx';
 import { typeIcon } from '../ui/trackKindIcon.ts';
 import { useUnitSystem } from '../ui/units.ts';
@@ -163,11 +164,7 @@ export function LibraryPage() {
     setMessage(t('library.downloading'));
     try {
       const { blob, name } = await downloadTracksGpx(rows.map((row) => row.id));
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = name;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+      saveFile(blob, name);
       setMessage(null);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : String(err));

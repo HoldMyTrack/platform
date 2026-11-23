@@ -2592,8 +2592,8 @@ button.tracks-panel__trip-badge:hover {
      desktop. Not unmounted, so a mid-scroll collapse doesn't lose the list's own scroll
      position, and expanding just gives that same flex child more height to actually use.
 
-     Bigger touch targets for the row checkbox and the toolbar's four icon actions, which
-     stay at their desktop size otherwise (15px/30px/30px/30px/30px — comfortably clickable
+     Bigger touch targets for the row checkbox and the toolbar's icon actions, which
+     stay at their desktop size otherwise (15px and 30px — comfortably clickable
      with a mouse, tight with a finger). The chips are shared by the toolbar and the row
      actions of Trips and Privacy, so both widen here. */
   .tracks-panel__checkbox {
@@ -2603,6 +2603,7 @@ button.tracks-panel__trip-badge:hover {
 
   .tracks-panel__edit,
   .tracks-panel__add-trip,
+  .tracks-panel__download,
   .tracks-panel__delete,
   .tracks-panel__visibility,
   .tracks-panel__focus {
