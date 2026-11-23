@@ -9,30 +9,31 @@ import (
 )
 
 // listTracksQuery is §4.7's list, with §4.3's "$n IS NULL OR ..." optional-filter
-// treatment. No pagination: the client renders every matching row on the map and computes stats
-// and type/distance facets across all of them at once, so a partial page was never usable. The
-// apps' date range and a Trip read it; the web's area list is track_area.go's.
+// treatment. Unpaged: the apps render every matching row on the map and compute stats and
+// type/distance facets across all of them at once, so a partial page is no use to them. The
+// apps' date range and a Trip read it; the web's area list is track_area.go's, and Library's
+// pages are track_page.go's.
 //
 // The four ST_*Min/Max calls are the row's bounding box, so a client can fly the map to an
 // track without a follow-up request per row. They are cheaper than they look: PostGIS
 // caches a geometry's bounding box in its header, so this reads that rather than walking
 // the vertices. §3.3 has no bbox column and doesn't need one back.
-//
-// Column order here has to match scanTrackRow's Scan call exactly — trackByIDQuery
-// shares that same order for the same reason.
-var listTracksQuery = `
-SELECT id, started_at, timezone, track_type, name, distance_meters, duration_seconds,
-       COALESCE(moving_seconds, duration_seconds), description,
-       ` + trackBBoxColumns + `,
-       edit_pending, route_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
-       split_group, split_from, split_to,
-       ` + trackTripsColumn + `
+var listTracksQuery = `SELECT ` + trackRowColumns + `
 FROM tracks
 WHERE user_id = $1
   AND ` + inDateRange("$2", "$3") + `
   AND ($4::text[] IS NULL OR track_type = ANY($4))
   AND ($5::uuid IS NULL OR tracks.id IN (SELECT track_id FROM trip_tracks WHERE trip_id = $5))
 ORDER BY started_at DESC, id DESC`
+
+// trackRowColumns is a trackRow as columns of tracks, in scanTrackRow's order, for every query
+// that returns rows: the list, its pages (track_page.go) and one track by id.
+var trackRowColumns = `id, started_at, timezone, track_type, name, distance_meters, duration_seconds,
+       COALESCE(moving_seconds, duration_seconds), description,
+       ` + trackBBoxColumns + `,
+       edit_pending, route_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
+       split_group, split_from, split_to,
+       ` + trackTripsColumn
 
 // trackRow is one row of the list. The field set is exactly what the Tracks panel
 // renders, no more. MovingSeconds is the time a row shows, the same time Trips and Trends
@@ -135,11 +136,20 @@ type tracksResponse struct {
 
 // handleListTracks serves IMPLEMENTATION.md §4.7's `GET /v2/tracks?from=&to=&types=&trip=`:
 // the user's own history as rows, newest first, unpaginated — see listTracksQuery's doc
-// comment for why.
+// comment for why. With `page` it serves one of Library's pages instead (serveTrackPage).
 func (s *Server) handleListTracks(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseTrackFilter(r.URL.Query())
 	if err != nil {
 		writeAPIError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	page, paged, err := parseTrackPage(r.URL.Query())
+	if err != nil {
+		writeAPIError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if paged {
+		s.serveTrackPage(w, r, filter, page)
 		return
 	}
 	list, err := readRows(r.Context(), s, listTracksQuery, scanTrackRow,

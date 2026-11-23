@@ -1,11 +1,35 @@
 tracks:
   get:
-    summary: The signed-in account's tracks, newest first, unpaginated
+    summary: The signed-in account's tracks, newest first, unpaginated; with page, one of Library's pages
+    description: sort, q, min_distance and max_distance need page, and are refused without it.
     parameters:
       - $ref: "../components/parameters.yaml#/FilterFrom"
       - $ref: "../components/parameters.yaml#/FilterTo"
       - $ref: "../components/parameters.yaml#/FilterTypes"
       - $ref: "../components/parameters.yaml#/FilterTrip"
+      - name: page
+        in: query
+        description: Which page of 100, from 1; past the last, no rows.
+        schema: { type: integer, minimum: 1, maximum: 1000000 }
+      - name: sort
+        in: query
+        description: The order, id breaking ties; a track with no route sorts last on distance and moving.
+        schema:
+          type: string
+          enum: [started_desc, started_asc, added_desc, added_asc, distance_desc, distance_asc, moving_desc, moving_asc]
+          default: started_desc
+      - name: q
+        in: query
+        description: Text found in the name or the description, ignoring case and accents; at most 200 characters once leading and trailing spaces are trimmed.
+        schema: { type: string }
+      - name: min_distance
+        in: query
+        description: Meters, inclusive; with max_distance, the Distance filter, which leaves out tracks with no route.
+        schema: { type: number, minimum: 0, maximum: 1000000000 }
+      - name: max_distance
+        in: query
+        description: Meters, inclusive.
+        schema: { type: number, minimum: 0, maximum: 1000000000 }
     responses:
       "200":
         description: The tracks
@@ -20,8 +44,37 @@ tracks:
                   type: array
                   items: { $ref: "../components/schemas.yaml#/TrackRow" }
                 types:
-                  description: Every type the rows use, once each.
+                  description: Every type the rows use, once each, and with page every type in bounds.
                   allOf: [{ $ref: "../components/schemas.yaml#/TrackTypes" }]
+                page:
+                  type: integer
+                  description: With page, the page.
+                page_size:
+                  type: integer
+                  description: With page, the most rows a page holds.
+                total:
+                  type: integer
+                  description: With page, how many tracks pass the filters.
+                bounds:
+                  description: With page, the filters' bounds over every track of the account; null where no track sets one.
+                  type: object
+                  required: [min_distance_meters, max_distance_meters, first_date, last_date, types]
+                  additionalProperties: false
+                  properties:
+                    min_distance_meters:
+                      type: number
+                      nullable: true
+                      description: The shortest track with a route.
+                    max_distance_meters: { type: number, nullable: true }
+                    first_date:
+                      type: string
+                      nullable: true
+                      format: date
+                      description: The first track's local date.
+                    last_date: { type: string, format: date, nullable: true }
+                    types:
+                      type: array
+                      items: { type: string }
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }

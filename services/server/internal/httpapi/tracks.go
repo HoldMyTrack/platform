@@ -149,13 +149,7 @@ const maxTrackNameLen = 200
 // trackByIDQuery is the single-row counterpart to listTracksQuery, same column order
 // (scanTrackRow's Scan call is shared between both), scoped by id and owner exactly like
 // routeMetricsQuery — a non-owned or nonexistent id is indistinguishable from "not found."
-var trackByIDQuery = `
-SELECT id, started_at, timezone, track_type, name, distance_meters, duration_seconds,
-       COALESCE(moving_seconds, duration_seconds), description,
-       ` + trackBBoxColumns + `,
-       edit_pending, route_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
-       split_group, split_from, split_to,
-       ` + trackTripsColumn + `
+var trackByIDQuery = `SELECT ` + trackRowColumns + `
 FROM tracks
 WHERE id = $1 AND user_id = $2`
 
