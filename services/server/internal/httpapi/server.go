@@ -308,6 +308,7 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("POST /settings/delete", s.sameOrigin(s.handleSettingsDeleteForm))
 	s.mux.HandleFunc("GET /profile", s.handleProfilePage)   // profile_page.go
 	s.mux.HandleFunc("GET /sync", s.handleSyncPage)         // sync_page.go
+	s.mux.HandleFunc("GET /library", s.handleLibraryPage)   // library_page.go
 	s.mux.HandleFunc("GET /admin", s.handleAdminStatsPage)  // admin_stats_page.go
 	s.mux.HandleFunc("GET /admin/users", s.handleAdminPage) // admin_pages.go
 	s.mux.HandleFunc("GET /admin/users/{id}", s.handleAdminUserPage)
@@ -434,6 +435,8 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	if origin := r.Header.Get("Origin"); s.corsOrigins[origin] {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		// A GPX download's file name, which the page reads to save it under (GET /v2/tracks/gpx).
+		w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition")
 		w.Header().Set("Vary", "Origin")
 	}
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")

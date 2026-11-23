@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Eye, EyeOff, Focus, Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Eye, EyeOff, Focus, Pencil, Trash2 } from 'lucide-react';
+import { CheckAllMenu } from './CheckAllMenu.tsx';
 import { deleteTrack, type Track, type Trip } from '../api.ts';
 import { rowLabel } from './TrackRow.tsx';
 import { AddToTripMenu } from './AddToTripMenu.tsx';
@@ -7,7 +8,6 @@ import { ConfirmDialog } from './ConfirmDialog.tsx';
 import { formatTotalDistance } from './format.ts';
 import { useUnitSystem } from './units.ts';
 import { t, tn } from '../i18n/index.ts';
-import { useDismiss } from './useDismiss.ts';
 
 interface TracksToolbarProps {
   readOnly: boolean;
@@ -50,11 +50,6 @@ export function TracksToolbar({
   onTracksDeleted,
   onShowSelected,
 }: TracksToolbarProps) {
-  // The ▾ menu, dismissed on outside click or Escape.
-  const [selectMenuOpen, setSelectMenuOpen] = useState(false);
-  const selectMenuRef = useRef<HTMLDivElement>(null);
-  useDismiss(selectMenuRef, selectMenuOpen, setSelectMenuOpen);
-
   // The toolbar's Delete is the only delete entry point, for one track or many.
   const [deletingGroup, setDeletingGroup] = useState(false);
 
@@ -72,14 +67,6 @@ export function TracksToolbar({
         ? tn('tracks.checked_count', targetTracks.length)
         : t('tracks.target_one', { label: rowLabel(firstTarget) });
   const hasTarget = targetName !== null;
-
-  // `indeterminate` is a DOM property with no JSX prop, hence the ref and effect.
-  const selectAllRef = useRef<HTMLInputElement>(null);
-  const allChecked = tracks.length > 0 && checkedCount === tracks.length;
-  const someChecked = checkedCount > 0 && !allChecked;
-  useEffect(() => {
-    if (selectAllRef.current) selectAllRef.current.indeterminate = someChecked;
-  }, [someChecked]);
 
   const groupSummary = t('tracks.group_summary', {
     name: targetName ?? '',
@@ -110,56 +97,7 @@ export function TracksToolbar({
         ▾ menu (All, None, Invert), a spacer, the action chips, a divider, then the one
         accent-tinted "focus the map on the target" action. */}
     <div className="tracks-panel__toolbar">
-      <input
-        ref={selectAllRef}
-        type="checkbox"
-        className="tracks-panel__checkbox"
-        checked={allChecked}
-        disabled={tracks.length === 0}
-        aria-label={allChecked ? t('tracks.uncheck_all_label') : t('tracks.check_all_label')}
-        title={allChecked ? t('tracks.uncheck_all') : t('tracks.check_all')}
-        onChange={() => (allChecked ? onClear() : onSelectAll())}
-      />
-      <div className="select-menu" ref={selectMenuRef}>
-        <button
-          type="button"
-          className="select-menu__trigger"
-          data-testid="select-menu"
-          disabled={tracks.length === 0}
-          aria-haspopup="menu"
-          aria-expanded={selectMenuOpen}
-          aria-label={t('tracks.select_menu')}
-          title={t('tracks.select_menu')}
-          onClick={() => setSelectMenuOpen((open) => !open)}
-        >
-          <ChevronDown size={12} />
-        </button>
-        {selectMenuOpen && (
-          <div className="trip-menu__panel select-menu__panel" role="group" aria-label={t('tracks.select_menu')}>
-            {(
-              [
-                ['all', t('tracks.select_all'), allChecked, onSelectAll],
-                ['none', t('tracks.select_none'), checkedCount === 0, onClear],
-                ['invert', t('tracks.select_invert'), false, onInvertSelection],
-              ] as const
-            ).map(([key, label, disabled, run]) => (
-              <button
-                key={key}
-                type="button"
-                className="trip-menu__item"
-                data-testid={`select-${key}`}
-                disabled={disabled}
-                onClick={() => {
-                  setSelectMenuOpen(false);
-                  run();
-                }}
-              >
-                <span className="trip-menu__name">{label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <CheckAllMenu total={tracks.length} checkedCount={checkedCount} onAll={onSelectAll} onNone={onClear} onInvert={onInvertSelection} />
 
       <span className="tracks-panel__toolbar-spacer" aria-hidden="true" />
 

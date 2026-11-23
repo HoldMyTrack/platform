@@ -1435,7 +1435,11 @@ export interface paths {
                                 first_date: string | null;
                                 /** Format: date */
                                 last_date: string | null;
-                                types: string[];
+                                /** @description Each type the account's tracks use, with how many do, most first. */
+                                types: {
+                                    type: string;
+                                    count: number;
+                                }[];
                             };
                         };
                     };
@@ -4171,6 +4175,11 @@ export interface components {
             id: string;
             /** Format: date-time */
             started_at: string;
+            /**
+             * Format: date-time
+             * @description When the track was added to the account.
+             */
+            added_at: string;
             /** @description The IANA zone it was recorded in; a client shows its times in it. */
             timezone: string;
             track_type: string;

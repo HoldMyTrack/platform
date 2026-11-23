@@ -473,6 +473,7 @@ Every track the account keeps, as one list not tied to the map's area.
 - Filters: Type, Distance and Dates by the panel's rules (FR-5.2, FR-5.3, FR-5.12), one Trip (FR-13.4), and a search for text in the name or the description, ignoring case and accents. An unnamed track matches only through its description.
 - Each page says how many tracks pass the filters. The filters' bounds cover every track, whatever is filtered.
 - Pending tracks are listed with their badge (FR-5.8).
+- Opening a track focuses it on the map. Download (FR-5.14) and Delete (FR-5.6) act on one track, or on the Checked tracks, which stay within the page: changing page, sort or filter clears them.
 
 ### FR-5.14 Download tracks as GPX
 

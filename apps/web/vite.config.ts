@@ -27,6 +27,7 @@ const pageRoutes = [
   '^/(\\?|$)',
   '^/profile(\\?|$)',
   '^/sync(\\?|$)',
+  '^/library(\\?|$)',
   '^/admin(/|\\?|$)',
   '^/settings(/|\\?|$)',
   '^/(about|help|guides|contacts|privacy|gpx-viewer|fog-of-war|logout|language|signin|signup|demo|forgot|reset|verify)(\\?|$)',
@@ -84,17 +85,21 @@ export default defineConfig({
     // this build to know them. Everything they pull in stays content-hashed; those two are
     // served no-cache (Caddyfile) and carry the deploy's version as a ?v= buster.
     rollupOptions: {
-      input: { app: 'src/main.tsx' },
+      // The map, and the Library page's island (library/main.tsx), each loaded by its own Go page.
+      input: { app: 'src/main.tsx', library: 'src/library/main.tsx' },
       output: {
         entryFileNames: 'assets/[name].js',
-        // MapLibre and React change only with a dependency bump, so they go in a content-hashed
-        // chunk the fixed-name entry imports: a deploy that changes only the app's own code
-        // re-downloads only that.
+        // MapLibre and React change only with a dependency bump, so they go in content-hashed
+        // chunks the fixed-name entries import: a deploy that changes only the app's own code
+        // re-downloads only that. Apart, so Library loads React without MapLibre.
         codeSplitting: {
-          groups: [{ name: 'vendor', test: /[\\/]node_modules[\\/](maplibre-gl|react|react-dom|scheduler)[\\/].*\.[cm]?js$/ }],
+          groups: [
+            { name: 'react', test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/].*\.[cm]?js$/ },
+            { name: 'maplibre', test: /[\\/]node_modules[\\/]maplibre-gl[\\/].*\.[cm]?js$/ },
+          ],
         },
         assetFileNames: (asset) =>
-          asset.names.includes('app.css') ? 'assets/app.css' : 'assets/[name]-[hash][extname]',
+          asset.names.includes('app.css') ? 'assets/app.css' : asset.names.includes('library.css') ? 'assets/library.css' : 'assets/[name]-[hash][extname]',
       },
     },
   },

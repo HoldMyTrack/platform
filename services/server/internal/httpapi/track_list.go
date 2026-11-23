@@ -33,11 +33,11 @@ var trackRowColumns = `id, started_at, timezone, track_type, name, distance_mete
        ` + trackBBoxColumns + `,
        edit_pending, route_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
        split_group, split_from, split_to,
-       ` + trackTripsColumn
+       ` + trackTripsColumn + `, created_at`
 
-// trackRow is one row of the list. The field set is exactly what the Tracks panel
-// renders, no more. MovingSeconds is the time a row shows, the same time Trips and Trends
-// sum, so a Trip's total is its rows added up. Like them, it falls back to the elapsed
+// trackRow is one row of the list: what the Tracks panel renders, and Library's added_at.
+// MovingSeconds is the time a row shows, the same time Trips and Trends sum, so a Trip's total
+// is its rows added up. Like them, it falls back to the elapsed
 // DurationSeconds where moving time is unset.
 //
 // Name is a user-entered title, nullable: a row with none has never had one set, and the
@@ -81,6 +81,8 @@ type trackRow struct {
 	Split *splitRef `json:"split"`
 	// Trips are the Trips it's in, newest first — the Tracks panel's Trip badge.
 	Trips []tripRef `json:"trips"`
+	// AddedAt is when the track was added to the account: Library's Added column and sort.
+	AddedAt time.Time `json:"added_at"`
 }
 
 // splitRef places a piece within its split: From and To are unix-ms point timestamps, null
@@ -113,7 +115,7 @@ func scanTrackRow(row rowScanner) (trackRow, error) {
 	var avail trackAvailability
 	if err := row.Scan(&a.ID, &a.StartedAt, &a.Timezone, &a.TrackType, &a.Name, &a.DistanceMeters, &a.DurationSeconds, &a.MovingSeconds, &a.Description,
 		&minLon, &minLat, &maxLon, &maxLat, &a.Pending, &a.Edited, &a.Private, &avail.hasOriginal, &avail.editableTimes,
-		&splitGroup, &split.From, &split.To, &a.Trips); err != nil {
+		&splitGroup, &split.From, &split.To, &a.Trips, &a.AddedAt); err != nil {
 		return trackRow{}, err
 	}
 	avail.pending, avail.private = a.Pending, a.Private

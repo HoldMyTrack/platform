@@ -1,3 +1,4 @@
+import { attachmentName } from './attachmentName.ts';
 import { t } from './i18n/index.ts';
 import { rememberTypeKinds, rememberTypeLabels } from './ui/trackTypes.ts';
 import { deleteDone, parseErrorBody } from './apiError.ts';
@@ -315,6 +316,81 @@ export async function listTracks(query: TrackQuery = {}, signal?: AbortSignal): 
   rememberTypes(body.types);
   return { tracks: body.tracks.map(toTrack), total: null };
 }
+
+/** A Library row: the panel's, plus when it was added and why Download can't take it. */
+export interface LibraryTrack extends Track {
+  addedAt: string;
+  /** Why it can't be downloaded or route-edited (`docs/SPEC.md` FR-5.14): Pending, Private or no
+   *  original; null when it can. `bad_times` blocks only the route editor. */
+  blocked: 'pending' | 'private' | 'no_original' | null;
+}
+
+/** One of Library's pages (`GET /v2/tracks?page=`, `docs/SPEC.md` FR-5.13). Every filter is
+ *  optional; distances are meters. */
+export interface TrackPageQuery {
+  page: number;
+  sort: string;
+  q?: string;
+  types?: string[];
+  minDistance?: number;
+  maxDistance?: number;
+  from?: string;
+  to?: string;
+  trip?: string;
+}
+
+export interface TrackPageResult {
+  tracks: LibraryTrack[];
+  total: number;
+  pageSize: number;
+  /** The filters' bounds over every track: distances of those with a route, the first and last
+   *  local dates, and each type with its count, most first. */
+  bounds: {
+    distance: { min: number; max: number } | null;
+    firstDate: string | null;
+    lastDate: string | null;
+    types: { type: string; count: number }[];
+  };
+}
+
+export async function listTrackPage(query: TrackPageQuery, signal?: AbortSignal): Promise<TrackPageResult> {
+  const params = new URLSearchParams({ page: String(query.page), sort: query.sort });
+  if (query.q) params.set('q', query.q);
+  if (query.types?.length) params.set('types', query.types.join(','));
+  if (query.minDistance !== undefined) params.set('min_distance', String(query.minDistance));
+  if (query.maxDistance !== undefined) params.set('max_distance', String(query.maxDistance));
+  if (query.from) params.set('from', query.from);
+  if (query.to) params.set('to', query.to);
+  if (query.trip) params.set('trip', query.trip);
+  const body = await getJson<ResponseJson<'/tracks', 'get'>>(`/tracks?${params.toString()}`, signal);
+  rememberTypes(body.types);
+  const b = body.bounds;
+  if (b === undefined || body.total === undefined || body.page_size === undefined) throw new Error(t('common.bad_response'));
+  return {
+    tracks: body.tracks.map((a) => ({
+      ...toTrack(a),
+      addedAt: a.added_at,
+      blocked: a.route_edit === 'pending' || a.route_edit === 'private' || a.route_edit === 'no_original' ? a.route_edit : null,
+    })),
+    total: body.total,
+    pageSize: body.page_size,
+    bounds: {
+      distance: b.min_distance_meters !== null && b.max_distance_meters !== null ? { min: b.min_distance_meters, max: b.max_distance_meters } : null,
+      firstDate: b.first_date,
+      lastDate: b.last_date,
+      types: b.types,
+    },
+  };
+}
+
+/** `GET /v2/tracks/gpx` (`docs/SPEC.md` FR-5.14): the tracks as one GPX file, or a zip of them,
+ *  and the name the server gives it. A refusal throws its message, which names the track. */
+export async function downloadTracksGpx(ids: readonly string[]): Promise<{ blob: Blob; name: string }> {
+  const res = await apiFetch(`/tracks/gpx?ids=${ids.map(encodeURIComponent).join(',')}`);
+  if (!res.ok) throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
+  return { blob: await res.blob(), name: attachmentName(res.headers.get('Content-Disposition')) };
+}
+
 
 /**
  * `PATCH /v2/tracks/{id}` (`docs/SPEC.md` FR-5.5) — the Edit window's Save, for its Route tab's

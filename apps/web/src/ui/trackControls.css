@@ -1,0 +1,713 @@
+/* The track controls the map's Tracks panel and the Library page share: the filter row (Type,
+   Dates, Distance), the toolbar's checkbox, its menu and icon buttons, and the confirm dialog.
+   @imported by both pages' stylesheets (index.css, library/library.css), so each build's app.css and
+   library.css carry it; narrow-screen tweaks for the panel stay
+   in index.css. */
+
+/* ModalDialog.tsx's shell, sized for a short title and message; TripDialog and SendCopyDialog
+   widen it with .trip-dialog. The red confirm button is ConfirmDialog's, tuned for its Delete
+   (§4.7.5). */
+.confirm-dialog {
+  width: min(24rem, calc(100vw - 40px));
+  margin: auto;
+  padding: var(--fm-space-20);
+  border: 1px solid rgb(var(--fm-ink-rgb) / 10%);
+  border-radius: var(--fm-radius-lg);
+  background: var(--fm-surface);
+  color: var(--fm-ink);
+  box-shadow: var(--fm-shadow-xl);
+}
+
+.confirm-dialog::backdrop {
+  background: rgb(var(--fm-shadow-rgb) / 35%);
+}
+
+.confirm-dialog__title {
+  margin: 0 0 var(--fm-space-10);
+  font-size: var(--fm-text-xl);
+  font-weight: var(--fm-weight-heavy);
+  letter-spacing: 0.02em;
+}
+
+.confirm-dialog__message {
+  margin: 0 0 var(--fm-space-16);
+  font-size: var(--fm-text-md);
+  line-height: 1.5;
+  color: rgb(var(--fm-ink-rgb) / 70%);
+}
+
+/* Reuses .settings-page__error's var(--fm-danger) red — the same tone this app already uses for
+   destructive/error states, not a new color introduced just for this button. */
+.confirm-dialog__confirm {
+  border: 0;
+  border-radius: var(--fm-radius-md);
+  padding: var(--fm-space-10) var(--fm-space-16);
+  background: var(--fm-danger);
+  color: var(--fm-on-accent);
+  font: inherit;
+  font-weight: var(--fm-weight-semibold);
+  font-size: var(--fm-text-lg);
+  cursor: pointer;
+}
+
+.confirm-dialog__confirm:hover {
+  background: var(--fm-danger-hover);
+}
+
+.confirm-dialog__confirm:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* DistanceFilter.tsx — the DISTANCE dual slider, standalone and always visible (docs/SPEC.md FR-5.3)
+   between the subtext line and the header toolbar, not hidden behind any toggle. TYPE moved
+   out to its own dropdown (checkboxes inline in TracksPanel.tsx, reusing
+   .track-filters__type-* below directly). */
+.track-filters {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-12);
+}
+
+/* The filter row (TrackFilters.tsx): Type's, Dates' and Distance's dropdowns on one line, a
+   long value cut short rather than wrapping. */
+.tracks-panel__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-8);
+  padding: var(--fm-space-4) var(--fm-space-16) var(--fm-space-16);
+  border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
+}
+
+/* Dates' and Distance's panels fit what they hold (the date fields, the slider and its bounds)
+   instead of Type's fixed width. The last dropdown's panel opens leftward from its right edge, or
+   it would run past the sidebar, which clips it. */
+.tracks-panel__filters .tracks-panel__filter-panel {
+  width: max-content;
+  min-width: 15rem;
+  box-sizing: border-box;
+}
+
+.tracks-panel__filters > .tracks-panel__type-dropdown:last-child .tracks-panel__type-panel {
+  left: auto;
+  right: 0;
+}
+
+.track-filters__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-6);
+}
+
+.track-filters__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.track-filters__label {
+  font-size: var(--fm-text-xs);
+  font-weight: var(--fm-weight-heavy);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(var(--fm-ink-rgb) / 68%);
+}
+
+.track-filters__readout {
+  font-size: var(--fm-text-xs);
+  color: rgb(var(--fm-ink-rgb) / 68%);
+}
+
+/* A real checkbox list, scrollable rather than collapsing behind "Show all (N)" — the Type
+   dropdown already has a natural height budget a scrollbar fits inside cleanly. Checked means
+   "shown", unchecked means excluded — the same toggle this always was, just a real checkbox
+   input instead of a click-to-toggle-a-✕-box chip. */
+.track-filters__type-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-2);
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.track-filters__type-item {
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-8);
+  min-width: 0;
+  padding: var(--fm-space-4) var(--fm-space-2);
+  font-size: var(--fm-text-md);
+  color: var(--fm-ink);
+  cursor: pointer;
+}
+
+.track-filters__type-item input[type='checkbox'] {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--fm-accent);
+  cursor: pointer;
+}
+
+.track-filters__type-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-filters__type-count {
+  flex: none;
+  font: 400 11px ui-monospace, Menlo, monospace;
+  color: rgb(var(--fm-ink-rgb) / 68%);
+}
+
+/* Two overlapping native range inputs sharing one track — a well-known dual-thumb-slider
+   technique. Each input's own track/fill is made transparent so only .track-filters__fill
+   below shows through, and pointer-events is disabled on the input everywhere except its
+   thumb, so a click between the two thumbs falls through to whichever is actually closer
+   rather than always grabbing one specific input. */
+.track-filters__track-wrap {
+  position: relative;
+  height: 20px;
+}
+
+.track-filters__track {
+  position: absolute;
+  top: 9px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgb(var(--fm-ink-rgb) / 12%);
+  border-radius: var(--fm-radius-xs);
+}
+
+.track-filters__fill {
+  position: absolute;
+  top: 9px;
+  height: 2px;
+  background: var(--fm-accent);
+  border-radius: var(--fm-radius-xs);
+}
+
+.track-filters__range {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  pointer-events: none;
+}
+
+.track-filters__range::-webkit-slider-runnable-track {
+  background: transparent;
+}
+
+.track-filters__range::-moz-range-track {
+  background: transparent;
+}
+
+.track-filters__range::-webkit-slider-thumb {
+  appearance: none;
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  margin-top: calc(-1 * var(--fm-space-8));
+  border-radius: 50%;
+  border: 2px solid var(--fm-accent);
+  background: var(--fm-surface);
+  cursor: pointer;
+}
+
+.track-filters__range::-moz-range-thumb {
+  pointer-events: auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--fm-accent);
+  background: var(--fm-surface);
+  cursor: pointer;
+}
+
+.track-filters__bounds {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fm-text-2xs);
+  color: rgb(var(--fm-ink-rgb) / 68%);
+}
+
+.tracks-panel__checkbox {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--fm-accent-strong);
+  cursor: pointer;
+}
+
+/* A button, because clicking it flies the map — but it has to keep looking like the row
+   text it replaced, so every button default is reset here rather than styled around. */
+.tracks-panel__type-icon {
+  flex: none;
+  color: rgb(var(--fm-ink-rgb) / 60%);
+}
+
+.trip-menu__panel.tracks-panel__trip-badge-menu {
+  top: calc(100% + 4px);
+  left: auto;
+  right: 0;
+  width: 14rem;
+  max-width: calc(100vw - 48px);
+}
+
+/* The toolbar icon buttons (docs/SPEC.md FR-5.8) — Show/Edit/Create trip/Delete/Focus, and Library's Download, all operate on the toolbar's target:
+   the checked group, else the selected row. Row actions on lists without checkboxes (.tracks-panel__row-action)
+   use the same chips. One shared chip look, matching the mockup: a soft tinted square rather than a bare icon, so the group actions read as one
+   family regardless of which one is destructive. */
+.tracks-panel__edit,
+.tracks-panel__add-trip,
+.tracks-panel__delete,
+.tracks-panel__download,
+.tracks-panel__visibility,
+.tracks-panel__focus {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--fm-radius-sm);
+  padding: 0;
+  background: var(--fm-surface-tint);
+  color: var(--fm-ink-secondary);
+  cursor: pointer;
+}
+
+.tracks-panel__edit:hover:not(:disabled),
+.tracks-panel__add-trip:hover:not(:disabled),
+.tracks-panel__delete:hover:not(:disabled),
+.tracks-panel__download:hover:not(:disabled),
+.tracks-panel__visibility:hover:not(:disabled) {
+  background: var(--fm-surface-tint-strong);
+  color: var(--fm-ink);
+}
+
+/* A demo account's disabled Edit/Delete (TracksPanel's readOnly prop), or simply nothing
+   checked yet — visibly inert, not just a hover/click no-op, so "there's nothing to act on"
+   reads before anyone hovers for the title tooltip. */
+.tracks-panel__edit:disabled,
+.tracks-panel__add-trip:disabled,
+.tracks-panel__delete:disabled,
+.tracks-panel__download:disabled,
+.tracks-panel__visibility:disabled,
+.tracks-panel__focus:disabled {
+  color: var(--fm-ink-faint);
+  cursor: not-allowed;
+}
+
+/* The one primary action in the group — tinted with the accent rather than the neutral chip
+   the others share, so "focus the map on this" reads as the toolbar's main affordance. */
+.tracks-panel__focus {
+  background: rgb(var(--fm-accent-rgb) / 12%);
+  color: var(--fm-accent-strong);
+}
+
+.tracks-panel__focus:hover:not(:disabled) {
+  background: rgb(var(--fm-accent-rgb) / 20%);
+}
+
+.tracks-panel__focus:disabled {
+  background: var(--fm-surface-tint);
+}
+
+/* The header toolbar (docs/SPEC.md FR-5.1) — right above the row list, a compact strip: the select-all checkbox, the Type
+   dropdown, a flex spacer pushing the rest right, the group action chips, a divider, then the
+   one accent-tinted "focus on map" action. */
+.tracks-panel__toolbar {
+  /* The containing block for Add to trip's menu (.trip-menu__panel). */
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-10);
+  padding: var(--fm-space-10) var(--fm-space-16);
+  border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
+}
+
+.tracks-panel__toolbar-spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.tracks-panel__toolbar-divider {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--fm-border);
+}
+
+/* Anchors the dropdown panel under its trigger's trailing edge. No fixed width any more (nothing below it to stay
+   column-aligned with) — sized to its own label/caret like the mockup's chip. */
+.tracks-panel__type-dropdown {
+  position: relative;
+  flex: none;
+}
+
+.tracks-panel__type-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-8);
+  border: 1px solid var(--fm-border-panel);
+  border-radius: var(--fm-radius-sm);
+  padding: var(--fm-space-8) var(--fm-space-10);
+  background: var(--fm-surface-tint);
+  color: var(--fm-ink);
+  font: inherit;
+  font-size: var(--fm-text-md);
+  font-weight: var(--fm-weight-semibold);
+  cursor: pointer;
+}
+
+.tracks-panel__type-trigger:hover {
+  background: var(--fm-surface-tint-strong);
+}
+
+/* The header checkbox's ▾ (TracksPanel.tsx): a menu of All, None and Invert under it, in
+   Add to trip's look (.trip-menu__panel/__item), anchored to the checkbox's left edge. */
+.select-menu {
+  position: relative;
+  display: flex;
+  margin-left: calc(-1 * var(--fm-space-8));
+}
+
+.select-menu__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 23px;
+  padding: 0;
+  border: none;
+  border-radius: var(--fm-radius-sm);
+  background: none;
+  color: rgb(var(--fm-ink-rgb) / 60%);
+  cursor: pointer;
+}
+
+.select-menu__trigger:hover:not(:disabled),
+.select-menu__trigger[aria-expanded='true'] {
+  background: var(--fm-surface-tint-strong);
+  color: var(--fm-ink);
+}
+
+.select-menu__trigger:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.trip-menu__panel.select-menu__panel {
+  top: calc(100% + 6px);
+  left: calc(-1 * var(--fm-space-16));
+  right: auto;
+  width: 9rem;
+}
+
+/* A plain dot, not a count — the trigger's own label already says "Type"; a badge repeating
+   "filters active" as a number would just be noise next to one word. */
+.tracks-panel__type-trigger-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fm-accent);
+}
+
+.tracks-panel__type-trigger-caret {
+  display: inline-flex;
+  flex: none;
+  color: rgb(var(--fm-ink-rgb) / 68%);
+}
+
+/* Right-aligned to the trigger, not left — the trigger sits mid-row now (above the TYPE
+   column, not at the panel's left edge), so anchoring the panel's right edge to the
+   trigger's is what keeps it from overflowing the panel's own narrow end. */
+.tracks-panel__type-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  /* left, not right: the trigger sits at the filter row's left edge, not mid-row above a
+     TYPE column any more — anchoring the panel's right edge to that narrow, left-positioned
+     trigger pushed a 13rem-wide panel leftward past x: 0, clipped
+     out of view entirely by .tracks-panel's own overflow: hidden. */
+  left: 0;
+  z-index: 3;
+  width: 13rem;
+  max-width: calc(100vw - 32px);
+  border: 1px solid var(--fm-border-panel);
+  border-radius: var(--fm-radius-lg);
+  background: var(--fm-surface);
+  box-shadow: var(--fm-shadow-lg);
+  padding: var(--fm-space-8);
+}
+
+.tracks-panel__type-panel-empty {
+  margin: 0;
+  padding: var(--fm-space-4) var(--fm-space-2);
+  font-size: var(--fm-text-md);
+  color: rgb(var(--fm-ink-rgb) / 68%);
+}
+
+/* The "All types" convenience row above the divider — a select-all, not a real toggle: it
+   only ever clears every exclusion (there is no "hide every type" action here), matching
+   "Reset filters"'s own always-clears-forward behavior elsewhere in this panel. */
+.track-filters__type-item--all {
+  font-weight: var(--fm-weight-semibold);
+  color: var(--fm-ink);
+}
+
+/* AddToTripMenu.tsx — anchored to the toolbar, not to its own button: the panel is
+   `overflow: hidden` and as narrow as 260px, so a menu hanging off a mid-toolbar button would be
+   clipped. Spanning the toolbar's width below it always fits. */
+.trip-menu {
+  flex: none;
+  display: flex;
+}
+
+.trip-menu__panel {
+  position: absolute;
+  top: calc(100% - 4px);
+  left: var(--fm-space-16);
+  right: var(--fm-space-16);
+  z-index: 3;
+  border: 1px solid var(--fm-border-panel);
+  border-radius: var(--fm-radius-lg);
+  background: var(--fm-surface);
+  box-shadow: var(--fm-shadow-lg);
+  padding: var(--fm-space-6);
+}
+
+.trip-menu__list {
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.trip-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-8);
+  width: 100%;
+  border: 0;
+  border-radius: var(--fm-radius-sm);
+  padding: var(--fm-space-6) var(--fm-space-8);
+  background: none;
+  color: var(--fm-ink);
+  font: inherit;
+  font-size: var(--fm-text-md);
+  text-align: left;
+  cursor: pointer;
+}
+
+.trip-menu__item:hover:not(:disabled),
+.trip-menu__item:focus-visible {
+  background: var(--fm-surface-tint);
+}
+
+.trip-menu__item:disabled {
+  cursor: default;
+}
+
+.trip-menu__item--new {
+  font-weight: var(--fm-weight-semibold);
+  color: var(--fm-accent-strong);
+}
+
+.trip-menu__check {
+  flex: none;
+  display: inline-flex;
+  width: 14px;
+  color: var(--fm-accent-strong);
+}
+
+.trip-menu__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trip-menu__item:disabled .trip-menu__name {
+  color: var(--fm-ink-muted);
+}
+
+.trip-menu__count {
+  flex: none;
+  font-size: var(--fm-text-2xs);
+  color: var(--fm-ink-muted);
+}
+
+.trip-menu__divider {
+  height: 1px;
+  background: var(--fm-divider-tint);
+  margin: var(--fm-space-4) 0;
+}
+
+.trip-menu__note {
+  margin: 0;
+  padding: var(--fm-space-6) var(--fm-space-8);
+  font-size: var(--fm-text-sm);
+  color: var(--fm-ink-muted);
+}
+
+.trip-menu__note--error {
+  color: var(--fm-danger);
+}
+
+/* Dates' and Distance's dropdowns (TrackFilters.tsx): the type dropdown's trigger and panel,
+   with the value in the trigger and a clear button beside it while set. */
+.tracks-panel__filter-dropdown {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+/* Only a button showing a value gives way; a bare name always fits. */
+.tracks-panel__filter-dropdown--set {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.tracks-panel__filter-dropdown > .tracks-panel__type-trigger {
+  min-width: 0;
+}
+
+.tracks-panel__filter-value {
+  /* Equal-width digits: a range read out while its slider is dragged keeps the button's width. */
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tracks-panel__filter-value--set {
+  color: var(--fm-accent-strong);
+  font-weight: var(--fm-weight-semibold);
+}
+
+.tracks-panel__filter-clear {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--fm-space-4);
+  border: 0;
+  background: none;
+  color: var(--fm-ink-muted);
+  cursor: pointer;
+}
+
+.tracks-panel__filter-clear:hover {
+  color: var(--fm-ink);
+}
+
+.tracks-panel__filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-10);
+  min-width: 220px;
+  padding: var(--fm-space-12);
+}
+
+.tracks-panel__date-field {
+  display: grid;
+  grid-template-columns: 4.5em 1fr;
+  align-items: center;
+  column-gap: var(--fm-space-8);
+  row-gap: var(--fm-space-2);
+  font-size: var(--fm-text-sm);
+}
+
+.tracks-panel__date-field input {
+  font: inherit;
+  color: var(--fm-ink);
+  background: var(--fm-surface);
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius-sm);
+  padding: var(--fm-space-4) var(--fm-space-6);
+}
+
+.tracks-panel__date-hint {
+  grid-column: 2;
+  color: var(--fm-ink-muted);
+  font-size: var(--fm-text-xs);
+}
+
+.tracks-panel__type-panel-divider {
+  height: 1px;
+  background: var(--fm-divider-tint);
+  margin: var(--fm-space-6) 0;
+}
+
+.settings-page__button {
+  border: 1px solid rgb(var(--fm-ink-rgb) / 18%);
+  border-radius: var(--fm-radius-sm);
+  padding: var(--fm-space-6) var(--fm-space-12);
+  background: var(--fm-surface);
+  color: var(--fm-ink);
+  font: inherit;
+  font-size: var(--fm-text-md);
+  font-weight: var(--fm-weight-semibold);
+  cursor: pointer;
+}
+
+.settings-page__button:disabled {
+  color: rgb(var(--fm-ink-rgb) / 30%);
+  border-color: rgb(var(--fm-ink-rgb) / 10%);
+  cursor: not-allowed;
+}
+
+.settings-page__error {
+  margin: var(--fm-space-4) 0 0;
+  padding: var(--fm-space-8) var(--fm-space-10);
+  border-radius: var(--fm-radius-sm);
+  background: rgb(var(--fm-danger-rgb) / 8%);
+  color: var(--fm-danger);
+  font-size: var(--fm-text-md);
+}
+
+.settings-page__save-row {
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-10);
+}
+
+.tracks-panel__hidden-badge {
+  flex: none;
+  font-size: var(--fm-text-2xs);
+  font-weight: var(--fm-weight-semibold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgb(var(--fm-ink-rgb) / 68%);
+  background: rgb(var(--fm-ink-rgb) / 8%);
+  border-radius: var(--fm-radius-xs);
+  padding: var(--fm-space-2) var(--fm-space-6);
+  white-space: nowrap;
+}
+
+/* Private (FR-7.1): a track entirely inside a Private location, kept with no track. A lock
+   before the word, in the same neutral chip as Pending and Hidden — it's a state, not an error. */
+.tracks-panel__private-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fm-space-2);
+}
+
+/* Trip sits beside Pending and Hidden, in the accent: it says where a track belongs, not
+   a state it's in. */
+.tracks-panel__trip-badge {
+  color: var(--fm-accent-strong);
+  background: rgb(var(--fm-accent-rgb) / 12%);
+}

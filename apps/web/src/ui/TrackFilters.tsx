@@ -45,9 +45,11 @@ function Trigger({ open, onClick, children, testId }: { open: boolean; onClick: 
 
 /**
  * A filter's dropdown: its trigger says what's set, a ✕ beside it clears it, and the panel holds
- * the control. Type's keeps its own trigger, a dot, since its value is a list.
+ * the control. Type's keeps its own trigger, a dot, since its value is a list. Library's Trip
+ * filter (library/LibraryPage.tsx) is one too, closing it once a Trip is picked: children may be a
+ * function given `close`.
  */
-function FilterDropdown({ text, set, onClear, clearLabel, panelLabel, testId, children }: { text: string; set: boolean; onClear: () => void; clearLabel: string; panelLabel: string; testId: string; children: ReactNode }) {
+export function FilterDropdown({ text, set, onClear, clearLabel, panelLabel, testId, children }: { text: string; set: boolean; onClear: () => void; clearLabel: string; panelLabel: string; testId: string; children: ReactNode | ((close: () => void) => ReactNode) }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(ref, open, setOpen);
@@ -63,7 +65,7 @@ function FilterDropdown({ text, set, onClear, clearLabel, panelLabel, testId, ch
       )}
       {open && (
         <div className="tracks-panel__type-panel tracks-panel__filter-panel" role="dialog" aria-label={panelLabel}>
-          {children}
+          {typeof children === 'function' ? children(() => setOpen(false)) : children}
         </div>
       )}
     </div>

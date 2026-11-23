@@ -15,11 +15,15 @@ Error:
       description: For a person, in the request's language when the server has it translated.
 TrackRow:
   type: object
-  required: [id, started_at, timezone, track_type, name, distance_meters, duration_seconds, moving_seconds, description, bbox, pending, edited, private, split, trips]
+  required: [id, started_at, timezone, track_type, name, distance_meters, duration_seconds, moving_seconds, description, bbox, pending, edited, private, split, trips, added_at]
   additionalProperties: false
   properties:
     id: { type: string, format: uuid }
     started_at: { type: string, format: date-time }
+    added_at:
+      type: string
+      format: date-time
+      description: When the track was added to the account.
     timezone:
       type: string
       description: The IANA zone it was recorded in; a client shows its times in it.
