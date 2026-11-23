@@ -13,7 +13,8 @@
 //
 // A job failing on something passing runs again after retryDelays, counted in jobs.retries; an
 // ingest without limit (retryDelay). attempts counts claims, so attempts - retries is the runs
-// its worker died in, which maxCrashes bounds.
+// its worker died in, which maxCrashes bounds. A run's outcome write is tried again through an
+// outage (recordOutcome), since a lost one would read as a crash.
 //
 // # Lanes
 //

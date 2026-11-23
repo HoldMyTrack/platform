@@ -243,7 +243,7 @@ The order matters:
 **The queue** (`internal/worker`, whose package comment covers the claim, the three lanes and fairness): a render or export never holds up an upload, and a new user's upload goes ahead of someone's thousandth file.
 - One account's lanes run side by side. That is safe because of `dirty_gen` (§3.6), `EnqueueRenderFog` queuing behind a claimed render, and Pending tracks staying out of composites (§4.2.5). Renders inside a job (route edit, reprivacy) take a per-account advisory lock (`lockRenders`), since a stale pass storing after a fresher one would leave its tile stale.
 - A deleted account's jobs are never claimed (§4.28). `worker_test.go` pins the fairness and lane rules.
-- A job failing on a database or storage error stays `pending` and reruns with growing delays for about 2.5 h, an ingest every 2 h after that without end (`worker/retry.go`); a bad file, a panic, a value Postgres refuses (SQLSTATE class 22 or 23), an original missing from storage, a route edit and `reprivacy` (§4.2.5) fail at once. A job whose worker died with it three times fails as abandoned.
+- A job failing on a database or storage error stays `pending` and reruns with growing delays for about 2.5 h, an ingest every 2 h after that without end (`worker/retry.go`); a bad file, a panic, a value Postgres refuses (SQLSTATE class 22 or 23), an original missing from storage, a route edit and `reprivacy` (§4.2.5) fail at once. A job whose worker died with it three times fails as abandoned. That count is inferred, claims less retries, so a run's outcome write is retried until Postgres answers, and it names the claim's `attempts`, so one delayed past the lease can't touch a job another loop has claimed since.
 
 ### 4.2 Fog of War — precomputed raster mask
 
