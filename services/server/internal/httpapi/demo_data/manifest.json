@@ -486,6 +486,35 @@
     },
     "2026-11-03 Solowheel.gpx": {
       "type": "Solowheel"
+    },
+    "2026-11-22 Solowheel.gpx": {
+      "type": "Solowheel",
+      "photos": [
+        {
+          "file": "2026-11-22 Solowheel 1.webp",
+          "thumb": "2026-11-22 Solowheel 1-thumb.webp",
+          "taken_at": "2026-11-22T21:15:06Z",
+          "route_at": "2026-11-22T21:15:06Z",
+          "width": 1536,
+          "height": 2048
+        },
+        {
+          "file": "2026-11-22 Solowheel 2.webp",
+          "thumb": "2026-11-22 Solowheel 2-thumb.webp",
+          "taken_at": "2026-11-22T21:18:24Z",
+          "route_at": "2026-11-22T21:18:24Z",
+          "width": 2048,
+          "height": 1536
+        },
+        {
+          "file": "2026-11-22 Solowheel 3.webp",
+          "thumb": "2026-11-22 Solowheel 3-thumb.webp",
+          "taken_at": "2026-11-22T21:32:14Z",
+          "route_at": "2026-11-22T21:32:14Z",
+          "width": 1536,
+          "height": 2048
+        }
+      ]
     }
   },
   "trips": [
@@ -524,7 +553,8 @@
         "2026-10-11 Solowheel.gpx",
         "2026-10-18 Lake to Lake Trail.gpx",
         "2026-11-01 Hemlock Creek Trail.gpx",
-        "2026-11-03 Solowheel.gpx"
+        "2026-11-03 Solowheel.gpx",
+        "2026-11-22 Solowheel.gpx"
       ]
     },
     {
@@ -666,6 +696,16 @@
       "osm_type": "node",
       "osm_id": 1913071336,
       "captured_at": "2026-11-03T18:58:27.332234Z"
+    },
+    {
+      "osm_type": "way",
+      "osm_id": 1181149466,
+      "captured_at": "2026-11-22T21:57:56.137786Z"
+    },
+    {
+      "osm_type": "way",
+      "osm_id": 1353959579,
+      "captured_at": "2026-11-22T22:22:15.167069Z"
     }
   ]
 }
