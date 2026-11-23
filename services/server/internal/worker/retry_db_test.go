@@ -18,8 +18,9 @@ import (
 func TestIngestFailingOnAnOutageIsRetriedWithoutEnd(t *testing.T) {
 	pool, userID := testPool(t)
 	ctx := context.Background()
+	// A store that doesn't answer.
 	srv := httptest.NewServer(storagetest.New())
-	t.Cleanup(srv.Close)
+	srv.Close()
 	store, err := storage.New(srv.URL, "test", "test", "test")
 	if err != nil {
 		t.Fatalf("store: %v", err)
@@ -59,5 +60,25 @@ func TestIngestFailingOnAnOutageIsRetriedWithoutEnd(t *testing.T) {
 	last := retryDelays[len(retryDelays)-1]
 	if wait := read(); state != "pending" || retries != n+1 || wait < last-time.Minute || wait > last {
 		t.Errorf("after %d retries: %s, retry %d, runs in %v; want pending, in about %v", n, state, retries, wait, last)
+	}
+}
+
+// An ingest whose original is missing from storage fails at once: no rerun brings it back.
+func TestIngestWithItsOriginalMissingFails(t *testing.T) {
+	pool, userID := testPool(t)
+	ctx := context.Background()
+	srv := httptest.NewServer(storagetest.New())
+	t.Cleanup(srv.Close)
+	store, err := storage.New(srv.URL, "test", "test", "test")
+	if err != nil {
+		t.Fatalf("store: %v", err)
+	}
+	payload := fmt.Sprintf(`{"user_id":%q,"source":"upload","source_detail":"x.gpx","external_id":"missing-test","raw_payload_key":"raw/%s/missing.gpx"}`, userID, userID)
+	id := insertJobOfKind(t, pool, userID, "ingest", payload, "2000-01-01T00:00:00Z", 0, nil)
+	if _, err := claimAndRunOne(ctx, pool, store, slog.New(slog.DiscardHandler)); err != nil {
+		t.Fatal(err)
+	}
+	if r := readJob(t, pool, id); r.state != "failed" {
+		t.Errorf("job %+v, want failed", r)
 	}
 }

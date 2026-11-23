@@ -88,6 +88,15 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	if s.refuseOverLimit(w, r, userIDFromContext(r.Context()), int64(len(data))) {
 		return
 	}
+	// A file imported already is answered before it is parsed.
+	if done, err := ingest.Processed(r.Context(), s.pool, userIDFromContext(r.Context()), "upload", ingest.FileID(data)); err != nil {
+		s.log.Error("upload dedupe check failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	} else if done {
+		writeJSON(w, http.StatusOK, uploadResponse{Status: "already_processed", ExternalID: ingest.FileID(data), Filename: header.Filename})
+		return
+	}
 	if !s.checkUpload(w, r, header.Filename, ext, data) {
 		return
 	}
@@ -121,19 +130,22 @@ func (s *Server) SetUploadsPerHour(n int) {
 // one holds its body, up to 17 MiB, so past s.fileWaits more are refused as busy: every client
 // sends one file at a time, so only many accounts at once reach it.
 func (s *Server) checkUpload(w http.ResponseWriter, r *http.Request, filename, ext string, data []byte) bool {
+	// A busy refusal is ours, so it doesn't count against the account's hourly uploads.
+	busy := func() bool {
+		s.uploadLimiter.refund(userIDFromContext(r.Context()))
+		httpErrorT(w, r, http.StatusTooManyRequests, "error.upload_busy")
+		return false
+	}
 	select {
 	case s.fileWaits <- struct{}{}:
 	default:
-		httpErrorT(w, r, http.StatusTooManyRequests, "error.upload_busy")
-		return false
+		return busy()
 	}
 	defer func() { <-s.fileWaits }()
 	select {
 	case s.fileChecks <- struct{}{}:
 	case <-r.Context().Done():
-		// The client left, or the server is stopping: answered all the same.
-		httpErrorT(w, r, http.StatusTooManyRequests, "error.upload_busy")
-		return false
+		return busy() // the client left, or the server is stopping: answered all the same
 	}
 	err := func() error {
 		defer func() { <-s.fileChecks }()

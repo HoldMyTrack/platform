@@ -75,8 +75,7 @@ func EnqueueRaw(ctx context.Context, db Querier, userID string, items []RawItem)
 			// sources is shared storage (RawNamed).
 			keys[i] = fmt.Sprintf("raw/%s/%s/%s%s", userID, it.Source, it.ExternalID, it.Ext)
 		} else {
-			sum := sha256.Sum256(it.Data)
-			ids[i] = hex.EncodeToString(sum[:])
+			ids[i] = FileID(it.Data)
 			keys[i] = fmt.Sprintf("raw/%s/%s%s", userID, ids[i], it.Ext)
 		}
 		out[i].ExternalID = ids[i]
@@ -138,6 +137,28 @@ func EnqueueRaw(ctx context.Context, db Querier, userID string, items []RawItem)
 		return nil, fmt.Errorf("ingest: enqueue: %w", err)
 	}
 	return out, nil
+}
+
+// FileID is an uploaded file's external id: the SHA-256 of its bytes.
+func FileID(data []byte) string {
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
+}
+
+// Processed reports whether the account already has the track source and externalID name, fully
+// ingested: EnqueueRaw's existence check for one item, which an upload runs before parsing the
+// file so a repeat costs no parse.
+func Processed(ctx context.Context, db Querier, userID, source, externalID string) (bool, error) {
+	rows, err := db.Query(ctx, `
+		SELECT 1 FROM tracks
+		WHERE user_id = $1 AND source = $2 AND external_id = $3 AND ingest_complete
+		LIMIT 1`, userID, source, externalID)
+	if err != nil {
+		return false, fmt.Errorf("ingest: dedupe check: %w", err)
+	}
+	defer rows.Close()
+	found := rows.Next()
+	return found, rows.Err()
 }
 
 // KnownExternalIDs returns which of ids the account already has from source: a track row

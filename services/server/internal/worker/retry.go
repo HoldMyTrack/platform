@@ -8,6 +8,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgconn"
 
+	"github.com/HoldMyTrack/platform/services/server/internal/storage"
+
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
@@ -24,15 +26,15 @@ type panicError struct{ value any }
 func (e panicError) Error() string { return fmt.Sprintf("panic: %v", e.value) }
 
 // retryable reports whether a job of kind that failed with err may run again. An ingest whose
-// file is at fault (its error code isn't FailInternal) fails at once, and so do a panic and a
-// value the database refuses (dataError): bugs no rerun mends, which the "jobs failed on our
-// side" alert reports. A request checks every file it accepts (ingest.Check), so the first
+// file is at fault (its error code isn't FailInternal) fails at once, and so do a panic, a
+// value the database refuses (dataError) and an object missing from storage: faults no rerun
+// mends, which the "jobs failed on our side" alert reports. A request checks every file it accepts (ingest.Check), so the first
 // meets only a job no request checked.
 // Track edits aren't retried: a failure already restores the old track and clears Pending, and
 // the user can save again. Nor is `reprivacy`, which queues its own reruns
 // (ingest.ProcessReprivacy). The kinds retried are safe to run twice.
 func retryable(kind string, err error) bool {
-	if errors.As(err, new(panicError)) || dataError(err) {
+	if errors.As(err, new(panicError)) || dataError(err) || storage.IsNotFound(err) {
 		return false
 	}
 	switch kind {

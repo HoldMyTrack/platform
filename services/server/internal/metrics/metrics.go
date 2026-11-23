@@ -170,7 +170,7 @@ func (c *queueCollector) Collect(ch chan<- prometheus.Metric) {
 	rows, err := c.pool.Query(ctx, `
 		SELECT kind, count(*) FILTER (WHERE run_after <= NOW()),
 			COALESCE(EXTRACT(EPOCH FROM NOW() - min(run_after) FILTER (WHERE run_after <= NOW())), 0)::float8,
-			count(*) FILTER (WHERE retries >= $1)
+			count(*) FILTER (WHERE retries > $1)
 		FROM jobs WHERE state = 'pending'
 		GROUP BY kind`, ScheduledRetries)
 	if err != nil {

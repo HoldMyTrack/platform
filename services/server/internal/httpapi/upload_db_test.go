@@ -488,7 +488,7 @@ func TestTracksThatCantBecomeOneAreRefusedWhenSent(t *testing.T) {
 	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", map[string]any{"source": "recorded", "tracks": []map[string]any{
 		{"external_id": "corrupt", "track_type": "walk", "points": corrupt},
 	}}), http.StatusOK, &resp)
-	if r := resp.Results[0]; r.Status != "rejected" || !strings.Contains(r.Error, "beyond any real track") {
+	if r := resp.Results[0]; r.Status != "rejected" || !strings.Contains(r.Error, "beyond any real one") {
 		t.Errorf("synced track with a corrupt elevation: %+v, want rejected as implausible", r)
 	}
 	walk := []map[string]any{ele(0), {"lat": 50.001, "lon": 10.001, "time": "2026-05-01T10:01:00Z"}}
@@ -499,10 +499,20 @@ func TestTracksThatCantBecomeOneAreRefusedWhenSent(t *testing.T) {
 		t.Errorf("synced track named with a NUL: %+v, want rejected", r)
 	}
 
-	// Past the uploads waiting to be checked, one more is refused as busy.
+	// Past the uploads waiting to be checked, one more is refused as busy, and isn't counted
+	// against the account's hourly uploads.
+	d.srv.SetUploadsPerHour(1)
+	waits := d.srv.fileWaits
 	d.srv.fileWaits = make(chan struct{})
 	if rec := d.uploadRaw(me, "ride.gpx", []byte(resumeGPX)); rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), "upload_busy") {
 		t.Errorf("upload with no room to wait: %d %s, want 429 upload_busy", rec.Code, rec.Body.String())
+	}
+	d.srv.fileWaits = waits
+	if rec := d.uploadRaw(me, "ride.gpx", []byte(resumeGPX)); rec.Code != http.StatusAccepted {
+		t.Errorf("upload after a busy refusal: %d %s, want 202", rec.Code, rec.Body.String())
+	}
+	if _, err := d.pool.Exec(ctx, `DELETE FROM jobs WHERE user_id = $1`, me.id); err != nil {
+		t.Fatal(err)
 	}
 
 	var jobs int
