@@ -46,14 +46,16 @@
 	@static path /assets/* /basemap/* /favicon.ico /favicon.svg /favicon.png /apple-touch-icon.png /icon-192.png /icon-512.png /icon-maskable-512.png /site.webmanifest /robots.txt /sitemap.xml
 	handle @static {
 		root * /srv/web
-		# The app's two entry files keep fixed names so the Go server can reference them
-		# without this build's manifest (vite.config.ts); revalidate them every time, so a
-		# deploy is never masked by a cached copy. Everything they load is content-hashed.
+		# The entries' files (the map's app.*, Library's library.*) keep fixed names so the Go
+		# server can reference them without this build's manifest (vite.config.ts); revalidate
+		# them every time, so a deploy is never masked by a cached copy. Everything they load is
+		# content-hashed.
 		header /assets/app.* Cache-Control "no-cache"
+		header /assets/library.* Cache-Control "no-cache"
 		# Every other file under /assets/ is named for its content, so it can never change.
 		@hashed {
 			path /assets/*
-			not path /assets/app.*
+			not path /assets/app.* /assets/library.*
 		}
 		header @hashed Cache-Control "public, max-age=31536000, immutable"
 		# The basemap's archive, fonts and sprites, the icons, robots.txt and the sitemap keep their

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -147,24 +146,31 @@ ORDER BY ` + order
 
 // trackPageTotalsQuery is how many tracks pass the page's filters, and the bounds a client sets
 // the filters within, over every track of the account: the distances of those with a route,
-// the first and last local dates, and the types.
+// the first and last local dates, and each type with how many tracks have it, most first.
 var trackPageTotalsQuery = `
 SELECT count(*) FILTER (WHERE ` + trackPageWhere + `),
        min(distance_meters::float8) FILTER (WHERE trajectory IS NOT NULL),
        max(distance_meters::float8) FILTER (WHERE trajectory IS NOT NULL),
        min(` + localStartedAt + `::date), max(` + localStartedAt + `::date),
-       COALESCE(array_agg(DISTINCT track_type), '{}')
+       (SELECT COALESCE(json_agg(json_build_object('type', track_type, 'count', n) ORDER BY n DESC, track_type), '[]')
+        FROM (SELECT track_type, count(*) AS n FROM tracks WHERE user_id = $1 GROUP BY track_type) t)
 FROM tracks
 WHERE user_id = $1`
 
 // trackBounds are the filters' bounds over every track of the account, null where no track
 // sets one.
 type trackBounds struct {
-	MinDistanceMeters *float64 `json:"min_distance_meters"`
-	MaxDistanceMeters *float64 `json:"max_distance_meters"`
-	FirstDate         *string  `json:"first_date"`
-	LastDate          *string  `json:"last_date"`
-	Types             []string `json:"types"`
+	MinDistanceMeters *float64    `json:"min_distance_meters"`
+	MaxDistanceMeters *float64    `json:"max_distance_meters"`
+	FirstDate         *string     `json:"first_date"`
+	LastDate          *string     `json:"last_date"`
+	Types             []typeCount `json:"types"`
+}
+
+// typeCount is a type the account's tracks use and how many do.
+type typeCount struct {
+	Type  string `json:"type"`
+	Count int    `json:"count"`
 }
 
 type trackPageResponse struct {
@@ -179,7 +185,7 @@ type trackPageResponse struct {
 
 // serveTrackPage answers `GET /v2/tracks?page=` (IMPLEMENTATION.md §4.7): one of Library's pages.
 func (s *Server) serveTrackPage(w http.ResponseWriter, r *http.Request, f trackFilter, p trackPage) {
-	resp, err := s.readTrackPage(r.Context(), f, p)
+	resp, err := s.readTrackPage(r.Context(), userIDFromContext(r.Context()), f, p)
 	if err != nil {
 		if clientGone(w, r) {
 			return
@@ -188,8 +194,10 @@ func (s *Server) serveTrackPage(w http.ResponseWriter, r *http.Request, f trackF
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	slices.Sort(resp.Bounds.Types)
-	types := slices.Clone(resp.Bounds.Types)
+	var types []string
+	for _, c := range resp.Bounds.Types {
+		types = append(types, c.Type)
+	}
 	for _, a := range resp.Tracks {
 		types = append(types, a.TrackType)
 	}
@@ -200,14 +208,14 @@ func (s *Server) serveTrackPage(w http.ResponseWriter, r *http.Request, f trackF
 
 // readTrackPage reads the page's rows and its totals in one snapshot, so `total` counts the
 // same tracks the rows were read from.
-func (s *Server) readTrackPage(ctx context.Context, f trackFilter, p trackPage) (trackPageResponse, error) {
+func (s *Server) readTrackPage(ctx context.Context, userID string, f trackFilter, p trackPage) (trackPageResponse, error) {
 	resp := trackPageResponse{Page: p.Page, PageSize: trackPageSize}
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
 	if err != nil {
 		return resp, err
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // read-only, nothing to keep
-	args := []any{userIDFromContext(ctx), f.From, f.To, f.Types, f.Trip, p.Search, p.MinDistance, p.MaxDistance}
+	args := []any{userID, f.From, f.To, f.Types, f.Trip, p.Search, p.MinDistance, p.MaxDistance}
 	rows, err := tx.Query(ctx, trackPageQuery(p.Sort, p.Desc), append(args, p.offset())...)
 	if err != nil {
 		return resp, err

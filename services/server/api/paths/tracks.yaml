@@ -74,7 +74,14 @@ tracks:
                     last_date: { type: string, format: date, nullable: true }
                     types:
                       type: array
-                      items: { type: string }
+                      description: Each type the account's tracks use, with how many do, most first.
+                      items:
+                        type: object
+                        required: [type, count]
+                        additionalProperties: false
+                        properties:
+                          type: { type: string }
+                          count: { type: integer }
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }

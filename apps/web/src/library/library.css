@@ -1,0 +1,379 @@
+@import '../ui/trackControls.css';
+
+/* The Library page's island (LibraryPage.tsx), under the Go page's header and title
+   (templates/pages/library.html, with pages.css). The filter row, toolbar and badges are the
+   Tracks panel's (ui/trackControls.css). */
+.page-main.library {
+  max-width: 1040px;
+}
+
+/* "LIBRARY · 56 tracks": the count beside the title, in the subtext's weight. */
+.library__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--fm-space-8);
+}
+
+.library__heading {
+  margin: 0;
+}
+
+.library__count::before {
+  content: '·';
+  margin-right: var(--fm-space-8);
+  color: var(--fm-ink-faint);
+}
+
+.library__count {
+  font-size: var(--fm-text-md);
+  color: var(--fm-ink-secondary);
+}
+
+/* The filters, then the search taking the rest of the line; under them on a narrow screen. */
+.library__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fm-space-8);
+  margin: var(--fm-space-12) 0;
+}
+
+.library__search {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.library__search-input {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid var(--fm-border-strong);
+  border-radius: var(--fm-radius-sm);
+  padding: var(--fm-space-8) var(--fm-space-10);
+  background: var(--fm-surface);
+  font: inherit;
+  font-size: var(--fm-text-md);
+  color: var(--fm-ink);
+}
+
+.library__filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fm-space-8);
+}
+
+/* The panel's filter row fills its column; here it sits beside Trip. */
+.library__filter-row .tracks-panel__filters {
+  flex: none;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+/* The panel pins its last filter's dropdown (Distance) to its right edge, to stay inside the
+   panel. Here that edge moves as the button's range changes during a drag, and the dropdown
+   moved under the pointer with it; there is room on the right, so it hangs from the left edge. */
+.library__filter-row .tracks-panel__filters > .tracks-panel__type-dropdown:last-child .tracks-panel__type-panel {
+  left: 0;
+  right: auto;
+}
+
+.library__trip-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.library__trip-list .trip-menu__item[aria-pressed='true'] {
+  font-weight: var(--fm-weight-semibold);
+  color: var(--fm-accent-strong);
+}
+
+.library__empty {
+  margin: var(--fm-space-12) 0;
+  font-size: var(--fm-text-md);
+  color: var(--fm-ink-secondary);
+}
+
+.library__link {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-weight: var(--fm-weight-semibold);
+  color: var(--fm-accent-strong);
+  cursor: pointer;
+}
+
+.library__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fm-text-md);
+}
+
+.library__table th {
+  padding: var(--fm-space-8) var(--fm-space-10);
+  border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 16%);
+  text-align: left;
+}
+
+.library__table td {
+  padding: var(--fm-space-10);
+  border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
+  vertical-align: top;
+}
+
+.library__table .library__cell--num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.library__cell--check,
+.library__cell--actions {
+  width: 1%;
+}
+
+/* A row's own Download and Delete, always shown as plain icons in the secondary ink, so a
+   hundred rows aren't a column of chips and a disabled one (the panel's faint ink) stands out.
+   Only the icon under the pointer takes the panel's chip; the row's tint marks the row. */
+.library__row-actions {
+  display: flex;
+  gap: var(--fm-space-6);
+}
+
+.library__row-actions :is(.tracks-panel__download, .tracks-panel__delete):not(:disabled) {
+  background: none;
+  color: var(--fm-ink-secondary);
+}
+
+.library__row-actions :is(.tracks-panel__download, .tracks-panel__delete):is(:hover, :focus-visible):not(:disabled) {
+  background: var(--fm-surface-tint-strong);
+  color: var(--fm-ink);
+}
+
+/* The Checked rows' actions, pinned to the window's foot while any row is checked. */
+.library__bar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--fm-space-16);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-6);
+  width: min(640px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  border: 1px solid var(--fm-border-strong);
+  border-radius: var(--fm-radius-md, 10px);
+  padding: var(--fm-space-10) var(--fm-space-12);
+  background: var(--fm-surface);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+}
+
+.library__bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-8);
+}
+
+.library__bar-count {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fm-text-md);
+  font-weight: var(--fm-weight-semibold);
+  color: var(--fm-ink);
+}
+
+.library__bar-message {
+  margin: 0;
+  font-size: var(--fm-text-md);
+  color: var(--fm-ink-secondary);
+}
+
+.library__bar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fm-space-6);
+  border: 0;
+  border-radius: var(--fm-radius-sm);
+  padding: var(--fm-space-6) var(--fm-space-10);
+  background: var(--fm-surface-tint);
+  font: inherit;
+  font-size: var(--fm-text-md);
+  font-weight: var(--fm-weight-semibold);
+  color: var(--fm-ink);
+  cursor: pointer;
+}
+
+.library__bar-button:hover:not(:disabled) {
+  background: var(--fm-surface-tint-strong);
+}
+
+.library__bar-button:disabled {
+  color: var(--fm-ink-faint);
+  cursor: not-allowed;
+}
+
+.library__bar-button--danger:not(:disabled) {
+  color: var(--fm-danger);
+}
+
+.library__bar-clear {
+  display: flex;
+  border: 0;
+  padding: var(--fm-space-4);
+  background: none;
+  color: var(--fm-ink-secondary);
+  cursor: pointer;
+}
+
+/* Room under the last row and the pager for the bar. */
+.library {
+  padding-bottom: 72px;
+}
+
+/* The panel's Check all: its ▾ pulls left by the toolbar's own gap (.select-menu), so the
+   same gap here. */
+.library__check-all {
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-10);
+}
+
+.library__sort {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fm-text-xs);
+  font-weight: var(--fm-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fm-ink-secondary);
+  cursor: pointer;
+}
+
+.library__sort:hover,
+th[aria-sort='ascending'] .library__sort,
+th[aria-sort='descending'] .library__sort {
+  color: var(--fm-ink);
+}
+
+.library__table th:nth-child(2) {
+  font-size: var(--fm-text-xs);
+  font-weight: var(--fm-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fm-ink-secondary);
+}
+
+/* Flex inside the cell, not on it: a flex <td> stops being a table cell, and its border and
+   background no longer fill the column. */
+.library__track-inner {
+  display: flex;
+  gap: var(--fm-space-8);
+  align-items: flex-start;
+}
+
+.library__track-inner .tracks-panel__type-icon {
+  margin-top: 1px;
+}
+
+.library__track-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-2);
+  min-width: 0;
+}
+
+.library__title {
+  font-weight: var(--fm-weight-semibold);
+  color: var(--fm-ink);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.library__title:hover {
+  color: var(--fm-accent-strong);
+  text-decoration: underline;
+}
+
+.library__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fm-space-6);
+  font-size: var(--fm-text-sm);
+  color: var(--fm-ink-secondary);
+}
+
+.library__trip-badge {
+  color: var(--fm-accent-strong);
+  background: rgb(var(--fm-accent-rgb) / 12%);
+  text-transform: none;
+}
+
+/* The row under the pointer, tinted across the table, so its numbers and icons read as its own. */
+.library__row:hover {
+  background: rgb(var(--fm-ink-rgb) / 3%);
+}
+
+.library__row--pending {
+  color: var(--fm-ink-secondary);
+}
+
+.library__pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fm-space-12);
+  margin-top: var(--fm-space-16);
+}
+
+.library__range {
+  font-size: var(--fm-text-sm);
+  color: var(--fm-ink-secondary);
+}
+
+/* Phone width: each row a block, its numbers on lines of their own under the title. */
+@media (max-width: 640px) {
+  .library__table thead {
+    display: none;
+  }
+
+  .library__table tr {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--fm-space-2) var(--fm-space-10);
+    padding: var(--fm-space-10) 0;
+    border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
+  }
+
+  .library__table td {
+    padding: 0;
+    border: 0;
+  }
+
+  .library__cell--check {
+    grid-row: 1 / span 6;
+  }
+
+  .library__table td:not(.library__cell--check) {
+    grid-column: 2;
+  }
+
+  .library__table .library__cell--num {
+    text-align: left;
+    font-size: var(--fm-text-sm);
+    color: var(--fm-ink-secondary);
+  }
+
+  .library__table .library__cell--num:empty {
+    display: none;
+  }
+
+  .library__table .library__cell--num::before {
+    content: attr(data-label) ': ';
+  }
+}

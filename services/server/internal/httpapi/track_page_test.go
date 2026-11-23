@@ -122,8 +122,11 @@ func TestTrackPage(t *testing.T) {
 	// Bounds cover every track, whatever the filters, and a track with no route sets no distance.
 	b := resp.Bounds
 	if *b.MinDistanceMeters != 1000 || *b.MaxDistanceMeters != 40000 || *b.FirstDate != "2026-05-01" || *b.LastDate != "2026-05-04" ||
-		!slices.Equal(b.Types, []string{"cycling", "walking"}) {
+		!slices.Equal(b.Types, []typeCount{{"walking", 3}, {"cycling", 1}}) {
 		t.Errorf("bounds %+v", b)
+	}
+	if resp.Tracks[0].AddedAt.IsZero() {
+		t.Error("want each row's added_at")
 	}
 	if _, ok := resp.Types["cycling"]; !ok {
 		t.Errorf("types %v: want every type in bounds described", resp.Types)

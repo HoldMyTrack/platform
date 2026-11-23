@@ -14,7 +14,7 @@ The pages coming next make the pattern worse, not better: Contacts, a Cloud-inte
 
 **HoldMyTrack is a web app made of real HTML pages.** The Go server renders every page from `html/template` templates (`services/server/internal/web`, embedded in the binary), all sharing one layout and one header template. The header's menus are `<details>` dropdowns, and its Sign out is a form POST, so a page needs no JavaScript to navigate or sign out.
 
-**React is kept for the map page only**, where it earns its place: the map, the Tracks panel, filters, the date-range picker and export are one tightly interactive WebGL surface. Import moved out of the header into the Tracks panel (its Sync tab) as part of this, because the header becomes shared page chrome, not a toolbar for the map.
+**React is kept for the map page**, where it earns its place: the map, the Tracks panel, filters, the date-range picker and export are one tightly interactive WebGL surface. A page that needs the map app's own components mounts them as a React island under its server-rendered header, as Library does (`SPEC.md` FR-5.13): its list uses the Tracks panel's filters, Check all and delete dialog, so the two can't drift. Import moved out of the header into the Tracks panel (its Sync tab) as part of this, because the header becomes shared page chrome, not a toolbar for the map.
 
 ## Alternatives considered
 

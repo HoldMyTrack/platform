@@ -33,5 +33,9 @@ func TestDevOriginsOnlyInLocalDevelopment(t *testing.T) {
 		if got != tc.allowed {
 			t.Errorf("APP_BASE_URL %s: dev origin allowed = %v, want %v", tc.appBaseURL, got, tc.allowed)
 		}
+		// An allowed origin can read a download's file name.
+		if exposed := rec.Header().Get("Access-Control-Expose-Headers") == "Content-Disposition"; exposed != tc.allowed {
+			t.Errorf("APP_BASE_URL %s: Content-Disposition exposed = %v, want %v", tc.appBaseURL, exposed, tc.allowed)
+		}
 	}
 }

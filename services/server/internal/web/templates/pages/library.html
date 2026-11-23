@@ -1,0 +1,19 @@
+{{/* The Library page (httpapi's library_page.go, docs/SPEC.md FR-5.13): the shared header, then
+     the element apps/web's Library island mounts into. Its bundle loads as the map's does
+     (templates/app/app.html): the built library.js and library.css, or Vite's dev server's. */}}
+{{define "head"}}{{if .Page.ViteDev}}
+    <script type="module" src="{{asset "vite-preamble.js"}}"></script>
+    <script type="module" src="/@vite/client"></script>
+    <script type="module" src="/src/library/main.tsx"></script>
+    {{else}}
+    <link rel="stylesheet" href="{{appAsset "library.css"}}" />
+    <script type="module" src="{{appAsset "library.js"}}"></script>
+    {{end}}{{end}}
+{{define "content"}}
+<main class="page-main library">
+  {{if not .InApp}}<a class="settings__back" href="/">{{t "common.back_to_map"}}</a>{{end}}
+  {{/* The island draws the title, with the count beside it; without a script, this one. */}}
+  <div id="library-root"></div>
+  <noscript><h1 class="profile__title">{{t "library.title"}}</h1><p class="sync__empty">{{t "library.needs_script"}}</p></noscript>
+</main>
+{{end}}
