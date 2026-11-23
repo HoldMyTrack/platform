@@ -465,6 +465,15 @@ The list holds every track whose route crosses the visible map, of all time unle
 - Setting it moves the camera once onto the tracks it matches, wherever they are; clearing it leaves the camera.
 - It filters the Tracks tab and Normal mode's routes only, not Trips, the Privacy tab or Fog.
 
+### FR-5.13 Library
+
+Every track the account keeps, as one list not tied to the map's area.
+
+- Pages of 100, ordered by start date, distance, moving time or date added, either way; tracks that tie always come in the same order. A track with no route (FR-7.1) sorts last on distance and moving time.
+- Filters: Type, Distance and Dates by the panel's rules (FR-5.2, FR-5.3, FR-5.12), one Trip (FR-13.4), and a search for text in the name or the description, ignoring case and accents. An unnamed track matches only through its description.
+- Each page says how many tracks pass the filters. The filters' bounds cover every track, whatever is filtered.
+- Pending tracks are listed with their badge (FR-5.8).
+
 ## 8. FR-6 — Track Graph (Profile)
 
 ### FR-6.1 Contribution grid

@@ -1375,7 +1375,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The signed-in account's tracks, newest first, unpaginated */
+        /**
+         * The signed-in account's tracks, newest first, unpaginated; with page, one of Library's pages
+         * @description sort, q, min_distance and max_distance need page, and are refused without it.
+         */
         get: {
             parameters: {
                 query?: {
@@ -1387,6 +1390,16 @@ export interface paths {
                     types?: components["parameters"]["FilterTypes"];
                     /** @description One Trip's tracks only. */
                     trip?: components["parameters"]["FilterTrip"];
+                    /** @description Which page of 100, from 1; past the last, no rows. */
+                    page?: number;
+                    /** @description The order, id breaking ties; a track with no route sorts last on distance and moving. */
+                    sort?: "started_desc" | "started_asc" | "added_desc" | "added_asc" | "distance_desc" | "distance_asc" | "moving_desc" | "moving_asc";
+                    /** @description Text found in the name or the description, ignoring case and accents; at most 200 characters once leading and trailing spaces are trimmed. */
+                    q?: string;
+                    /** @description Meters, inclusive; with max_distance, the Distance filter, which leaves out tracks with no route. */
+                    min_distance?: number;
+                    /** @description Meters, inclusive. */
+                    max_distance?: number;
                 };
                 header?: never;
                 path?: never;
@@ -1402,8 +1415,28 @@ export interface paths {
                     content: {
                         "application/json": {
                             tracks: components["schemas"]["TrackRow"][];
-                            /** @description Every type the rows use, once each. */
+                            /** @description Every type the rows use, once each, and with page every type in bounds. */
                             types: components["schemas"]["TrackTypes"];
+                            /** @description With page, the page. */
+                            page?: number;
+                            /** @description With page, the most rows a page holds. */
+                            page_size?: number;
+                            /** @description With page, how many tracks pass the filters. */
+                            total?: number;
+                            /** @description With page, the filters' bounds over every track of the account; null where no track sets one. */
+                            bounds?: {
+                                /** @description The shortest track with a route. */
+                                min_distance_meters: number | null;
+                                max_distance_meters: number | null;
+                                /**
+                                 * Format: date
+                                 * @description The first track's local date.
+                                 */
+                                first_date: string | null;
+                                /** Format: date */
+                                last_date: string | null;
+                                types: string[];
+                            };
                         };
                     };
                 };
