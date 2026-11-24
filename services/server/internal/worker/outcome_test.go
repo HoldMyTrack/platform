@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net"
 	"testing"
 	"time"
 
@@ -14,31 +15,36 @@ import (
 )
 
 // A run's outcome write that fails on something passing is tried again until it gets through,
-// so the run doesn't read as a crash; one Postgres refuses, or one cut off by a shutdown, isn't.
+// and for outcomeGrace once the worker is stopping, so the run doesn't read as a crash; one
+// Postgres refuses, or one the client can't send, isn't.
 func TestRecordOutcome(t *testing.T) {
-	saved := outcomeBackoff
+	savedBackoff, savedGrace := outcomeBackoff, outcomeGrace
 	outcomeBackoff = [2]time.Duration{time.Millisecond, 2 * time.Millisecond}
-	t.Cleanup(func() { outcomeBackoff = saved })
+	outcomeGrace = 20 * time.Millisecond
+	t.Cleanup(func() { outcomeBackoff, outcomeGrace = savedBackoff, savedGrace })
 	log := slog.New(slog.DiscardHandler)
-	down := errors.New("dial tcp: connection refused")
+	down := &net.OpError{Op: "dial", Net: "tcp", Err: errors.New("connection refused")}
 	updated := pgconn.NewCommandTag("UPDATE 1")
 	none := pgconn.NewCommandTag("UPDATE 0")
 
 	for _, c := range []struct {
 		name      string
 		results   []error // one per try; past the end, success
+		always    bool    // every try fails with the last of results
 		tag       pgconn.CommandTag
 		cancelled bool
-		calls     int
+		calls     int // 0: more than one, however many fit in the grace
 		owned     bool
 		fails     bool
 	}{
-		{"recorded at once", nil, updated, false, 1, true, false},
-		{"database down twice", []error{down, down}, updated, false, 3, true, false},
-		{"database starting up", []error{&pgconn.PgError{Code: "57P03"}}, updated, false, 2, true, false},
-		{"refused by Postgres", []error{&pgconn.PgError{Code: "22021"}}, updated, false, 1, false, true},
-		{"claimed again meanwhile", nil, none, false, 1, false, false},
-		{"shutting down", []error{down, down}, updated, true, 1, false, true},
+		{"recorded at once", nil, false, updated, false, 1, true, false},
+		{"database down twice", []error{down, down}, false, updated, false, 3, true, false},
+		{"database starting up", []error{&pgconn.PgError{Code: "57P03"}}, false, updated, false, 2, true, false},
+		{"refused by Postgres", []error{&pgconn.PgError{Code: "22021"}}, false, updated, false, 1, false, true},
+		{"not sent by the client", []error{errors.New("failed to encode args[2]")}, false, updated, false, 1, false, true},
+		{"claim no longer held", nil, false, none, false, 1, false, false},
+		{"stopping, database back in the grace", []error{down, down}, false, updated, true, 3, true, false},
+		{"stopping, database down through the grace", []error{down}, true, updated, true, 0, false, true},
 	} {
 		ctx, cancel := context.WithCancel(context.Background())
 		if c.cancelled {
@@ -47,6 +53,9 @@ func TestRecordOutcome(t *testing.T) {
 		calls := 0
 		exec := func(context.Context, string, ...any) (pgconn.CommandTag, error) {
 			calls++
+			if c.always {
+				return pgconn.CommandTag{}, c.results[len(c.results)-1]
+			}
 			if calls <= len(c.results) {
 				return pgconn.CommandTag{}, c.results[calls-1]
 			}
@@ -54,7 +63,11 @@ func TestRecordOutcome(t *testing.T) {
 		}
 		owned, err := recordOutcome(ctx, exec, log, 1, "test", "UPDATE")
 		cancel()
-		if calls != c.calls || owned != c.owned || (err != nil) != c.fails {
+		wrongCalls := calls != c.calls
+		if c.calls == 0 {
+			wrongCalls = calls < 2
+		}
+		if wrongCalls || owned != c.owned || (err != nil) != c.fails {
 			t.Errorf("%s: %d tries, owned %v, err %v; want %d, %v, failing %v", c.name, calls, owned, err, c.calls, c.owned, c.fails)
 		}
 	}
