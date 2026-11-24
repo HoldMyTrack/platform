@@ -24,7 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * Settings › Sync (`apps/android/docs/SPEC.md` FR-3.1): where journeys come from. Health Connect,
+ * Health Connect access (`apps/android/docs/SPEC.md` FR-3.1): where journeys come from. Health Connect,
  * off until switched on here ([SyncSources]) and then its permissions as one checklist
  * ([HealthConnectCard]). Opened from the Sync tab, and by Health Connect itself: the screen it opens as this app's permission
  * *rationale*, and from "see how this app used your data" — so it opens even signed out, which

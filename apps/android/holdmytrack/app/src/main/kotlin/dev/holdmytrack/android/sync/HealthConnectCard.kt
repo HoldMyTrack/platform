@@ -15,7 +15,7 @@ import dev.holdmytrack.android.health.HealthConnect
 import dev.holdmytrack.android.net.HoldMyTrackApi
 
 /**
- * Health Connect on Settings › Sync (`include_health_connect_card`, `SyncActivity`): its switch —
+ * Health Connect on Health Connect access (`include_health_connect_card`, `SyncActivity`): its switch —
  * off until the user turns it on ([SyncSources]) — where it stands, a dot, a title and the line
  * under it, and, while it's on, its three permissions as a checklist with the one remaining step
  * as the card's button. What is read and what it is for sits behind the info button beside the

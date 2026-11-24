@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Settings › Sync (SyncActivity): where journeys come from. Health Connect, with its switch and
-     its permissions (include_health_connect_card), and Recorded on this phone, which is always
-     on; then the way to the Sync tab, where what's on the phone is chosen and sent. -->
+<!-- Health Connect access (SyncActivity): Health Connect's switch and its permissions
+     (include_health_connect_card), then the way to the Sync tab, where its sessions are ticked
+     and sent. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

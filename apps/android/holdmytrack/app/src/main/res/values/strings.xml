@@ -256,7 +256,6 @@
     <string name="recorded_delete_confirm_title">Delete this recording?</string>
     <string name="recorded_delete_confirm_message">It hasn\'t reached your account, so this is the only copy. This can\'t be undone.</string>
 
-    <string name="sync_title">Sync</string>
     <string name="sync_rationale">HoldMyTrack reads your recorded exercise sessions and their GPS routes from Health Connect, and adds the outdoor ones to your map. It reads nothing else — no heart rate, no weight, no sleep — and it never writes anything back. Sessions recorded indoors have no route, so they are skipped.</string>
     <string name="sync_source_health_connect">Health Connect</string>
     <string name="sync_health_connect_info">About Health Connect sync</string>
@@ -368,10 +367,10 @@
     <string name="sync_check_history">History older than 30 days (optional)</string>
     <string name="sync_check_allowed">%1$s: allowed</string>
     <string name="sync_check_missing">%1$s: not allowed yet</string>
-    <string name="sync_sources_intro">Where your journeys come from. Health Connect is read only while it\'s switched on, and when you tap Load on the Sync tab.</string>
-    <string name="sync_sources_link">Sync settings</string>
-    <string name="sync_open_sources">Open Sync settings</string>
-    <string name="sync_hc_is_off">Health Connect is off. Turn it on in Sync settings to list its sessions here.</string>
+    <string name="sync_sources_intro">HoldMyTrack reads Health Connect only while it\'s switched on here: when you open Sync, or tap Refresh there.</string>
+    <string name="sync_hc_access">Health Connect access</string>
+    <string name="sync_open_sources">Open Health Connect access</string>
+    <string name="sync_hc_is_off">Health Connect is off. Turn it on in Health Connect access to list its sessions here.</string>
     <string name="sync_hc_needs_setup">Health Connect needs one more step before its sessions can be listed.</string>
     <string name="sync_refresh">Refresh</string>
     <string name="sync_loading_health_connect">Reading Health Connect…</string>

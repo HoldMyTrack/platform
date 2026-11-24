@@ -24,7 +24,7 @@ Every built feature of the app; what it won't do is in §9.
 | :-- | :-- |
 | **Session record** | A Health Connect exercise session: start and end time, an exercise type and sometimes a route. Not a sign-in session. |
 | **Candidate** | A Health Connect session with a readable route, or a recording on this phone, that the account doesn't have yet. "Waiting" means exactly this. |
-| **Source** | Where candidates come from: Health Connect, switched on and off in Settings › Sync, or Recorded on this phone, always on (FR-3.1). |
+| **Source** | Where candidates come from: Health Connect, switched on and off in Health Connect access, or Recorded on this phone, always on (FR-3.1). |
 | **Readiness** | Where the user stands in Health Connect's permission sequence, one of six states (FR-3.1). |
 
 ## 2. Actors
@@ -68,7 +68,7 @@ An unverified account (`docs/SPEC.md` FR-1.8) sees a "check your email" screen i
 - The screen asks `GET /v2/auth/me` again on every resume, and on Confirm with the field empty, and opens the map once the email is verified. A `401` signs out as in FR-1.2.
 - Confirming by the email's link in the phone's browser ends the app's session (`docs/SPEC.md` FR-1.8), so the app returns to Sign in.
 - Resend shows the server's answer as sent, its hourly limit included.
-- Settings › Sync, which Health Connect can open without the map, shows only a notice for such an account.
+- Health Connect access, which Health Connect can open without the map, shows only a notice for such an account.
 - Changing the address is web-only: the phone keeps recordings and Sync state by email (FR-5.3), which a change would orphan. A demo account is never gated.
 
 ### FR-1.5 Settings
@@ -242,7 +242,7 @@ sequenceDiagram
     A-->>U: on the map, or back on the list if ingest failed
 ```
 
-### FR-3.1 Settings › Sync — the sources and Health Connect's setup
+### FR-3.1 Health Connect access — the switch and Health Connect's setup
 
 - Health Connect's switch starts off, also on an install that granted its permissions before the switch existed, and is kept per account (FR-5.3). Off, Health Connect is read nowhere in the app.
 - Turning it on with nothing granted opens Health Connect's dialog for sessions and history; once readable, it's read at once. Turning it off forgets the last read and leaves the grants alone.
@@ -288,7 +288,7 @@ Library › Sync is the map in Normal mode with the sheet on its Sync tab, also 
 - Leaving it takes its lines off the map.
 - The demo account sees its recordings, to edit and delete, with nothing to tick, no read of Health Connect and no upload.
 - Swiping a row hides it from the list, kept on the phone per account and undoable. A hidden row is forgotten once its candidate is gone (synced, deleted or out of the window); a hidden session is forgotten only after a read that withheld nothing, so a route unreadable once keeps its place.
-- Upload (FR-3.6) heads the sheet, apart from Add, which sends the ticked sessions. When Health Connect was last read, with Refresh, heads its sessions; the recordings not sent yet have Retry; Settings › Sync (FR-3.1) is at the list's foot. Upload is gone for the demo account.
+- Upload (FR-3.6) heads the sheet, apart from Add, which sends the ticked sessions. When Health Connect was last read heads its sessions, with Refresh and the way to Health Connect access (FR-3.1); the recordings not sent yet have Retry. Upload is gone for the demo account.
 
 ### FR-3.6 Upload
 

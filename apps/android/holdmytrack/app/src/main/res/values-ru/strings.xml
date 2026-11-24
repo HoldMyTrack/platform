@@ -258,7 +258,6 @@
     <string name="recorded_delete_confirm_title">Удалить эту запись?</string>
     <string name="recorded_delete_confirm_message">Она ещё не попала в ваш аккаунт, так что это единственная копия. Это нельзя отменить.</string>
 
-    <string name="sync_title">Синхронизация</string>
     <string name="sync_rationale">HoldMyTrack читает из Health Connect ваши записанные тренировки и их GPS-маршруты и добавляет тренировки на улице на вашу карту. Больше он ничего не читает — ни пульс, ни вес, ни сон — и никогда ничего не записывает обратно. У тренировок в помещении нет маршрута, поэтому они пропускаются.</string>
     <string name="sync_source_health_connect">Health Connect</string>
     <string name="sync_health_connect_info">О синхронизации с Health Connect</string>
@@ -390,10 +389,10 @@
     <string name="sync_check_history">История старше 30 дней (по желанию)</string>
     <string name="sync_check_allowed">%1$s: разрешено</string>
     <string name="sync_check_missing">%1$s: пока не разрешено</string>
-    <string name="sync_sources_intro">Откуда берутся ваши пути. Health Connect читается, только пока он включён, и когда вы нажимаете «Загрузить» на вкладке «Синхронизация».</string>
-    <string name="sync_sources_link">Настройки синхронизации</string>
-    <string name="sync_open_sources">Открыть настройки синхронизации</string>
-    <string name="sync_hc_is_off">Health Connect выключен. Включите его в настройках синхронизации, чтобы увидеть здесь его тренировки.</string>
+    <string name="sync_sources_intro">HoldMyTrack читает Health Connect, только пока он здесь включён: когда вы открываете синхронизацию или нажимаете там «Обновить».</string>
+    <string name="sync_hc_access">Доступ к Health Connect</string>
+    <string name="sync_open_sources">Открыть «Доступ к Health Connect»</string>
+    <string name="sync_hc_is_off">Health Connect выключен. Включите его в разделе «Доступ к Health Connect», чтобы увидеть здесь его тренировки.</string>
     <string name="sync_hc_needs_setup">Health Connect нужно донастроить, прежде чем его тренировки появятся здесь.</string>
     <string name="sync_refresh">Обновить</string>
     <string name="sync_loading_health_connect">Читаем Health Connect…</string>

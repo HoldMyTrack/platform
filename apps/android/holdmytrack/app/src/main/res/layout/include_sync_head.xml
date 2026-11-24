@@ -45,8 +45,9 @@
         android:textIsSelectable="true"
         android:visibility="gone" />
 
-    <!-- Health Connect, when it was last read (sync/WaitingLoader), and Refresh, which reads it
-         again (panel/SyncSourceRow). -->
+    <!-- Health Connect, when it was last read (sync/WaitingLoader), its access (SyncActivity),
+         and Refresh, which reads it again (panel/SyncSourceRow). Switched off, or with a step to
+         set up, the notice under it leads to the same screen. -->
     <LinearLayout
         android:id="@+id/sync_source_row"
         android:layout_width="match_parent"
@@ -65,6 +66,15 @@
             android:accessibilityLiveRegion="polite"
             android:textAppearance="@style/TextAppearance.HoldMyTrack.CardRowTitle"
             tools:text="Health Connect · read Nov 24, 07:12" />
+
+        <Button
+            android:id="@+id/sync_source_access"
+            style="@style/Widget.HoldMyTrack.Button.RowIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/sync_hc_access"
+            android:tooltipText="@string/sync_hc_access"
+            app:icon="@drawable/ic_settings" />
 
         <Button
             android:id="@+id/sync_refresh"
@@ -88,7 +98,7 @@
         android:visibility="gone"
         tools:text="Health Connect sessions from the last 3 months. Older ones stay in Health Connect." />
 
-    <!-- Health Connect switched off, or not set up yet: Settings › Sync (SyncActivity). -->
+    <!-- Health Connect switched off, or not set up yet: Health Connect access (SyncActivity). -->
     <Button
         android:id="@+id/sync_source_settings"
         style="@style/Widget.HoldMyTrack.Button.Link"

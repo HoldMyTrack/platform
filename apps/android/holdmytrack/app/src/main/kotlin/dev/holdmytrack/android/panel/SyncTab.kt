@@ -65,7 +65,7 @@ import kotlinx.coroutines.launch
  * track the account has, carries an ⓘ ([SimilarTracksDialog]) — a hint, never a choice made
  * for the user. A row swiped aside is hidden ([HiddenCandidates]) —
  * Show hidden brings it back. Under the list, Upload files and Sync history, each a screen of its
- * own, and the way to Settings › Sync (`SyncActivity`), where Health Connect is switched on and
+ * own, and the way to Health Connect access (`SyncActivity`), where Health Connect is switched on and
  * set up: it isn't read here until it is ([SyncSources]).
  *
  * Health Connect is read only when the user taps **Load** ([WaitingLoader]) — or once by
@@ -196,7 +196,7 @@ class SyncTab(
         }
         upload.setOnClickListener { activity.startActivity(Intent(activity, UploadActivity::class.java)) }
         recordingsRetry.setOnClickListener { RecordingSends.send(activity, retry = true) }
-        for (link in listOf(foot.findViewById<View>(R.id.sync_sources), sourceSettings)) {
+        for (link in listOf(head.findViewById<View>(R.id.sync_source_access), sourceSettings)) {
             link.setOnClickListener { activity.startActivity(Intent(activity, SyncActivity::class.java)) }
         }
     }
@@ -226,7 +226,7 @@ class SyncTab(
         onCandidates(emptyList(), null)
     }
 
-    /** Back on screen — from Settings › Sync, a recording's Edit, or the app itself: what's kept
+    /** Back on screen — from Health Connect access, a recording's Edit, or the app itself: what's kept
      *  listed again, keeping what's ticked. Health Connect isn't read. */
     fun resume() {
         if (!showing) return

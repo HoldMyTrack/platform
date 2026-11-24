@@ -15,7 +15,7 @@ import kotlinx.coroutines.CancellationException
  * Load (`apps/android/docs/SPEC.md` FR-3.2): what Health Connect has waiting, read now
  * and kept ([WaitingStore]) until the next one. Health Connect is read only here, and only when
  * the user asks — the Sync tab's Load — or once by itself after it's switched on
- * ([SyncSources.firstLoadPending]), on Settings › Sync or the Sync tab, whichever is in front.
+ * ([SyncSources.firstLoadPending]), on Health Connect access or the Sync tab, whichever is in front.
  *
  * The sessions with a route from the last three months ([SyncCandidates.readHealthConnect]), less
  * those the account already has (`POST /v2/sync/known`) — so a reinstall or a second phone
