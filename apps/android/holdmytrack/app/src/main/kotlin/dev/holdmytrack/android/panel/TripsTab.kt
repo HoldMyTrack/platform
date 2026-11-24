@@ -40,7 +40,8 @@ import dev.holdmytrack.android.recording.RecordingTypes
  * exactly one of them open while the tab shows — the newest, until another is tapped. Opening
  * one is viewing it: `MapFragment` shows the tracks and the list of all its tracks,
  * whatever the date range ([onOpen]), and this tab lists those rows inside the folder — tap to
- * select, × to take one out of the Trip — with the whole Trip's statistics in the footer. A
+ * select, × to take one out of the Trip — with the whole Trip's statistics in the footer. A tap
+ * on the open Trip's folder folds its list away or back ([TripFold]); the Trip stays open. A
  * folder's pencil and bin rename and delete it, and its send button sends someone a copy
  * ([SendCopyDialog], FR-13.7).
  *
@@ -88,6 +89,9 @@ class TripsTab(
     private var openTrip: Trip? = null
     private var openError: String? = null
 
+    /** The Trip whose list is folded ([TripFold]); the tab opens with none. */
+    private var foldedId: String? = null
+
     /** The open Trip's rows, as the panel last drew them. */
     private var rows: List<TrackRowItem> = emptyList()
     private var rowsLoading = false
@@ -123,6 +127,7 @@ class TripsTab(
     fun start() {
         showing = true
         ready = false
+        foldedId = null
         error = null
         render()
         loadTrips()
@@ -253,8 +258,9 @@ class TripsTab(
             val open = listed.id == openId
             // The open Trip's own copy is the fresher one.
             val trip = if (open && openTrip?.id == listed.id) openTrip!! else listed
-            items += Item.Folder(trip, open)
-            if (!open) continue
+            val expanded = open && !TripFold.isFolded(foldedId, openId)
+            items += Item.Folder(trip, open, expanded)
+            if (!expanded) continue
             trip.from?.let { items += Item.From(trip.id, res.getString(R.string.trip_from, it)) }
             if (trip.description.isNotEmpty()) items += Item.Description(trip.id, trip.description)
             removeError?.let { items += Item.Note(it, failed = true) }
@@ -402,7 +408,7 @@ class TripsTab(
 
     /** What the list draws, in order: folders, the open one's description and rows, notes. */
     private sealed class Item(val key: String) {
-        data class Folder(val trip: Trip, val open: Boolean) : Item("folder:" + trip.id)
+        data class Folder(val trip: Trip, val open: Boolean, val expanded: Boolean) : Item("folder:" + trip.id)
         data class Description(val tripId: String, val text: String) : Item("description:$tripId")
         data class From(val tripId: String, val text: String) : Item("from:$tripId")
         data class Inbox(val send: TripSend, val answering: Boolean) : Item("inbox:" + send.id)
@@ -514,14 +520,21 @@ class TripsTab(
         fun bind(item: Item.Folder) {
             val trip = item.trip
             name.text = trip.name
-            // The triangle points right while folded and down once open, in the accent.
-            chevron.rotation = if (item.open) 90f else 0f
+            // The triangle points down while the list shows and right while folded; the accent,
+            // and the row's tint (bg_trip_folder), mark the open Trip, folded or not.
+            chevron.rotation = if (item.expanded) 90f else 0f
             chevron.setColorFilter(context.getColor(if (item.open) R.color.hmt_accent_strong else R.color.hmt_ink_meta))
-            toggle.isSelected = item.open
+            itemView.isSelected = item.open
+            // setSelected reaches every child; TalkBack would call the actions "selected".
+            listOf(edit, send, delete).forEach { it.isSelected = false }
             toggle.contentDescription = trip.name
-            toggle.stateDescription = res.getString(if (item.open) R.string.trip_open else R.string.trip_folded)
-            // Tapping the open Trip does nothing: there is no way to fold them all.
-            toggle.setOnClickListener { if (!item.open) onOpen(trip.id, true) }
+            toggle.stateDescription = res.getString(if (item.expanded) R.string.trip_open else R.string.trip_folded)
+            // A fold leaves the sheet where it is; opening another Trip lowers it.
+            toggle.setOnClickListener {
+                val click = TripFold.folderClick(foldedId, openId, trip.id)
+                foldedId = click.foldedId
+                if (click.open) onOpen(trip.id, true) else render()
+            }
 
             // The demo account sees both, disabled, saying why (FR-13.6), as it does
             // the rows' ×.

@@ -138,6 +138,14 @@ final class PanelTests: XCTestCase {
         shot.lifetime = .keepAlways
         add(shot)
 
+        // A tap on the open Trip folds its rows away and back; its numbers stay.
+        let folder = app.cells["tripFolder"].firstMatch
+        folder.tap()
+        XCTAssertEqual(folder.value as? String, "Folded")
+        XCTAssertTrue(app.staticTexts["tripStats"].exists, "the numbers stay under a folded Trip")
+        folder.tap()
+        XCTAssertEqual(folder.value as? String, "Open")
+
         app.tabBars.buttons["tabTracks"].tap()
         XCTAssertTrue(modes.waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["modeFog"].isSelected, "Fog again")
