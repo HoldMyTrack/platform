@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The bottom of the Sync tab's list (panel/SyncTab): a note when there's nothing to list,
-     Show hidden, then two tiles side by side: Upload files (UploadActivity), gone for an account
-     that can't upload, and Sync history (SyncHistoryActivity); and under them the way to
-     Settings › Sync (SyncActivity), where the sources are set up. -->
+<!-- The bottom of the Sync tab's list (panel/SyncTab): a note when there's nothing to list, and
+     Show hidden. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -30,84 +28,4 @@
         android:minHeight="48dp"
         android:textFontWeight="600"
         android:visibility="gone" />
-
-    <!-- Side by side, or one over the other at a large font size (LargeText.stack). -->
-    <LinearLayout
-        android:id="@+id/sync_tiles"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:baselineAligned="false"
-        android:divider="@drawable/gap_8_both"
-        android:orientation="horizontal"
-        android:showDividers="middle">
-
-        <LinearLayout
-            android:id="@+id/sync_upload"
-            style="@style/Widget.HoldMyTrack.Tile"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
-
-            <ImageView
-                style="@style/Widget.HoldMyTrack.IconTile"
-                android:contentDescription="@null"
-                android:backgroundTint="@color/hmt_accent_container"
-                android:src="@drawable/ic_upload"
-                app:tint="@color/hmt_accent_strong" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/hmt_space_10"
-                android:text="@string/sync_upload_title"
-                android:textAppearance="@style/TextAppearance.HoldMyTrack.TitleSmall" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/hmt_space_2"
-                android:text="@string/sync_upload_sub"
-                android:textAppearance="@style/TextAppearance.HoldMyTrack.BodySmall"
-                android:textColor="@color/hmt_ink_secondary" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/sync_history"
-            style="@style/Widget.HoldMyTrack.Tile"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
-
-            <ImageView
-                style="@style/Widget.HoldMyTrack.IconTile"
-                android:contentDescription="@null"
-                android:backgroundTint="@color/hmt_accent_container"
-                android:src="@drawable/ic_history"
-                app:tint="@color/hmt_accent_strong" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/hmt_space_10"
-                android:text="@string/sync_history_title"
-                android:textAppearance="@style/TextAppearance.HoldMyTrack.TitleSmall" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/hmt_space_2"
-                android:text="@string/sync_history_sub"
-                android:textAppearance="@style/TextAppearance.HoldMyTrack.BodySmall"
-                android:textColor="@color/hmt_ink_secondary" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/sync_sources"
-        style="@style/Widget.HoldMyTrack.Button.Link"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:minHeight="48dp"
-        android:text="@string/sync_sources_link" />
 </LinearLayout>

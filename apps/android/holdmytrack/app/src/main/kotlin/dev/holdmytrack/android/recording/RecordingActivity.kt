@@ -16,9 +16,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.HoldMyTrackApi
+import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.panel.TrackTypes
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import dev.holdmytrack.android.recording.db.toGpx
+import dev.holdmytrack.android.sync.RecordingSends
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -125,9 +127,14 @@ class RecordingActivity : AppCompatActivity() {
                 ),
             )
             RecordingTypes.rememberLastUsed(this@RecordingActivity, newType)
-            // A new recording stays on the phone until Sync sends it, which isn't obvious from
-            // the map it returns to. On the app's context, since this screen is finishing.
-            if (isSaveScreen) Toast.makeText(applicationContext, R.string.recording_saved_until_sync, Toast.LENGTH_LONG).show()
+            // Save was the choice: it goes now (ADR-0039), and leaves the phone once the account
+            // has it. The demo's stay on the phone, which the map it returns to doesn't show. On
+            // the app's context, since this screen is finishing.
+            RecordingSends.send(applicationContext)
+            if (isSaveScreen) {
+                val saved = if (Session.isDemo) R.string.recording_saved_demo else R.string.recording_saved_sending
+                Toast.makeText(applicationContext, saved, Toast.LENGTH_LONG).show()
+            }
             finish()
         }
     }

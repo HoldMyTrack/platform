@@ -20,6 +20,7 @@ import dev.holdmytrack.android.R
 import dev.holdmytrack.android.SyncActivity
 import dev.holdmytrack.android.UploadActivity
 import dev.holdmytrack.android.health.HealthConnect
+import dev.holdmytrack.android.imports.ImportFailureAlert
 import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.TrackOverlap
 import dev.holdmytrack.android.net.HoldMyTrackApi
@@ -28,6 +29,9 @@ import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.RecordingActivity
 import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
+import dev.holdmytrack.android.sync.ReadDue
+import dev.holdmytrack.android.sync.RecordingSendRules
+import dev.holdmytrack.android.sync.RecordingSends
 import dev.holdmytrack.android.sync.Candidate
 import dev.holdmytrack.android.sync.HealthConnectCard.Companion.isReadable
 import dev.holdmytrack.android.sync.HiddenCandidates
@@ -41,8 +45,6 @@ import dev.holdmytrack.android.sync.SyncRunner
 import dev.holdmytrack.android.sync.SyncSources
 import dev.holdmytrack.android.sync.WaitingLoader
 import dev.holdmytrack.android.sync.WaitingStore
-import dev.holdmytrack.android.ui.LargeText
-import dev.holdmytrack.android.web.WebPageActivity
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -63,7 +65,7 @@ import kotlinx.coroutines.launch
  * track the account has, carries an ⓘ ([SimilarTracksDialog]) — a hint, never a choice made
  * for the user. A row swiped aside is hidden ([HiddenCandidates]) —
  * Show hidden brings it back. Under the list, Upload files and Sync history, each a screen of its
- * own, and the way to Settings › Sync (`SyncActivity`), where Health Connect is switched on and
+ * own, and the way to Health Connect access (`SyncActivity`), where Health Connect is switched on and
  * set up: it isn't read here until it is ([SyncSources]).
  *
  * Health Connect is read only when the user taps **Load** ([WaitingLoader]) — or once by
@@ -98,16 +100,19 @@ class SyncTab(
     private val progress: View = content.findViewById(R.id.sync_progress)
     private val tickedLine: TextView = content.findViewById(R.id.sync_ticked)
     private val syncNow: Button = content.findViewById(R.id.sync_now)
-    private val loadColumn: View = content.findViewById(R.id.sync_load_column)
-    private val checkedLine: TextView = content.findViewById(R.id.sync_checked)
-    private val loadUpdates: Button = content.findViewById(R.id.sync_load)
     private val waiting = WaitingStore(activity)
 
     private val head: View = LayoutInflater.from(activity).inflate(R.layout.include_sync_head, list, false)
     private val accountNotice: TextView = head.findViewById(R.id.sync_account_notice)
     private val results: TextView = head.findViewById(R.id.sync_results)
     private val problems: TextView = head.findViewById(R.id.sync_problems)
+    private val sourceRow: View = head.findViewById(R.id.sync_source_row)
+    private val sourceStatus: TextView = head.findViewById(R.id.sync_source_status)
+    private val refresh: Button = head.findViewById(R.id.sync_refresh)
     private val sourceNote: TextView = head.findViewById(R.id.sync_source_note)
+    private val recordingsRow: View = head.findViewById(R.id.sync_recordings_row)
+    private val recordingsStatus: TextView = head.findViewById(R.id.sync_recordings_status)
+    private val recordingsRetry: Button = head.findViewById(R.id.sync_recordings_retry)
     private val sourceSettings: Button = head.findViewById(R.id.sync_source_settings)
     private val filters: View = head.findViewById(R.id.sync_filters)
     private val typeChips: ChipGroup = head.findViewById(R.id.sync_types)
@@ -116,7 +121,7 @@ class SyncTab(
     private val foot: View = LayoutInflater.from(activity).inflate(R.layout.include_sync_foot, list, false)
     private val listNote: TextView = foot.findViewById(R.id.sync_list_note)
     private val showHiddenButton: Button = foot.findViewById(R.id.sync_show_hidden)
-    private val upload: View = foot.findViewById(R.id.sync_upload)
+    private val upload: View = content.findViewById(R.id.sync_upload)
 
     private val rows = SyncRowAdapter(
         SyncRowActions(
@@ -169,7 +174,11 @@ class SyncTab(
     private var runJob: Job? = null
 
     /** A row on its way landed — it leaves the list — or failed: it's back, and says so. */
-    private val progressListener = SyncProgress.Listener(onChange = ::progressed, onLanded = {})
+    /** A landed recording has left the store: listed again without it. */
+    private val progressListener = SyncProgress.Listener(onChange = ::progressed, onLanded = { if (showing) restore(opening = false) })
+
+    /** A recording started or finished sending by itself ([RecordingSends]): the store changed. */
+    private val recordingsListener: () -> Unit = { if (showing) restore(opening = false) }
 
     /** A type described after the rows showed changes their icons ([TrackTypes]). */
     private val onTypes: () -> Unit = { list.post { render() } }
@@ -179,21 +188,17 @@ class SyncTab(
         list.adapter = ConcatAdapter(ViewAdapter(head), rows, ViewAdapter(foot))
         ItemTouchHelper(SwipeToHide()).attachToRecyclerView(list)
         syncNow.setOnClickListener { startSync() }
-        loadUpdates.setOnClickListener { loadUpdates() }
+        refresh.setOnClickListener { loadUpdates() }
         selectAll.setOnClickListener { toggleAll() }
         showHiddenButton.setOnClickListener {
             showHidden = !showHidden
             render()
         }
         upload.setOnClickListener { activity.startActivity(Intent(activity, UploadActivity::class.java)) }
-        foot.findViewById<View>(R.id.sync_history).setOnClickListener {
-            WebPageActivity.open(activity, WebPageActivity.Page.SYNC_HISTORY)
-        }
-        for (link in listOf(foot.findViewById<View>(R.id.sync_sources), sourceSettings)) {
+        recordingsRetry.setOnClickListener { RecordingSends.send(activity, retry = true) }
+        for (link in listOf(head.findViewById<View>(R.id.sync_source_access), sourceSettings)) {
             link.setOnClickListener { activity.startActivity(Intent(activity, SyncActivity::class.java)) }
         }
-        LargeText.stack(foot.findViewById(R.id.sync_tiles))
-        LargeText.stack(content.findViewById(R.id.sync_buttons))
     }
 
     /** The tab showed: what's kept listed again, nothing ticked. */
@@ -206,24 +211,26 @@ class SyncTab(
         results.visibility = View.GONE
         problems.visibility = View.GONE
         SyncProgress.addListener(progressListener)
+        RecordingSends.addListener(recordingsListener)
         SyncProgress.resume(activity)
         showFailed()
-        restore()
+        restore(opening = true)
     }
 
     /** The tab went: the map's lines go, and so does anything still reading or sending. */
     fun stop() {
         showing = false
         SyncProgress.removeListener(progressListener)
+        RecordingSends.removeListener(recordingsListener)
         pause()
         onCandidates(emptyList(), null)
     }
 
-    /** Back on screen — from Settings › Sync, a recording's Edit, or the app itself: what's kept
+    /** Back on screen — from Health Connect access, a recording's Edit, or the app itself: what's kept
      *  listed again, keeping what's ticked. Health Connect isn't read. */
     fun resume() {
         if (!showing) return
-        restore()
+        restore(opening = false)
     }
 
     /** Off screen: Health Connect's routes can't be read from the background. */
@@ -244,12 +251,12 @@ class SyncTab(
     }
 
     /**
-     * Lists what's kept: the recordings on the phone and Health Connect's sessions as Load
-     * last read them, and asks the server which tracks they overlap. Then, if Health Connect
-     * was just switched on and hasn't been read yet, it reads it — the one load the user didn't
-     * tap for ([SyncSources.firstLoadPending]).
+     * Lists what's kept: the recordings on the phone and Health Connect's sessions as they were
+     * last read, and asks the server which tracks they overlap. Then it reads Health Connect when
+     * it was just switched on ([SyncSources.firstLoadPending]), or, [opening] the tab, when it was
+     * last read a minute or more ago ([ReadDue]).
      */
-    private fun restore() {
+    private fun restore(opening: Boolean) {
         if (runJob != null || loading) return
         loadJob?.cancel()
         loadJob = scope().launch {
@@ -283,12 +290,13 @@ class SyncTab(
             render()
             frameOnce()
             loadJob = null
-            if (sources.healthConnect && sources.firstLoadPending && readiness?.isReadable() == true) loadUpdates()
+            val due = if (opening) ReadDue.onOpen(sources.firstLoadPending, checkedAt, Instant.now()) else ReadDue.onReturn(sources.firstLoadPending)
+            if (sources.healthConnect && readiness?.isReadable() == true && due) loadUpdates()
         }
     }
 
-    /** Load: Health Connect read now, and kept until the next one. A failure keeps what
-     *  was listed, and says why over the list. */
+    /** Health Connect read now, and kept until the next read: on opening ([restore]) or Refresh.
+     *  A failure keeps what was listed, and says why over the list. */
     private fun loadUpdates() {
         if (runJob != null || loading) return
         loadJob?.cancel()
@@ -391,19 +399,30 @@ class SyncTab(
         sourceNote.visibility = if (setUp != null || (!demo && readable)) View.VISIBLE else View.GONE
         sourceSettings.visibility = if (setUp != null) View.VISIBLE else View.GONE
 
-        // Load, over when it last ran — or, greyed out, why there's nothing to load from: no
-        // source switched on, or Health Connect on and not set up yet.
+        // Health Connect's row over that note: when it was last read, with Refresh.
         val healthConnect = !demo && healthConnectOn()
-        val loadable = healthConnect && readable
-        loadColumn.visibility = if (demo) View.GONE else View.VISIBLE
-        checkedLine.text = when {
-            !healthConnect -> res.getString(R.string.sync_no_source)
-            !readable -> res.getString(R.string.sync_source_not_set_up)
-            loading -> res.getString(R.string.sync_loading_health_connect)
-            else -> checkedAt?.let { res.getString(R.string.sync_last_load, PanelFormat.phoneDateTime(res, it)) }
-                ?: res.getString(R.string.sync_not_loaded_yet)
+        val sourceLine = SyncSourceRow.line(healthConnect, readable, setUpNotice = setUp != null, loading, checkedAt)
+        sourceRow.visibility = if (sourceLine == SyncSourceRow.Line.Hidden) View.GONE else View.VISIBLE
+        sourceStatus.text = when (sourceLine) {
+            SyncSourceRow.Line.Hidden -> null
+            SyncSourceRow.Line.NotSetUp -> res.getString(R.string.sync_source_not_set_up)
+            SyncSourceRow.Line.Reading -> res.getString(R.string.sync_loading_health_connect)
+            SyncSourceRow.Line.NotRead -> res.getString(R.string.sync_hc_not_read)
+            is SyncSourceRow.Line.Read -> res.getString(R.string.sync_hc_read, PanelFormat.phoneDateTime(res, sourceLine.at))
         }
-        loadUpdates.isEnabled = loadable && !loading && runJob == null
+        refresh.visibility = if (SyncSourceRow.refreshShown(sourceLine)) View.VISIBLE else View.GONE
+        refresh.isEnabled = !loading && runJob == null
+
+        // The recordings not sent yet, which send themselves; Retry sends them now.
+        val unsent = recordings.count { !processing(it) }
+        val sendingRecordings = recordings.any { RecordingSends.note(it.key) == RecordingSendRules.Note.Sending }
+        recordingsRow.visibility = if (RecordingSendRules.retryShown(demo, unsent)) View.VISIBLE else View.GONE
+        recordingsStatus.text = if (sendingRecordings) {
+            res.getString(R.string.sync_recordings_sending)
+        } else {
+            res.getQuantityString(R.plurals.sync_recordings_unsent, unsent, unsent)
+        }
+        recordingsRetry.isEnabled = !sendingRecordings
 
         val tickable = list.tickable
         filters.visibility = if (everything.isEmpty()) View.GONE else View.VISIBLE
@@ -430,8 +449,7 @@ class SyncTab(
 
         val sending = list.sendable
         val running = runJob != null
-        // Load is there even with nothing listed — greyed out, saying why, with no source set up —
-        // and Sync beside it, disabled.
+        // Add is there even with nothing listed, disabled, and with Upload beside it.
         bar.visibility = if (demo) View.GONE else View.VISIBLE
         progress.visibility = if (running || loading) View.VISIBLE else View.GONE
         // Two ticked copies of one walk: said in the bar, and still sent if the user goes on.
@@ -448,7 +466,6 @@ class SyncTab(
             )
         }
         syncNow.isEnabled = !demo && !running && sending.isNotEmpty()
-        syncNow.text = if (sending.isEmpty()) res.getString(R.string.sync_now) else res.getString(R.string.sync_send, sending.size)
 
         onCandidates(shown.filterNot(::processing), highlight)
     }
@@ -602,7 +619,11 @@ class SyncTab(
      *  known, and a recording is unsent in the store again, so the list is read again. */
     private fun progressed() {
         if (!showing) return
-        if (showFailed()) restore()
+        if (showFailed()) {
+            restore(opening = false)
+            // The server's reason for it, and for any upload that failed meanwhile.
+            ImportFailureAlert.check(activity)
+        }
         render()
     }
 
@@ -655,8 +676,15 @@ class SyncTab(
             TrackTypes.label(candidate.trackType),
             res.getString(if (candidate.isRecording) R.string.sync_origin_recorded else R.string.sync_origin_health_connect),
         ).joinToString(" · ")
-        val processing = processing(candidate)
-        val note = if (processing) res.getString(R.string.sync_row_processing) else null
+        val sendNote = if (candidate.isRecording && !Session.isDemo) RecordingSends.note(candidate.key) else null
+        val processing = processing(candidate) || sendNote == RecordingSendRules.Note.Sending
+        val note = when {
+            processing(candidate) -> res.getString(R.string.sync_row_processing)
+            sendNote == RecordingSendRules.Note.Sending -> res.getString(R.string.recording_note_sending)
+            sendNote is RecordingSendRules.Note.Refused -> res.getString(R.string.recording_note_refused, sendNote.reason)
+            sendNote == RecordingSendRules.Note.Waiting -> res.getString(R.string.recording_note_waiting)
+            else -> null
+        }
         val similarCount = if (processing) 0 else similar[candidate.key].orEmpty().size + (if (candidate.key in overlaps) 1 else 0)
         return SyncRow(
             key = candidate.key,

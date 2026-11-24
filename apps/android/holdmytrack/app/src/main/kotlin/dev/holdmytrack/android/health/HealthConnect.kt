@@ -90,7 +90,7 @@ object HealthConnect {
     suspend fun readiness(context: Context): Readiness = access(context).readiness
 
     /** Where Health Connect stands, and which of [READ_EXERCISE], [READ_EXERCISE_ROUTES] and
-     *  [READ_HISTORY] it has granted — one read, for Settings › Sync's checklist. */
+     *  [READ_HISTORY] it has granted — one read, for Health Connect access's checklist. */
     class Access(val readiness: Readiness, val granted: Set<String>)
 
     suspend fun access(context: Context): Access {

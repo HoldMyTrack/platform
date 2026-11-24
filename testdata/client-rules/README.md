@@ -21,7 +21,11 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `pendingChange` | `previous`, `now`, `awaiting`, `listed` (id sets) | `{ started, finished, left, landed, awaiting, pending }` |
 | `pendingCheck` | `pending`, `awaiting`, `listed`, `stillPending` (ids) | `{ watched, moved, finished }` |
 | `pendingBatches` | `ids`, `size` | the ids in consecutive batches of at most `size` |
+| `attachmentName` (web and Android) | `header` (a Content-Disposition value, or null) | string |
 | `deleteDone` | `status` (a DELETE's HTTP status) | boolean |
+| `libraryEmptyReason` (web and Android) | `state` (`q`, `exclude`, `distance`, `after`, `before`, `trip`), `total`, `anyTrack` | `"no_tracks"`, `"past_last"`, `"search"`, `"search_and_filters"` or `"filters"` |
+| `libraryPageQuery` (web and Android) | `state` (`sort`, `desc`, `page`, `q`, `exclude`, `distance` with `min` and `max`, null for unbounded; `after`, `before`, `trip`), `allTypes` | the query (`page`, `sort`, and `q`, `types`, `minDistance`, `maxDistance`, `from`, `to`, `trip` when set), or null |
+| `libraryPager` (web and Android) | `page`, `total`, `pageSize` | `{ from, to, prev, next }` or null |
 | `verifyAction` | `typed` (the code field's text) | `"check"` or `{ submit }` |
 | `similarSpans` | `a`, `b` (`{ start, end }`, epoch ms, maybe fractional) | boolean |
 | `profileStats` | `days` (`{ date, count, distanceMeters }`), `today`, `weeks` | `{ count, distanceMeters, activeDays, longestStreakDays, weeks }` |

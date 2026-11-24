@@ -62,7 +62,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 ### FR-2.9 The bottom bar
 
-- Tracks, Trips, the record button, Sync and You. Sync's sheet lists the recordings on the phone (FR-5.2) and leads to Upload and Sync history (FR-4.1).
+- Tracks, Trips, the record button, Sync and You. Sync's sheet lists the recordings on the phone (FR-5.2) and leads to Upload and Sync history, the web's `/sync` page.
 - You's Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). Settings › Sync lists only the record button until HealthKit sync (`ROADMAP.md`, 7c).
 
 ### FR-2.10 Photos
@@ -99,6 +99,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-5.2), except as below.
 
+- A recording waits on the Sync tab until ticked and sent; Save doesn't send it (`ROADMAP.md` 7d.4).
 - Download GPX goes to the share sheet, which saves to Files among its choices.
 
 ## 8. Non-Functional Requirements (summary)

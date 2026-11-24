@@ -1,119 +1,168 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Upload: the web's Upload menu (services/server/internal/web/static/upload.js) as a screen.
-     What can be imported, the files another app handed over waiting for Upload, Choose files…, then each file
-     queued or uploading, what the uploads had to say, and the way to the history on Sync.
-     Filled by UploadActivity.render from imports/FileImports. Laid out like the Sync screen:
-     16dp padding and gap, notes in a notice, what went wrong in the error box. -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Upload: the web's Upload menu (services/server/internal/web/static/upload.js) as a sheet over
+     the screen it opened from, on a scrim that closes it. Dragged down, it closes too
+     (UploadActivity); uploads carry on either way (imports/FileImports). What can be imported,
+     the files another app handed over waiting for Upload, Choose files…, then each file queued or
+     uploading, what the uploads had to say, and the way to Library. Notes in a notice, what went
+     wrong in the error box. -->
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/upload_scrim"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:fitsSystemWindows="true">
+    android:background="@color/hmt_sheet_scrim"
+    android:importantForAccessibility="no">
 
     <LinearLayout
+        android:id="@+id/upload_sheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:divider="@drawable/gap_16"
+        android:background="@drawable/bg_sheet"
+        android:clickable="true"
+        android:elevation="8dp"
+        android:focusable="false"
         android:orientation="vertical"
-        android:padding="@dimen/hmt_space_16"
-        android:showDividers="middle">
+        app:behavior_fitToContents="true"
+        app:behavior_hideable="true"
+        app:behavior_skipCollapsed="true"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-        <!-- Why nothing can be uploaded: signed out, email unconfirmed, or the demo. -->
-        <TextView
-            android:id="@+id/upload_account_notice"
-            style="@style/Widget.HoldMyTrack.Notice"
+        <!-- The drag handle. -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
+            android:layout_height="24dp"
+            android:importantForAccessibility="no">
 
-        <LinearLayout
-            android:id="@+id/upload_section"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:divider="@drawable/gap_8"
-            android:orientation="vertical"
-            android:showDividers="middle">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:lineHeight="20sp"
-                android:text="@string/upload_hint" />
-        </LinearLayout>
-
-        <!-- Files another app opened or shared with HoldMyTrack: listed, and sent only on Upload. -->
-        <LinearLayout
-            android:id="@+id/upload_shared"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:divider="@drawable/gap_8"
-            android:orientation="vertical"
-            android:showDividers="middle"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/upload_shared_title"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/upload_shared_names"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:lineHeight="20sp" />
-
-            <Button
-                android:id="@+id/upload_shared_send"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/upload_shared_send" />
-
-            <Button
-                android:id="@+id/upload_shared_cancel"
-                style="@style/Widget.HoldMyTrack.Button.Outlined"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/upload_shared_cancel" />
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/upload_choose"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/upload_choose" />
-
-        <!-- A row per file queued or uploading: its name, then "Queued" or "Uploading 45%". -->
-        <LinearLayout
-            android:id="@+id/upload_transfers"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:accessibilityLiveRegion="polite"
-            android:orientation="vertical" />
+            <View
+                android:layout_width="36dp"
+                android:layout_height="4dp"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_sheet_handle" />
+        </FrameLayout>
 
         <TextView
-            android:id="@+id/upload_notes"
-            style="@style/Widget.HoldMyTrack.Notice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textIsSelectable="true"
-            android:visibility="gone" />
+            android:accessibilityHeading="true"
+            android:paddingStart="@dimen/hmt_space_16"
+            android:paddingTop="@dimen/hmt_space_4"
+            android:paddingEnd="@dimen/hmt_space_16"
+            android:text="@string/upload_title"
+            android:textAppearance="@style/TextAppearance.HoldMyTrack.TitleLarge" />
 
-        <TextView
-            android:id="@+id/upload_errors"
-            style="@style/Widget.HoldMyTrack.Notice.Error"
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/upload_scroll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textIsSelectable="true"
-            android:visibility="gone" />
+            android:layout_height="wrap_content">
 
-        <!-- Once a file has gone: where its tracks can be followed as they're processed. -->
-        <Button
-            android:id="@+id/upload_see_sync"
-            style="@style/Widget.HoldMyTrack.Button.Outlined"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/upload_see_sync"
-            android:visibility="gone" />
+            <LinearLayout
+                android:id="@+id/upload_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@drawable/gap_16"
+                android:orientation="vertical"
+                android:padding="@dimen/hmt_space_16"
+                android:showDividers="middle">
+
+                <!-- Why nothing can be uploaded: signed out, email unconfirmed, or the demo. -->
+                <TextView
+                    android:id="@+id/upload_account_notice"
+                    style="@style/Widget.HoldMyTrack.Notice"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/upload_section"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:divider="@drawable/gap_8"
+                    android:orientation="vertical"
+                    android:showDividers="middle">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineHeight="20sp"
+                        android:text="@string/upload_hint" />
+                </LinearLayout>
+
+                <!-- Files another app opened or shared with HoldMyTrack: listed, and sent only on Upload. -->
+                <LinearLayout
+                    android:id="@+id/upload_shared"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:divider="@drawable/gap_8"
+                    android:orientation="vertical"
+                    android:showDividers="middle"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/upload_shared_title"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/upload_shared_names"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineHeight="20sp" />
+
+                    <Button
+                        android:id="@+id/upload_shared_send"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/upload_shared_send" />
+
+                    <Button
+                        android:id="@+id/upload_shared_cancel"
+                        style="@style/Widget.HoldMyTrack.Button.Outlined"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/upload_shared_cancel" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/upload_choose"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/upload_choose" />
+
+                <!-- A row per file queued or uploading: its name, then "Queued" or "Uploading 45%". -->
+                <LinearLayout
+                    android:id="@+id/upload_transfers"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:accessibilityLiveRegion="polite"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/upload_notes"
+                    style="@style/Widget.HoldMyTrack.Notice"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textIsSelectable="true"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/upload_errors"
+                    style="@style/Widget.HoldMyTrack.Notice.Error"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textIsSelectable="true"
+                    android:visibility="gone" />
+
+                <!-- Once a file has gone: where its tracks can be followed as they're processed. -->
+                <Button
+                    android:id="@+id/upload_see_library"
+                    style="@style/Widget.HoldMyTrack.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/upload_see_library"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
     </LinearLayout>
-</ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

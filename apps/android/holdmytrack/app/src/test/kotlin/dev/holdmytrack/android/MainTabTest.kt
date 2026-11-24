@@ -17,4 +17,13 @@ class MainTabTest {
         assertNull(MainActivity.Tab.named("MAP"))
         assertNull(MainActivity.Tab.named(""))
     }
+
+    @Test
+    fun `Back goes from Sync to Library, from another tab to Tracks, and from Tracks out of the app`() {
+        assertEquals(MainActivity.Tab.LIBRARY, MainActivity.Tab.SYNC.back)
+        for (tab in listOf(MainActivity.Tab.TRIPS, MainActivity.Tab.LIBRARY, MainActivity.Tab.YOU)) {
+            assertEquals(MainActivity.Tab.TRACKS, tab.back)
+        }
+        assertNull(MainActivity.Tab.TRACKS.back)
+    }
 }

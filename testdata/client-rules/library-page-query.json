@@ -1,0 +1,12 @@
+{
+  "rule": "libraryPageQuery",
+  "clients": ["web", "android"],
+  "description": "The GET /v2/tracks query Library (docs/SPEC.md FR-5.13) asks for its state, given every type the account has: the Type filter sent as the types kept, a Distance end at 0 or unbounded (null) left out, the sort as key_desc or key_asc. Null when every type is left out, which matches no track.",
+  "cases": [
+    { "name": "the first page as it opens", "input": { "state": { "sort": "started", "desc": true, "page": 1, "q": "", "exclude": [], "distance": null, "after": null, "before": null, "trip": null }, "allTypes": ["walking", "cycling"] }, "expected": { "page": 1, "sort": "started_desc" } },
+    { "name": "every filter on", "input": { "state": { "sort": "distance", "desc": false, "page": 3, "q": "lake", "exclude": ["walking"], "distance": { "min": 5000, "max": 20000 }, "after": "2026-01-01", "before": "2026-06-30", "trip": "t1" }, "allTypes": ["walking", "cycling", "running"] }, "expected": { "page": 3, "sort": "distance_asc", "q": "lake", "types": ["cycling", "running"], "minDistance": 5000, "maxDistance": 20000, "from": "2026-01-01", "to": "2026-06-30", "trip": "t1" } },
+    { "name": "an open end is no bound", "input": { "state": { "sort": "moving", "desc": true, "page": 1, "q": "", "exclude": [], "distance": { "min": 0, "max": null }, "after": null, "before": null, "trip": null }, "allTypes": [] }, "expected": { "page": 1, "sort": "moving_desc" } },
+    { "name": "every type left out asks for nothing", "input": { "state": { "sort": "added", "desc": true, "page": 1, "q": "", "exclude": ["walking", "cycling"], "distance": null, "after": null, "before": null, "trip": null }, "allTypes": ["walking", "cycling"] }, "expected": null },
+    { "name": "types left out before the bounds are known send no type filter", "input": { "state": { "sort": "started", "desc": true, "page": 1, "q": "", "exclude": ["walking"], "distance": null, "after": null, "before": null, "trip": null }, "allTypes": [] }, "expected": { "page": 1, "sort": "started_desc" } }
+  ]
+}

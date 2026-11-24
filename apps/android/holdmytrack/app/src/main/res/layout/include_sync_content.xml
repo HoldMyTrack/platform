@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Sync tab (panel/SyncTab): the bar — Load, which reads Health Connect, over when it last
-     did, beside Sync, which sends what's ticked, over what is — which stays put, then what's on
-     this phone and not on the map yet, one row each — the list's head (include_sync_head) above
-     them and its foot (include_sync_foot) under them, all one scrolling list. -->
+<!-- The Sync tab (panel/SyncTab): two ways in, one over the other — Upload, for a file from
+     somewhere else, then Add, which sends the Health Connect sessions ticked, over what is
+     ticked — which stay put, then what's on this phone and not on the map yet, one row each:
+     the list's head (include_sync_head), with Health Connect's row and the recordings not sent
+     yet, above them and its foot (include_sync_foot) under them, all one scrolling list. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -12,10 +13,8 @@
     android:orientation="vertical"
     android:visibility="gone">
 
-    <!-- Load and Sync side by side, each over its status — at the top, so the half-open sheet
-         shows them; one over the other at a large font size (LargeText.stack); progress under
-         them while a read or a run goes. Load (sync/WaitingLoader, the only thing that reads
-         Health Connect) is greyed out, saying why, while no source is set up. -->
+    <!-- At the top, so the half-open sheet shows both; progress under them while a read or a run
+         goes. -->
     <LinearLayout
         android:id="@+id/sync_bar"
         android:layout_width="match_parent"
@@ -23,72 +22,71 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <LinearLayout
-            android:id="@+id/sync_buttons"
+        <!-- Upload: files, once (UploadActivity). -->
+        <Button
+            android:id="@+id/sync_upload"
+            style="@style/Widget.HoldMyTrack.Button.Outlined"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/hmt_space_16"
+            android:layout_marginTop="@dimen/hmt_space_8"
+            android:layout_marginEnd="@dimen/hmt_space_16"
+            android:text="@string/sync_upload_title"
+            app:icon="@drawable/ic_upload" />
+
+        <TextView
+            android:id="@+id/sync_upload_hint"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:baselineAligned="false"
-            android:divider="@drawable/gap_8_both"
-            android:orientation="horizontal"
             android:paddingStart="@dimen/hmt_space_16"
-            android:paddingTop="@dimen/hmt_space_8"
+            android:paddingTop="@dimen/hmt_space_4"
+            android:paddingEnd="@dimen/hmt_space_16"
+            android:paddingBottom="@dimen/hmt_space_12"
+            android:text="@string/upload_hint"
+            android:textColor="@color/hmt_ink_meta"
+            android:textSize="@dimen/hmt_text_sm" />
+
+        <View
+            android:id="@+id/sync_upload_rule"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/hmt_hairline" />
+
+        <!-- Add: the ticked Health Connect sessions, and the gate rule where they're ticked. -->
+        <Button
+            android:id="@+id/sync_now"
+            style="@style/Widget.HoldMyTrack.Button.Hero"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/hmt_space_16"
+            android:layout_marginTop="@dimen/hmt_space_12"
+            android:layout_marginEnd="@dimen/hmt_space_16"
+            android:text="@string/sync_now"
+            app:icon="@drawable/ic_plus" />
+
+        <TextView
+            android:id="@+id/sync_add_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/hmt_space_16"
+            android:paddingTop="@dimen/hmt_space_4"
+            android:paddingEnd="@dimen/hmt_space_16"
+            android:text="@string/sync_add_hint"
+            android:textColor="@color/hmt_ink_meta"
+            android:textSize="@dimen/hmt_text_sm" />
+
+        <TextView
+            android:id="@+id/sync_ticked"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:accessibilityLiveRegion="polite"
+            android:paddingStart="@dimen/hmt_space_16"
+            android:paddingTop="@dimen/hmt_space_4"
             android:paddingEnd="@dimen/hmt_space_16"
             android:paddingBottom="@dimen/hmt_space_8"
-            android:showDividers="middle">
-
-            <LinearLayout
-                android:id="@+id/sync_load_column"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <Button
-                    android:id="@+id/sync_load"
-                    style="@style/Widget.HoldMyTrack.Button.Outlined"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sync_load"
-                    app:icon="@drawable/ic_download" />
-
-                <TextView
-                    android:id="@+id/sync_checked"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/hmt_space_4"
-                    android:accessibilityLiveRegion="polite"
-                    android:gravity="center_horizontal"
-                    android:textColor="@color/hmt_ink_meta"
-                    android:textSize="@dimen/hmt_text_sm"
-                    tools:text="Last load: Oct 11, 2026, 9:39 AM" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <Button
-                    android:id="@+id/sync_now"
-                    style="@style/Widget.HoldMyTrack.Button.Hero"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sync_now"
-                    app:icon="@drawable/ic_refresh_cw" />
-
-                <TextView
-                    android:id="@+id/sync_ticked"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/hmt_space_4"
-                    android:accessibilityLiveRegion="polite"
-                    android:gravity="center_horizontal"
-                    android:textColor="@color/hmt_ink_meta"
-                    android:textSize="@dimen/hmt_text_sm"
-                    tools:text="2 of 14 ticked · 18.4 km" />
-            </LinearLayout>
-        </LinearLayout>
+            android:textColor="@color/hmt_ink_meta"
+            android:textSize="@dimen/hmt_text_sm"
+            tools:text="2 of 14 ticked · 18.4 km" />
 
         <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/sync_progress"

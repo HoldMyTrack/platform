@@ -274,6 +274,30 @@ object HoldMyTrackApi {
         }
 
     /**
+     * `GET /v2/uploads/active`'s failures (root `docs/SPEC.md` FR-3.7): the imports that failed on
+     * the server's side and haven't been dismissed, newest first, each with its reason in the
+     * request's language.
+     */
+    suspend fun importFailures(): List<ImportFailure> = withContext(Dispatchers.IO) {
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/uploads/active").build()
+        val response = waitingClient.newCall(request).await()
+        val text = response.use { it.body.string() }
+        if (!response.isSuccessful) throw ApiException.from(response.code, text)
+        decode<UploadsActiveJson>(text).failures.map { ImportFailure(it.id, it.title, it.reason) }
+    }
+
+    /** `POST /v2/uploads/seen`: the failure [id] has been shown and dismissed. */
+    suspend fun dismissImportFailure(id: Long): Unit = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/uploads/seen")
+            .post(jsonBody(UploadsSeenJson(id)))
+            .build()
+        val response = waitingClient.newCall(request).await()
+        val text = response.use { it.body.string() }
+        if (!response.isSuccessful) throw ApiException.from(response.code, text)
+    }
+
+    /**
      * `POST /v2/tracks/overlaps` (root `docs/IMPLEMENTATION.md` §4.6): for each of [spans],
      * keyed by the caller, the live track it overlaps, if any — the Already on your map half
      * of the Sync tab's similar tracks (`docs/SPEC.md` FR-3.5). Keys with no overlap aren't in
@@ -319,6 +343,22 @@ object HoldMyTrackApi {
             .writeTimeout(UPLOAD_WRITE_TIMEOUT)
             .readTimeout(UPLOAD_READ_TIMEOUT)
             .build()
+    }
+
+    /**
+     * `GET /v2/tracks/gpx?ids=` — Library's Download in the app (root `docs/SPEC.md` FR-5.14): one track as GPX, or several as a zip, written to [into]. Returns
+     * the file name the server gives it. Through [uploadClient] for its long read timeout: a page of
+     * tracks is zipped before the first byte comes back.
+     */
+    suspend fun downloadTracksGpx(ids: List<String>, into: File): String = withContext(Dispatchers.IO) {
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks/gpx").toHttpUrl().newBuilder()
+            .addQueryParameter("ids", ids.joinToString(","))
+            .build()
+        uploadClient.newCall(Request.Builder().url(url).build()).await().use { response ->
+            if (!response.isSuccessful) throw ApiException.from(response.code, response.body.string())
+            into.outputStream().use { out -> response.body.byteStream().copyTo(out) }
+            AttachmentName.of(response.header("Content-Disposition"))
+        }
     }
 
     /**
@@ -689,6 +729,39 @@ object HoldMyTrackApi {
             heard(decoded.types.described())
             decoded.tracks.map { it.toTrack() }
         }, onResult)
+    }
+
+    /**
+     * `GET /v2/tracks?page=`: one page of Library (root `docs/SPEC.md` FR-5.13), as [query]
+     * asks for it.
+     */
+    suspend fun trackPage(query: TrackPageQuery): TrackPage = withContext(Dispatchers.IO) {
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks").toHttpUrl().newBuilder().apply {
+            addQueryParameter("page", query.page.toString())
+            addQueryParameter("sort", query.sort)
+            query.q?.let { addQueryParameter("q", it) }
+            query.types?.let { addQueryParameter("types", it.joinToString(",")) }
+            query.minDistance?.let { addQueryParameter("min_distance", it.toString()) }
+            query.maxDistance?.let { addQueryParameter("max_distance", it.toString()) }
+            query.from?.let { addQueryParameter("from", it) }
+            query.to?.let { addQueryParameter("to", it) }
+            query.trip?.let { addQueryParameter("trip", it) }
+        }.build()
+        val response = waitingClient.newCall(Request.Builder().url(url).build()).await()
+        val text = response.use { it.body.string() }
+        if (!response.isSuccessful) throw ApiException.from(response.code, text)
+        val decoded = decode<TrackPageJson>(text)
+        heard(decoded.types.described())
+        val bounds = decoded.bounds ?: throw IOException("no bounds in a track page")
+        TrackPage(
+            tracks = decoded.tracks.map { it.toTrack() },
+            total = decoded.total ?: 0,
+            pageSize = decoded.pageSize ?: 100,
+            distance = if (bounds.minDistanceMeters != null && bounds.maxDistanceMeters != null) bounds.minDistanceMeters to bounds.maxDistanceMeters else null,
+            firstDate = bounds.firstDate,
+            lastDate = bounds.lastDate,
+            types = bounds.types.map { it.type to it.count },
+        )
     }
 
     /**

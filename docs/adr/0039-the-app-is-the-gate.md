@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built: the Android app's list of what's on the phone to tick and send (`SPEC.md` FR-3.4, FR-3.6), Google Maps Timeline import and `.zip` and Takeout import removed, the overlap hint in place of duplicate handling on ingest (FR-3.5), and `superseded_by` gone with the copies it hid.
+Accepted. Built: the Android app's list of Health Connect sessions to tick and send (`SPEC.md` FR-3.4), and its recordings sent on Save (FR-3.6); the iOS app still sends a recording only when ticked (`apps/ios/docs/ROADMAP.md` 7d.4), Google Maps Timeline import and `.zip` and Takeout import removed, the overlap hint in place of duplicate handling on ingest (FR-3.5), and `superseded_by` gone with the copies it hid.
 
 ## Context
 
@@ -17,7 +17,8 @@ Both exist to clean up after an import the user didn't choose track by track. On
 
 ## Decision
 
-- **Every source is a gate, and nothing is ticked by default.** Each source shows what it would bring in, and the user ticks what to keep: the Android app's list of Health Connect sessions and waiting recordings, and future cloud connectors. What isn't ticked never reaches the server. Nothing starts ticked, in any source.
+- **Every source is a gate, and nothing is ticked by default.** Each source shows what it would bring in, and the user ticks what to keep: the Android app's list of Health Connect sessions, and future cloud connectors. What isn't ticked never reaches the server. Nothing starts ticked, in any source.
+- **A recording made in the app is sent when saved.** Starting it and not discarding it is the choice a tick would make, so it is never ticked. One the server refuses, or whose processing fails, waits on the phone until the user sends it again.
 - **Fog of War shows only what's kept.** It is drawn from the account's tracks and nothing else: no "fog-only" contributions from history that wasn't imported. Deleting a track takes its fog away, so the fog stays reversible.
 - **Trips are the main feature; the Tracks list stays the everyday view.** The last few days are what people look at most, so navigation and the map's opening view don't change.
 - **No guessing.** Automatic duplicate handling goes, and so does `superseded_by`. In its place is a hint: a candidate whose time overlaps a live track is marked "overlaps *Morning walk*" in the list it's picked from, and stays unticked like everything else. Ticking it anyway makes a second track. The user fixes a route with the edit tools. Idempotency stays (the content hash and `external_id`), since that's what makes a re-sync or a re-import safe.
@@ -30,6 +31,7 @@ Both exist to clean up after an import the user didn't choose track by track. On
 - **Smart default ticking.** Tick what looks like a journey (long, far from home, unusual) and leave the routine unticked. Another heuristic, wrong in both directions, and the user would have to check every row anyway.
 - **Keep automatic duplicate handling (auto-supersede).** Saves a tap when the same walk comes from two sources. With a gate, the user sees both and picks one, and the hint tells them when they're about to make a second copy. The automatic version costs a filter in every read and gets splits wrong.
 - **Keep Timeline, with a picker per trip.** Every trip listed and drawn, each ticked on its own. Real work for the coarsest routes HoldMyTrack takes in, and a season of commutes is hundreds of rows to pick a holiday's drives out of; recording the trip in the app gives a better route.
+- **Keep recordings behind a tick.** A recording waited on the phone until ticked on the Sync tab. The user had already chosen it twice, by recording and by saving, so the tick only delayed it; a false start has Discard on the save screen.
 - **Keep archives, with a preview and select step.** A two-step import on the server: parse, show, then ingest what's picked. It would hold uploads of up to 2 GB between the steps and send a preview of thousands of routes. Connectors with a picker cover the same need without the export step.
 
 ## Consequences

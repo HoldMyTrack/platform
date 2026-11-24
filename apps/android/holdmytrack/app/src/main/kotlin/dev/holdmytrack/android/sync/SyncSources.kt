@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 
 /**
- * Which sources Settings › Sync has switched on (`apps/android/docs/SPEC.md` FR-3.1), kept on this
+ * Which sources Health Connect access has switched on (`apps/android/docs/SPEC.md` FR-3.1), kept on this
  * phone per account, as [HiddenCandidates] is and in the same file. Only Health Connect has a
  * switch — recordings are the app's own and always listed — and it starts **off**, for a new
  * install and for one that had Health Connect's permissions before there was a switch: a source
@@ -26,7 +26,7 @@ class SyncSources(context: Context, account: String) {
         }
 
     /** Switched on and not read yet: the one load that runs without Load being tapped
-     *  ([WaitingLoader]), on whichever of Settings › Sync and the Sync tab is in front once Health
+     *  ([WaitingLoader]), on whichever of Health Connect access and the Sync tab is in front once Health
      *  Connect can be read. Cleared by a load that finishes, and by switching off. */
     var firstLoadPending: Boolean
         get() = prefs.getBoolean(firstLoadKey, false)

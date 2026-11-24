@@ -8,22 +8,29 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import androidx.appcompat.app.AppCompatActivity
 import dev.holdmytrack.android.imports.FileImports
 import dev.holdmytrack.android.imports.SharedFiles
 import dev.holdmytrack.android.net.Session
-import dev.holdmytrack.android.web.WebPageActivity
 
 /**
  * Upload: files made somewhere else — a watch's or an app's export — brought into the account (`apps/android/docs/SPEC.md` FR-3.6).
- * The web's Upload menu as a screen, from the Sync tab, kept apart from the Sync tab as Upload
+ * The web's Upload menu as a sheet over the screen it opened from, the Sync tab or another app, kept apart from the Sync tab as Upload
  * sits apart from Sync in the web's header: Sync is for what lives on the phone and keeps coming, this is for a file,
  * usually once. The uploads themselves are [FileImports]'s, so they carry on when this screen
- * goes; once one has gone, its tracks are followed in Sync history ([WebPageActivity]).
+ * goes; once one has gone, its tracks are in Library.
  *
  * Another app's `.gpx` or `.tcx` handed to this app to open or share lands here, listed, and
- * goes only on the user's Upload ([SharedFiles]).
+ * goes only on the user's Upload ([SharedFiles]). An activity rather than a sheet on the map, since
+ * the read grant for those files is this activity's.
+ *
+ * Dragged down, Back or a tap on the scrim closes it; the uploads carry on, so nothing holds it open.
  */
 class UploadActivity : AppCompatActivity() {
 
@@ -33,7 +40,7 @@ class UploadActivity : AppCompatActivity() {
     private lateinit var transfers: LinearLayout
     private lateinit var notes: TextView
     private lateinit var errors: TextView
-    private lateinit var seeSync: Button
+    private lateinit var seeLibrary: Button
     private lateinit var sharedSection: View
     private lateinit var sharedNames: TextView
 
@@ -50,6 +57,7 @@ class UploadActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_upload)
+        installSheet(slideIn = savedInstanceState == null)
 
         accountNotice = findViewById(R.id.upload_account_notice)
         section = findViewById(R.id.upload_section)
@@ -57,13 +65,13 @@ class UploadActivity : AppCompatActivity() {
         transfers = findViewById(R.id.upload_transfers)
         notes = findViewById(R.id.upload_notes)
         errors = findViewById(R.id.upload_errors)
-        seeSync = findViewById(R.id.upload_see_sync)
+        seeLibrary = findViewById(R.id.upload_see_library)
         sharedSection = findViewById(R.id.upload_shared)
         sharedNames = findViewById(R.id.upload_shared_names)
 
         choose.setOnClickListener { picker.launch(arrayOf("*/*")) }
-        seeSync.setOnClickListener {
-            WebPageActivity.open(this, WebPageActivity.Page.SYNC_HISTORY)
+        seeLibrary.setOnClickListener {
+            MainActivity.openTab(this, MainActivity.Tab.LIBRARY)
             finish()
         }
 
@@ -77,6 +85,47 @@ class UploadActivity : AppCompatActivity() {
         // A recreation keeps the list as it stood, the files of a later share included; the read
         // grants stay with the activity.
         setShared(savedInstanceState?.getParcelableArrayList(KEY_SHARED, Uri::class.java) ?: sharedFiles(intent))
+    }
+
+    private lateinit var sheet: BottomSheetBehavior<View>
+
+    /** The sheet over a scrim that fades with it; hidden, the activity finishes. It clears the
+     *  status bar at the top, and its content the navigation bar at the bottom. */
+    private fun installSheet(slideIn: Boolean) {
+        val scrim = findViewById<View>(R.id.upload_scrim)
+        val scrimColor = scrim.background.mutate()
+        val body = findViewById<View>(R.id.upload_body)
+        val bodyBottom = body.paddingBottom
+        sheet = BottomSheetBehavior.from(findViewById(R.id.upload_sheet))
+        sheet.state = if (slideIn) BottomSheetBehavior.STATE_HIDDEN else BottomSheetBehavior.STATE_EXPANDED
+        if (slideIn) scrimColor.alpha = 0
+        sheet.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(view: View, state: Int) {
+                if (state == BottomSheetBehavior.STATE_HIDDEN && !isFinishing) {
+                    finish()
+                    overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+                }
+            }
+
+            override fun onSlide(view: View, offset: Float) {
+                scrimColor.alpha = ((1 + offset).coerceIn(0f, 1f) * 255).toInt()
+            }
+        })
+        if (slideIn) scrim.post { sheet.state = BottomSheetBehavior.STATE_EXPANDED }
+        scrim.setOnClickListener { close() }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = close()
+        })
+        ViewCompat.setOnApplyWindowInsetsListener(scrim) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            view.setPadding(bars.left, bars.top, bars.right, 0)
+            body.updatePadding(bottom = bodyBottom + bars.bottom)
+            insets
+        }
+    }
+
+    private fun close() {
+        sheet.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -140,7 +189,7 @@ class UploadActivity : AppCompatActivity() {
                 },
             )
             accountNotice.visibility = View.VISIBLE
-            for (view in listOf(section, sharedSection, choose, transfers, notes, errors, seeSync)) view.visibility = View.GONE
+            for (view in listOf(section, sharedSection, choose, transfers, notes, errors, seeLibrary)) view.visibility = View.GONE
             return
         }
         accountNotice.visibility = View.GONE
@@ -171,7 +220,7 @@ class UploadActivity : AppCompatActivity() {
         notes.visibility = if (good.isEmpty()) View.GONE else View.VISIBLE
         errors.text = bad.joinToString("\n") { it.text }
         errors.visibility = if (bad.isEmpty()) View.GONE else View.VISIBLE
-        seeSync.visibility = if (FileImports.sentCount > 0) View.VISIBLE else View.GONE
+        seeLibrary.visibility = if (FileImports.sentCount > 0) View.VISIBLE else View.GONE
     }
 
     private companion object {

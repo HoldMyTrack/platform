@@ -33,8 +33,9 @@ data class SyncRow(
 
 /** What a Sync row offers. */
 object SyncRowRules {
-    /** Ticked to send: not hidden, not on its way already, and never for the demo account. */
-    fun tickable(row: SyncRow, demo: Boolean): Boolean = !row.hidden && !row.processing && !demo
+    /** Ticked to send: a Health Connect session, not hidden, not on its way already, and never
+     *  for the demo account. A recording sends itself. */
+    fun tickable(row: SyncRow, demo: Boolean): Boolean = !row.recording && !row.hidden && !row.processing && !demo
 
     /** Edit and Delete: a recording on the phone. One sent is off the phone already. */
     fun editable(row: SyncRow): Boolean = row.recording && !row.processing

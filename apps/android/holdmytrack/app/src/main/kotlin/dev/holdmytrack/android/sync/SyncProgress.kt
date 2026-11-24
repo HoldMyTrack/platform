@@ -2,6 +2,7 @@ package dev.holdmytrack.android.sync
 
 import android.content.Context
 import android.util.Log
+import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
@@ -40,6 +41,9 @@ object SyncProgress {
     private val inFlight = LinkedHashMap<String, Candidate>()
     private val failed = mutableListOf<Candidate>()
     private var store: RecordedTrackStore? = null
+
+    /** What a recording's row says when its job failed, in the app's language. */
+    private var failedOnServer = ""
     private var poll: Job? = null
 
     /** Sent, not on the map yet. */
@@ -72,6 +76,7 @@ object SyncProgress {
         if (!forThisAccount()) clear()
         account = Session.email
         if (store == null) store = RecordedTrackStore(context.applicationContext)
+        failedOnServer = context.getString(R.string.recording_failed_on_server)
         var added = false
         for (candidate in sent) if (inFlight.put(candidate.key, candidate) == null) added = true
         if (added) {
@@ -104,6 +109,7 @@ object SyncProgress {
         if (resumedFor == email) return
         resumedFor = email
         val store = RecordedTrackStore(context.applicationContext)
+        failedOnServer = context.getString(R.string.recording_failed_on_server)
         scope.launch {
             val sent = try {
                 store.sent()
@@ -173,6 +179,8 @@ object SyncProgress {
                 } else {
                     failed += candidate
                     recording?.let { settle(it) { store?.unmarkSent(it) } }
+                    // Not sent again by itself: the same file would likely fail the same way.
+                    if (recording != null) RecordingSends.failedOnServer(candidate.key, failedOnServer)
                 }
             }
         }

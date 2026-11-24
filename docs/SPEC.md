@@ -205,7 +205,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 
 ### FR-3.4 Mobile sync (Android / Health Connect)
 
-The Android app sends the Health Connect sessions and recordings (FR-3.6) the user ticks: nothing is ticked by default, and nothing unticked reaches the server. The app side is `apps/android/docs/SPEC.md` FR-3.
+The Android app sends the Health Connect sessions the user ticks: nothing is ticked by default, and nothing unticked reaches the server. Recordings are sent when saved (FR-3.6). The app side is `apps/android/docs/SPEC.md` FR-3.
 
 - Only a session with a route is offered (not an indoor workout, nor any Samsung Galaxy Watch session). Routes can only be read in the foreground, a Health Connect constraint. Only the session and its positions, times and altitudes are read; no other health permission is requested.
 - The server says which Health Connect records the account already has (in any state, or queued) and which are still processing. The phone keeps no record of what it sent, so a reinstall or second phone agrees, and a record whose track was deleted is offered again.
@@ -224,16 +224,16 @@ A candidate on the phone covering the same time as an account track, or another 
 
 ### FR-3.6 In-app GPS recording (Android)
 
-The Android app records GPS-only tracks on the phone; nothing reaches the server until the user ticks a recording and sends it (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
+The Android app records GPS-only tracks on the phone and sends each one the user saves; a discarded one never reaches the server (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
 
 - Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. It is refused or taken by the rules of FR-3.4.
 - It is the only path that sets a name and description at ingest.
-- A recording the server takes is deleted from the phone once it is on the map, and listed again if its ingest fails; a refused one stays.
+- A recording the server takes is deleted from the phone once it is on the map; a refused one, or one whose ingest fails, stays on the phone to send again.
 
 ### FR-3.7 The Sync page
 
-- `/sync` lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed. The web doesn't link it: it is the Android app's Sync history.
-- A failed import is listed in the header's Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened.
+- `/sync` lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed. The web doesn't link it: it is the iOS app's Sync history.
+- A failed import is listed in the header's Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened. The Android app shows it in an alert, which dismisses it (`apps/android/docs/SPEC.md` FR-3.4).
 
 ### FR-3.8 A track's own timezone
 
@@ -556,7 +556,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-9.4).
 
 ### FR-9.6 Pages inside the Android app
 
-- The Android app shows Settings, Profile, the Sync page and About as web pages; the `hmt_app` cookie drops their header and footer.
+- The Android app shows Settings, Profile and About as web pages; the `hmt_app` cookie drops their header and footer.
 - For the app, pages leave out what the app has natively. Signed out, the app's About is cached apart from the browser's.
 - The cookie's value names the app, `android` or `ios`, and a page names that platform's app and health store; any value but `ios` counts as Android.
 

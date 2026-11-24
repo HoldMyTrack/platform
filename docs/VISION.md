@@ -114,7 +114,7 @@ The mobile app can also originate a track, for someone with no watch running who
 
 **Photos are the one non-geographic thing kept, because the user adds them.** Each sits on the point of its route where it was taken, kept as a resized copy with EXIF stripped; the original stays wherever the user keeps it (ADR-0024).
 
-**Only what the user keeps comes in, and nothing is guessed for them.** Every source is a gate with nothing ticked to start. Fog of War clears only where kept journeys went. An overlapping candidate is marked, never merged or hidden, and routes are fixed with the edit tools rather than rules on import (ADR-0039).
+**Only what the user keeps comes in, and nothing is guessed for them.** Every source is a gate with nothing ticked to start, and a recording made in the app comes in when saved. Fog of War clears only where kept journeys went. An overlapping candidate is marked, never merged or hidden, and routes are fixed with the edit tools rather than rules on import (ADR-0039).
 
 **The track graph is private**: motivation from your own history, visible to nobody else. A shareable version would be a §5.1 decision.
 

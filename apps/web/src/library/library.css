@@ -336,8 +336,27 @@ th[aria-sort='descending'] .library__sort {
   color: var(--fm-ink-secondary);
 }
 
-/* Phone width: each row a block, its numbers on lines of their own under the title. */
+/* Phone width: each row a block, its numbers on lines of their own under the title. A filter's
+   panel spans the filter row instead of hanging from its trigger, which leaves no room to its
+   right: it stays on screen, and still doesn't move during a drag. */
 @media (max-width: 640px) {
+  .library__filter-row {
+    position: relative;
+  }
+
+  .library__filter-row .tracks-panel__type-dropdown {
+    position: static;
+  }
+
+  .library__filter-row .tracks-panel__type-panel,
+  .library__filter-row .tracks-panel__filters > .tracks-panel__type-dropdown:last-child .tracks-panel__type-panel,
+  .library__filter-row .tracks-panel__filters .tracks-panel__filter-panel {
+    left: 0;
+    right: 0;
+    width: auto;
+    min-width: 0;
+  }
+
   .library__table thead {
     display: none;
   }

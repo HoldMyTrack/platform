@@ -2,8 +2,8 @@
 <!-- The map's Tracks sheet (panel/TracksPanel.kt): a bottom sheet the user drags between
      collapsed — its head alone — half the map and nearly all of it (BottomSheetBehavior; the
      expanded top stops under the map's top row). Its head is the date range on the Tracks
-     tab — the range as a heading, ‹ › to move it, and the day scrubber under them — or the
-     title of the Trips or Sync content showing instead. Everything under the
+     tab — the range as a heading, ‹ › to move it, and the day scrubber under them. The other
+     tabs have no head of their own, the bottom bar naming them. Everything under the
      head stays laid out while collapsed, just covered, so the list keeps its scroll position.
      Clickable, so a touch on it never reaches the map underneath. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -78,41 +78,6 @@
 
         <!-- The selected track, in the range's place while one is selected. -->
         <include layout="@layout/include_track_card" />
-
-        <!-- The Trips and Sync head: the content's title. -->
-        <LinearLayout
-            android:id="@+id/panel_title_head"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:orientation="horizontal"
-            android:paddingStart="@dimen/hmt_space_16"
-            android:paddingEnd="@dimen/hmt_space_4"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/panel_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:accessibilityHeading="true"
-                android:textAppearance="@style/TextAppearance.HoldMyTrack.TitleLarge"
-                tools:text="Trips" />
-        </LinearLayout>
-
-        <!-- What the Trips or Sync content is (.tracks-panel__subtext);
-             the Tracks tab has none, its range and filters saying what's listed. -->
-        <TextView
-            android:id="@+id/panel_subtext"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="@dimen/hmt_space_16"
-            android:paddingEnd="@dimen/hmt_space_16"
-            android:textColor="@color/hmt_ink_meta"
-            android:textSize="@dimen/hmt_text_sm"
-            android:visibility="gone"
-            tools:text="Hand-picked sets of your tracks. Only you can see them." />
     </LinearLayout>
 
     <View
@@ -349,5 +314,8 @@
 
         <!-- The Sync tab: what's on this phone, waiting, to tick and send (panel/SyncTab). -->
         <include layout="@layout/include_sync_content" />
+
+        <!-- The Library tab: every track the account keeps (panel/LibraryTab). -->
+        <include layout="@layout/include_library_content" />
     </FrameLayout>
 </LinearLayout>

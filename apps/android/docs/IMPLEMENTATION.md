@@ -48,7 +48,7 @@ stateDiagram-v2
 
 ### 1.3 Tabs
 
-Tracks, Trips and Sync are one `MapFragment` whose panel switches tabs; You is `YouFragment`. `MainActivity` shows and hides them, never replaces them, so the `MapView`, its camera, its layers and a recording survive a trip to You.
+Tracks, Trips, Library and Sync are one `MapFragment` whose panel switches tabs; You is `YouFragment`. `MainActivity` shows and hides them, never replaces them, so the `MapView`, its camera, its layers and a recording survive a trip to You.
 
 **An intent that asks `MainActivity` for something goes through `MainActivity.fromApp`**, the unexported alias: the activity is exported for the launcher, so it drops the action and extras of any launch addressed to it directly (`MainEntry`).
 
@@ -58,7 +58,7 @@ Every screen draws edge-to-edge: Android 15+ does at `targetSdk` 35+, and `HoldM
 
 ### 1.4 The web's pages in a WebView
 
-Settings, Track graph & trends, Sync history and About are the server's pages in `web/WebPageActivity` (ADR-0042); how the server renders a page for the app is root `docs/IMPLEMENTATION.md` §4.19.
+Settings, Track graph & trends and About are the server's pages in `web/WebPageActivity` (ADR-0042); how the server renders a page for the app is root `docs/IMPLEMENTATION.md` §4.19. Library is native (`panel/LibraryTab`): the rules it applies itself are `panel/LibraryRules`, which runs the web's cases (`testdata/client-rules/library-*.json`), and its Download fetches `GET /v2/tracks/gpx` into the cache and saves through `CreateDocument` (`panel/LibraryDownload`), whose launchers are registered with `MapFragment`, since they can't be once it has started.
 
 - **Signed in by cookie.** WebView requests never pass through the app's `OkHttpClient`, so the session, the in-app marker and the language are written into the WebView's cookie store before every load. A header would reach only the first request; a cookie rides on every link, form POST and redirect.
 - **`route` acts on where a navigation goes**, decided by `web/WebRoute` from the link's parts (`testdata/client-rules/web-page-route.json`): the page's own path stays, `/` opens the native map, the sign-in pages finish and leave the map's session check to act, anything else opens in a Custom Tab. Trap: `shouldOverrideUrlLoading` is never offered a POST or reliably the redirect after one, so `route` runs again in `onPageStarted`. That is how first-run Settings' save, redirecting to `/`, reaches the map; `route` reads the session first, because the map gates on a Country only the server has heard of. `onPageStarted` isn't told the method, so `shouldInterceptRequest` records the main frame's POST and `onPageStarted` takes it: a form the server refuses, answering with the page at the form's path, stays in the page.
@@ -169,7 +169,7 @@ The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Con
 
 ### 4.3 Sending and landing
 
-- **`sync/SyncRunner.send`** sends sessions in batches below the server's cap, then each recording alone, deleting it from the phone once taken. The JSON is built from the route as read, never the simplified line. A failed request stops the run, leaving the rest ticked.
+- **`sync/SyncRunner.send`** sends sessions in batches below the server's cap, then each recording alone, deleting it from the phone once taken. The Sync tab's Add hands it ticked sessions; `sync/RecordingSends` hands it the unsent recordings, process-wide like `imports/FileImports`, on Save, on every `MainActivity` resume and on Retry. It keeps what the server refused only in memory, so a refusal is asked for again after a restart but not on every resume. The JSON is built from the route as read, never the simplified line. A failed request stops the run, leaving the rest ticked.
 - **`sync/SyncProgress` is process-wide**: it reads nothing from Health Connect, so it outlives the tab. While it holds anything and has a listener it polls `/v2/sync/known` (`syncOutcome`). A sent recording stays in the store, marked, until it lands or fails; `resume` takes marked rows back after a restart. **A landing refetches the tracks tile at once**, since the tile version moves only after the coverage render that follows ingest.
 - **The candidates on the map**: the account's routes step aside on the Sync tab. `map/Simplify` thins each route for drawing only, with speeds by the server's track-metrics rule on the coarser line, so a candidate's pace bands are smoother than the synced track's.
 

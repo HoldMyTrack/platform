@@ -137,6 +137,29 @@ internal data class TrackRowJson(
     val trips: List<TripRefJson>,
 )
 
+/** `GET /v2/tracks` with `page`: one page of Library (root `docs/SPEC.md` FR-5.13). */
+@Serializable
+internal data class TrackPageJson(
+    val tracks: List<TrackRowJson>,
+    val types: Map<String, TrackTypeJson> = emptyMap(),
+    @SerialName("page_size") val pageSize: Int? = null,
+    val total: Int? = null,
+    val bounds: TrackPageBoundsJson? = null,
+)
+
+/** The filters' bounds over every track of the account; null where no track sets one. */
+@Serializable
+internal data class TrackPageBoundsJson(
+    @SerialName("min_distance_meters") val minDistanceMeters: Double?,
+    @SerialName("max_distance_meters") val maxDistanceMeters: Double?,
+    @SerialName("first_date") val firstDate: String?,
+    @SerialName("last_date") val lastDate: String?,
+    val types: List<TypeCountJson>,
+)
+
+@Serializable
+internal data class TypeCountJson(val type: String, val count: Int)
+
 @Serializable
 internal data class TracksJson(
     val tracks: List<TrackRowJson>,
@@ -487,3 +510,15 @@ internal data class SpotCapturesJson(val captures: List<SpotCaptureJson>)
 
 @Serializable
 internal data class SpotCaptureRequestJson(val lat: Double, val lon: Double)
+
+/** One of `GET /v2/uploads/active`'s unseen failures: an import that failed on the server's side. */
+@Serializable
+internal data class ImportFailureJson(val id: Long, val title: String, val reason: String)
+
+/** `GET /v2/uploads/active`, read for its failures only: what's still processing is the web's. */
+@Serializable
+internal data class UploadsActiveJson(val failures: List<ImportFailureJson> = emptyList())
+
+/** `POST /v2/uploads/seen`: the failure dismissed. */
+@Serializable
+internal data class UploadsSeenJson(val id: Long)

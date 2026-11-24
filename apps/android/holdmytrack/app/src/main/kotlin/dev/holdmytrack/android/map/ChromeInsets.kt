@@ -67,6 +67,7 @@ class ChromeInsets(
             (topBar.layoutParams as MarginLayoutParams).topMargin = barTopMargin + bars.top
             topBar.requestLayout()
             systemBarInsetTop = bars.top
+            fitSheet(root.height)
             applyCompassMargin()
             // The keyboard rising or falling moves the editors with it.
             keyboard = WindowInsetsCompat.toWindowInsetsCompat(insets, root).getInsets(WindowInsetsCompat.Type.ime()).bottom
@@ -88,20 +89,26 @@ class ChromeInsets(
             if (bottom - top != oldBottom - oldTop) placeEditorsAfterLayout()
         }
         // The compass sits below the top row and any notice under it, whose heights are only
-        // known once they're laid out; the expanded sheet stops under the row likewise. The
-        // attribution follows the sheet's head (`MapFragment.onSheetChanged`).
+        // known once they're laid out. The attribution follows the sheet's head
+        // (`MapFragment.onSheetChanged`).
         topChrome.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             applyCompassMargin()
             if (bottom - top != oldBottom - oldTop) placeEditorsAfterLayout()
-            panel.setExpandedOffset(topBar.bottom + root.resources.getDimensionPixelSize(R.dimen.hmt_space_8), root.height)
         }
         root.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop) {
-                panel.setExpandedOffset(topBar.bottom + root.resources.getDimensionPixelSize(R.dimen.hmt_space_8), bottom - top)
+                fitSheet(bottom - top)
                 // An editor opens before the bottom bar hides, so the map grows after it's placed.
                 placeEditorsAfterLayout()
             }
         }
+    }
+
+    /** Lets the expanded sheet reach the status bar, over the map's top row, in a map [height] tall:
+     *  a long list is read at full height, and the row's buttons come back as the sheet drops. */
+    private fun fitSheet(height: Int) {
+        // Before the first layout the map has no height, and the layout listener comes next.
+        if (height > 0) panel.setExpandedOffset(systemBarInsetTop, height)
     }
 
     /** Moves MapLibre's compass below the status bar and the top row, whose rail shares its top-end corner. */

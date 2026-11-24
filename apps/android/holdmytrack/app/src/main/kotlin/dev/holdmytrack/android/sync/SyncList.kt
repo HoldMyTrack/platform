@@ -4,7 +4,9 @@ package dev.holdmytrack.android.sync
  * What the Sync tab lists and offers, as values (`apps/android/docs/SPEC.md` FR-3.2, FR-3.4).
  * Sent and not landed yet ([inFlight]): the server knows such a session and a recording is off
  * the phone, so neither is in [SyncCandidates.listed]; they're listed from [SyncProgress]
- * instead, never tickable, and not drawn, since each is drawn as itself once it lands.
+ * instead, never tickable, and not drawn, since each is drawn as itself once it lands. A
+ * recording is listed while it's on the phone, and never tickable either: it sends itself
+ * ([RecordingSends]).
  */
 data class SyncList(
     /** Everything waiting, hidden or not, and what's on its way, newest first. */
@@ -13,7 +15,8 @@ data class SyncList(
     val shown: List<Candidate>,
     /** What the map draws dashed. */
     val drawn: List<Candidate>,
-    /** What Select all and the count offer: shown, not hidden, not on its way. */
+    /** What Select all and the count offer: shown Health Connect sessions, not hidden, not on
+     *  their way. */
     val tickable: List<Candidate>,
     /** What Sync sends: tickable and ticked. */
     val sendable: List<Candidate>,
@@ -36,7 +39,7 @@ data class SyncList(
             val everything = withInFlight(SyncCandidates.listed(sessions, known, recordings, hidden, showHidden = true))
             val shown = withInFlight(SyncCandidates.listed(sessions, known, recordings, hidden, showHidden))
                 .filter { types.isEmpty() || it.trackType in types }
-            val tickable = shown.filter { it.key !in hidden && it.key !in onItsWay }
+            val tickable = shown.filter { !it.isRecording && it.key !in hidden && it.key !in onItsWay }
             return SyncList(
                 everything = everything,
                 shown = shown,

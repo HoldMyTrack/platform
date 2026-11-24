@@ -55,6 +55,7 @@ class WireContractTest {
         request(EmailJson.serializer().descriptor, "/trips/{id}/send", "post")
 
         response(TracksJson.serializer().descriptor, "/tracks", "get")
+        response(TrackPageJson.serializer().descriptor, "/tracks", "get")
         response(AreaTracksJson.serializer().descriptor, "/tracks/area", "get")
         response(TracksJson.serializer().descriptor, "/tracks/{id}", "get")
         response(TrackTypesJson.serializer().descriptor, "/track-types", "get")
@@ -76,6 +77,8 @@ class WireContractTest {
         response(SyncResultsJson.serializer().descriptor, "/sync/tracks", "post")
         request(SyncKnownRequestJson.serializer().descriptor, "/sync/known", "post")
         response(SyncKnownJson.serializer().descriptor, "/sync/known", "post")
+        response(UploadsActiveJson.serializer().descriptor, "/uploads/active", "get")
+        request(UploadsSeenJson.serializer().descriptor, "/uploads/seen", "post")
 
         response(ListSerializer(PrivateLocationJson.serializer()).descriptor, "/private-locations", "get")
         response(PrivateLocationJson.serializer().descriptor, "/private-locations", "post", 201)
