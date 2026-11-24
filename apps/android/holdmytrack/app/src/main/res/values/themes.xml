@@ -858,19 +858,6 @@
         <item name="android:textAppearance">@style/TextAppearance.HoldMyTrack.LabelLarge</item>
     </style>
 
-    <!-- A tile (Sync's Upload files and Sync history): a card, its icon in an accent tile over a
-         title and a line under it. -->
-    <style name="Widget.HoldMyTrack.Tile" parent="">
-        <item name="android:background">@drawable/bg_section_card</item>
-        <item name="android:foreground">?attr/selectableItemBackground</item>
-        <item name="android:clipToOutline">true</item>
-        <item name="android:orientation">vertical</item>
-        <item name="android:padding">@dimen/hmt_space_16</item>
-        <item name="android:minHeight">120dp</item>
-        <item name="android:clickable">true</item>
-        <item name="android:focusable">true</item>
-    </style>
-
     <!-- A link to one of the web's pages (the You tab's About, Help, Contacts): a short card,
          its icon over its label. -->
     <style name="Widget.HoldMyTrack.WebTile" parent="">

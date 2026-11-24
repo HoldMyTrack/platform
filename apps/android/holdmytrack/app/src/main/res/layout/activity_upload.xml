@@ -109,11 +109,11 @@
 
         <!-- Once a file has gone: where its tracks can be followed as they're processed. -->
         <Button
-            android:id="@+id/upload_see_sync"
+            android:id="@+id/upload_see_library"
             style="@style/Widget.HoldMyTrack.Button.Outlined"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/upload_see_sync"
+            android:text="@string/upload_see_library"
             android:visibility="gone" />
     </LinearLayout>
 </ScrollView>

@@ -151,7 +151,7 @@ The Tracks tab lists the visible area under Dates, as the web's does (`docs/SPEC
 
 ### FR-2.7 Tracks panel
 
-The web's Tracks panel (`docs/SPEC.md` FR-5) as a sheet over the map, with Tracks and Trips tabs. Normal mode only, not while recording.
+The web's Tracks panel (`docs/SPEC.md` FR-5) as a sheet over the map, with Tracks and Trips tabs. Normal mode only, not while recording. Every tab's sheet, Sync's too, opens up to the status bar, over the map's top row.
 
 - Rows, badges, the Type and Distance filters and Pending follow `docs/SPEC.md` FR-5.1–FR-5.3 and FR-5.8. The Distance filter is offered only with two or more distinct distances.
 - A tap on a row, or on a route within 14 dp, focuses that track and fits the camera to it; one at a time.
@@ -277,7 +277,8 @@ The Sync sheet lists every candidate and draws it on the map.
 - Sync sends the ticked rows shown, and only them: Health Connect's in batches of at most 25 tracks or 20,000 points under `healthconnect`, then each recording on its own under `recorded` (FR-5.2).
 - Health Connect types map onto HoldMyTrack's (`biking` becomes `cycling`, `running_treadmill` becomes `running`), so the Type filter matches across sources.
 - The route sent is the one Health Connect holds, read again by id, never the line drawn. A session gone from Health Connect, or whose route it withholds, is refused with the reason. Elevation goes only where a point has it. A route over 50,000 points is refused by the app.
-- What the server took or already had is unticked (a recording leaves the phone) and stays listed as being added, not tickable, until its ingest ends; the app asks every 2 seconds on any tab. Landed, it leaves the list and the map refreshes; failed, it's back on the list, a recording back on the phone, pointing to Sync history.
+- What the server took or already had is unticked (a recording leaves the phone) and stays listed as being added, not tickable, until its ingest ends; the app asks every 2 seconds on any tab. Landed, it leaves the list and the map refreshes; failed on the server's side, it's back on the list to send again, a recording back on the phone.
+- An alert lists the imports that failed on the server's side, files and synced tracks alike, each with the server's reason; closing it dismisses them. It's checked whenever the map comes to the front and when a sent row fails.
 - Each refused row is listed with its reason and stays ticked. A run cut short leaves what wasn't confirmed ticked. Ticked rows that overlap don't stop a send.
 - Leaving the tab or the app cancels a run safely: the server is idempotent on each track's id (`docs/SPEC.md` FR-3.4), and the next Load knows what it took.
 
@@ -288,7 +289,7 @@ The bottom bar's Sync is the map in Normal mode with the sheet on its Sync tab, 
 - Leaving it takes its lines off the map.
 - The demo account sees its recordings, to edit and delete, with nothing to tick, no Load and no upload.
 - Swiping a row hides it from the list, kept on the phone per account and undoable. A hidden row is forgotten once its candidate is gone (synced, deleted or out of the window); a hidden session is forgotten only after a Load that withheld nothing, so a route unreadable once keeps its place.
-- It leads to Upload (FR-3.6), Sync history (FR-4.1) and Settings › Sync (FR-3.1).
+- Upload (FR-3.6) beside Library (FR-4.1) sit above Load and Sync, and Settings › Sync (FR-3.1) is at the list's foot. Upload is gone for the demo account.
 
 ### FR-3.6 Upload
 
@@ -296,16 +297,17 @@ The web's upload (`docs/SPEC.md` FR-3.1, FR-3.2) as a screen, for a verified, no
 
 - Files come from Android's picker, or are opened or shared from another app (§9). Files from another app are listed and sent only on Upload.
 - The web's limits apply: `.gpx`, `.fit` or `.tcx`, up to 16 MiB each, 20 at a time (more are refused whole) and 100 an hour; a `.zip` is refused by name.
-- Files go one at a time and carry on when the screen is left. Finished imports are in Sync history.
+- Files go one at a time and carry on when the screen is left. Finished ones are tracks in Library.
 - Files still queued at a sign-out are dropped, never sent from another account.
 
-## 6. FR-4 — Sync History
+## 6. FR-4 — Library
 
-### FR-4.1 Sync history
+### FR-4.1 Library
 
-The web's `/sync` page (`docs/SPEC.md` FR-3.7) shown in the app (`docs/SPEC.md` FR-9.6), read again each time it comes to the front.
+The web's Library (`docs/SPEC.md` FR-5.13) shown in the app (`docs/SPEC.md` FR-9.6), read again each time it comes to the front.
 
-- View on map opens the app's map in Normal mode with the track focused. When its day is outside the range, the range becomes that day, as if picked.
+- Opening a track opens the app's map in Normal mode with the track focused. When its day is outside the range, the range becomes that day, as if picked.
+- Download saves through Android's save screen, with no storage permission: one track as GPX, Checked tracks as a zip.
 
 ## 7. FR-5 — In-App GPS Recording
 
@@ -380,7 +382,7 @@ Nothing the app keeps on the phone goes into a backup or moves to a new phone: u
 
 ## 9. Known Limitations & Out-of-Scope Items
 
-- **An import in processing isn't shown.** Sync history lists finished imports and Upload shows only queued and uploading files, so a file between the two is in neither.
+- **An import in processing isn't shown.** Library lists tracks and Upload shows only queued and uploading files, so a file between the two is in neither.
 - **A `.gpx` or `.fit` can't be opened with the app from most other apps**, which hand them over as generic binary; pick them on Upload. A `.tcx` can.
 - **A touch and hold stands in for hover** where the web reads a value on hover.
 - **A picked photo's position rarely arrives**: Android's photo picker strips location, so photos are placed by capture time or by hand (FR-2.10).

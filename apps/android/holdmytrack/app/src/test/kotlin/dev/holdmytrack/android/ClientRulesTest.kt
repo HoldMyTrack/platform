@@ -14,6 +14,7 @@ import dev.holdmytrack.android.map.MapSession
 import dev.holdmytrack.android.map.OpeningView
 import dev.holdmytrack.android.map.PendingDiff
 import dev.holdmytrack.android.map.SatelliteStatus
+import dev.holdmytrack.android.net.AttachmentName
 import dev.holdmytrack.android.net.deleteDone
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.RouteEdit
@@ -189,6 +190,7 @@ class ClientRulesTest {
             }
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
+        "attachmentName" to { input -> JsonPrimitive(AttachmentName.of(input.string("header"))) },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
         "privateDrawOrder" to { input ->
             val circle = { id: String -> Circle(id, 0.0, 0.0, 200) }

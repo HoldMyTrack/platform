@@ -76,6 +76,8 @@ class WireContractTest {
         response(SyncResultsJson.serializer().descriptor, "/sync/tracks", "post")
         request(SyncKnownRequestJson.serializer().descriptor, "/sync/known", "post")
         response(SyncKnownJson.serializer().descriptor, "/sync/known", "post")
+        response(UploadsActiveJson.serializer().descriptor, "/uploads/active", "get")
+        request(UploadsSeenJson.serializer().descriptor, "/uploads/seen", "post")
 
         response(ListSerializer(PrivateLocationJson.serializer()).descriptor, "/private-locations", "get")
         response(PrivateLocationJson.serializer().descriptor, "/private-locations", "post", 201)

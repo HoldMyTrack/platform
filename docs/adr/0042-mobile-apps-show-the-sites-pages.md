@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built in the Android app: Settings, Track graph & trends, Sync history and About are the site's pages in a WebView (`SPEC.md` FR-9.6, `apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1). The iOS app is a skeleton so far; its pages come in `apps/ios/docs/ROADMAP.md` phase 6.
+Accepted. Built in the Android app: Settings, Track graph & trends, Library and About are the site's pages in a WebView (`SPEC.md` FR-9.6, `apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1). The iOS app is a skeleton so far; its pages come in `apps/ios/docs/ROADMAP.md` phase 6.
 
 ## Context
 
@@ -35,4 +35,4 @@ The parts that have to be native are few and known. Health Connect and HealthKit
 - **What a page saves reaches the native app only through the server** — units, the name, a first run's country — so the app reads the session again when it takes over, and forgetting that is a bug (`apps/android/docs/IMPLEMENTATION.md` §2.5).
 - **A page has to work for an app as well as a browser**: no hover-only detail, no pointer to something only the site has, nothing that contradicts the app's own screens. The server leaves those out for an app, or the page grows a tap fallback for everyone.
 - **A page's form only passes the server's same-origin check when the app talks to the server at `APP_BASE_URL`'s origin**, which is true in production and not against a stock dev stack (`docs/DEVELOPMENT.md`).
-- **Some behavior changed with the screens.** Android's Sync history lists finished imports only, as the web's page does, so an upload still processing shows nowhere in the app until it finishes.
+- **Some behavior changed with the screens.** Android's Library lists tracks only, as the web's page does, so an upload still processing shows nowhere in the app until it finishes.

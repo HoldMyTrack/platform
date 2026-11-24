@@ -271,6 +271,12 @@
     <string name="sync_failed">Ошибка синхронизации: %1$s</string>
     <string name="sync_rejected_row">Отклонено: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Остановлено досрочно. %1$s</string>
+    <plurals name="import_failed_title">
+        <item quantity="one">%d импорт не удалось добавить</item>
+        <item quantity="few">%d импорта не удалось добавить</item>
+        <item quantity="many">%d импортов не удалось добавить</item>
+        <item quantity="other">%d импорта не удалось добавить</item>
+    </plurals>
     <plurals name="sync_refusal_too_many_points">
         <item quantity="one">в маршруте %1$d точка — больше, чем принимает один запрос синхронизации</item>
         <item quantity="few">в маршруте %1$d точки — больше, чем принимает один запрос синхронизации</item>
@@ -315,7 +321,7 @@
     </plurals>
     <string name="sync_summary_with_present">Отправлено новых: %1$d; уже было в HoldMyTrack: %2$d. Тренировки остаются в списке, пока не появятся на карте.</string>
     <string name="sync_row_processing">Добавляется на карту…</string>
-    <string name="sync_row_failed">Не удалось добавить %1$s %2$s — причина в истории синхронизации. Тренировка снова в списке.</string>
+    <string name="sync_row_failed">Не удалось добавить %1$s %2$s: что-то пошло не так на нашей стороне. Тренировка снова в списке, можно попробовать ещё раз.</string>
     <string name="sync_origin_health_connect">Health Connect</string>
     <string name="sync_origin_recorded">Записано на этом телефоне</string>
     <string name="sync_row_tick">Отметить: %1$s</string>
@@ -383,13 +389,14 @@
         <item quantity="many">Найдено %1$d тренировок с маршрутом. Они на вкладке «Синхронизация».</item>
         <item quantity="other">Найдено %1$d тренировки с маршрутом. Они на вкладке «Синхронизация».</item>
     </plurals>
-    <string name="sync_upload_title">Файлы</string>
-    <string name="sync_upload_sub">Файлы GPX, FIT или TCX</string>
-    <string name="sync_history_title">История синхронизации</string>
-    <string name="sync_history_sub">Все импорты и чем они закончились</string>
+    <string name="sync_upload_title">Загрузить</string>
+    <string name="library_title">Библиотека</string>
+    <string name="library_downloading">Загрузка…</string>
+    <string name="library_saved">Сохранено</string>
+    <string name="library_save_failed">Не удалось сохранить файл</string>
     <string name="upload_title">Загрузить</string>
     <string name="upload_demo">Недоступно в демо-аккаунте — создайте аккаунт, чтобы загружать свои треки.</string>
-    <string name="upload_see_sync">Смотреть в истории синхронизации</string>
+    <string name="upload_see_library">Смотреть в библиотеке</string>
     <string name="upload_hint">Файлы .gpx, .fit или .tcx, до 20 за раз.</string>
     <string name="upload_choose">Выбрать файлы…</string>
     <string name="upload_shared_title">Загрузить эти файлы в аккаунт?</string>

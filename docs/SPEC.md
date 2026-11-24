@@ -232,8 +232,8 @@ The Android app records GPS-only tracks on the phone; nothing reaches the server
 
 ### FR-3.7 The Sync page
 
-- `/sync` lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed. The web doesn't link it: it is the Android app's Sync history.
-- A failed import is listed in the header's Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened.
+- `/sync` lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed. The web doesn't link it: it is the iOS app's Sync history.
+- A failed import is listed in the header's Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened. The Android app shows it in an alert, which dismisses it (`apps/android/docs/SPEC.md` FR-3.4).
 
 ### FR-3.8 A track's own timezone
 
@@ -556,7 +556,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-9.4).
 
 ### FR-9.6 Pages inside the Android app
 
-- The Android app shows Settings, Profile, the Sync page and About as web pages; the `hmt_app` cookie drops their header and footer.
+- The Android app shows Settings, Profile, Library and About as web pages; the `hmt_app` cookie drops their header and footer.
 - For the app, pages leave out what the app has natively. Signed out, the app's About is cached apart from the browser's.
 - The cookie's value names the app, `android` or `ios`, and a page names that platform's app and health store; any value but `ios` counts as Android.
 

@@ -1,26 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Lucide "history" (lucide-static 1.48.0, the web's version; ISC, assets/licenses/lucide-LICENSE.txt),
-     its 24-unit grid and 2-unit round stroke unchanged. White, and tinted where it's used, the
-     way the web's icons take currentColor. -->
+<!-- Lucide "library" (lucide-static 1.48.0, the web's version; ISC, assets/licenses/lucide-LICENSE.txt),
+     its 24-unit grid and 2-unit round stroke unchanged, as the web's header draws Library. White,
+     and tinted where it's used, the way the web's icons take currentColor. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:pathData="M3 12a9 9 0 1 0 9 -9 9.75 9.75 0 0 0 -6.74 2.74L3 8"
+        android:pathData="m16 6 4 14"
         android:strokeColor="#FFFFFFFF"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:strokeWidth="2" />
     <path
-        android:pathData="M3 3v5h5"
+        android:pathData="M12 6v14"
         android:strokeColor="#FFFFFFFF"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:strokeWidth="2" />
     <path
-        android:pathData="M12 7v5l4 2"
+        android:pathData="M8 8v12"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+    <path
+        android:pathData="M4 4v16"
         android:strokeColor="#FFFFFFFF"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"

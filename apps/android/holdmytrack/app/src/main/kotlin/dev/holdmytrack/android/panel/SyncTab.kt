@@ -20,6 +20,7 @@ import dev.holdmytrack.android.R
 import dev.holdmytrack.android.SyncActivity
 import dev.holdmytrack.android.UploadActivity
 import dev.holdmytrack.android.health.HealthConnect
+import dev.holdmytrack.android.imports.ImportFailureAlert
 import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.TrackOverlap
 import dev.holdmytrack.android.net.HoldMyTrackApi
@@ -116,7 +117,7 @@ class SyncTab(
     private val foot: View = LayoutInflater.from(activity).inflate(R.layout.include_sync_foot, list, false)
     private val listNote: TextView = foot.findViewById(R.id.sync_list_note)
     private val showHiddenButton: Button = foot.findViewById(R.id.sync_show_hidden)
-    private val upload: View = foot.findViewById(R.id.sync_upload)
+    private val upload: View = content.findViewById(R.id.sync_upload)
 
     private val rows = SyncRowAdapter(
         SyncRowActions(
@@ -186,13 +187,13 @@ class SyncTab(
             render()
         }
         upload.setOnClickListener { activity.startActivity(Intent(activity, UploadActivity::class.java)) }
-        foot.findViewById<View>(R.id.sync_history).setOnClickListener {
-            WebPageActivity.open(activity, WebPageActivity.Page.SYNC_HISTORY)
+        content.findViewById<View>(R.id.library).setOnClickListener {
+            WebPageActivity.open(activity, WebPageActivity.Page.LIBRARY)
         }
         for (link in listOf(foot.findViewById<View>(R.id.sync_sources), sourceSettings)) {
             link.setOnClickListener { activity.startActivity(Intent(activity, SyncActivity::class.java)) }
         }
-        LargeText.stack(foot.findViewById(R.id.sync_tiles))
+        LargeText.stack(content.findViewById(R.id.sync_links))
         LargeText.stack(content.findViewById(R.id.sync_buttons))
     }
 
@@ -602,7 +603,11 @@ class SyncTab(
      *  known, and a recording is unsent in the store again, so the list is read again. */
     private fun progressed() {
         if (!showing) return
-        if (showFailed()) restore()
+        if (showFailed()) {
+            restore()
+            // The server's reason for it, and for any upload that failed meanwhile.
+            ImportFailureAlert.check(activity)
+        }
         render()
     }
 

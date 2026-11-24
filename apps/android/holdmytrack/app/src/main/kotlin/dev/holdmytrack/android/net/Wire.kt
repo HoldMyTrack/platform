@@ -487,3 +487,15 @@ internal data class SpotCapturesJson(val captures: List<SpotCaptureJson>)
 
 @Serializable
 internal data class SpotCaptureRequestJson(val lat: Double, val lon: Double)
+
+/** One of `GET /v2/uploads/active`'s unseen failures: an import that failed on the server's side. */
+@Serializable
+internal data class ImportFailureJson(val id: Long, val title: String, val reason: String)
+
+/** `GET /v2/uploads/active`, read for its failures only: what's still processing is the web's. */
+@Serializable
+internal data class UploadsActiveJson(val failures: List<ImportFailureJson> = emptyList())
+
+/** `POST /v2/uploads/seen`: the failure dismissed. */
+@Serializable
+internal data class UploadsSeenJson(val id: Long)

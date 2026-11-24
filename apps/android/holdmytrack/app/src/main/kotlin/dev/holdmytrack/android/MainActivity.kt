@@ -14,6 +14,7 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dev.holdmytrack.android.map.MapMode
+import dev.holdmytrack.android.imports.ImportFailureAlert
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.panel.PanelTab
@@ -144,8 +145,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Copies of Trips may have been sent while the app was away.
+        // Copies of Trips may have been sent while the app was away, and an import may have failed.
         if (::nav.isInitialized) refreshTripsBadge()
+        ImportFailureAlert.check(this)
     }
 
     override fun onNewIntent(intent: Intent) {

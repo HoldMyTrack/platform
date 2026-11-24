@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -21,26 +22,36 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.MaterialColors
 import dev.holdmytrack.android.BuildConfig
 import dev.holdmytrack.android.MainActivity
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 /**
  * One of the web's own pages, shown in the app (root `docs/SPEC.md` FR-9.6): Activity graph &
- * trends, Sync history, Settings (a new account's first run included) and About. The server
+ * trends, Library, Settings (a new account's first run included) and About. The server
  * renders a page for the app when the request carries the `hmt_app` cookie — no site header,
  * footer or Back to map, and none of what the app keeps as screens of its own — and this screen
  * hands the WebView the session as the cookie a browser would hold.
  *
- * Where a link goes ([route]): the map (`/`, Sync history's View on map) opens the native map;
+ * Where a link goes ([route]): the map (`/`, a Library row's link) opens the native map;
  * the same page again (a pager, Week/Month, Shade by, a form's redirect back to it) and a form's
  * POST to the site stay here; anything else opens in a browser tab. The page follows the app's Theme with no help from
  * here: a WebView answers `prefers-color-scheme` from the screen's own light or dark theme.
+ *
+ * Library's Download can't be a browser download in a WebView, so the page hands the track ids
+ * to [LibraryBridge] instead; the app downloads them with its own session and asks where to save
+ * the file, with Android's save screen (no storage permission).
  */
 class WebPageActivity : AppCompatActivity() {
 
@@ -48,7 +59,7 @@ class WebPageActivity : AppCompatActivity() {
      *  screen comes back to the front, as the native screens before it did. */
     enum class Page(val path: String, val title: Int, val refreshOnReturn: Boolean) {
         PROFILE("/profile", R.string.you_graph_link, true),
-        SYNC_HISTORY("/sync", R.string.sync_history_title, true),
+        LIBRARY("/library", R.string.library_title, true),
         SETTINGS("/settings", R.string.settings_title, false),
         ABOUT("/about", R.string.menu_about, false),
     }
@@ -70,6 +81,20 @@ class WebPageActivity : AppCompatActivity() {
 
     /** Whether the page on screen failed to load: the WebView's own error page is never shown. */
     private var failed = false
+
+    /** A download is under way ([downloadGpx]): a second tap waits for it. */
+    private var downloading = false
+
+    /** Set as the save screen opens: coming back from it isn't a return to refresh for. */
+    private var returningFromSave = false
+
+    /** A downloaded file's name, waiting for the screen to be back in front to offer the save
+     *  screen: one opened from the background would pop over another app, or be blocked. */
+    private var saveWaiting: String? = null
+
+    /** Android's save screen for a downloaded GPX or zip; the file waits in [DOWNLOAD_FILE]. */
+    private val saveGpx = registerForActivityResult(ActivityResultContracts.CreateDocument(GpxDownload.mimeType("tracks.gpx"))) { saveDownload(it) }
+    private val saveZip = registerForActivityResult(ActivityResultContracts.CreateDocument(GpxDownload.mimeType("tracks.zip"))) { saveDownload(it) }
 
     /** The page's file input waiting for the photo picker's answer, which it must get once. */
     private var fileCallback: ValueCallback<Array<Uri>>? = null
@@ -116,6 +141,7 @@ class WebPageActivity : AppCompatActivity() {
         // No content:// reads from a page: the avatar picker hands its file over itself.
         web.settings.allowContentAccess = false
         web.webViewClient = Client()
+        if (page == Page.LIBRARY) web.addJavascriptInterface(LibraryBridge(), BRIDGE)
         web.webChromeClient = object : WebChromeClient() {
             override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
                 fileCallback?.onReceiveValue(null)
@@ -129,7 +155,85 @@ class WebPageActivity : AppCompatActivity() {
 
     override fun onRestart() {
         super.onRestart()
+        if (returningFromSave || saveWaiting != null) {
+            returningFromSave = false
+            return
+        }
         if (page.refreshOnReturn && !failed) web.reload()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        saveWaiting?.let {
+            saveWaiting = null
+            offerSave(it)
+        }
+    }
+
+    /** What Library's page calls in place of a browser download (`apps/web/src/library/appBridge.ts`).
+     *  Called on the WebView's own thread. */
+    private inner class LibraryBridge {
+        @JavascriptInterface
+        fun downloadGpx(ids: String) {
+            runOnUiThread { downloadGpx(ids) }
+        }
+    }
+
+    /** Downloads [raw]'s tracks into [DOWNLOAD_FILE], then offers the save screen under the
+     *  server's file name. Only Library's own page, on the API's origin, is heard. A download cut
+     *  off by the screen closing (Back, a rotation) is dropped without a word. */
+    private fun downloadGpx(raw: String) {
+        if (isFinishing || downloading || !onOwnPage()) return
+        val ids = GpxDownload.ids(raw) ?: return
+        downloading = true
+        Toast.makeText(this, R.string.library_downloading, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val file = File(cacheDir, DOWNLOAD_FILE)
+            try {
+                val name = HoldMyTrackApi.downloadTracksGpx(ids, file)
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) offerSave(name) else saveWaiting = name
+            } catch (e: CancellationException) {
+                file.delete()
+                throw e
+            } catch (e: Exception) {
+                file.delete()
+                val reason = FailureText.of(e, getString(R.string.something_went_wrong), getString(R.string.network_error))
+                Toast.makeText(this@WebPageActivity, reason, Toast.LENGTH_LONG).show()
+            } finally {
+                downloading = false
+            }
+        }
+    }
+
+    /** Whether the WebView shows this screen's own page on the API's origin, its path exactly. */
+    private fun onOwnPage(): Boolean {
+        val shown = web.url?.toUri() ?: return false
+        val base = BuildConfig.API_BASE_URL.toUri()
+        return shown.scheme == base.scheme && shown.authority == base.authority && shown.path == page.path
+    }
+
+    /** Opens Android's save screen for the downloaded file named [name]. */
+    private fun offerSave(name: String) {
+        returningFromSave = true
+        (if (GpxDownload.mimeType(name) == GpxDownload.mimeType("tracks.zip")) saveZip else saveGpx).launch(name)
+    }
+
+    /** Copies the downloaded file to where the save screen put [uri], or drops it when cancelled. */
+    private fun saveDownload(uri: Uri?) {
+        val file = File(cacheDir, DOWNLOAD_FILE)
+        if (uri == null) {
+            file.delete()
+            return
+        }
+        io.execute {
+            val saved = runCatching {
+                contentResolver.openOutputStream(uri)!!.use { out -> file.inputStream().use { it.copyTo(out) } }
+            }.isSuccess
+            file.delete()
+            runOnUiThread {
+                Toast.makeText(this, if (saved) R.string.library_saved else R.string.library_save_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     /** Destroyed by a rotation, as against left by the user ([route]'s first-run save). */
@@ -261,6 +365,10 @@ class WebPageActivity : AppCompatActivity() {
         private const val EXTRA_PAGE = "page"
         private const val EXTRA_ONBOARDING = "onboarding"
         private const val AVATAR_FILE = "avatar.jpg"
+        private const val DOWNLOAD_FILE = "library-download"
+
+        /** The name Library's page finds the app's bridge under. */
+        private const val BRIDGE = "HoldMyTrackApp"
 
         /** The server's session cookie (`sessionCookieName`), its in-app marker
          *  (`appCookieName`) and its language cookie (`i18n.CookieName`). */

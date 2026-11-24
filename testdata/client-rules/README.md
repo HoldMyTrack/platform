@@ -21,6 +21,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `pendingChange` | `previous`, `now`, `awaiting`, `listed` (id sets) | `{ started, finished, left, landed, awaiting, pending }` |
 | `pendingCheck` | `pending`, `awaiting`, `listed`, `stillPending` (ids) | `{ watched, moved, finished }` |
 | `pendingBatches` | `ids`, `size` | the ids in consecutive batches of at most `size` |
+| `attachmentName` (web and Android) | `header` (a Content-Disposition value, or null) | string |
 | `deleteDone` | `status` (a DELETE's HTTP status) | boolean |
 | `verifyAction` | `typed` (the code field's text) | `"check"` or `{ submit }` |
 | `similarSpans` | `a`, `b` (`{ start, end }`, epoch ms, maybe fractional) | boolean |

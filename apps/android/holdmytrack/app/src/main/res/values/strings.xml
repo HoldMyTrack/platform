@@ -269,6 +269,10 @@
     <string name="sync_failed">Sync failed: %1$s</string>
     <string name="sync_rejected_row">Rejected: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Stopped early. %1$s</string>
+    <plurals name="import_failed_title">
+        <item quantity="one">An import couldn\'t be added</item>
+        <item quantity="other">%d imports couldn\'t be added</item>
+    </plurals>
     <plurals name="sync_refusal_too_many_points">
         <item quantity="one">the route has %1$d point, more than one sync request accepts</item>
         <item quantity="other">the route has %1$d points, more than one sync request accepts</item>
@@ -305,7 +309,7 @@
     </plurals>
     <string name="sync_summary_with_present">Sent %1$d new, %2$d already in HoldMyTrack. They stay listed until they\'re on your map.</string>
     <string name="sync_row_processing">Adding to your map…</string>
-    <string name="sync_row_failed">Couldn\'t add %1$s %2$s — Sync history says why. It\'s back on the list.</string>
+    <string name="sync_row_failed">Couldn\'t add %1$s %2$s: something went wrong on our side. It\'s back on the list to try again.</string>
     <string name="sync_origin_health_connect">Health Connect</string>
     <string name="sync_origin_recorded">Recorded on this phone</string>
     <string name="sync_row_tick">Tick %1$s</string>
@@ -367,13 +371,14 @@
         <item quantity="one">Found %1$d session with a route. It\'s on the Sync tab.</item>
         <item quantity="other">Found %1$d sessions with a route. They\'re on the Sync tab.</item>
     </plurals>
-    <string name="sync_upload_title">Upload files</string>
-    <string name="sync_upload_sub">GPX, FIT or TCX files</string>
-    <string name="sync_history_title">Sync history</string>
-    <string name="sync_history_sub">Every import and how it went</string>
+    <string name="sync_upload_title">Upload</string>
+    <string name="library_title">Library</string>
+    <string name="library_downloading">Downloading…</string>
+    <string name="library_saved">Saved</string>
+    <string name="library_save_failed">Couldn\'t save the file</string>
     <string name="upload_title">Upload</string>
     <string name="upload_demo">Not available for demo accounts — create an account to upload your own tracks.</string>
-    <string name="upload_see_sync">See them in Sync history</string>
+    <string name="upload_see_library">See them in Library</string>
     <string name="upload_hint">.gpx, .fit or .tcx files, up to 20 at a time.</string>
     <string name="upload_choose">Choose files…</string>
     <string name="upload_shared_title">Upload these files to your account?</string>

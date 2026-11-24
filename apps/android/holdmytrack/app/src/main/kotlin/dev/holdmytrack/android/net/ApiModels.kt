@@ -84,6 +84,9 @@ data class SyncKnown(val known: Set<String>, val processing: Set<String>)
 /** What `POST /v2/tracks/upload` said about one file: "enqueued" or "already_processed". */
 data class UploadOutcome(val status: String)
 
+/** An import that failed on the server's side, unseen: what [HoldMyTrackApi.importFailures] reads. */
+data class ImportFailure(val id: Long, val title: String, val reason: String)
+
 /**
  * One row of `GET /v2/tracks` (`docs/IMPLEMENTATION.md` §4.7) — what the map's Tracks
  * panel lists, the web's `Track`. [startedAt] is the server's RFC 3339 instant, shown in

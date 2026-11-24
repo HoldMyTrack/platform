@@ -399,8 +399,8 @@ class TracksPanel(
     /** The offset last asked for, before [setExpandedOffset] clamps it. */
     private var expandedOffsetWanted = 0
 
-    /** How far down the expanded sheet's top stops — under the map's top row, where there's
-     *  room — in a parent [parentHeight] tall. The sheet is that much shorter than its parent, so expanded, its
+    /** How far down the expanded sheet's top stops — under the status bar — in a parent
+     *  [parentHeight] tall. The sheet is that much shorter than its parent, so expanded, its
      *  bottom — the list's last rows — is still on screen. */
     fun setExpandedOffset(offset: Int, parentHeight: Int) {
         // Never so far down that the open sheet is shorter than its own head — a landscape

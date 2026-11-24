@@ -22,10 +22,11 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 ### Library replaces Sync
 
-The web links Library and no import history; `/sync` stays for the Android app's Sync history (`SPEC.md` FR-3.7).
+The web and Android link Library and no import history; `/sync` stays for the apps that still open it as Sync history (`SPEC.md` FR-3.7).
 
-- [ ] Android: Library in place of Sync history, and a failed import's note pointing to Library (`apps/android/docs/SPEC.md` FR-4.1, FR-3.4).
-- [ ] When `MIN_ANDROID_BUILD` reaches that release, remove `/sync`, the unused `GET /v2/uploads` and `GET /v2/uploads/{external_id}`, and keep finished jobs only as long as the Upload menu's failures need them (`IMPLEMENTATION.md` §4.0).
+- [x] Android: Library in place of Sync history (`apps/android/docs/SPEC.md` FR-4.1).
+- [ ] iOS: Library in place of Sync history, its Download through the app as Android's (`apps/ios/docs/ROADMAP.md` 6.2).
+- [ ] When `MIN_ANDROID_BUILD` and `MIN_IOS_BUILD` reach those releases, remove `/sync`, the unused `GET /v2/uploads` and `GET /v2/uploads/{external_id}`, and keep finished jobs only as long as the Upload menu's failures need them (`IMPLEMENTATION.md` §4.0).
 
 ### After launch
 

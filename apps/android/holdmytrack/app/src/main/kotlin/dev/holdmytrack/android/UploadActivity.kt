@@ -33,7 +33,7 @@ class UploadActivity : AppCompatActivity() {
     private lateinit var transfers: LinearLayout
     private lateinit var notes: TextView
     private lateinit var errors: TextView
-    private lateinit var seeSync: Button
+    private lateinit var seeLibrary: Button
     private lateinit var sharedSection: View
     private lateinit var sharedNames: TextView
 
@@ -57,13 +57,13 @@ class UploadActivity : AppCompatActivity() {
         transfers = findViewById(R.id.upload_transfers)
         notes = findViewById(R.id.upload_notes)
         errors = findViewById(R.id.upload_errors)
-        seeSync = findViewById(R.id.upload_see_sync)
+        seeLibrary = findViewById(R.id.upload_see_library)
         sharedSection = findViewById(R.id.upload_shared)
         sharedNames = findViewById(R.id.upload_shared_names)
 
         choose.setOnClickListener { picker.launch(arrayOf("*/*")) }
-        seeSync.setOnClickListener {
-            WebPageActivity.open(this, WebPageActivity.Page.SYNC_HISTORY)
+        seeLibrary.setOnClickListener {
+            WebPageActivity.open(this, WebPageActivity.Page.LIBRARY)
             finish()
         }
 
@@ -140,7 +140,7 @@ class UploadActivity : AppCompatActivity() {
                 },
             )
             accountNotice.visibility = View.VISIBLE
-            for (view in listOf(section, sharedSection, choose, transfers, notes, errors, seeSync)) view.visibility = View.GONE
+            for (view in listOf(section, sharedSection, choose, transfers, notes, errors, seeLibrary)) view.visibility = View.GONE
             return
         }
         accountNotice.visibility = View.GONE
@@ -171,7 +171,7 @@ class UploadActivity : AppCompatActivity() {
         notes.visibility = if (good.isEmpty()) View.GONE else View.VISIBLE
         errors.text = bad.joinToString("\n") { it.text }
         errors.visibility = if (bad.isEmpty()) View.GONE else View.VISIBLE
-        seeSync.visibility = if (FileImports.sentCount > 0) View.VISIBLE else View.GONE
+        seeLibrary.visibility = if (FileImports.sentCount > 0) View.VISIBLE else View.GONE
     }
 
     private companion object {
