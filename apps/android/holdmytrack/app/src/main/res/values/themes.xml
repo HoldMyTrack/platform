@@ -608,6 +608,12 @@
         <item name="tint">@color/panel_chip_icon</item>
     </style>
 
+    <!-- Focus on map, the toolbar's accent-tinted main action (.tracks-panel__focus). -->
+    <style name="Widget.HoldMyTrack.PanelChip.Accent">
+        <item name="android:background">@drawable/bg_panel_chip_accent</item>
+        <item name="tint">@color/panel_chip_accent_icon</item>
+    </style>
+
     <!-- A row's Pending / Hidden badge, the web's .tracks-panel__hidden-badge: 10sp
          semibold uppercase at ink 55% on an ink 8% tint. -->
     <style name="Widget.HoldMyTrack.PanelStatusBadge" parent="">

@@ -131,16 +131,16 @@ class TracksPanel(
     private val cardVisibility: MaterialButton = sheet.findViewById(R.id.card_visibility)
 
     /** The actions over the toolbar's target, twice: the selection bar's icons, and the selected
-     *  track's card's — the same rules and the same enabled states, whichever shows. Only the card
-     *  has [focus]: the checked tracks are on screen already. */
-    private class Actions(val visibility: View, val edit: View, val addToTrip: View, val delete: View, val focus: View?)
+     *  track's card's — the same rules and the same enabled states, whichever shows. [delete] is
+     *  the card's; the selection bar's is in its ⋯ menu ([SelectionMoreMenu]). */
+    private class Actions(val visibility: View, val edit: View, val addToTrip: View, val delete: View?, val focus: View)
     private val checkAll: MaterialCheckBox = selectionBar.findViewById(R.id.panel_check_all)
     private val selectMenu: ImageButton = selectionBar.findViewById(R.id.panel_select_menu)
     private val visibility: ImageButton = selectionBar.findViewById(R.id.panel_visibility)
     private val edit: ImageButton = selectionBar.findViewById(R.id.panel_edit)
     private val addToTrip: ImageButton = selectionBar.findViewById(R.id.panel_add_to_trip)
-    private val delete: ImageButton = selectionBar.findViewById(R.id.panel_delete)
-    private val selectionDownload = SelectionDownload(selectionBar.findViewById(R.id.panel_download), download)
+    private val more = SelectionMoreMenu(selectionBar.findViewById(R.id.panel_more), download, onDelete = { confirmDelete() })
+    private val focus: ImageButton = selectionBar.findViewById(R.id.panel_focus)
     private val list: RecyclerView = sheet.findViewById(R.id.panel_list)
 
     /** Over the rows while a reload runs past [PROGRESS_DELAY_MS]: the list keeps its rows until
@@ -149,7 +149,7 @@ class TracksPanel(
     private val showProgress = Runnable { if (loading && !zoomedOut) progress.visibility = View.VISIBLE }
     private val footer: TextView = sheet.findViewById(R.id.panel_footer)
 
-    private val toolbarActions = Actions(visibility, edit, addToTrip, delete, null)
+    private val toolbarActions = Actions(visibility, edit, addToTrip, null, focus)
     private val cardActions = Actions(
         cardVisibility,
         sheet.findViewById(R.id.card_edit),
@@ -259,13 +259,13 @@ class TracksPanel(
                 state.toggleTargetVisibility()
                 changed()
             }
-            actions.focus?.setOnClickListener {
+            actions.focus.setOnClickListener {
                 val hidden = state.mapHidden
                 onFly(state.targets.filter { it.id !in hidden })
             }
             actions.edit.setOnClickListener { state.targets.takeIf { it.isNotEmpty() }?.let(onEdit) }
             actions.addToTrip.setOnClickListener { anchor -> if (tripMenu.target == null) showAddToTrip(anchor) else tripMenu.dismiss() }
-            actions.delete.setOnClickListener { confirmDelete() }
+            actions.delete?.setOnClickListener { confirmDelete() }
         }
         selectionClose.setOnClickListener { endSelecting() }
         sheet.findViewById<View>(R.id.card_close).setOnClickListener { clearFocus() }
@@ -571,7 +571,6 @@ class TracksPanel(
         cardVisibility.setIconResource(if (anyHidden) R.drawable.ic_eye_off else R.drawable.ic_eye)
         cardVisibility.setText(if (anyHidden) R.string.card_show else R.string.card_hide)
         for (actions in listOf(toolbarActions, cardActions)) describeActions(actions, targets, targetName, noTarget, anyHidden)
-        selectionDownload.update(targets, targetName, noTarget)
     }
 
     /** Each action says what it would do, or why it can't (as the web's do): disabled actions
@@ -600,8 +599,8 @@ class TracksPanel(
         )
         describe(actions.addToTrip, text(use.addToTrip, R.string.trip_demo_add) { res.getString(R.string.trip_add_target, targetName) }, use.addToTrip.enabled())
         val deleteText = text(use.delete, R.string.panel_demo_delete) { res.getString(R.string.panel_delete_target, targetName) }
-        describe(actions.delete, deleteText, use.delete.enabled())
-        actions.focus?.let { describe(it, text(use.focus, 0) { res.getString(R.string.panel_focus_target, targetName) }, use.focus.enabled()) }
+        if (actions.delete != null) describe(actions.delete, deleteText, use.delete.enabled()) else more.update(targets, targetName, noTarget, deleteText, use.delete.enabled())
+        describe(actions.focus, text(use.focus, 0) { res.getString(R.string.panel_focus_target, targetName) }, use.focus.enabled())
     }
 
     /** The master checkbox's ▾ (the web's `.select-menu`): All, None and Invert over the listed

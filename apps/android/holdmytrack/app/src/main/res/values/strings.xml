@@ -474,6 +474,9 @@
     <string name="panel_edit_one">Edit %1$s: type, name, description and route</string>
     <string name="panel_edit_many">Edit type for %1$s</string>
     <string name="panel_delete_target">Delete %1$s</string>
+    <string name="panel_more_target">More for %1$s</string>
+    <string name="panel_more_download">Download as GPX</string>
+    <string name="panel_more_delete">Delete…</string>
     <string name="panel_delete_pending">Can\'t delete: “%1$s” is still being processed</string>
     <string name="panel_download_busy">Another download is still being prepared</string>
     <string name="panel_download_target">Download %1$s as GPX</string>
