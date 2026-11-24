@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One track in the Similar tracks dialog (dialog_similar_tracks): its kind's tile, its name or
+<!-- One track in the Similar tracks sheet (sheet_similar_tracks): its kind's tile, its name or
      day and time over "time · distance · where it is", and Show — the whole row one tap target. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"

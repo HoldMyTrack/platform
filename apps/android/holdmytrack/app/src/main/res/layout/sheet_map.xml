@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A sheet over the map whose changes apply at once (panel/MapSheet.kt): a toolbar with the title
+     and the one action that closes it, over the sheet's own content, which scrolls past the
+     sheet's cap. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/map_sheet_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:theme="@style/ThemeOverlay.HoldMyTrack.FormSheetToolbar"
+        app:titleTextAppearance="?attr/textAppearanceTitleMedium" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true">
+
+        <FrameLayout
+            android:id="@+id/map_sheet_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="@dimen/hmt_space_16" />
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

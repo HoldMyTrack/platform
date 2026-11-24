@@ -144,7 +144,7 @@
                 </LinearLayout>
 
                 <!-- Dates (docs/SPEC.md FR-5.12): the chip reads what's set, "Dates" for all
-                     time, and opens From and To (map/DatesDialog). -->
+                     time, and opens From and To (map/DatesSheet). -->
                 <LinearLayout
                     android:id="@+id/panel_dates"
                     style="@style/Widget.HoldMyTrack.FilterChip"

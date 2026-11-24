@@ -106,7 +106,7 @@ class TracksPanel(
     private val datesLabel: TextView = sheet.findViewById(R.id.panel_dates_label)
     private val datesDot: View = sheet.findViewById(R.id.panel_dates_dot)
 
-    /** Dates' chip was tapped: its dialog is the map's (`map/DatesDialog`). */
+    /** Dates' chip was tapped: its sheet is the map's (`map/DatesSheet`). */
     var onDatesTap: () -> Unit = {}
 
     /** The map is too far out to list anything (`docs/SPEC.md` FR-5.11). */

@@ -108,7 +108,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val export: ExportController,
         val panel: TracksPanel,
         val camera: CameraFramer,
-        /** The list for the session's area under Dates or its Trip, Dates' dialog and the cap. */
+        /** The list for the session's area under Dates or its Trip, Dates' sheet and the cap. */
         val area: AreaController,
         val refresh: DataRefresh,
         val sheetChrome: SheetChrome,
@@ -446,7 +446,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             libraryTab = libraryTab,
             download = trackDownload,
         )
-        val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, onEmpty = ::onEmptyChecked)
+        val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, sheetTop = { views?.area?.datesSheetTop() }, onEmpty = ::onEmptyChecked)
         val area = AreaController(
             this,
             sheet,
