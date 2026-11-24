@@ -320,12 +320,12 @@ export async function listTracks(query: TrackQuery = {}, signal?: AbortSignal): 
 /** A Library row: the panel's, plus when it was added and why Download can't take it. */
 export interface LibraryTrack extends Track {
   addedAt: string;
-  /** Why it can't be downloaded or route-edited (`docs/SPEC.md` FR-5.14): Pending, Private or no
+  /** Why it can't be downloaded or route-edited (`docs/SPEC.md` FR-17.2): Pending, Private or no
    *  original; null when it can. `bad_times` blocks only the route editor. */
   blocked: 'pending' | 'private' | 'no_original' | null;
 }
 
-/** One of Library's pages (`GET /v2/tracks?page=`, `docs/SPEC.md` FR-5.13). Every filter is
+/** One of Library's pages (`GET /v2/tracks?page=`, `docs/SPEC.md` FR-17.1). Every filter is
  *  optional; distances are meters. */
 export interface TrackPageQuery {
   page: number;
@@ -383,7 +383,7 @@ export async function listTrackPage(query: TrackPageQuery, signal?: AbortSignal)
   };
 }
 
-/** `GET /v2/tracks/gpx` (`docs/SPEC.md` FR-5.14): the tracks as one GPX file, or a zip of them,
+/** `GET /v2/tracks/gpx` (`docs/SPEC.md` FR-17.2): the tracks as one GPX file, or a zip of them,
  *  and the name the server gives it. A refusal throws its message, which names the track. */
 export async function downloadTracksGpx(ids: readonly string[]): Promise<{ blob: Blob; name: string }> {
   const res = await apiFetch(`/tracks/gpx?ids=${ids.map(encodeURIComponent).join(',')}`);

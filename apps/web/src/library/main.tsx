@@ -9,7 +9,7 @@ import { LibraryPage } from './LibraryPage.tsx';
 import './library.css';
 
 /**
- * The Library page's island (`docs/SPEC.md` FR-5.13), mounted into the Go server's /library page
+ * The Library page's island (`docs/SPEC.md` FR-17.1), mounted into the Go server's /library page
  * (templates/pages/library.html) under its header. Like the map (App.tsx), it reads the session
  * first, and a session that ended goes to sign in.
  */

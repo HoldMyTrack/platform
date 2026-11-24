@@ -16,7 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * The alert for imports that failed on the server's side (root `docs/SPEC.md` FR-3.7): files
+ * The alert for imports that failed on the server's side (root `docs/SPEC.md` FR-3.2): files
  * uploaded and tracks synced alike, each with its reason. A file the server can't use is refused
  * when it is sent, so only a fault on the server's side gets here. Read whenever the map comes to
  * the front and when a sync finds a row failed; closing the alert dismisses what it listed, so

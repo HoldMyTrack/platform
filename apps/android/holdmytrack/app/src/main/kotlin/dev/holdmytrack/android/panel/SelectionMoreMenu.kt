@@ -8,7 +8,7 @@ import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.Track
 
 /**
- * The selection bar's ⋯ ([TracksPanel]): Download (root `docs/SPEC.md` FR-5.14) and Delete, which
+ * The selection bar's ⋯ ([TracksPanel]): Download (root `docs/SPEC.md` FR-17.2) and Delete, which
  * don't fit across a phone as buttons beside the others. A blocked one stays tappable and says
  * why, as a disabled menu item can't.
  */

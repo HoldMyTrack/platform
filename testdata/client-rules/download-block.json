@@ -1,7 +1,7 @@
 {
   "rule": "downloadBlock",
   "clients": ["web", "android"],
-  "description": "Why the Tracks panel's Download (docs/SPEC.md FR-5.14) can't take its target, so Download says why before a request the server would refuse: more tracks than one download takes (Checked in the panel can pass it while the map pans), else the first Pending track, else the first entirely inside Private locations. Null when it can. A missing or unreadable original only the server can tell. Without max, each client's own limit applies: 100, as the server's. plainTracks stands for that many ordinary tracks.",
+  "description": "Why the Tracks panel's Download (docs/SPEC.md FR-17.2) can't take its target, so Download says why before a request the server would refuse: more tracks than one download takes (Checked in the panel can pass it while the map pans), else the first Pending track, else the first entirely inside Private locations. Null when it can. A missing or unreadable original only the server can tell. Without max, each client's own limit applies: 100, as the server's. plainTracks stands for that many ordinary tracks.",
   "cases": [
     { "name": "tracks that can go", "input": { "tracks": [{ "id": "a", "pending": false, "private": false }, { "id": "b", "pending": false, "private": false }], "max": 3 }, "expected": null },
     { "name": "exactly the most one download takes", "input": { "tracks": [{ "id": "a", "pending": false, "private": false }, { "id": "b", "pending": false, "private": false }, { "id": "c", "pending": false, "private": false }], "max": 3 }, "expected": null },

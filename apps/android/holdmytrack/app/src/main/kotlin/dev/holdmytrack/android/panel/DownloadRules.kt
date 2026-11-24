@@ -1,7 +1,7 @@
 package dev.holdmytrack.android.panel
 
 /**
- * Whether the Tracks panel's Download (root `docs/SPEC.md` FR-5.14) can take its target, so it
+ * Whether the Tracks panel's Download (root `docs/SPEC.md` FR-17.2) can take its target, so it
  * says why before a request the server would refuse. The web's
  * `apps/web/src/ui/downloadTarget.ts`; both run `testdata/client-rules/download-block.json`.
  */

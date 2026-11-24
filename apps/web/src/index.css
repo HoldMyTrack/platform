@@ -2483,7 +2483,7 @@ button.tracks-panel__trip-badge:hover {
    query. Scope is "core flows fully touch-usable," a direct decision, not full parity with
    every desktop interaction: the map-track-hover ↔ Tracks-row-underline two-way
    highlight stays mouse-only — a continuous-position hover read with no discrete point to
-   tap (docs/SPEC.md §20). Desktop phone emulation has a fixed viewport, no browser toolbar,
+   tap (docs/SPEC.md §21). Desktop phone emulation has a fixed viewport, no browser toolbar,
    no iOS focus-zoom and a pointer-precise "tap", so it passes layouts that fail on a phone:
    the traps below were each found on a real one. */
 @media (max-width: 768px) {

@@ -1,5 +1,5 @@
 /**
- * Whether the Tracks panel's Download (`docs/SPEC.md` FR-5.14) can take its target, as plain
+ * Whether the Tracks panel's Download (`docs/SPEC.md` FR-17.2) can take its target, as plain
  * values, so the button is disabled and says why before a request the server would refuse.
  */
 

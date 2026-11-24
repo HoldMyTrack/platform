@@ -16,7 +16,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 
 /**
- * Download (root `docs/SPEC.md` FR-5.14), Library's and the Tracks panel's: the tracks as one GPX, or a zip of them,
+ * Download (root `docs/SPEC.md` FR-17.2), Library's and the Tracks panel's: the tracks as one GPX, or a zip of them,
  * fetched into the cache and then saved where the user picks on Android's save screen, with no
  * storage permission. Made with its fragment, since the save screen's launchers must be
  * registered before it starts.
