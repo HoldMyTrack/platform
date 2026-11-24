@@ -9,12 +9,15 @@ import android.view.ViewGroup
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.shape.MaterialShapeDrawable
 import dev.holdmytrack.android.R
 
 /**
  * A sheet over the map whose changes apply at once (`sheet_map`), Dates' and Similar tracks': the
  * title and one action, Done or Close, that closes it, over [body]. Nothing dims what's behind it,
- * so the map or list it changes stays in view; a tap outside, Back or a swipe close it too.
+ * so the map or list it changes stays in view; a tap outside, Back or a swipe close it too. Without
+ * the dim its shadow alone doesn't part it from the Tracks sheet under it, the same white: a
+ * hairline edge and the drag handle do.
  *
  * A `BottomSheetDialog`, not the in-layout `BottomSheetBehavior` the Tracks sheet uses: neither
  * sheet needs the map moved while it's open, and a dialog needs no placement, Back or bottom bar
@@ -36,6 +39,13 @@ class MapSheet(context: Context, title: String, action: String, body: View) {
         dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
         dialog.behavior.maxHeight = (context.resources.displayMetrics.heightPixels * MAX_HEIGHT_FRACTION).toInt()
         dialog.window?.setDimAmount(0f)
+        dialog.setOnShowListener {
+            val sheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet) ?: return@setOnShowListener
+            (sheet.background as? MaterialShapeDrawable)?.setStroke(
+                context.resources.displayMetrics.density,
+                context.getColor(R.color.hmt_border_strong),
+            )
+        }
     }
 
     /** Closed by any means. */
