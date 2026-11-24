@@ -380,6 +380,7 @@ Lists the types present among the tracks FR-5.1 starts from; types are free text
 ### FR-5.5 Edit track type, name, and description
 
 - Type is required, 1–50 characters; name up to 200; description up to 2,000. Type is free text; the picker's list is only a convenience.
+- The Type picker lists every type the account's tracks use, with how many tracks use each, most used first, whatever the area, Dates or filters, and the current type even when no other track uses it.
 - Editing several tracks sets only their type, never their names or descriptions.
 - An edit doesn't change distance, coverage, Trends or the list's order.
 - When a save over several fails partway, what was written stays written.

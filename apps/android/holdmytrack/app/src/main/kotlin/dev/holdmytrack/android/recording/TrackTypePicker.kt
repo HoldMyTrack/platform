@@ -22,11 +22,26 @@ object TrackTypePicker {
 
     const val MAX_LENGTH = 50
 
-    fun show(context: Context, current: String, known: List<TypeCount>, onPick: (String) -> Unit) {
+    /** The open picker: [Handle.update] lists [known] in place of what it opened with. */
+    fun interface Handle {
+        fun update(known: List<TypeCount>)
+    }
+
+    fun show(context: Context, current: String, known: List<TypeCount>, onPick: (String) -> Unit): Handle {
+        val (items, search) = rows(context, current, known)
+        val sheet = PickerSheet.show(context, context.getString(R.string.recording_type_hint), current, items, search, onPick)
+        return Handle { next ->
+            val (nextItems, nextSearch) = rows(context, current, next)
+            sheet.replace(nextItems, nextSearch)
+        }
+    }
+
+    /** The rows for [known] before any search, and the search over them. */
+    private fun rows(context: Context, current: String, known: List<TypeCount>): Pair<List<PickerSheet.Item>, PickerSheet.Search> {
         val items = TypeSearch.options(current, known).map { item(it.type, it.count) }
         val byValue = items.associateBy { it.value }
         // [TypeSearch] decides the rows, all of them while blank; this only labels its Add row.
-        fun rows(typed: String): List<PickerSheet.Item> {
+        fun matching(typed: String): List<PickerSheet.Item> {
             val result = TypeSearch.search(items.map { TypeSearch.Option(it.value, it.label) }, typed, MAX_LENGTH)
             val matches = result.shown.map { byValue.getValue(it.value) }
             val add = result.add ?: return matches
@@ -34,10 +49,10 @@ object TrackTypePicker {
         }
         val search = PickerSheet.Search(
             hint = context.getString(R.string.recording_type_search_hint),
-            rows = ::rows,
+            rows = ::matching,
             noMatch = { typed -> context.getString(R.string.recording_type_no_match, typed) },
         )
-        PickerSheet.show(context, context.getString(R.string.recording_type_hint), current, items, search, onPick)
+        return items to search
     }
 
     private fun item(type: String, count: Int) =

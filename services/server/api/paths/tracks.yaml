@@ -75,13 +75,7 @@ tracks:
                     types:
                       type: array
                       description: Each type the account's tracks use, with how many do, most first.
-                      items:
-                        type: object
-                        required: [type, count]
-                        additionalProperties: false
-                        properties:
-                          type: { type: string }
-                          count: { type: integer }
+                      items: { $ref: "../components/schemas.yaml#/TypeCount" }
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
@@ -633,10 +627,11 @@ tracks_id_route-edit:
       "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
 track_types:
   get:
-    summary: What a client shows for the catalog's track types and any others it names
+    summary: The account's track types, and what a client shows for them, the catalog's and any others it names
     description: >-
-      For the Type picker's suggestions and for types not in a list response, such as a phone's
-      unsent recordings.
+      For the Type picker, which lists every type the account's tracks use whatever a client's
+      area or filters (docs/SPEC.md FR-5.5), and for types not in a list response, such as a
+      phone's unsent recordings.
     parameters:
       - name: types
         in: query
@@ -649,9 +644,13 @@ track_types:
           application/json:
             schema:
               type: object
-              required: [types]
+              required: [used, types]
               additionalProperties: false
               properties:
+                used:
+                  type: array
+                  description: Every type the account's tracks use, with how many do, most first and ties by type.
+                  items: { $ref: "../components/schemas.yaml#/TypeCount" }
                 types: { $ref: "../components/schemas.yaml#/TrackTypes" }
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }

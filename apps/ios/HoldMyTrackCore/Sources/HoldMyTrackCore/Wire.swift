@@ -225,7 +225,14 @@ struct TrackTypeJSON: Codable, Sendable, Equatable {
 }
 
 struct TrackTypesJSON: Codable, Sendable, Equatable {
+    let used: [TypeCountJSON]
     let types: [String: TrackTypeJSON]
+}
+
+/// A type the account's tracks use, and how many do.
+struct TypeCountJSON: Codable, Sendable, Equatable {
+    let type: String
+    let count: Int
 }
 
 struct TrackPatchJSON: Codable, Sendable, Equatable {

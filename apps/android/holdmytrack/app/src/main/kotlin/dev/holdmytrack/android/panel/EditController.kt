@@ -134,7 +134,7 @@ class EditController(
     private fun openWindow(group: List<Track>) {
         panel().dismissPopups()
         panel().hold(true)
-        window.open(group, TrackFacets.typeFacets(panelState.tracks, null))
+        window.open(group)
         // The photos follow the window: its one track's, which its Photos tab manages.
         photos.refresh(force = false)
         closeWindowOnBack.isEnabled = true

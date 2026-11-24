@@ -1436,10 +1436,7 @@ export interface paths {
                                 /** Format: date */
                                 last_date: string | null;
                                 /** @description Each type the account's tracks use, with how many do, most first. */
-                                types: {
-                                    type: string;
-                                    count: number;
-                                }[];
+                                types: components["schemas"]["TypeCount"][];
                             };
                         };
                     };
@@ -1465,8 +1462,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * What a client shows for the catalog's track types and any others it names
-         * @description For the Type picker's suggestions and for types not in a list response, such as a phone's unsent recordings.
+         * The account's track types, and what a client shows for them, the catalog's and any others it names
+         * @description For the Type picker, which lists every type the account's tracks use whatever a client's area or filters (docs/SPEC.md FR-5.5), and for types not in a list response, such as a phone's unsent recordings.
          */
         get: {
             parameters: {
@@ -1487,6 +1484,8 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            /** @description Every type the account's tracks use, with how many do, most first and ties by type. */
+                            used: components["schemas"]["TypeCount"][];
                             types: components["schemas"]["TrackTypes"];
                         };
                     };
@@ -4297,6 +4296,11 @@ export interface components {
                  */
                 kind: "foot" | "wheels" | "motor" | "solowheel" | "e_scooter" | "other";
             };
+        };
+        /** @description A type the account's tracks use, and how many do. */
+        TypeCount: {
+            type: string;
+            count: number;
         };
         UploadResult: {
             /** @enum {string} */

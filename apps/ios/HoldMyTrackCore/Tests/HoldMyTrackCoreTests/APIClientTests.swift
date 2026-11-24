@@ -372,15 +372,27 @@ struct APIClientTests {
             let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
             #expect(request.url?.path == "/v2/track-types")
             #expect(items.first { $0.name == "types" }?.value == "kayaking,e_bike")
-            return .init(body: self.json(["types": ["kayaking": ["kind": "other", "label": "Kayaking"]]]))
+            return .init(body: self.json(["used": [], "types": ["kayaking": ["kind": "other", "label": "Kayaking"]]]))
         }
         let types = try await client().trackTypes(["kayaking", "e_bike"])
         #expect(types == ["kayaking": TrackTypeInfo(kind: .other, label: "Kayaking")])
         StubProtocol.answer = { request in
             #expect(request.url?.query == nil)
-            return .init(body: self.json(["types": [:]]))
+            return .init(body: self.json(["used": [], "types": [:]]))
         }
         #expect(try await client().trackTypes([]).isEmpty)
+    }
+
+    @Test func typeCountsAreTheAccountsInTheServersOrder() async throws {
+        StubProtocol.answer = { request in
+            #expect(request.url?.path == "/v2/track-types")
+            return .init(body: self.json(["used": [["type": "cycling", "count": 3], ["type": "kayaking", "count": 1]],
+                                          "types": ["kayaking": ["kind": "other", "label": "Kayaking"]]]))
+        }
+        let read = try await client().typeCounts()
+        #expect(read.counts.map(\.type) == ["cycling", "kayaking"])
+        #expect(read.counts.map(\.count) == [3, 1])
+        #expect(read.types["kayaking"] == TrackTypeInfo(kind: .other, label: "Kayaking"))
     }
 
     @Test func aTripsTracksComeWithTheirTypes() async throws {

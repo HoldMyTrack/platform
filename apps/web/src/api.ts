@@ -383,6 +383,14 @@ export async function listTrackPage(query: TrackPageQuery, signal?: AbortSignal)
   };
 }
 
+/** `GET /v2/track-types` (`docs/SPEC.md` FR-5.5): every type the account's tracks use, with how
+ *  many do, most first, whatever the map's area or filters: the Type picker's list. */
+export async function listAccountTypes(signal?: AbortSignal): Promise<{ type: string; count: number }[]> {
+  const body = await getJson<ResponseJson<'/track-types', 'get'>>('/track-types', signal);
+  rememberTypes(body.types);
+  return body.used;
+}
+
 /** `GET /v2/tracks/gpx` (`docs/SPEC.md` FR-17.2): the tracks as one GPX file, or a zip of them,
  *  and the name the server gives it. A refusal throws its message, which names the track. */
 export async function downloadTracksGpx(ids: readonly string[]): Promise<{ blob: Blob; name: string }> {

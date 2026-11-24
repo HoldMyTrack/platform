@@ -103,6 +103,14 @@ AreaTrackRow:
         properties:
           id: { type: string, format: uuid }
           name: { type: string }
+TypeCount:
+  type: object
+  description: A type the account's tracks use, and how many do.
+  required: [type, count]
+  additionalProperties: false
+  properties:
+    type: { type: string }
+    count: { type: integer }
 TrackTypes:
   type: object
   description: What a client shows for each track type, keyed by the type as stored (docs/SPEC.md FR-5.1).

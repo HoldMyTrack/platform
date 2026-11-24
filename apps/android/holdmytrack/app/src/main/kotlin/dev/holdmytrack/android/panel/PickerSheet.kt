@@ -49,8 +49,14 @@ object PickerSheet {
      *  stray Done can't swap the current entry for whatever heads the list. */
     fun doneValue(typed: String, shown: List<Item>): String? = if (typed.isBlank()) null else shown.firstOrNull()?.value
 
+    /** An open sheet whose rows can change under it, as when the list it shows arrives late. */
+    fun interface Handle {
+        /** [items] and [search] in place of the ones it opened with, for what's typed now. */
+        fun replace(items: List<Item>, search: Search?)
+    }
+
     @SuppressLint("InflateParams") // A dialog's content has no parent to inflate against.
-    fun show(context: Context, title: String, current: String, items: List<Item>, search: Search?, onPick: (String) -> Unit) {
+    fun show(context: Context, title: String, current: String, items: List<Item>, search: Search?, onPick: (String) -> Unit): Handle {
         val dialog = BottomSheetDialog(context)
         val content = LayoutInflater.from(context).inflate(R.layout.sheet_picker, null)
         val toolbar: MaterialToolbar = content.findViewById(R.id.picker_toolbar)
@@ -72,18 +78,22 @@ object PickerSheet {
 
         val adapter = Rows(current, ::pick)
         adapter.shown = items
+        var rows = items
+        var searching = search
+        fun render() {
+            val typed = field.text.toString().trim()
+            val active = searching
+            adapter.shown = active?.rows(typed) ?: rows
+            if (active != null) empty.text = active.noMatch(typed)
+            empty.isVisible = active != null && adapter.shown.isEmpty()
+        }
         list.layoutManager = LinearLayoutManager(context)
         list.adapter = adapter
 
         if (search != null) {
             searchLayout.isVisible = true
             searchLayout.hint = search.hint
-            field.doAfterTextChanged { text ->
-                val typed = text.toString().trim()
-                adapter.shown = search.rows(typed)
-                empty.text = search.noMatch(typed)
-                empty.isVisible = adapter.shown.isEmpty()
-            }
+            field.doAfterTextChanged { render() }
             field.setOnEditorActionListener { _, actionId, _ ->
                 if (actionId != EditorInfo.IME_ACTION_DONE) return@setOnEditorActionListener false
                 doneValue(field.text.toString(), adapter.shown)?.let(::pick)
@@ -99,6 +109,11 @@ object PickerSheet {
         dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         dialog.show()
         items.indexOfFirst { it.value == current }.takeIf { it > 0 }?.let(list::scrollToPosition)
+        return Handle { next, nextSearch ->
+            rows = next
+            searching = nextSearch
+            if (dialog.isShowing) render()
+        }
     }
 
     private class Rows(private val current: String, private val onPick: (String) -> Unit) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {

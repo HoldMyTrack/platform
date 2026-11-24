@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useWindowFocus } from './useWindowFocus.ts';
 import { onTabListKeyDown } from './tabKeys.ts';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { deletePhoto, saveTrackRouteEdit, SplitHidesPartError, updateTrack, updatePhoto, uploadPhoto, type Track, type TrackDetail, type Photo, type RouteEdit } from '../api.ts';
+import { deletePhoto, listAccountTypes, saveTrackRouteEdit, SplitHidesPartError, updateTrack, updatePhoto, uploadPhoto, type Track, type TrackDetail, type Photo, type RouteEdit } from '../api.ts';
 import type { PhotoMarkerOverlay } from '../map/photos.ts';
 import { draftIsEmpty, draftSize, EMPTY_DRAFT, isoSeconds, type PhotoDraft } from './photoDraft.ts';
 import { fieldWrites, saveProblem, type TrackFields } from './editSave.ts';
@@ -64,10 +64,6 @@ interface EditTrackWindowProps {
   map: MapLibreMap;
   /** At least one — the checked group, whatever its size. */
   tracks: TrackDetail[];
-  /** Every distinct track_type already in this account's loaded tracks, with counts —
-   *  the same facets the Type filter is built from (trackFacets.ts), reused as the Type
-   *  picker's list rather than recomputed. */
-  knownTypes: TypeFacet[];
   /** Why the Route tab is disabled, or null when `tracks` is one editable track. */
   routeUnavailable: string | null;
   onStartRoute: (track: Track) => void;
@@ -99,7 +95,6 @@ export interface EditWindowResult {
 export function EditTrackWindow({
   map,
   tracks,
-  knownTypes,
   routeUnavailable,
   onStartRoute,
   photosUnavailable,
@@ -129,6 +124,14 @@ export function EditTrackWindow({
   // types"), and stays that way unless a type is picked — empty keeps each track's own type.
   const mixedTypes = tracks.some((a) => a.trackType !== tracks[0]!.trackType);
   const [trackType, setTrackType] = useState(mixedTypes ? '' : tracks[0]!.trackType);
+  // The Type picker lists every type the account uses, not only the area's (FR-5.5). Until they
+  // arrive, or when the read fails, it lists the current type and still takes a new one.
+  const [knownTypes, setKnownTypes] = useState<TypeFacet[]>([]);
+  useEffect(() => {
+    const aborter = new AbortController();
+    listAccountTypes(aborter.signal).then(setKnownTypes, () => {});
+    return () => aborter.abort();
+  }, []);
   const [name, setName] = useState(single?.name ?? '');
   const [description, setDescription] = useState(single?.description ?? '');
   const [routePending, setRoutePending] = useState<RoutePending | null>(null);

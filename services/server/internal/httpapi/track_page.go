@@ -152,10 +152,15 @@ SELECT count(*) FILTER (WHERE ` + trackPageWhere + `),
        min(distance_meters::float8) FILTER (WHERE trajectory IS NOT NULL),
        max(distance_meters::float8) FILTER (WHERE trajectory IS NOT NULL),
        min(` + localStartedAt + `::date), max(` + localStartedAt + `::date),
-       (SELECT COALESCE(json_agg(json_build_object('type', track_type, 'count', n) ORDER BY n DESC, track_type), '[]')
-        FROM (SELECT track_type, count(*) AS n FROM tracks WHERE user_id = $1 GROUP BY track_type) t)
+       ` + accountTypeCounts + `
 FROM tracks
 WHERE user_id = $1`
+
+// accountTypeCounts is every type the tracks of account $1 use, with how many do, most first and
+// ties by name, as a JSON array of typeCount: Library's Type bounds and the Type picker's list
+// (`GET /v2/track-types`).
+const accountTypeCounts = `(SELECT COALESCE(json_agg(json_build_object('type', track_type, 'count', n) ORDER BY n DESC, track_type), '[]')
+        FROM (SELECT track_type, count(*) AS n FROM tracks WHERE user_id = $1 GROUP BY track_type) t)`
 
 // trackBounds are the filters' bounds over every track of the account, null where no track
 // sets one.

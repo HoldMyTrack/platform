@@ -5,7 +5,7 @@ import UIKit
 /// tracks use each, filtered as the user types (TypeSearch), and what was typed offered as a last
 /// "Add “…”" row, saved exactly as typed. Return picks the top row.
 final class TypePickerViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
-    private let options: [TypeSearch.Option]
+    private var options: [TypeSearch.Option]
     private let current: String
     private let format: (Int) -> String
     private let onPick: (String) -> Void
@@ -28,11 +28,25 @@ final class TypePickerViewController: UIViewController, UITableViewDataSource, U
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    /// In a sheet of its own over presenter.
-    static func present(over presenter: UIViewController, options: [TypeSearch.Option], current: String, format: @escaping (Int) -> String, onPick: @escaping (String) -> Void) {
-        let nav = UINavigationController(rootViewController: TypePickerViewController(options: options, current: current, format: format, onPick: onPick))
+    /// In a sheet of its own over presenter; the picker, for options that arrive after it opens.
+    @discardableResult
+    static func present(over presenter: UIViewController, options: [TypeSearch.Option], current: String, format: @escaping (Int) -> String,
+                        onPick: @escaping (String) -> Void) -> TypePickerViewController {
+        let picker = TypePickerViewController(options: options, current: current, format: format, onPick: onPick)
+        let nav = UINavigationController(rootViewController: picker)
         nav.sheetPresentationController?.detents = [.large()]
         presenter.present(nav, animated: true)
+        return picker
+    }
+
+    /// options in place of the ones it opened with, for what's typed now.
+    func replace(options: [TypeSearch.Option]) {
+        self.options = options
+        guard isViewLoaded else {
+            result = TypeSearch.search(options, query: "", maxLength: EditPlan.maxType)
+            return
+        }
+        searchBar(search, textDidChange: search.text ?? "")
     }
 
     override func viewDidLoad() {

@@ -446,7 +446,6 @@ export function MapView({ initialPrivateLocationsOpen = false, initialTrack = nu
             <EditTrackWindow
               map={map}
               tracks={edit.tracks}
-              knownTypes={facets}
               routeUnavailable={edit.routeBlocker === null ? null : t(edit.routeBlocker)}
               onStartRoute={startEditRoute}
               photosUnavailable={edit.photosBlocker === null ? null : t(edit.photosBlocker)}
