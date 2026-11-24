@@ -178,17 +178,6 @@
     </issue>
 
     <issue
-        id="ButtonOrder"
-        message="Cancel button should be on the left (was &quot;Delete | Cancel | Save&quot;, should be &quot;Cancel | Delete | Save&quot;)"
-        errorLine1="            &lt;Button"
-        errorLine2="             ~~~~~~">
-        <location
-            file="src/main/res/layout/include_private_location_editor.xml"
-            line="121"
-            column="14"/>
-    </issue>
-
-    <issue
         id="ButtonStyle"
         message="Buttons in button bars should be borderless; use `style=&quot;?android:attr/buttonBarButtonStyle&quot;` (and `?android:attr/buttonBarStyle` on the parent)"
         errorLine1="            &lt;Button"
