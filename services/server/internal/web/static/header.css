@@ -492,21 +492,6 @@
   color: var(--fm-accent-strong);
 }
 
-.sync-link__alert {
-  position: absolute;
-  top: 6px;
-  left: 24px;
-  width: 8px;
-  height: 8px;
-  border: 1.5px solid var(--fm-surface);
-  border-radius: 50%;
-  background: var(--fm-danger);
-}
-
-.sync-link__alert[hidden] {
-  display: none;
-}
-
 .user-menu__avatar {
   display: inline-flex;
   align-items: center;
@@ -639,8 +624,7 @@ button.page-button {
     height: 32px;
   }
 
-  .upload-menu__alert,
-  .sync-link__alert {
+  .upload-menu__alert {
     top: 4px;
     left: 18px;
   }

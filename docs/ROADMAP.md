@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-18.
+Last updated: 2026-11-23.
 
 ## How to read this document
 
@@ -19,6 +19,13 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 ### Verification by code
 
 - [ ] When `MIN_ANDROID_BUILD` reaches a build whose "check your email" screen takes the code, make the email code-only: drop its link, the `/verify` page and its Confirm button, the Facebook round trip from that page, and `POST /v2/auth/verify-email` (`IMPLEMENTATION.md` §4.9).
+
+### Library replaces Sync
+
+The web links Library and no import history; `/sync` stays for the Android app's Sync history (`SPEC.md` FR-3.7).
+
+- [ ] Android: Library in place of Sync history, and a failed import's note pointing to Library (`apps/android/docs/SPEC.md` FR-4.1, FR-3.4).
+- [ ] When `MIN_ANDROID_BUILD` reaches that release, remove `/sync`, the unused `GET /v2/uploads` and `GET /v2/uploads/{external_id}`, and keep finished jobs only as long as the Upload menu's failures need them (`IMPLEMENTATION.md` §4.0).
 
 ### After launch
 
