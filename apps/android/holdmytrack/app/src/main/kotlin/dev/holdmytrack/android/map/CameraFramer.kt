@@ -13,14 +13,17 @@ import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 
 /**
- * Moves the camera onto tracks, into the map left showing between the top row and the sheet
- * or an editor ([FrameRules]): any box ([flyTo]), and the opening view once per session ([open]).
+ * Moves the camera onto tracks, into the map left showing between the top row and the sheet,
+ * an editor or the Dates sheet ([FrameRules]): any box ([flyTo]), and the opening view once per session ([open]).
  */
 class CameraFramer(
     view: View,
     private val panel: TracksPanel,
     private val map: () -> MapLibreMap?,
     private val recording: () -> Boolean,
+    /** The top on screen of a sheet over the map in a window of its own (`panel/MapSheet`), or
+     *  null when none is open. */
+    private val sheetTop: () -> Int?,
     /** What [open] found: whether the account has no track yet. */
     private val onEmpty: (Boolean) -> Unit,
 ) {
@@ -88,11 +91,13 @@ class CameraFramer(
         val editor = editors.firstOrNull { it.isVisible }
         // Above where the sheet rests or is heading, not mid-drag: View on map collapses it and
         // flies at once.
-        val covered = when {
+        val inMap = when {
             editor != null -> root.height - editor.top
             sheet.isVisible -> root.height - panel.restingTop(root.height)
             else -> 0
         }
+        val inWindow = sheetTop()?.let { top -> IntArray(2).also(root::getLocationOnScreen)[1] + root.height - top } ?: 0
+        val covered = maxOf(inMap, inWindow)
         val padding = FrameRules.padding(
             rootHeight = root.height,
             // The mode toggle's column, not the whole row: the rail of buttons at the end is

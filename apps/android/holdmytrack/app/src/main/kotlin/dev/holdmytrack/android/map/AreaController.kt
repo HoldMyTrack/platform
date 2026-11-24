@@ -18,7 +18,7 @@ import java.text.NumberFormat
  * What the list and the tracks show, bound to the views (`docs/SPEC.md` FR-5.11, FR-5.12): the
  * visible area's tracks under Dates, followed each time the camera settles from zoom 4 but
  * not after the app's own flights, the 1,000 cap drawn through the tracks' `capped` and `listed`
- * vars, Dates' dialog and its one flight, or a Trip through [MapSession]; the list's Pending rows
+ * vars, Dates' sheet and its one flight, or a Trip through [MapSession]; the list's Pending rows
  * tracked ([PendingTracker]). The web's `useAreaList.ts` and `useDatesFlight.ts`.
  */
 class AreaController(
@@ -57,7 +57,7 @@ class AreaController(
 
     private val res = host.resources
     private val unreachable = res.getString(R.string.map_unreachable)
-    private val dialog = DatesDialog(fragment, ::setDates, ::clearDates)
+    private val datesSheet = DatesSheet(fragment, ::setDates, ::clearDates)
 
     init {
         panel.onDatesTap = ::showDates
@@ -198,7 +198,7 @@ class AreaController(
 
     private val bounds: DateFilter.Bounds get() = DateFilter.bounds(earliest, latest, today)
 
-    private fun showDates() = dialog.show(session.dates, bounds, earliest, today)
+    private fun showDates() = datesSheet.show(session.dates, bounds, earliest, today)
 
     private fun setDates(end: DateFilter.End, value: String?) {
         val change = session.dates.setting(end, value, bounds)
@@ -216,7 +216,7 @@ class AreaController(
     /** Dates changed: their chip, the tracks, and the list, after a flight onto what they match
      *  when one was asked for. */
     private fun datesChanged() {
-        dialog.update(session.dates)
+        datesSheet.update(session.dates)
         renderDates()
         style()?.let { MapOverlays.setTrackDates(it, session.dates) }
         if (session.consumeFly() && !recording()) datesFlight() else reloadList()
@@ -226,9 +226,9 @@ class AreaController(
         val dates = session.dates
         val text = when (val label = dates.label) {
             DateFilter.Label.All -> res.getString(R.string.dates_name)
-            is DateFilter.Label.Between -> res.getString(R.string.dates_between, DatesDialog.short(label.after, today), DatesDialog.short(label.before, today))
-            is DateFilter.Label.After -> res.getString(R.string.dates_after_date, DatesDialog.short(label.after, today))
-            is DateFilter.Label.Before -> res.getString(R.string.dates_before_date, DatesDialog.short(label.before, today))
+            is DateFilter.Label.Between -> res.getString(R.string.dates_between, DatesSheet.short(label.after, today), DatesSheet.short(label.before, today))
+            is DateFilter.Label.After -> res.getString(R.string.dates_after_date, DatesSheet.short(label.after, today))
+            is DateFilter.Label.Before -> res.getString(R.string.dates_before_date, DatesSheet.short(label.before, today))
         }
         panel.setDates(text, !dates.isAllTime)
     }
@@ -296,7 +296,10 @@ class AreaController(
         renderDates()
     }
 
-    fun release() = dialog.dismiss()
+    fun release() = datesSheet.dismiss()
+
+    /** The Dates sheet's top on screen while it's open: Dates' flight fits above it. */
+    fun datesSheetTop(): Int? = datesSheet.topOnScreen()
 
     companion object {
         private const val TAG = "HoldMyTrack"

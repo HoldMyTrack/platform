@@ -36,7 +36,7 @@ import dev.holdmytrack.android.sync.Candidate
 import dev.holdmytrack.android.sync.HealthConnectCard.Companion.isReadable
 import dev.holdmytrack.android.sync.HiddenCandidates
 import dev.holdmytrack.android.sync.Similar
-import dev.holdmytrack.android.sync.SimilarTracksDialog
+import dev.holdmytrack.android.sync.SimilarTracksSheet
 import dev.holdmytrack.android.sync.SyncCandidates
 import dev.holdmytrack.android.sync.SyncList
 import dev.holdmytrack.android.sync.SyncProgress
@@ -62,7 +62,7 @@ import kotlinx.coroutines.launch
  * newest first ([SyncCandidates]), each drawn dashed on the map while the tab shows
  * ([onCandidates]). **Nothing is ticked**: only what the user ticks is sent ([SyncRunner]), and
  * an unticked row never reaches the server. A row that covers the same time as another, or as an
- * track the account has, carries an ⓘ ([SimilarTracksDialog]) — a hint, never a choice made
+ * track the account has, carries an ⓘ ([SimilarTracksSheet]) — a hint, never a choice made
  * for the user. A row swiped aside is hidden ([HiddenCandidates]) —
  * Show hidden brings it back. Under the list, Upload files and Sync history, each a screen of its
  * own, and the way to Health Connect access (`SyncActivity`), where Health Connect is switched on and
@@ -152,6 +152,9 @@ class SyncTab(
     private var overlaps: Map<String, TrackOverlap> = emptyMap()
     /** The other waiting rows each one overlaps, by key ([Similar.waiting]), as last rendered. */
     private var similar: Map<String, List<Candidate>> = emptyMap()
+
+    /** Similar tracks while open, dismissed when the tab goes. */
+    private var similarSheet: MapSheet? = null
     /** The rows [similar] was worked out from: it compares every pair, so only a change redoes it. */
     private var similarOf: List<Candidate>? = null
     /** The lists as last rendered, for a tap to find its row in. */
@@ -220,6 +223,8 @@ class SyncTab(
     /** The tab went: the map's lines go, and so does anything still reading or sending. */
     fun stop() {
         showing = false
+        similarSheet?.dismiss()
+        similarSheet = null
         SyncProgress.removeListener(progressListener)
         RecordingSends.removeListener(recordingsListener)
         pause()
@@ -521,7 +526,8 @@ class SyncTab(
     /** A row's ⓘ: what else covers its time. A waiting one is picked out here; one on the map
      *  opens there, on its day, as Sync history's View on map does. */
     private fun showSimilar(candidate: Candidate) {
-        SimilarTracksDialog.show(
+        similarSheet?.dismiss()
+        similarSheet = SimilarTracksSheet.show(
             activity,
             of = candidate,
             waiting = similar[candidate.key].orEmpty(),

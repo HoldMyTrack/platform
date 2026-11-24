@@ -22,7 +22,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.slider.RangeSlider
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.DateFilter
-import dev.holdmytrack.android.map.DatesDialog
+import dev.holdmytrack.android.map.DatesSheet
 import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
@@ -96,7 +96,7 @@ class LibraryTab(
     /** The map's view is gone: a late search or delete reads nothing, since [scope] is gone too. */
     private var destroyed = false
 
-    private val dates = DatesDialog(
+    private val dates = DatesSheet(
         fragment,
         onChange = { end, value -> setDates(DateFilter(state.after, state.before).setting(end, value, dateBounds()).filter) },
         onClear = { setDates(DateFilter.ALL_TIME) },

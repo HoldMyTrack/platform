@@ -5,7 +5,6 @@ import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.google.android.material.datepicker.CalendarConstraints
@@ -13,55 +12,58 @@ import com.google.android.material.datepicker.CompositeDateValidator
 import com.google.android.material.datepicker.DateValidatorPointBackward
 import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.panel.MapSheet
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * The Dates filter's From and To (`docs/SPEC.md` FR-5.12): each its day or the web's hint, a tap
- * that picks it in a calendar bounded by the first track and today, which applies at once, as
- * the web's does, and ✕ while it's set; Clear dates clears both ([onClear]). What a change does
- * is [DateFilter.setting]'s, reported through [onChange].
+ * The Dates filter's From and To (`docs/SPEC.md` FR-5.12) in a [MapSheet], for the map's list or the
+ * Library's: each its day or the web's hint, a tap that picks it in a calendar bounded by the first track
+ * and today, which applies at once, as the web's does, and ✕ while it's set; Clear dates clears
+ * both ([onClear]). What a change does is [DateFilter.setting]'s, reported through [onChange].
  */
-class DatesDialog(
+class DatesSheet(
     private val fragment: Fragment,
     private val onChange: (DateFilter.End, String?) -> Unit,
     /** Clear dates: both ends at once. */
     private val onClear: () -> Unit,
 ) {
 
-    private var dialog: AlertDialog? = null
+    private var sheet: MapSheet? = null
     private var content: View? = null
     private var filter = DateFilter.ALL_TIME
     private var bounds = DateFilter.Bounds("", "")
     private var earliest: String? = null
     private var today = ""
 
-    @SuppressLint("InflateParams") // A dialog's content has no parent to inflate against.
+    @SuppressLint("InflateParams") // MapSheet adds the content to its own body.
     fun show(filter: DateFilter, bounds: DateFilter.Bounds, earliest: String?, today: String) {
+        // A second tap on the chip before the sheet takes input.
+        if (sheet != null) return
         this.bounds = bounds
         this.earliest = earliest
         this.today = today
         val context = fragment.requireContext()
-        val view = LayoutInflater.from(context).inflate(R.layout.dialog_dates, null)
+        val view = LayoutInflater.from(context).inflate(R.layout.sheet_dates, null)
         content = view
         view.findViewById<View>(R.id.dates_after).setOnClickListener { pick(DateFilter.End.AFTER) }
         view.findViewById<View>(R.id.dates_before).setOnClickListener { pick(DateFilter.End.BEFORE) }
         view.findViewById<View>(R.id.dates_after_clear).setOnClickListener { onChange(DateFilter.End.AFTER, null) }
         view.findViewById<View>(R.id.dates_before_clear).setOnClickListener { onChange(DateFilter.End.BEFORE, null) }
-        dialog = MaterialAlertDialogBuilder(context)
-            .setTitle(R.string.dates_filter)
-            .setView(view)
-            .setPositiveButton(R.string.dates_done, null)
-            .setNeutralButton(R.string.dates_clear) { _, _ -> onClear() }
-            .setOnDismissListener {
-                dialog = null
+        view.findViewById<View>(R.id.dates_clear).setOnClickListener { onClear() }
+        val res = context.resources
+        val opened = MapSheet(context, res.getString(R.string.dates_filter), res.getString(R.string.dates_done), view)
+        opened.setOnDismiss {
+            if (sheet === opened) {
+                sheet = null
                 content = null
             }
-            .show()
+        }
+        sheet = opened
+        opened.show()
         update(filter)
     }
 
@@ -81,10 +83,17 @@ class DatesDialog(
             isVisible = next.before != null
             contentDescription = res.getString(R.string.dates_clear_end, res.getString(R.string.dates_before))
         }
+        view.findViewById<View>(R.id.dates_clear).isEnabled = !next.isAllTime
     }
 
-    fun dismiss() = dialog?.dismiss()
+    fun dismiss() = sheet?.dismiss()
 
+    /** The open sheet's top on screen, which a flight fits above. */
+    fun topOnScreen(): Int? = sheet?.topOnScreen()
+
+    /** One end at a time in Material's date picker. Its range picker fails both of Dates' rules:
+     *  it confirms only with both ends picked, where either may be empty, and applies on Save,
+     *  where a change applies at once. */
     private fun pick(end: DateFilter.End) {
         val min = millis(bounds.min)
         val max = millis(bounds.max)

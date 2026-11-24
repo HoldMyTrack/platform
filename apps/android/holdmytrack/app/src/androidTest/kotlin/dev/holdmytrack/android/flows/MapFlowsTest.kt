@@ -139,6 +139,8 @@ class MapFlowsTest {
         val before = mapHeight()
         // Dates' From, typed: the keyboard comes up over the map and the bottom bar.
         tapUntil({ still(id("panel_dates")) }) { device.hasObject(id("dates_after")) }
+        // Dates is a sheet along the bottom, capped at 60% of the screen, the map in view above it.
+        expect("Dates within its cap", still(id("map_sheet_toolbar")).visibleBounds.top >= device.displayHeight * 2 / 5)
         need(id("dates_after")).click()
         need(id("mtrl_picker_header_toggle")).click()
         expect("the keyboard up", waitUntil { keyboardShown() })
@@ -149,7 +151,7 @@ class MapFlowsTest {
         device.pressBack()
         expect("the keyboard down", waitUntil { !keyboardShown() })
         device.pressBack()
-        still(By.res("android", "button1")).click()
+        tapUntil({ still(By.text(context.getString(R.string.dates_done))) }) { !device.hasObject(id("dates_after")) }
     }
 
     /** Edit trip and Send a copy are sheets: Save waits for a Name and closes once saved; Send
@@ -363,12 +365,13 @@ class MapFlowsTest {
 
     private fun checkedRows(): Int = device.findObjects(checkedTiles()).size
 
-    /** Sets Dates' From to [day] through its dialog and the picker's calendar, then Done. Not typed:
+    /** Sets Dates' From to [day] through its sheet and the picker's calendar, then Done. Not typed:
      *  the dialogs slide as the keyboard comes and goes, and taps land on what moved under
      *  ([d_theKeyboardCoversTheMapWithoutShorteningIt] has the keyboard's own case). */
     private fun pickFrom(day: LocalDate) {
         need(id("panel_dates")).click()
-        need(id("dates_after")).click()
+        // The sheet slides up: From is tapped once it has settled.
+        tapUntil({ still(id("dates_after")) }) { device.hasObject(id("month_navigation_fragment_toggle")) }
         // The picker opens on the first track's month, so the day is forward of it.
         val month = day.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
         fun shown(): String {
@@ -388,7 +391,7 @@ class MapFlowsTest {
         val picked = Regex("""\b${day.format(DateTimeFormatter.ofPattern("MMM", Locale.getDefault()))}\w*\.? ${day.dayOfMonth}\b""")
         tapUntil({ need(By.descContains(label)) }) { picked.containsMatchIn(need(id("mtrl_picker_header_selection_text")).text) }
         tapUntil({ need(id("confirm_button")) }) { !device.hasObject(id("confirm_button")) }
-        need(By.res("android", "button1")).click()
+        tapUntil({ still(By.text(context.getString(R.string.dates_done))) }) { !device.hasObject(id("dates_after")) }
     }
 
     /** [selector] once it's on screen and its bounds have held for half a second, two readings
