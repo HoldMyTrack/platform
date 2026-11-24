@@ -74,7 +74,7 @@ Private locations (FR-7.1). `salt` seeds each clipped end's stretch (§4.1); onl
 
 ### 3.8 `jobs`
 
-The queue (§4.1); there is no broker. A running job stays `pending`, with `locked_at` marking it taken. Finished rows are kept as the import history (§4.0), so partial indexes keep the claim and per-account reads cheap. `raw` holds an ingest's payload until the worker stores it. `error_code` is a failed ingest's reason, translated when read (§4.21); `last_error` is an English diagnostic. `attempts` counts claims, `retries` the reruns scheduled after a failure and `releases` the claims a shutdown handed back; the rest of `attempts` is the runs a worker died in.
+The queue (§4.1); there is no broker. A running job stays `pending`, with `locked_at` marking it taken. Finished rows are kept as the import history (§4.0), so partial indexes keep the claim and per-account reads cheap. `raw` holds an ingest's payload until the worker stores it. `error_code` is a failed ingest's reason, translated when read (§4.21); `last_error` is an English diagnostic; `seen_at` is when the Upload menu's note of a failed ingest was dismissed. `attempts` counts claims, `retries` the reruns scheduled after a failure and `releases` the claims a shutdown handed back; the rest of `attempts` is the runs a worker died in.
 
 ### 3.9 `sessions`
 
@@ -192,7 +192,7 @@ flowchart LR
 
 **All three are idempotent on `(user_id, source, external_id)`**, under concurrent duplicates too. The check at receive time is a fast path; the guarantee is `idx_tracks_dedupe` plus the persist step's `ON CONFLICT DO NOTHING` (§4.1 step 6).
 
-**The import history is the `jobs` table** (`kind = 'ingest'`): every file and synced track is a job carrying its file name, source, state and error, so the Upload menu, `/sync` and the Android Sync history read one history with no uploads table (`imports.go`, `uploads.go`). A daily sweep deletes finished jobs 90 days after they finish (`worker/job_history.go`). `GET /v2/uploads/{external_id}` answers only from the caller's own jobs: an upload's id is its file's hash, which would otherwise tell anyone holding a file whether someone uploaded it. Clients refresh the map when an import finishes, not when its request returns, since the request only enqueued it.
+**The import history is the `jobs` table** (`kind = 'ingest'`): every file and synced track is a job carrying its file name, source, state and error, so the Upload menu and `/sync`, which the Android Sync history opens, read one history with no uploads table (`imports.go`, `uploads.go`). A daily sweep deletes finished jobs 90 days after they finish (`worker/job_history.go`). `GET /v2/uploads/{external_id}` answers only from the caller's own jobs: an upload's id is its file's hash, which would otherwise tell anyone holding a file whether someone uploaded it. Clients refresh the map when an import finishes, not when its request returns, since the request only enqueued it.
 
 #### 4.0.3 `POST /v2/sync/tracks`
 

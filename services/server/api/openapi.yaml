@@ -147,6 +147,8 @@ paths:
     $ref: "paths/uploads.yaml#/uploads"
   /uploads/active:
     $ref: "paths/uploads.yaml#/uploads_active"
+  /uploads/seen:
+    $ref: "paths/uploads.yaml#/uploads_seen"
   /uploads/{external_id}:
     $ref: "paths/uploads.yaml#/uploads_external_id"
   /coverage/status:

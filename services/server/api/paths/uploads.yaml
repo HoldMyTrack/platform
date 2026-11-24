@@ -61,7 +61,7 @@ uploads:
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
 uploads_active:
   get:
-    summary: Imports still running, grouped by batch, and how many failures the account hasn't seen
+    summary: Imports still running, grouped by batch, and the failures the account hasn't seen
     responses:
       "200":
         description: The running imports
@@ -69,7 +69,7 @@ uploads_active:
           application/json:
             schema:
               type: object
-              required: [imports, unseen_failures]
+              required: [imports, unseen_failures, failures]
               additionalProperties: false
               properties:
                 imports:
@@ -85,8 +85,39 @@ uploads_active:
                       total: { type: integer }
                       submitted_at: { type: string, format: date-time }
                 unseen_failures: { type: integer }
+                failures:
+                  type: array
+                  description: The newest 20 of the unseen failures, newest first; none for the demo account.
+                  items:
+                    type: object
+                    required: [id, title, reason, finished_at]
+                    additionalProperties: false
+                    properties:
+                      id: { type: integer, description: What POST /uploads/seen dismisses it by. }
+                      title: { type: string }
+                      reason: { type: string, description: In the request's language. }
+                      finished_at: { type: string, format: date-time }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
+uploads_seen:
+  post:
+    summary: Dismiss one failed import from the unseen failures
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [id]
+            properties:
+              id: { type: integer, description: A failure's id from GET /uploads/active; any other changes nothing. }
+    responses:
+      "204":
+        description: Seen
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/Forbidden" }
 uploads_external_id:
   parameters:
     - name: external_id

@@ -189,7 +189,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 - Each file is processed on its own; one failing doesn't affect the others.
 - At most 100 files an hour per account, refused and duplicate ones included, checked before the file is read.
 - A file is refused at once with the reason when it is empty, another type, too large or past the account's limits (FR-1.14), or when it can't become a track: it can't be read, has no timestamps (a planned route), has no positioned point, has fewer than 2 points or more than 200,000, crosses more than 20,000 map squares of about 2.4 km, names a type over 50 characters, or has a distance, climb or duration beyond any real track. Untimed points inside a timed route are dropped.
-- A file taken becomes a track. A failure on the server's side is retried while the import stays processing; only a server fault no retry can mend fails it, with the reason on the Sync page.
+- A file taken becomes a track. A failure on the server's side is retried while the import stays processing; only a server fault no retry can mend fails it, with the reason in the Upload menu.
 - The track reaches the list, map and totals without a reload; Fog follows once redrawn (FR-4.2).
 
 ### FR-3.2 Import status
@@ -232,8 +232,8 @@ The Android app records GPS-only tracks on the phone; nothing reaches the server
 
 ### FR-3.7 The Sync page
 
-- `/sync` lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed.
-- An unseen failed import marks the header's Sync item until the page is opened.
+- `/sync` lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed. The web doesn't link it: it is the Android app's Sync history.
+- A failed import is listed in the header's Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened.
 
 ### FR-3.8 A track's own timezone
 

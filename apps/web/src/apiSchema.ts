@@ -3579,7 +3579,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Imports still running, grouped by batch, and how many failures the account hasn't seen */
+        /** Imports still running, grouped by batch, and the failures the account hasn't seen */
         get: {
             parameters: {
                 query?: never;
@@ -3605,6 +3605,16 @@ export interface paths {
                                 submitted_at: string;
                             }[];
                             unseen_failures: number;
+                            /** @description The newest 20 of the unseen failures, newest first; none for the demo account. */
+                            failures: {
+                                /** @description What POST /uploads/seen dismisses it by. */
+                                id: number;
+                                title: string;
+                                /** @description In the request's language. */
+                                reason: string;
+                                /** Format: date-time */
+                                finished_at: string;
+                            }[];
                         };
                     };
                 };
@@ -3614,6 +3624,50 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/uploads/seen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss one failed import from the unseen failures */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description A failure's id from GET /uploads/active; any other changes nothing. */
+                        id: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Seen */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;

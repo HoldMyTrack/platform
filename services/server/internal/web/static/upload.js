@@ -2,12 +2,11 @@
 // chosen here — or dropped on the map, which sends them here as an `hmt:upload-files` event —
 // upload one at a time with their progress, then show as "Processing…" until the server has
 // finished them. A .zip is refused here, with a note: archives aren't imported (ADR-0039). A
-// finished import leaves the menu, whatever became of it: what
-// it came to is the header's Sync item's, the /sync page, whose red dot this script also keeps
-// — a failure the account hasn't seen there.
+// finished import leaves the menu; one that failed comes back as a note with its reason, until
+// that note is dismissed (POST /v2/uploads/seen), and lights the menu's dot.
 //
 // The server's GET /v2/uploads/active is the list of what's still processing — a phone sync's
-// too — and the count of unseen failures, read every POLL_MS while anything is in flight and
+// too — and the failures the account hasn't dismissed, read every POLL_MS while anything is in flight and
 // every IDLE_MS otherwise. Whenever an import finishes, or a file's upload lands, the menu
 // fires `hmt:imports-changed` on window, which the map listens to (MapView.tsx) to redraw its
 // list and tracks. How many are in flight, uploading or processing, it keeps in its
@@ -37,15 +36,13 @@
   var list = menu.querySelector('.upload-menu__list');
   var idle = menu.querySelector('.upload-menu__idle');
   var notes = menu.querySelector('.upload-menu__notes');
-  // The header's Sync item, where finished imports are: its dot is a failure not yet seen there.
-  var syncLink = document.querySelector('[data-sync-link]');
-  var syncAlert = syncLink && syncLink.querySelector('.sync-link__alert');
   var badge = menu.querySelector('.upload-menu__badge');
   var alertDot = menu.querySelector('.upload-menu__alert');
 
   var transfers = []; // { id, name, progress, sending } — files still to send, or being sent
   var active = []; // GET /v2/uploads/active's imports
-  var unseenFailures = 0;
+  var failures = []; // GET /v2/uploads/active's failures the account hasn't dismissed
+  var dismissed = {}; // failure ids dismissed here, kept out of a read that started before
   var inFlight = -1; // the last count announced; -1 until the first render
   var noteList = []; // { id, text, error } — this page's own messages, dismissed one by one
   var uid = 0;
@@ -133,24 +130,40 @@
       window.dispatchEvent(new CustomEvent('hmt:imports-in-flight', { detail: busy }));
     }
 
-    syncList(notes, noteList, function (n) { return 'n' + n.id; }, function (n) {
-      var li = el('li', 'upload-menu__note' + (n.error ? ' upload-menu__note--error' : ''));
-      li.appendChild(el('span', '', n.text));
-      li.appendChild(dismissButton(function () {
+    // The server's failures first, then this page's own notes.
+    var shown = failures.filter(function (f) { return !dismissed[f.id]; }).map(function (f) {
+      return { key: 'f' + f.id, text: fill(strings.failed_transfer, { filename: f.title, error: f.reason }), error: true, dismiss: function () { dismissFailure(f.id); } };
+    }).concat(noteList.map(function (n) {
+      return { key: 'n' + n.id, text: n.text, error: n.error, dismiss: function () {
         noteList = noteList.filter(function (x) { return x.id !== n.id; });
         render();
-      }));
+      } };
+    }));
+    syncList(notes, shown, function (n) { return n.key; }, function (n) {
+      var li = el('li', 'upload-menu__note' + (n.error ? ' upload-menu__note--error' : ''));
+      li.appendChild(el('span', '', n.text));
+      li.appendChild(dismissButton(n.dismiss));
       return li;
     }, function () {
       // A note never changes once shown.
     });
 
-    alertDot.hidden = !noteList.some(function (n) { return n.error; });
-    if (syncAlert) {
-      syncAlert.hidden = unseenFailures === 0;
-      if (unseenFailures > 0) syncLink.title = fill(strings.failed_unseen, { n: unseenFailures });
-      else syncLink.removeAttribute('title');
-    }
+    alertDot.hidden = !shown.some(function (n) { return n.error; });
+  }
+
+  // Hides the failure at once and for good on this page; one the server didn't record comes back
+  // with the next page load, to dismiss again.
+  function dismissFailure(id) {
+    dismissed[id] = true;
+    render();
+    fetch('/v2/uploads/seen', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id }),
+    }).catch(function () {
+      // Kept hidden here; the next page load lists it again.
+    });
   }
 
   function note(text, error) {
@@ -191,7 +204,7 @@
           return !(k in now) || now[k] > before[k];
         });
         active = body.imports;
-        unseenFailures = body.unseen_failures;
+        failures = body.failures || [];
         render();
         if (finishedSome) changed();
       })
@@ -301,7 +314,7 @@
     }, Promise.resolve()).then(schedule);
   }
 
-  // Uploads live in this page's memory: leaving it (Sync, the logo, a language) drops the rest,
+  // Uploads live in this page's memory: leaving it (Library, the logo, a language) drops the rest,
   // so the browser asks first while any remain, as the Edit window does for unsaved photos. Only
   // while any remain (render keeps it): Firefox keeps a page with the listener out of its
   // back/forward cache.

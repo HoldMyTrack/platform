@@ -112,3 +112,42 @@ func TestUploadHistoryFinishedAt(t *testing.T) {
 		t.Errorf("pending row: status %q, finished_at %v; want processing with none", n.Status, n.FinishedAt)
 	}
 }
+
+// The Upload menu lists unseen failures with their reason, and dismissing one marks only that
+// one seen: the other stays listed.
+func TestUploadMenuFailuresUntilDismissed(t *testing.T) {
+	d := newDBTest(t)
+	me := d.newAccount(false)
+	ctx := context.Background()
+	if _, err := d.pool.Exec(ctx, `UPDATE users SET imports_seen_at = NOW() - INTERVAL '1 hour' WHERE id = $1`, me.id); err != nil {
+		t.Fatal(err)
+	}
+	d.insertImportJob(me, "failed", "upload", "bad.gpx", "")
+	d.insertImportJob(me, "failed", "upload", "worse.gpx", "")
+	// One stored with a code, one without: both read as a failure on our side.
+	if _, err := d.pool.Exec(ctx, `UPDATE jobs SET error_code = 'internal' WHERE user_id = $1 AND payload->>'source_detail' = 'bad.gpx'`, me.id); err != nil {
+		t.Fatal(err)
+	}
+
+	var resp activeImportsResponse
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
+	if len(resp.Failures) != 2 {
+		t.Fatalf("failures %+v, want two", resp.Failures)
+	}
+	for _, f := range resp.Failures {
+		if f.Reason != resp.Failures[0].Reason || f.Reason == "" {
+			t.Errorf("failure %+v, want the same reason as the other", f)
+		}
+	}
+	dismissed, kept := resp.Failures[0], resp.Failures[1]
+	if res := d.do(me, "POST", "/v2/uploads/seen", map[string]any{"id": "first"}); res.Code != http.StatusBadRequest {
+		t.Errorf("POST /v2/uploads/seen with a string id: %d, want 400", res.Code)
+	}
+	if res := d.do(me, "POST", "/v2/uploads/seen", map[string]any{"id": dismissed.ID}); res.Code != http.StatusNoContent {
+		t.Fatalf("POST /v2/uploads/seen: %d", res.Code)
+	}
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
+	if len(resp.Failures) != 1 || resp.Failures[0].ID != kept.ID || resp.UnseenFailures != 1 {
+		t.Errorf("after dismissing %s: %+v, want only %s", dismissed.Title, resp, kept.Title)
+	}
+}
