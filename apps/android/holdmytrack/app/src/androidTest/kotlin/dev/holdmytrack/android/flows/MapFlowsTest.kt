@@ -176,8 +176,8 @@ class MapFlowsTest {
         need(id("send_copy_email")).text = "nobody@example.com"
         retrying { still(By.text("Send").enabled(true)).click() }
         need(id("send_copy_status").textStartsWith("Sent to nobody@example.com"))
-        need(By.desc("Close")).click()
-        assertTrue("Close closed it", device.wait(Until.gone(id("send_copy_email")), TIMEOUT_MS))
+        // The sheet grows with the "Sent to …" line: Close is tapped once it has settled.
+        tapUntil({ still(By.desc("Close")) }) { !device.hasObject(id("send_copy_email")) }
     }
 
     /** The Private location editor is a sheet over the live map: with the keyboard up for Name,
