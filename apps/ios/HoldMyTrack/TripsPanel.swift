@@ -5,7 +5,8 @@ import UIKit
 /// Trip as a folder, newest first, one of them open while the tab shows, the newest until another
 /// is tapped. The map screen lists and draws the open Trip's tracks and hands its rows back
 /// (setRows); this tab draws them inside the folder, with × to take one out and the whole Trip's
-/// numbers under them. Above the folders, copies others sent wait to be accepted or declined
+/// numbers under them. A tap on the open Trip's folder folds its list away or back (TripFold); the
+/// Trip stays open and its numbers stay under the folder. Above the folders, copies others sent wait to be accepted or declined
 /// (FR-13.7), read with the list and every 3 seconds while an accepted one is arriving.
 final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
@@ -39,6 +40,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private(set) var openID: String?
     private var openTrip: Trip?
     private var openError: String?
+    /// The Trip whose list is folded (TripFold); the tab opens with none.
+    private var foldedID: String?
     private var rows: [TrackRowCell.Row] = []
     private var rowsNote: (text: String, failed: Bool)?
     private var removeError: String?
@@ -49,7 +52,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var inboxTask: Task<Void, Never>?
 
     private enum Item {
-        case send(TripSend), copying(TripCopying), folder(Trip, open: Bool), text(String, small: Bool), stats(Trip)
+        case send(TripSend), copying(TripCopying), folder(Trip, open: Bool, expanded: Bool), text(String, small: Bool), stats(Trip)
         case row(TrackRowCell.Row, tripID: String), note(String, failed: Bool)
     }
     private var items: [Item] = []
@@ -94,6 +97,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         showing = true
         ready = false
         error = nil
+        foldedID = nil
         render()
         loadTrips()
         loadInbox()
@@ -209,25 +213,29 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         var next: [Item] = sends.map { .send($0) } + copying.map { .copying($0) }
         if let answerError { next.append(.note(answerError, failed: true)) }
         if let openError, !trips.contains(where: { $0.id == openID }) { next.append(.note(openError, failed: true)) }
+        // Where the open Trip's numbers go: under its last row, or under its folder while folded.
+        var statsAt: Int?
         for listed in trips {
             let open = listed.id == openID
             let trip = open && openTrip?.id == listed.id ? openTrip! : listed
-            next.append(.folder(trip, open: open))
-            guard open else { continue }
+            let expanded = open && !TripFold.isFolded(foldedID: foldedID, openID: openID)
+            next.append(.folder(trip, open: open, expanded: expanded))
+            if open && !expanded { statsAt = next.count }
+            guard expanded else { continue }
             if let from = trip.from { next.append(.text(String(localized: "From \(from)"), small: true)) }
             if !trip.description.isEmpty { next.append(.text(trip.description, small: false)) }
             if let removeError { next.append(.note(removeError, failed: true)) }
             next += rows.map { .row($0, tripID: trip.id) }
+            if !rows.isEmpty { statsAt = next.count }
             if let rowsNote {
                 next.append(.note(rowsNote.text, failed: rowsNote.failed))
             } else if rows.isEmpty {
                 next.append(.note(trip.stats.count == 0 ? String(localized: "trips.noTracks", defaultValue: "No tracks in this trip.", comment: "An open Trip with no tracks.") : String(localized: "No tracks here match the current filters."), failed: false))
             }
         }
-        // The whole Trip's numbers, and each type's share, under its rows (Android's footer).
-        if let trip = openTrip, trip.id == openID, trip.stats.count > 0,
-           let at = next.lastIndex(where: { if case .row = $0 { true } else { false } }) {
-            next.insert(.stats(trip), at: at + 1)
+        // The whole Trip's numbers, and each type's share (Android's footer).
+        if let trip = openTrip, trip.id == openID, trip.stats.count > 0, let statsAt {
+            next.insert(.stats(trip), at: statsAt)
         }
         if let error {
             next.append(.note(error, failed: true))
@@ -310,8 +318,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                       onRemove: { [weak self] in self?.remove(tripID: tripID, trackID: id) })
             cell.contentView.directionalLayoutMargins.leading = 36
             return cell
-        case .folder(let trip, let open):
-            return folderCell(trip, open: open)
+        case .folder(let trip, let open, let expanded):
+            return folderCell(trip, open: open, expanded: expanded)
         case .send(let send):
             return inboxCell(String(localized: "\(send.from) sent you a copy of “\(send.tripName)” · \(format.trackCount(send.trackCount))") , send: send)
         case .copying(let copy):
@@ -328,7 +336,11 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         switch items[indexPath.row] {
         case .row(let row, _) where !row.track.pending: onEvent?(.select(row.track.id))
-        case .folder(let trip, let open) where !open: onEvent?(.open(trip.id, collapse: true))
+        case .folder(let trip, _, _):
+            // A fold leaves the sheet where it is; opening another Trip lowers it.
+            let click = TripFold.folderClick(foldedID: foldedID, openID: openID, clickedID: trip.id)
+            foldedID = click.foldedID
+            if click.open { onEvent?(.open(trip.id, collapse: true)) } else { render() }
         case .note: onEvent?(.clearFocus)
         default: break
         }
@@ -352,11 +364,13 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         return cell
     }
 
-    private func folderCell(_ trip: Trip, open: Bool) -> UITableViewCell {
+    /// The arrow and the spoken state follow whether the list shows; the accent and the tint mark
+    /// the open Trip, folded or not.
+    private func folderCell(_ trip: Trip, open: Bool, expanded: Bool) -> UITableViewCell {
         let cell = table.dequeueReusableCell(withIdentifier: "plain")!
         var config = UIListContentConfiguration.cell()
         config.text = trip.name
-        config.image = Controls.icon(UIImage(resource: open ? .chevronDown : .chevronRight), size: 16)
+        config.image = Controls.icon(UIImage(resource: expanded ? .chevronDown : .chevronRight), size: 16)
         config.imageProperties.tintColor = UIColor(resource: open ? .accentStrong : .inkSecondary)
         config.textProperties.font = Typeface.sans(DesignTokens.Text.lg, weight: DesignTokens.Weight.semibold)
         config.textProperties.color = UIColor(resource: .ink)
@@ -364,7 +378,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         cell.backgroundColor = open ? UIColor(resource: .surfaceTint) : .clear
         cell.selectionStyle = .none
         cell.accessibilityIdentifier = "tripFolder"
-        cell.accessibilityValue = open ? String(localized: "Open") : String(localized: "Folded")
+        cell.accessibilityValue = expanded ? String(localized: "Open") : String(localized: "Folded")
 
         // Each named for its Trip, since VoiceOver reads a folder's buttons on their own.
         func named(_ action: String) -> String { demo ? String(localized: "Not available for demo accounts — create an account to change trips") : "\(action): \(trip.name)" }

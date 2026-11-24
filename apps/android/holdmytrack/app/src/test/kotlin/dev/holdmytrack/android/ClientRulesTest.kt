@@ -21,6 +21,7 @@ import dev.holdmytrack.android.net.RouteEdit
 import dev.holdmytrack.android.net.RoutePoint
 import dev.holdmytrack.android.panel.DownloadRules
 import dev.holdmytrack.android.panel.LibraryRules
+import dev.holdmytrack.android.panel.TripFold
 import dev.holdmytrack.android.panel.TrackFacets
 import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.sync.Similar
@@ -233,6 +234,17 @@ class ClientRulesTest {
                 is DownloadRules.Block.TooMany -> buildJsonObject { put("kind", "too_many"); put("count", block.count) }
                 is DownloadRules.Block.Pending -> buildJsonObject { put("kind", "pending"); put("track", block.id) }
                 is DownloadRules.Block.Private -> buildJsonObject { put("kind", "private"); put("track", block.id) }
+            }
+        },
+        "tripFold" to { input ->
+            val folded = input.string("foldedId")
+            val open = input.string("openId")
+            val clicked = input.string("clicked")
+            val click = clicked?.let { TripFold.folderClick(folded, open, it) } ?: TripFold.Click(folded, open = false)
+            buildJsonObject {
+                put("foldedId", click.foldedId)
+                put("open", click.open)
+                put("folded", TripFold.isFolded(click.foldedId, if (click.open) clicked else open))
             }
         },
         "libraryPager" to { input ->

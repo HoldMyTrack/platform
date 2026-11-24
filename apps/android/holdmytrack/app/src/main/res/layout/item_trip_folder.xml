@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One Trip on the Trips tab, after the web's .trips-tab__folder: the triangle and the
-     name, which is the folder's own tap target (open it), then the pencil, send and the bin — always
-     shown, as the web shows them at phone width. A hairline over it. -->
+     name, which is the folder's own tap target (open it, or fold the open one), then the pencil, send and the bin — always
+     shown, as the web shows them at phone width. A hairline over it; open, the accent tint
+     and a bar down its left edge (bg_trip_folder). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_list_top"
+    android:background="@drawable/bg_trip_folder"
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingStart="@dimen/hmt_space_10"

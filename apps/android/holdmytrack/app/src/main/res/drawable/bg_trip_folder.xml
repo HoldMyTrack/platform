@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A Trip's folder (item_trip_folder): a hairline above it, and, open, the accent at 8% with a
+     3dp strong-accent bar down its left edge, as a selected Tracks row (bg_panel_row) and the
+     web's open .trips-tab__folder. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <layer-list>
+            <item>
+                <shape>
+                    <solid android:color="#14B07E2E" />
+                </shape>
+            </item>
+            <item
+                android:width="3dp"
+                android:gravity="start">
+                <shape>
+                    <solid android:color="@color/hmt_accent_strong" />
+                </shape>
+            </item>
+            <item
+                android:height="1dp"
+                android:gravity="top">
+                <shape>
+                    <solid android:color="@color/hmt_hairline" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item android:drawable="@drawable/bg_list_top" />
+</selector>
