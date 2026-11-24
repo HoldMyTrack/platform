@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-5.13 (the Library page's shell; its island is apps/web's).
+// Covers docs/SPEC.md FR-17.1 (the Library page's shell; its island is apps/web's).
 
 import (
 	"net/http"

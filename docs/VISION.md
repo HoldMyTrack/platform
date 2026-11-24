@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-HoldMyTrack is a **free, open-source platform for tracking outdoor activities and seeing the accumulated shape of where you have been**: how much ground you've covered, how well you've explored the places you live and travel through, and where you go most. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and turns them into maps and exploration stats.
+HoldMyTrack is a **free, open-source platform for tracking outdoor activities and seeing the accumulated shape of where you have been**: how much ground you've covered, how well you've explored the places you live and travel through, and where you go most. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and turns them into maps and exploration stats. Every kept track is also in one list, apart from the map, to sort, search and download as GPX, so a history outlives the devices and apps that recorded it, and HoldMyTrack too.
 
 **What it is for.** A watch app shows one track at a time, and years of history end up split across devices. HoldMyTrack puts the journeys the user picks from each source on one map (ADR-0039). "Where have I been?" is answered by a picture, which also shows the streets, parks and trails nearby that are still unexplored. Trips are the main feature: a trip spanning several tracks, such as a multi-day hike or a holiday, is kept as one Trip with its own map and totals (§4.2). HoldMyTrack shows what's left and leaves the choice of where to go to the user, Spots aside (§4.2).
 
@@ -27,7 +27,7 @@ The small scope is what makes it defensible and affordable (§6.3).
 
 ### 2.1 Mission Statement
 
-To let athletes, runners, cyclists, travellers and explorers see and keep the shape of where they have been, without surrendering their data.
+To let athletes, runners, cyclists, travellers and explorers see and keep the shape of where they have been, in one place they can take their tracks back from, without surrendering their data.
 
 **Tagline**: "HoldMyTrack — Every journey, mapped."
 
@@ -102,6 +102,7 @@ The mobile app can also originate a track, for someone with no watch running who
 | :--- | :--- |
 | **Multi-source ingest** | Each source shows what it would bring in; only what the user ticks comes in |
 | **Map** | Fog of War and track modes; curated themes; smooth fog edges |
+| **Library** | Every kept track in one list, apart from the map: sorted, filtered, searched and downloaded as GPX |
 | **Per-track detail** | The focused route colored by pace |
 | **Trips** | Hand-picked tracks kept as one trip, with joint stats and their own map |
 | **Photos** | The user's photos, each placed on its track's route |

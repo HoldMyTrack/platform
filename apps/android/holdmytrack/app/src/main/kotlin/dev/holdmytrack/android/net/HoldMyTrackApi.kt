@@ -274,7 +274,7 @@ object HoldMyTrackApi {
         }
 
     /**
-     * `GET /v2/uploads/active`'s failures (root `docs/SPEC.md` FR-3.7): the imports that failed on
+     * `GET /v2/uploads/active`'s failures (root `docs/SPEC.md` FR-3.2): the imports that failed on
      * the server's side and haven't been dismissed, newest first, each with its reason in the
      * request's language.
      */
@@ -346,7 +346,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `GET /v2/tracks/gpx?ids=` — Library's Download in the app (root `docs/SPEC.md` FR-5.14): one track as GPX, or several as a zip, written to [into]. Returns
+     * `GET /v2/tracks/gpx?ids=` — Library's Download in the app (root `docs/SPEC.md` FR-17.2): one track as GPX, or several as a zip, written to [into]. Returns
      * the file name the server gives it. Through [uploadClient] for its long read timeout: a page of
      * tracks is zipped before the first byte comes back.
      */
@@ -732,7 +732,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `GET /v2/tracks?page=`: one page of Library (root `docs/SPEC.md` FR-5.13), as [query]
+     * `GET /v2/tracks?page=`: one page of Library (root `docs/SPEC.md` FR-17.1), as [query]
      * asks for it.
      */
     suspend fun trackPage(query: TrackPageQuery): TrackPage = withContext(Dispatchers.IO) {

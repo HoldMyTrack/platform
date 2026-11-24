@@ -13,7 +13,7 @@ type libraryShell struct {
 	ViteDev bool
 }
 
-// GET /library: the Library page (docs/SPEC.md FR-5.13), a server page holding a React island
+// GET /library: the Library page (docs/SPEC.md FR-17.1), a server page holding a React island
 // (apps/web's library/main.tsx) that lists the tracks from `GET /v2/tracks?page=` and keeps its
 // sort, filters and page in the URL. Signed out goes to sign in, and a session with somewhere
 // else to be first goes there, as for the map.

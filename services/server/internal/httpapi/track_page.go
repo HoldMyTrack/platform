@@ -15,7 +15,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/tracktype"
 )
 
-// trackPageSize is how many rows one of Library's pages holds (SPEC.md FR-5.13), and so the
+// trackPageSize is how many rows one of Library's pages holds (SPEC.md FR-17.1), and so the
 // most a client can check at once there.
 const trackPageSize = 100
 

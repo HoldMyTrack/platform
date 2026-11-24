@@ -13,7 +13,7 @@ What HoldMyTrack does, as a user or an API client can rely on it: limits, privac
 
 ### 1.2 Scope
 
-Every built feature of the server and the web app; the Android app's own behavior is in `apps/android/docs/SPEC.md`. What won't be built is in §21; what isn't built yet is in `ROADMAP.md`.
+Every built feature of the server and the web app; the Android app's own behavior is in `apps/android/docs/SPEC.md`. What won't be built is in §22; what isn't built yet is in `ROADMAP.md`.
 
 ### 1.3 Definitions
 
@@ -194,7 +194,9 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 
 ### FR-3.2 Import status
 
-- Files, Health Connect sessions and recordings are one history, shown for 90 days (FR-3.7).
+- Files come in through the header's Upload menu, which shows each one queued, uploading or processing, and a phone sync's tracks still processing. What came in is Library sorted by date added (FR-17.1); no list of imports is shown on the web or Android.
+- A failed import is listed in the Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened. The Android app shows it in an alert, which dismisses it (`apps/android/docs/SPEC.md` FR-3.4).
+- A finished import is kept 90 days, for the Upload menu's failures and `/sync` (FR-3.7).
 - A phone sync of several tracks is one import. The web can't start a phone sync.
 
 ### FR-3.3 Duplicate detection
@@ -232,8 +234,7 @@ The Android app records GPS-only tracks on the phone and sends each one the user
 
 ### FR-3.7 The Sync page
 
-- `/sync` lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed. The web doesn't link it: it is the iOS app's Sync history.
-- A failed import is listed in the header's Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened. The Android app shows it in an alert, which dismisses it (`apps/android/docs/SPEC.md` FR-3.4).
+`/sync` is the iOS app's Sync history; the web and Android don't link it. It lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed.
 
 ### FR-3.8 A track's own timezone
 
@@ -466,23 +467,6 @@ The list holds every track whose route crosses the visible map, of all time unle
 - Setting it moves the camera once onto the tracks it matches, wherever they are; clearing it leaves the camera.
 - It filters the Tracks tab and Normal mode's routes only, not Trips, the Privacy tab or Fog.
 
-### FR-5.13 Library
-
-Every track the account keeps, as one list not tied to the map's area.
-
-- Pages of 100, ordered by start date, distance, moving time or date added, either way; tracks that tie always come in the same order. A track with no route (FR-7.1) sorts last on distance and moving time.
-- Filters: Type, Distance and Dates by the panel's rules (FR-5.2, FR-5.3, FR-5.12), one Trip (FR-13.4), and a search for text in the name or the description, ignoring case and accents. An unnamed track matches only through its description.
-- Each page says how many tracks pass the filters. The filters' bounds cover every track, whatever is filtered.
-- Pending tracks are listed with their badge (FR-5.8).
-- Opening a track focuses it on the map. Download (FR-5.14) and Delete (FR-5.6) act on one track, or on the Checked tracks, which stay within the page: changing page, sort or filter clears them.
-
-### FR-5.14 Download tracks as GPX
-
-- Up to 100 tracks at once: one as a GPX file, several as a zip of them. A demo session can download.
-- Each file is the track as the map shows it: route edits applied and the ends inside Private locations removed, with the account's Private locations as they are at download (FR-7.1). Positions, elevation, times and the type, nothing else.
-- A request is refused whole, naming the track, when any of them is Pending, entirely inside Private locations, or has no readable original; and when their originals hold more than 2,000,000 points together.
-- At most 60 downloads an hour per account.
-
 ## 8. FR-6 — Track Graph (Profile)
 
 ### FR-6.1 Contribution grid
@@ -523,7 +507,7 @@ An account only sees its own data. Every endpoint takes the account from the ses
 ### FR-8.1 Trends
 
 - Weekly (Monday to Sunday) or monthly totals of count, distance, moving time and elevation gain by local date (FR-3.8), for a window defaulting to the trailing 12 months, every bucket returned, empty ones as zeroes.
-- A track with no moving time counts its elapsed time. Shown on the Profile page. Best efforts and personal bests are out of scope (§21).
+- A track with no moving time counts its elapsed time. Shown on the Profile page. Best efforts and personal bests are out of scope (§22).
 
 ## 11. FR-9 — Public pages: About, Help, Contacts, privacy policy, Android test suite
 
@@ -763,7 +747,26 @@ The service spends up to `R2_DAILY_BUDGET_USD` a day ($2 by default) on object-s
 - **At 100%**, reads of stored files are refused the same way: Fog tiles, photos, avatars, download archives and the route editor's points. Routes, lists, Trips, totals, Spots and pages keep working.
 - The stages lift at midnight UTC, or when the budget is raised past the day's spend. A stage can start up to a minute after the spend that crosses it.
 
-## 19. Non-Functional Requirements (summary)
+## 19. FR-17 — Library
+
+### FR-17.1 Library
+
+Every track the account keeps, as one list not tied to the map's area.
+
+- Pages of 100, ordered by start date, distance, moving time or date added, either way; tracks that tie always come in the same order. A track with no route (FR-7.1) sorts last on distance and moving time.
+- Filters: Type, Distance and Dates by the panel's rules (FR-5.2, FR-5.3, FR-5.12), one Trip (FR-13.4), and a search for text in the name or the description, ignoring case and accents. An unnamed track matches only through its description.
+- Each page says how many tracks pass the filters. The filters' bounds cover every track, whatever is filtered.
+- Pending tracks are listed with their badge (FR-5.8).
+- Opening a track focuses it on the map. Download (FR-17.2) and Delete (FR-5.6) act on one track, or on the Checked tracks, which stay within the page: changing page, sort or filter clears them.
+
+### FR-17.2 Download tracks as GPX
+
+- Up to 100 tracks at once: one as a GPX file, several as a zip of them. A demo session can download.
+- Each file is the track as the map shows it: route edits applied and the ends inside Private locations removed, with the account's Private locations as they are at download (FR-7.1). Positions, elevation, times and the type, nothing else.
+- A request is refused whole, naming the track, when any of them is Pending, entirely inside Private locations, or has no readable original; and when their originals hold more than 2,000,000 points together.
+- At most 60 downloads an hour per account.
+
+## 20. Non-Functional Requirements (summary)
 
 | Concern | Behavior |
 | :-- | :-- |
@@ -774,11 +777,11 @@ The service spends up to `R2_DAILY_BUDGET_USD` a day ($2 by default) on object-s
 | **No reload required** | Lists, totals and the map update as processing finishes. |
 | **Idempotency** | The same original (FR-3.3), sync record (FR-3.4) or reset token (FR-1.6) has no effect beyond the first. |
 
-## 20. Mobile Browser Support
+## 21. Mobile Browser Support
 
 The web app works in a phone browser as on a desktop. Taps stand in for hover.
 
-## 21. Deliberate limits
+## 22. Deliberate limits
 
 Not built by design, and not planned:
 

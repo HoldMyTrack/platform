@@ -2,7 +2,7 @@
 
 [![Go coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=go&logo=go&logoColor=white&label=Go%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=go) [![TypeScript coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=typescript&logo=typescript&logoColor=white&label=TypeScript%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=typescript) [![Kotlin coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=kotlin&logo=kotlin&logoColor=white&label=Kotlin%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=kotlin) [![Swift coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=swift&logo=swift&logoColor=white&label=Swift%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=swift)
 
-A free, open-source platform for outdoor activities. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and turns them into maps and exploration stats: one map of every place they reached and the nearby streets, parks and trails they haven't, so the next walk, run or ride can go somewhere new, and each holiday or multi-day hike can be kept as a Trip with its photos. What it is and isn't: [`docs/VISION.md` §1](docs/VISION.md#1-executive-summary).
+A free, open-source platform for outdoor activities. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and keeps every one in a list you can sort, search and download as GPX, and turns them into maps and exploration stats: one map of every place they reached and the nearby streets, parks and trails they haven't, so the next walk, run or ride can go somewhere new, and each holiday or multi-day hike can be kept as a Trip with its photos. What it is and isn't: [`docs/VISION.md` §1](docs/VISION.md#1-executive-summary).
 
 Live at [holdmytrack.com](https://holdmytrack.com), with a no-signup demo account to explore.
 
@@ -11,6 +11,7 @@ Live at [holdmytrack.com](https://holdmytrack.com), with a no-signup demo accoun
 Each feature links to the part of [`docs/SPEC.md`](docs/SPEC.md) that defines its behavior.
 
 - **Bring in what you choose.** GPX, FIT and TCX files, plus Health Connect sync and GPS recording from the Android app, through one ingest pipeline. Nothing comes in that you didn't pick, and a hint marks a likely second copy ([FR-3](docs/SPEC.md#5-fr-3--track-upload--ingestion)).
+- **Every track in one Library.** Sort, filter and search every track you keep, apart from the map, and download any of them as GPX, so your tracks outlive the apps that recorded them ([FR-17](docs/SPEC.md#19-fr-17--library)).
 - **One map, two views.** Every track drawn together, and Fog of War, which clears wherever you have ever been. Pick a track and it is colored by pace ([FR-4](docs/SPEC.md#6-fr-4--map-visualization)).
 - **Somewhere new, close to home.** The fog shows which streets, parks and trails nearby you haven't been to.
 - **Points of interest.** Playgrounds, dog parks, monuments, viewpoints, waterfalls and historic sites from OpenStreetMap, with what OSM knows about each; the Android app captures one when you stand in it for 30 seconds ([FR-14](docs/SPEC.md#16-fr-14--spots)).

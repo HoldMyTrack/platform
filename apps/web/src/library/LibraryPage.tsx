@@ -40,7 +40,7 @@ const COLUMNS: readonly { key: SortKey; label: () => string }[] = [
 ];
 
 /**
- * The Library page (`docs/SPEC.md` FR-5.13): every track the account keeps, a page of 100 at a
+ * The Library page (`docs/SPEC.md` FR-17.1): every track the account keeps, a page of 100 at a
  * time, with the Tracks panel's filters, Check all and delete dialog. Each row has its own Download
  * and Delete; the Checked rows' are in a bar at the window's foot. Its state lives in the URL
  * (libraryState.ts), so Back and a shared link reopen the same page. Checked stays within the

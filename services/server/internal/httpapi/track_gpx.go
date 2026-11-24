@@ -108,7 +108,7 @@ func gpxPoints(tracks []gpxTrack) int {
 // errGPXTooLarge is a download whose originals, counted as they were parsed, passed maxGPXPoints.
 var errGPXTooLarge = errors.New("the tracks' originals hold too many points")
 
-// handleTracksGPX serves `GET /v2/tracks/gpx?ids=` (docs/SPEC.md FR-5.14): the tracks as the map
+// handleTracksGPX serves `GET /v2/tracks/gpx?ids=` (docs/SPEC.md FR-17.2): the tracks as the map
 // shows them, one as a .gpx file and several as a zip of them. Every check that needs no parsing
 // runs first, so an oversized or impossible request is refused before any original is read, and
 // only a request that passes them counts against the hourly limit; the file is built in a

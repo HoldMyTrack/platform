@@ -1,5 +1,5 @@
 /**
- * What the Library page (`docs/SPEC.md` FR-5.13) decides, as plain values: its state read from
+ * What the Library page (`docs/SPEC.md` FR-17.1) decides, as plain values: its state read from
  * and written to the URL, so Back and a shared link reopen the same page; the API query that
  * state asks for; the sort a column's header sets; the pager; and why the list is empty.
  *

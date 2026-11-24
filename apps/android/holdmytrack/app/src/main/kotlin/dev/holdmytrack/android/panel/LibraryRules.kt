@@ -3,7 +3,7 @@ package dev.holdmytrack.android.panel
 import dev.holdmytrack.android.net.TrackPageQuery
 
 /**
- * What the Library tab (`apps/android/docs/SPEC.md` FR-4.1, root `docs/SPEC.md` FR-5.13) decides,
+ * What the Library tab (`apps/android/docs/SPEC.md` FR-4.1, root `docs/SPEC.md` FR-17.1) decides,
  * as plain values: the request a state asks for, the pager and why a page is empty. The web's
  * `apps/web/src/library/libraryState.ts`; both run `testdata/client-rules/library-*.json`.
  */

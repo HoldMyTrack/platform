@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-5.14 (GPX download).
+// Covers docs/SPEC.md FR-17.2 (GPX download).
 
 import (
 	"archive/zip"

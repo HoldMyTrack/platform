@@ -350,7 +350,7 @@ class TracksPanel(
     }
 
     /** Selects [id] and scrolls its row to the middle of the list — without expanding a
-     *  collapsed sheet (`docs/SPEC.md` §20). */
+     *  collapsed sheet (`docs/SPEC.md` §21). */
     fun focusFromMap(id: String) {
         select(id)
         if (tab == PanelTab.TRIPS) tripsTab.scrollToRow(id) else scrollToRow(id)

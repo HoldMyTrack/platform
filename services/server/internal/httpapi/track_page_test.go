@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-5.13 (Library's pages).
+// Covers docs/SPEC.md FR-17.1 (Library's pages).
 
 import (
 	"context"
