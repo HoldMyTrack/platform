@@ -31,7 +31,7 @@ RUN npx --prefix /opt/deps playwright install --with-deps chromium \
 CMD ["npm", "run", "verify:map"]
 
 # Production build. Same-origin default: docker/Caddyfile (the `serve` stage below)
-# reverse-proxies /v1/*, /v2/*, /tiles/* and /healthz onto the same origin this bundle is served
+# reverse-proxies everything but the static files onto the same origin this bundle is served
 # from, so a relative API base works regardless of the eventual domain — no per-deployment
 # build ARG needed for VITE_API_BASE_URL, unlike VITE_BASEMAP_ORIGIN below.
 #

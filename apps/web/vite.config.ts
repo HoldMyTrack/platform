@@ -19,7 +19,7 @@ const pagesTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:8080';
 // `/profile` as a shell around the element this app mounts into. So dev
 // proxies every page path to it — production's Caddy sends it everything that isn't a static
 // file (apps/web/docker/Caddyfile) — and this server is left serving the app's modules and
-// public/. /v1 and /v2 serve the header's avatar image; the app itself calls the API directly at
+// public/. /v2 serves the header's avatar image; the app itself calls the API directly at
 // VITE_API_BASE_URL. /tiles and /healthz: an iOS simulator's Debug build at this origin
 // (docs/DEVELOPMENT.md).
 // Vite matches these against the URL with its query string, hence the `(\?|$)` endings.
@@ -35,7 +35,6 @@ const pageRoutes = [
   '^/import/(garmin|strava)(\\?|$)',
   '^/verify-pending(/|\\?|$)',
   '^/static/',
-  '^/v1/',
   '^/v2/',
   '^/tiles/',
   '^/healthz(\\?|$)',
