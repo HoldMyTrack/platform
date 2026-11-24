@@ -51,7 +51,7 @@ class AddToTripMenu(
         val popup = PopupWindow(content, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
         content.findViewById<View>(R.id.trip_menu_new).setOnClickListener {
             popup.dismiss()
-            TripDialog.create(context, summary, ids, onTripCreated)
+            TripSheet.create(context, summary, ids, onTripCreated)
         }
         showNote(res.getString(R.string.panel_loading), failed = false)
         HoldMyTrackApi.trips { result ->

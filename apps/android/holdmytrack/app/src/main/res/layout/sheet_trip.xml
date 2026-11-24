@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Create trip and Edit trip (panel/TripDialog.kt), after the web's TripDialog.tsx: what the
+<!-- Create trip and Edit trip (panel/TripSheet.kt), after the web's TripDialog.tsx: what the
      Trip is made of (Create only), Name and Description, and the server's reason when a request
-     fails. The dialog's own buttons are Cancel and Create trip / Save. -->
+     fails. The sheet's toolbar (sheet_form) holds ✕ and Create trip / Save. The 200 and 2000
+     are the server's maxTripNameLen and maxTripDescriptionLen (httpapi/trips.go). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -51,7 +52,7 @@
             android:gravity="top"
             android:inputType="textMultiLine|textCapSentences"
             android:maxLength="2000"
-            android:maxLines="6"
+            android:maxLines="12"
             android:minLines="3" />
     </com.google.android.material.textfield.TextInputLayout>
 

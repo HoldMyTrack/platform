@@ -1,9 +1,9 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The panel's small dialogs: a Trip's name and description, sending a copy, a confirmation,
-/// and Add to trip's menu. Each runs its request after the alert closes and, when it fails,
-/// opens again with the server's reason and what was typed.
+/// The panel's small dialogs: a confirmation, a notice, and Add to trip's menu. A confirmation
+/// runs its request after the alert closes and, when it fails, opens again with the server's
+/// reason. A Trip's name and Send a copy are sheets (TripSheets).
 @MainActor
 enum TripDialogs {
     /// What a dialog's request answers: nil once done, else why it failed.
@@ -13,61 +13,6 @@ enum TripDialogs {
         var top = view.window?.rootViewController
         while let presented = top?.presentedViewController { top = presented }
         return top
-    }
-
-    static func name(over view: UIView, title: String, name: String, description: String, action: String, error: String? = nil,
-                     run: @escaping (String, String) async -> Outcome) {
-        let alert = UIAlertController(title: title, message: error, preferredStyle: .alert)
-        alert.addTextField {
-            $0.placeholder = String(localized: "Name")
-            $0.text = name
-            $0.autocapitalizationType = .sentences
-            $0.accessibilityIdentifier = "tripName"
-        }
-        alert.addTextField {
-            $0.placeholder = String(localized: "Description (optional)")
-            $0.text = description
-            $0.autocapitalizationType = .sentences
-            $0.accessibilityIdentifier = "tripDescription"
-        }
-        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        alert.addAction(UIAlertAction(title: action, style: .default) { [weak view] _ in
-            let typed = (alert.textFields?[0].text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let about = (alert.textFields?[1].text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            Task {
-                guard let failure = await run(typed, about), let view else { return }
-                Self.name(over: view, title: title, name: typed, description: about, action: action, error: failure, run: run)
-            }
-        })
-        top(view)?.present(alert, animated: true)
-    }
-
-    /// FR-13.7: a copy to an email address; the server never says whether it has an account.
-    static func sendCopy(over view: UIView, trip: Trip, email: String = "", error: String? = nil, run: @escaping (String) async -> Outcome) {
-        let message = error ?? String(localized: "They get their own copy of this trip and its tracks in their HoldMyTrack account, once they accept it. It's theirs from then on: what you change later doesn't reach it. Sending again later adds only the tracks they don't have yet.")
-        let alert = UIAlertController(title: String(localized: "Send a copy"), message: message, preferredStyle: .alert)
-        alert.addTextField {
-            $0.placeholder = String(localized: "Email")
-            $0.text = email
-            $0.keyboardType = .emailAddress
-            $0.textContentType = .emailAddress
-            $0.autocapitalizationType = .none
-            $0.accessibilityIdentifier = "sendEmail"
-        }
-        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        alert.addAction(UIAlertAction(title: String(localized: "Send"), style: .default) { [weak view] _ in
-            let typed = (alert.textFields?[0].text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            Task {
-                let failure = await run(typed)
-                guard let view else { return }
-                if let failure {
-                    Self.sendCopy(over: view, trip: trip, email: typed, error: failure, run: run)
-                } else {
-                    Self.inform(over: view, String(localized: "Sent to \(typed). If that address has a HoldMyTrack account, they'll find the copy in their Trips tab."))
-                }
-            }
-        })
-        top(view)?.present(alert, animated: true)
     }
 
     /// A destructive action confirmed first; a failure is shown with the chance to try again.
@@ -95,7 +40,8 @@ enum TripDialogs {
                                added: @escaping (Trip, _ created: Bool) -> Void) -> UIMenu {
         let create = UIAction(title: String(localized: "New trip…"), image: UIImage(resource: .plus)) { [weak view] _ in
             guard let view else { return }
-            name(over: view, title: String(localized: "Create trip"), name: "", description: "", action: String(localized: "Create trip")) { name, description in
+            TripSheets.trip(over: view, title: String(localized: "Create trip"), name: "", description: "", action: String(localized: "Create trip"),
+                            busy: String(localized: "Creating…")) { name, description in
                 do {
                     let read = try await api.createTrip(name: name, description: description, trackIDs: targets())
                     added(read.trip, true)

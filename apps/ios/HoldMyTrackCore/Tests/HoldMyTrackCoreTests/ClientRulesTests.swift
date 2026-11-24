@@ -81,6 +81,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting), "pending": .ids(change.pending)]
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
+    "tripFormAction": { input in .bool(TripForms.actionEnabled(text: input["text"].string!, busy: input["busy"].bool!)) },
     "tripFold": { input in
         let folded = input["foldedId"].string, open = input["openId"].string, clicked = input["clicked"].string
         let click = clicked.map { TripFold.folderClick(foldedID: folded, openID: open, clickedID: $0) } ?? TripFold.Click(foldedID: folded, open: false)
