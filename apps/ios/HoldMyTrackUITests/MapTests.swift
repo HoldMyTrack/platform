@@ -147,9 +147,14 @@ extension XCUIApplication {
     /// kept on the phone.
     @MainActor
     func setPlaygrounds(_ on: Bool) {
-        buttons["places"].tap()
+        // A tap during the map's first load right after sign-in is lost, so Places is tapped
+        // again until its menu opens.
         let item = buttons["Playgrounds"]
-        XCTAssertTrue(item.waitForExistence(timeout: 5))
+        for _ in 0..<5 where !item.exists {
+            buttons["places"].tap()
+            _ = item.waitForExistence(timeout: 2)
+        }
+        XCTAssertTrue(item.exists, "the Places menu opened")
         if item.isSelected != on { item.tap() }
         // The menu stays open for more picks, and closes on a tap outside it.
         otherElements["map"].coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.6)).tap()
