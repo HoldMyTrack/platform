@@ -43,7 +43,8 @@ import kotlin.concurrent.thread
  * built for (`docs/DEVELOPMENT.md`, "Android verification"): new Dates keeping Checked and Hidden
  * on the tracks still listed, a dimmed Edit tab saying why on a tap, a Trip opened from the Trips
  * tab and closed by Back, a recording
- * reaching the Sync sheet, and the keyboard covering the map without shortening it. One fresh
+ * reaching the Sync sheet, the keyboard covering the map without shortening it, and a Trip
+ * renamed and sent from its sheets. One fresh
  * account ([TestAccount]) serves the class, in method-name order.
  */
 @RunWith(AndroidJUnit4::class)
@@ -146,6 +147,33 @@ class MapFlowsTest {
         expect("the keyboard down", waitUntil { !keyboardShown() })
         device.pressBack()
         still(By.res("android", "button1")).click()
+    }
+
+    /** Edit trip and Send a copy are sheets: Save waits for a Name and closes once saved; Send
+     *  stays open on "Sent to …" until Close. */
+    @Test
+    fun e_aTripIsRenamedAndSentFromSheets() {
+        signIn()
+        account.createTrip(SHEET_TRIP, listOf(account.idsByDay.getValue("2026-10-01")))
+        openTrips()
+        expandSheet()
+        need(By.text(SHEET_TRIP))
+        // The newest Trip's folder is the first.
+        retrying { need(id("trip_edit")).click() }
+        val name = need(id("trip_dialog_name"))
+        name.text = ""
+        expect("no Save without a Name", waitUntil { device.findObject(By.text("Save"))?.isEnabled == false })
+        name.text = RENAMED_TRIP
+        retrying { need(By.text("Save").enabled(true)).click() }
+        assertTrue("the sheet closed once saved", device.wait(Until.gone(id("trip_dialog_name")), TIMEOUT_MS))
+        need(By.text(RENAMED_TRIP))
+
+        retrying { need(id("trip_send")).click() }
+        need(id("send_copy_email")).text = "nobody@example.com"
+        retrying { need(By.text("Send").enabled(true)).click() }
+        need(id("send_copy_status").textStartsWith("Sent to nobody@example.com"))
+        need(By.desc("Close")).click()
+        assertTrue("Close closed it", device.wait(Until.gone(id("send_copy_email")), TIMEOUT_MS))
     }
 
     /** The map view's height in the app, read on its main thread: UI Automator sees only the
@@ -405,6 +433,8 @@ class MapFlowsTest {
         const val SIGN_IN_MS = 15_000L
         const val RECORDING_MS = 70_000L
         const val TRIP = "Flows trip"
+        const val SHEET_TRIP = "Sheets trip"
+        const val RENAMED_TRIP = "Sheets trip, renamed"
         const val WALK = "Flows walk"
 
         val instrumentation get() = InstrumentationRegistry.getInstrumentation()

@@ -235,6 +235,18 @@
         <item name="android:textColor">@color/hmt_ink</item>
     </style>
 
+    <!-- A form sheet's toolbar (layout/sheet_form): its action in the accent and in sentence case,
+         as the app's text buttons are, not the toolbar default's capitals. -->
+    <style name="ThemeOverlay.HoldMyTrack.FormSheetToolbar" parent="">
+        <item name="actionMenuTextAppearance">@style/TextAppearance.HoldMyTrack.FormSheetAction</item>
+        <item name="actionMenuTextColor">@color/form_sheet_action</item>
+    </style>
+
+    <style name="TextAppearance.HoldMyTrack.FormSheetAction" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
     <style name="Widget.HoldMyTrack.Button.Text" parent="Widget.Material3.Button.TextButton">
         <item name="shapeAppearance">@style/ShapeAppearance.HoldMyTrack.Small</item>
         <item name="android:textColor">@color/hmt_accent_strong</item>

@@ -43,7 +43,7 @@ import dev.holdmytrack.android.recording.RecordingTypes
  * select, × to take one out of the Trip — with the whole Trip's statistics in the footer. A tap
  * on the open Trip's folder folds its list away or back ([TripFold]); the Trip stays open. A
  * folder's pencil and bin rename and delete it, and its send button sends someone a copy
- * ([SendCopyDialog], FR-13.7).
+ * ([SendCopySheet], FR-13.7).
  *
  * The list is read each time the tab opens ([start]), so a Trip made or changed since —
  * Add to trip's included — is there; the open Trip is read on its own ([setOpen]) for the
@@ -551,8 +551,8 @@ class TripsTab(
             TooltipCompat.setTooltipText(edit, editLabel)
             TooltipCompat.setTooltipText(send, sendLabel)
             TooltipCompat.setTooltipText(delete, deleteLabel)
-            edit.setOnClickListener { TripDialog.edit(context, trip, ::edited) }
-            send.setOnClickListener { SendCopyDialog.show(context, trip) }
+            edit.setOnClickListener { TripSheet.edit(context, trip, ::edited) }
+            send.setOnClickListener { SendCopySheet.show(context, trip) }
             delete.setOnClickListener { confirmDelete(trip) }
         }
     }

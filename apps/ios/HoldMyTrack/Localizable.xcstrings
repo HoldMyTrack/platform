@@ -353,6 +353,39 @@
         }
       }
     },
+    "Creating…" : {
+      "comment" : "Create trip's sheet: the trip is being created.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Создание…"
+          }
+        }
+      }
+    },
+    "Send a copy of “%@”" : {
+      "comment" : "Send a copy's sheet: its title, with the Trip's name.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить копию «%@»"
+          }
+        }
+      }
+    },
+    "Sending…" : {
+      "comment" : "Send a copy's sheet: the copy is being sent.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправляем…"
+          }
+        }
+      }
+    },
     "account.deleted" : {
       "comment" : "Sign in, after Delete account.",
       "extractionState" : "manual",

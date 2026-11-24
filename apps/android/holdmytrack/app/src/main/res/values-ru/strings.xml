@@ -693,7 +693,7 @@
     <string name="privacy_download_sub">Копия всего, письмо придёт, когда она будет готова</string>
     <string name="privacy_opens_browser">Откроется в браузере</string>
 
-    <!-- Trips (panel/TripsTab.kt, panel/TripDialog.kt, Add to trip (panel/TracksPanel.kt) and the
+    <!-- Trips (panel/TripsTab.kt, panel/TripSheet.kt, Add to trip (panel/TracksPanel.kt) and the
          rows' Trip badge), after the web's trips.* messages. -->
     <string name="trip_empty">Путешествия — это подборки ваших треков, и видны они только вам. Чтобы создать путешествие, на вкладке «Треки» отметьте нужные треки или нажмите на один из них, затем — «Добавить в путешествие».</string>
     <string name="trip_add_target">Добавить в путешествие: %1$s</string>

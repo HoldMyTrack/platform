@@ -472,7 +472,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     private func rename(_ trip: Trip) {
-        TripDialogs.name(over: table, title: String(localized: "trips.editTitle", defaultValue: "Edit trip", comment: "The dialog renaming a Trip: its title."), name: trip.name, description: trip.description, action: String(localized: "Save")) { [weak self] name, description in
+        TripSheets.trip(over: table, title: String(localized: "trips.editTitle", defaultValue: "Edit trip", comment: "The dialog renaming a Trip: its title."), name: trip.name, description: trip.description,
+                        action: String(localized: "Save"), busy: String(localized: "Saving…")) { [weak self] name, description in
             guard let self else { return nil }
             do {
                 let read = try await self.api.updateTrip(trip.id, name: name, description: description)
@@ -488,7 +489,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     private func sendCopy(_ trip: Trip) {
-        TripDialogs.sendCopy(over: table, trip: trip) { [weak self] email in
+        TripSheets.sendCopy(over: table, trip: trip) { [weak self] email in
             guard let self else { return nil }
             do {
                 try await self.api.sendTrip(trip.id, email: email)

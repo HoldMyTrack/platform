@@ -22,6 +22,7 @@ import dev.holdmytrack.android.net.RoutePoint
 import dev.holdmytrack.android.panel.DownloadRules
 import dev.holdmytrack.android.panel.LibraryRules
 import dev.holdmytrack.android.panel.TripFold
+import dev.holdmytrack.android.panel.TripForms
 import dev.holdmytrack.android.panel.TrackFacets
 import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.sync.Similar
@@ -236,6 +237,7 @@ class ClientRulesTest {
                 is DownloadRules.Block.Private -> buildJsonObject { put("kind", "private"); put("track", block.id) }
             }
         },
+        "tripFormAction" to { input -> JsonPrimitive(TripForms.actionEnabled(input.string("text")!!, input.bool("busy"))) },
         "tripFold" to { input ->
             val folded = input.string("foldedId")
             val open = input.string("openId")

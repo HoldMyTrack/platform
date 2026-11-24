@@ -150,4 +150,59 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(modes.waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["modeFog"].isSelected, "Fog again")
     }
+
+    /// Edit trip and Send a copy are sheets: Save waits for a Name and closes once saved; Send
+    /// stays open on "Sent to …" with the field cleared for another address.
+    @MainActor
+    func testATripIsRenamedAndSentFromSheets() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
+        try account.trip("Lakeside")
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        app.tabBars.buttons["tabTrips"].tap()
+        XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
+
+        app.buttons["tripEdit"].firstMatch.tap()
+        let name = app.textFields["tripName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        // Its end, so the caret follows the name: the field may not have focus yet.
+        name.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        let save = app.buttons["tripSave"]
+        name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Lakeside".count))
+        XCTAssertFalse(save.isEnabled, "no Save without a Name")
+        name.typeText("Lakeside loop")
+        let about = app.textViews["tripDescription"]
+        about.tap()
+        about.typeText("Two days on the shore.\nBack by the ridge.")
+        keep("Edit trip")
+        save.tap()
+        XCTAssertTrue(name.waitForNonExistence(timeout: 10), "the sheet closes once saved")
+        XCTAssertTrue(app.cells["tripFolder"].staticTexts["Lakeside loop"].waitForExistence(timeout: 10))
+
+        app.buttons["tripSend"].firstMatch.tap()
+        let email = app.textFields["sendEmail"]
+        XCTAssertTrue(email.waitForExistence(timeout: 5))
+        email.tap()
+        email.typeText("nobody@example.com")
+        app.buttons["sendCopy"].tap()
+        let status = app.staticTexts["sendStatus"]
+        XCTAssertTrue(status.waitForExistence(timeout: 10))
+        XCTAssertTrue(status.label.hasPrefix("Sent to nobody@example.com"))
+        XCTAssertEqual(email.value as? String ?? "", "Email", "the field cleared for another address")
+        keep("Send a copy")
+        app.navigationBars.buttons["Close"].tap()
+        XCTAssertTrue(email.waitForNonExistence(timeout: 5))
+    }
+
+    private func keep(_ name: String) {
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = name
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
 }
