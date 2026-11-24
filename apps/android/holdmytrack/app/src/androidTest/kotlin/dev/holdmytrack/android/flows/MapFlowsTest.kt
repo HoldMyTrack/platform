@@ -46,7 +46,8 @@ import kotlin.concurrent.thread
  * on the tracks still listed, a dimmed Edit tab saying why on a tap, a Trip opened from the Trips
  * tab and closed by Back, a recording
  * reaching the Sync sheet, the keyboard covering the map without shortening it, and a Trip
- * renamed and sent from its sheets, and the Private location editor keeping Save above the keyboard. One fresh
+ * renamed and sent from its sheets, the Private location editor keeping Save above the keyboard,
+ * and the Type picker adding a type from its sheet. One fresh
  * account ([TestAccount]) serves the class, in method-name order.
  */
 @RunWith(AndroidJUnit4::class)
@@ -175,8 +176,8 @@ class MapFlowsTest {
         need(id("send_copy_email")).text = "nobody@example.com"
         retrying { still(By.text("Send").enabled(true)).click() }
         need(id("send_copy_status").textStartsWith("Sent to nobody@example.com"))
-        need(By.desc("Close")).click()
-        assertTrue("Close closed it", device.wait(Until.gone(id("send_copy_email")), TIMEOUT_MS))
+        // The sheet grows with the "Sent to …" line: Close is tapped once it has settled.
+        tapUntil({ still(By.desc("Close")) }) { !device.hasObject(id("send_copy_email")) }
     }
 
     /** The Private location editor is a sheet over the live map: with the keyboard up for Name,
@@ -194,6 +195,34 @@ class MapFlowsTest {
         // Cancel with the keyboard still up: Back would close the editor once it's down.
         retrying { still(id("private_editor_cancel")).click() }
         assertTrue("Cancel closed the editor", device.wait(Until.gone(id("private_editor")), TIMEOUT_MS))
+    }
+
+    /** The Type field's picker is a sheet: a search with no match offers an Add row, which sets
+     *  the field and closes it. Edit is cancelled, so nothing is saved. */
+    @Test
+    fun g_theTypePickerAddsANewTypeFromItsSheet() {
+        signIn()
+        expandSheet()
+        tapUntil({ device.findObjects(id("track_tile_target")).first() }) { checkedRows() > 0 }
+        try {
+            tapUntil({ still(id("panel_edit")) }) { device.hasObject(id("edit_type")) }
+            tapUntil({ still(id("edit_type")) }) { device.hasObject(id("picker_search")) }
+            need(id("picker_search")).text = NEW_TYPE
+            retrying { still(By.textStartsWith(context.getString(R.string.recording_type_add, NEW_TYPE))).click() }
+            assertTrue("the picker closed", device.wait(Until.gone(id("picker_search")), TIMEOUT_MS))
+            expect("the field shows the new type", waitUntil { device.findObject(id("edit_type"))?.text?.contains(NEW_TYPE, ignoreCase = true) == true })
+        } finally {
+            runCatching {
+                device.findObject(id("edit_cancel"))?.click()
+                device.findObject(By.res("android", "button1"))?.click()
+                device.wait(Until.gone(id("edit_type")), TIMEOUT_MS)
+                expandSheet()
+                while (checkedRows() > 0) {
+                    val checked = checkedRows()
+                    tapUntil({ device.findObject(checkedTiles()) }) { checkedRows() < checked }
+                }
+            }
+        }
     }
 
     /** Whether the editor's Save is wholly on screen above the keyboard, read in the app: UI
@@ -471,6 +500,7 @@ class MapFlowsTest {
         const val RECORDING_MS = 70_000L
         const val TRIP = "Flows trip"
         const val SHEET_TRIP = "Sheets trip"
+        const val NEW_TYPE = "Sheet picker walk"
         const val RENAMED_TRIP = "Sheets trip, renamed"
         const val WALK = "Flows walk"
 

@@ -22,7 +22,7 @@ import dev.holdmytrack.android.recording.RecordingFormat
 import dev.holdmytrack.android.settings.AccountDeletion
 import dev.holdmytrack.android.settings.AppLanguage
 import dev.holdmytrack.android.settings.AppTheme
-import dev.holdmytrack.android.settings.ChoicePicker
+import dev.holdmytrack.android.panel.PickerSheet
 import dev.holdmytrack.android.ui.LargeText
 import dev.holdmytrack.android.web.WebPageActivity
 import java.time.LocalDate
@@ -230,12 +230,12 @@ class YouFragment : Fragment(R.layout.fragment_you) {
             }
             return
         }
-        val choices = listOf(ChoicePicker.Choice("", getString(R.string.settings_language_auto))) +
-            loaded.languages.map { ChoicePicker.Choice(it.value, it.label) }
-        ChoicePicker.show(requireContext(), getString(R.string.settings_language), current.locale, choices) { choice ->
-            if (choice.value == current.locale) return@show
+        // A handful of languages: no search field.
+        val items = listOf(PickerSheet.Item("", getString(R.string.settings_language_auto))) +
+            loaded.languages.map { PickerSheet.Item(it.value, it.label) }
+        PickerSheet.show(requireContext(), getString(R.string.settings_language), current.locale, items, search = null) { locale ->
             val appContext = requireContext().applicationContext
-            HoldMyTrackApi.updateSettings(current.displayName, current.country, current.timezone, choice.value) { result ->
+            HoldMyTrackApi.updateSettings(current.displayName, current.country, current.timezone, locale) { result ->
                 result.onSuccess { saved ->
                     profile = saved
                     Session.update(saved)

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A list to pick one entry from, as a bottom sheet (panel/PickerSheet.kt): ✕ and the title, a
+     search field over the list when it has one, then the rows. A pick applies at once, so the
+     toolbar has no action. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/picker_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:theme="@style/ThemeOverlay.HoldMyTrack.FormSheetToolbar"
+        app:navigationContentDescription="@string/picker_close"
+        app:navigationIcon="@drawable/ic_x"
+        app:navigationIconTint="@color/hmt_ink"
+        app:titleTextAppearance="?attr/textAppearanceTitleMedium" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/picker_search_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/hmt_space_16"
+        android:layout_marginEnd="@dimen/hmt_space_16"
+        android:layout_marginBottom="@dimen/hmt_space_8"
+        android:visibility="gone">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/picker_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/picker_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityLiveRegion="polite"
+        android:paddingStart="@dimen/hmt_space_16"
+        android:paddingTop="@dimen/hmt_space_12"
+        android:paddingEnd="@dimen/hmt_space_16"
+        android:paddingBottom="@dimen/hmt_space_12"
+        android:textColor="@color/hmt_ink_meta"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/picker_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingBottom="@dimen/hmt_space_16" />
+</LinearLayout>
