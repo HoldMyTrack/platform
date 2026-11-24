@@ -500,6 +500,20 @@
     <string name="panel_edit_one">Изменить тип, название, описание и маршрут: %1$s</string>
     <string name="panel_edit_many">Изменить тип: %1$s</string>
     <string name="panel_delete_target">Удалить: %1$s</string>
+    <string name="panel_more_target">Ещё для: %1$s</string>
+    <string name="panel_more_download">Скачать в GPX</string>
+    <string name="panel_more_delete">Удалить…</string>
+    <string name="panel_delete_pending">Нельзя удалить: «%1$s» ещё обрабатывается</string>
+    <string name="panel_download_busy">Другой файл для скачивания ещё готовится</string>
+    <string name="panel_download_target">Скачать %1$s в GPX</string>
+    <plurals name="panel_download_too_many">
+        <item quantity="one">За раз можно скачать не больше %1$d треков, а отмечен %2$d</item>
+        <item quantity="few">За раз можно скачать не больше %1$d треков, а отмечено %2$d</item>
+        <item quantity="many">За раз можно скачать не больше %1$d треков, а отмечено %2$d</item>
+        <item quantity="other">За раз можно скачать не больше %1$d треков, а отмечено %2$d</item>
+    </plurals>
+    <string name="panel_download_pending">Нельзя скачать: «%1$s» ещё обрабатывается</string>
+    <string name="panel_download_private">Нельзя скачать: «%1$s» целиком внутри ваших приватных мест</string>
     <string name="panel_delete_one_title">Удалить этот трек?</string>
     <string name="panel_delete_title">Удалить эту группу?</string>
     <string name="panel_delete_one_body">%1$s будет удалён навсегда — вместе с маршрутом, покрытием «тумана войны» и всеми рекордами, в которые он входил. Это нельзя отменить.</string>

@@ -184,7 +184,7 @@
                 <!-- While any of the Tracks sheet's rows is checked, the selection bar in the mode
                      toggle's place, the rail stepping aside for it: × unchecks all, ending selecting,
                      then the master checkbox and its All / None / Invert, and the actions over the
-                     checked group — Show/Hide, Edit, Add to trip, Delete, then Focus on map in the
+                     checked group — Show/Hide, Edit, Add to trip, ⋯ with Download and Delete, then Focus on map in the
                      accent (panel/TracksPanel; MapFragment.renderSelectionBar). -->
                 <LinearLayout
                     android:id="@+id/selection_bar"
@@ -249,11 +249,13 @@
                         android:contentDescription="@string/panel_no_target"
                         android:src="@drawable/ic_book_plus" />
 
+                    <!-- Download (panel/TrackDownload, panel/DownloadRules) and Delete, in a menu:
+                         nine 48 dp controls don't fit across a phone. -->
                     <ImageButton
-                        android:id="@+id/panel_delete"
+                        android:id="@+id/panel_more"
                         style="@style/Widget.HoldMyTrack.PanelChip"
                         android:contentDescription="@string/panel_no_target"
-                        android:src="@drawable/ic_trash_2" />
+                        android:src="@drawable/ic_ellipsis" />
 
                     <ImageButton
                         android:id="@+id/panel_focus"

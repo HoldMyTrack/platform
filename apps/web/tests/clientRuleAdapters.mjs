@@ -17,6 +17,7 @@ import { pendingAnswer, pendingBatches, pendingChange, pendingWatched } from '..
 import { deleteDone } from '../src/apiError.ts';
 import { attachmentName } from '../src/attachmentName.ts';
 import { emptyReason, pageQuery, pager } from '../src/library/libraryState.ts';
+import { downloadBlock } from '../src/ui/downloadTarget.ts';
 import { drawOrder } from '../src/ui/privateLocationPick.ts';
 import { clusterPoints, photoMarkerLayout, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
@@ -73,6 +74,11 @@ export const rules = {
   libraryPageQuery: ({ state, allTypes }) =>
     pageQuery({ ...state, distance: state.distance && { min: state.distance.min, max: state.distance.max ?? Infinity }, dates: { after: state.after ?? null, before: state.before ?? null } }, allTypes),
   libraryPager: ({ page, total, pageSize }) => pager(page, total, pageSize),
+  downloadBlock: ({ tracks, plainTracks, max }) => {
+    const target = tracks ?? Array.from({ length: plainTracks }, (_, i) => ({ id: String(i), pending: false, private: false }));
+    const block = downloadBlock(target, max ?? undefined);
+    return block === null || block.kind === 'too_many' ? block : { kind: block.kind, track: block.track.id };
+  },
   libraryEmptyReason: ({ state, total, anyTrack }) =>
     emptyReason({ ...state, sort: 'started', desc: true, page: 1, dates: { after: state.after ?? null, before: state.before ?? null } }, total, anyTrack),
   deleteDone: ({ status }) => deleteDone(status),

@@ -1,6 +1,6 @@
 package dev.holdmytrack.android.panel
 
-/** What kind of file Library's Download ([LibraryDownload]) saves. */
+/** What kind of file Download ([TrackDownload]) saves. */
 object GpxDownload {
 
     /** The MIME type the save screen offers [name] as: a zip of several tracks, or one GPX. */

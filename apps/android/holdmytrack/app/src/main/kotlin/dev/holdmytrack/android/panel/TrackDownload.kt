@@ -16,7 +16,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 
 /**
- * Library's Download (root `docs/SPEC.md` FR-5.14): the tracks as one GPX, or a zip of them,
+ * Download (root `docs/SPEC.md` FR-5.14), Library's and the Tracks panel's: the tracks as one GPX, or a zip of them,
  * fetched into the cache and then saved where the user picks on Android's save screen, with no
  * storage permission. Made with its fragment, since the save screen's launchers must be
  * registered before it starts.
@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
  * offer the save screen: one opened from the background would pop over another app, or be
  * blocked. One cut off by the fragment closing is dropped without a word.
  */
-class LibraryDownload(private val fragment: Fragment) {
+class TrackDownload(private val fragment: Fragment) {
 
     private val saveGpx = fragment.registerForActivityResult(ActivityResultContracts.CreateDocument(GpxDownload.mimeType("tracks.gpx"))) { save(it) }
     private val saveZip = fragment.registerForActivityResult(ActivityResultContracts.CreateDocument(GpxDownload.mimeType("tracks.zip"))) { save(it) }
@@ -52,10 +52,11 @@ class LibraryDownload(private val fragment: Fragment) {
     fun start(ids: List<String>) {
         if (busy || ids.isEmpty()) return
         val context = fragment.context ?: return
+        // Found before busy is set: a return after it would leave every later Download refused.
+        val file = file() ?: return
         busy = true
         Toast.makeText(context, R.string.library_downloading, Toast.LENGTH_SHORT).show()
         fragment.lifecycleScope.launch {
-            val file = file() ?: return@launch
             try {
                 val name = HoldMyTrackApi.downloadTracksGpx(ids, file)
                 if (fragment.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) offer(name) else waiting = name
@@ -99,7 +100,7 @@ class LibraryDownload(private val fragment: Fragment) {
     private fun file(): File? = fragment.context?.cacheDir?.let { File(it, DOWNLOAD_FILE) }
 
     private companion object {
-        const val DOWNLOAD_FILE = "library-download"
+        const val DOWNLOAD_FILE = "track-download"
         val io = Executors.newSingleThreadExecutor()
     }
 }
