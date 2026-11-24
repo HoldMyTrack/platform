@@ -81,6 +81,12 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting), "pending": .ids(change.pending)]
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
+    "tripFold": { input in
+        let folded = input["foldedId"].string, open = input["openId"].string, clicked = input["clicked"].string
+        let click = clicked.map { TripFold.folderClick(foldedID: folded, openID: open, clickedID: $0) } ?? TripFold.Click(foldedID: folded, open: false)
+        let shown = TripFold.isFolded(foldedID: click.foldedID, openID: click.open ? clicked : open)
+        return ["foldedId": click.foldedID.map { .string($0) } ?? .null, "open": .bool(click.open), "folded": .bool(shown)]
+    },
     "privateDrawOrder": { input in
         let saved = input.strings("saved").map { PrivateLocation(id: $0, name: "", lon: 0, lat: 0, radiusM: 200) }
         return .list(PrivateLocationEditing.drawOrder(saved, editing: input["editing"].string).map(\.id))

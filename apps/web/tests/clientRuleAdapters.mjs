@@ -18,6 +18,7 @@ import { deleteDone } from '../src/apiError.ts';
 import { attachmentName } from '../src/attachmentName.ts';
 import { emptyReason, pageQuery, pager } from '../src/library/libraryState.ts';
 import { downloadBlock } from '../src/ui/downloadTarget.ts';
+import { folderClick, isFolded } from '../src/ui/tripFold.ts';
 import { drawOrder } from '../src/ui/privateLocationPick.ts';
 import { clusterPoints, photoMarkerLayout, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
@@ -78,6 +79,11 @@ export const rules = {
     const target = tracks ?? Array.from({ length: plainTracks }, (_, i) => ({ id: String(i), pending: false, private: false }));
     const block = downloadBlock(target, max ?? undefined);
     return block === null || block.kind === 'too_many' ? block : { kind: block.kind, track: block.track.id };
+  },
+  tripFold: ({ foldedId, openId, clicked }) => {
+    if (clicked == null) return { foldedId, open: false, folded: isFolded(foldedId, openId) };
+    const click = folderClick(foldedId, openId, clicked);
+    return { ...click, folded: isFolded(click.foldedId, click.open ? clicked : openId) };
   },
   libraryEmptyReason: ({ state, total, anyTrack }) =>
     emptyReason({ ...state, sort: 'started', desc: true, page: 1, dates: { after: state.after ?? null, before: state.before ?? null } }, total, anyTrack),

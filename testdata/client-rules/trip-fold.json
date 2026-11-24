@@ -1,0 +1,14 @@
+{
+  "rule": "tripFold",
+  "description": "Folding the open Trip's list on the Trips tab (docs/SPEC.md FR-13.6): a tap on the open Trip's folder hides or shows its description and rows, and the Trip stays open; a tap on another Trip's folder opens that one unfolded. foldedId is the Trip whose list is folded, or null; openId is the open Trip, or null; clicked is the folder tapped, or null for no tap. The answer is the fold after it, whether to open the clicked Trip, and whether the open Trip's list is hidden, where the open Trip is the clicked one when it opens. A fold left on a Trip that is no longer open hides nothing, so a Trip opened any other way (returning to the tab, deleting the open one, a row's Trip badge) is unfolded.",
+  "cases": [
+    { "name": "a tap on the open Trip folds its list without opening anything", "input": { "foldedId": null, "openId": "a", "clicked": "a" }, "expected": { "foldedId": "a", "open": false, "folded": true } },
+    { "name": "the next tap on it unfolds it", "input": { "foldedId": "a", "openId": "a", "clicked": "a" }, "expected": { "foldedId": null, "open": false, "folded": false } },
+    { "name": "a tap on another Trip opens it unfolded", "input": { "foldedId": "a", "openId": "a", "clicked": "b" }, "expected": { "foldedId": null, "open": true, "folded": false } },
+    { "name": "a tap on a Trip with none open opens it", "input": { "foldedId": null, "openId": null, "clicked": "b" }, "expected": { "foldedId": null, "open": true, "folded": false } },
+    { "name": "the open Trip folded, with no tap", "input": { "foldedId": "a", "openId": "a", "clicked": null }, "expected": { "foldedId": "a", "open": false, "folded": true } },
+    { "name": "a fold left on a Trip no longer open hides nothing", "input": { "foldedId": "a", "openId": "b", "clicked": null }, "expected": { "foldedId": "a", "open": false, "folded": false } },
+    { "name": "nothing folded", "input": { "foldedId": null, "openId": "a", "clicked": null }, "expected": { "foldedId": null, "open": false, "folded": false } },
+    { "name": "a fold with no Trip open hides nothing", "input": { "foldedId": "a", "openId": null, "clicked": null }, "expected": { "foldedId": "a", "open": false, "folded": false } }
+  ]
+}
