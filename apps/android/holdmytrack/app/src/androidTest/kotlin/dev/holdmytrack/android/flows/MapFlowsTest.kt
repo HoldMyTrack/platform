@@ -27,6 +27,7 @@ import dev.holdmytrack.android.tour.TourStore
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -374,6 +375,14 @@ class MapFlowsTest {
         need(id("panel_handle"))
     }
 
+    /** Wakes and unlocks an emulator that booted asleep, so [need] doesn't time out on a black
+     *  screen. */
+    @Before
+    fun wake() {
+        device.wakeUp()
+        device.executeShellCommand("wm dismiss-keyguard")
+    }
+
     /** A recording a failed flow left running would hide the sheet from every flow after it. */
     @After
     fun endRecording() {
@@ -403,6 +412,9 @@ class MapFlowsTest {
         val device: UiDevice get() = UiDevice.getInstance(instrumentation)
         lateinit var account: TestAccount
 
+        /** The device's own stay-on setting, put back after the class. */
+        var stayOn = "0"
+
         fun id(name: String): BySelector = By.res(PACKAGE, name)
 
         @BeforeClass
@@ -417,12 +429,16 @@ class MapFlowsTest {
             automation.executeShellCommand("appops set $PACKAGE android:mock_location allow").close()
             // A loaded emulator's own apps (the launcher) can stop responding; their dialog would cover the app.
             automation.executeShellCommand("settings put global hide_error_dialogs 1").close()
+            // Kept on for the class, since a flow's waits can outlast the screen-off timeout.
+            stayOn = device.executeShellCommand("settings get global stay_on_while_plugged_in").trim().takeIf { it.toIntOrNull() != null } ?: "0"
+            device.executeShellCommand("settings put global stay_on_while_plugged_in 7")
             account = TestAccount.create()
         }
 
         @AfterClass
         @JvmStatic
         fun deleteAccount() {
+            device.executeShellCommand("settings put global stay_on_while_plugged_in $stayOn")
             account.delete()
         }
     }
