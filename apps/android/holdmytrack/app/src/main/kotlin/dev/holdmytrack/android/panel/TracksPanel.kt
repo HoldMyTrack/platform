@@ -43,10 +43,10 @@ enum class PanelTab { TRACKS, TRIPS, LIBRARY, SYNC }
  * Tracks tab its head is the listed tracks' totals ([render]), the visible area's under
  * Dates (`map/AreaController`), and under it the Type, Dates and DISTANCE filters,
  * a toolbar over the toolbar's target, the rows and the target's summary. The Trips tab — the
- * bottom bar's Trips — has the account's Trips with one open on the map ([TripsTab]),
- * headed by its title instead of the totals; the Library tab — the bottom bar's Library — every
- * track the account keeps, a page at a time ([LibraryTab]); the Sync tab — You › Sync — what's on
- * this phone waiting to be added ([SyncTab]), headed the same way.
+ * bottom bar's Trips — has the account's Trips with one open on the map ([TripsTab]); the
+ * Library tab — the bottom bar's Library — every track the account keeps, a page at a time
+ * ([LibraryTab]); the Sync tab — Library › Sync — what's on this phone waiting to be added
+ * ([SyncTab]). Only the Tracks tab has a head: the bar names the others.
  *
  * The rules live in [PanelState]; this draws it and turns taps into state changes.
  * `MapFragment` owns the map and the fetch: it hands over each list ([setTracks]) and
@@ -95,14 +95,11 @@ class TracksPanel(
     private val behavior = BottomSheetBehavior.from(sheet)
     private val handle: View = sheet.findViewById(R.id.panel_handle)
     private val summary: TextView = sheet.findViewById(R.id.panel_summary)
-    private val titleHead: View = sheet.findViewById(R.id.panel_title_head)
-    private val title: TextView = sheet.findViewById(R.id.panel_title)
     private val tripsContent: View = sheet.findViewById(R.id.panel_trips_content)
     private val syncContent: View = sheet.findViewById(R.id.panel_sync_content)
     private val libraryContent: View = sheet.findViewById(R.id.panel_library_content)
     private val tracksContent: View = sheet.findViewById(R.id.panel_tracks_content)
     private val head: View = sheet.findViewById(R.id.panel_head)
-    private val subtext: TextView = sheet.findViewById(R.id.panel_subtext)
     private val datesChip: View = sheet.findViewById(R.id.panel_dates)
     private val datesLabel: TextView = sheet.findViewById(R.id.panel_dates_label)
     private val datesDot: View = sheet.findViewById(R.id.panel_dates_dot)
@@ -297,7 +294,7 @@ class TracksPanel(
     }
 
     /** Onto the Sync tab, the sheet halfway up so its list shows over the lines it draws —
-     *  You › Sync. */
+     *  Library › Sync. */
     fun showSync() {
         showTab(PanelTab.SYNC)
         setExpanded(true)
@@ -499,8 +496,6 @@ class TracksPanel(
         // aren't what the area's heading counts, as on the web.
         if (tab == PanelTab.TRACKS) summary.text = summaryOf(listed)
         renderTabs()
-        subtext.visibility = if (tab == PanelTab.TRACKS || tab == PanelTab.LIBRARY) View.GONE else View.VISIBLE
-        subtext.setText(if (tab == PanelTab.SYNC) R.string.sync_subtext else R.string.trip_subtext)
         // Held down under an edit, the sheet is collapsed whatever it was.
         val open = expanded && !held
         handle.contentDescription = res.getString(if (open) R.string.panel_collapse else R.string.panel_expand)
@@ -540,17 +535,8 @@ class TracksPanel(
         PanelFormat.duration(res, listed.sumOf { it.movingSeconds ?: 0L }),
     ).joinToString(" · ")
 
-    /** The tab's head, the Tracks tab's totals or Trips' and Sync's titles, and its content
-     *  in the sheet. */
+    /** The tab's content in the sheet. */
     private fun renderTabs() {
-        titleHead.visibility = if (tab == PanelTab.TRACKS) View.GONE else View.VISIBLE
-        title.setText(
-            when (tab) {
-                PanelTab.SYNC -> R.string.sync_title
-                PanelTab.LIBRARY -> R.string.library_title
-                else -> R.string.panel_tab_trips
-            },
-        )
         tracksContent.visibility = if (tab == PanelTab.TRACKS) View.VISIBLE else View.GONE
         tripsContent.visibility = if (tab == PanelTab.TRIPS) View.VISIBLE else View.GONE
         syncContent.visibility = if (tab == PanelTab.SYNC) View.VISIBLE else View.GONE

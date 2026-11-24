@@ -15,4 +15,8 @@ object ReadDue {
 
     fun onOpen(firstLoadPending: Boolean, lastRead: Instant?, now: Instant): Boolean =
         firstLoadPending || lastRead == null || Duration.between(lastRead, now) >= MIN_GAP
+
+    /** Sync back on screen, open all along (from Settings › Sync, an Edit, the app's return, a
+     *  failed send): read only when Health Connect was just switched on, whatever the age. */
+    fun onReturn(firstLoadPending: Boolean): Boolean = firstLoadPending
 }

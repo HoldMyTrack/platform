@@ -11,25 +11,49 @@
     android:orientation="vertical"
     android:visibility="gone">
 
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+    <!-- The search, and + beside it, opening Sync: how more tracks come in, with the recordings waiting. -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/hmt_space_16"
         android:layout_marginTop="@dimen/hmt_space_4"
         android:layout_marginEnd="@dimen/hmt_space_16"
-        android:hint="@string/library_search_hint"
-        app:endIconMode="clear_text"
-        app:startIconDrawable="@drawable/ic_search">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/library_search"
-            android:layout_width="match_parent"
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:imeOptions="actionSearch"
-            android:inputType="text"
-            android:maxLength="200" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_weight="1"
+            android:hint="@string/library_search_hint"
+            app:endIconMode="clear_text"
+            app:startIconDrawable="@drawable/ic_search">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/library_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLength="200" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- The icon, then the count while recordings wait (panel/LibraryTab.setSyncWaiting). -->
+        <Button
+            android:id="@+id/library_sync"
+            style="@style/Widget.Material3.Button.TonalButton.Icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/hmt_space_8"
+            android:minWidth="48dp"
+            android:paddingStart="@dimen/hmt_space_12"
+            android:paddingEnd="@dimen/hmt_space_12"
+            android:contentDescription="@string/library_add"
+            android:tooltipText="@string/library_add"
+            app:icon="@drawable/ic_plus"
+            app:iconPadding="0dp" />
+    </LinearLayout>
 
     <HorizontalScrollView
         android:layout_width="match_parent"
@@ -173,6 +197,17 @@
         android:layout_height="wrap_content"
         android:padding="@dimen/hmt_space_16"
         android:textAppearance="@style/TextAppearance.HoldMyTrack.CardRowSub"
+        android:visibility="gone" />
+
+    <!-- Past the last page, as after deleting the last one's tracks: back to the first. -->
+    <Button
+        android:id="@+id/library_first_page"
+        style="@style/Widget.HoldMyTrack.Button.Link"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/hmt_space_8"
+        android:minHeight="48dp"
+        android:text="@string/library_first_page"
         android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView

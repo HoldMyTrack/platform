@@ -169,13 +169,13 @@
             </intent-filter>
         </activity>
 
-        <!-- Upload: the web's Upload menu as a screen. Exported because other apps open and share
-             files with it. -->
+        <!-- Upload: the web's Upload menu as a sheet over the screen it opened from. Exported
+             because other apps open and share files with it. -->
         <activity
             android:name=".UploadActivity"
             android:exported="true"
             android:label="@string/upload_title"
-            android:theme="@style/Theme.HoldMyTrack">
+            android:theme="@style/Theme.HoldMyTrack.Sheet">
             <!-- A track file another app opens or shares with HoldMyTrack — listed, and
                  uploaded only on the user's Upload (imports/SharedFiles). A .fit has no type of its own
                  most apps agree on, and most hand a .gpx over as a generic binary, which isn't

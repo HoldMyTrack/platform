@@ -99,6 +99,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-5.2), except as below.
 
+- A recording waits on the Sync tab until ticked and sent; Save doesn't send it (`ROADMAP.md` 7d.4).
 - Download GPX goes to the share sheet, which saves to Files among its choices.
 
 ## 8. Non-Functional Requirements (summary)

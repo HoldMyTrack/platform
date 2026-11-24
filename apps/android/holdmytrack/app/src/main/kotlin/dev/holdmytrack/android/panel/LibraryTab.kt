@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.slider.RangeSlider
@@ -28,6 +29,7 @@ import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.TrackPage
 import dev.holdmytrack.android.net.Trip
+import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import java.time.OffsetDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -40,7 +42,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * and the Type, Dates, Distance and Trip filters ask the server for the page ([LibraryRules]);
  * the rows are the Tracks tab's. A row's tap opens it on the map ([onOpen]); its tile, or a long
  * press, checks it, and the Checked tracks, which stay within the page, can be downloaded or
- * deleted.
+ * deleted. The + beside the search opens Sync, how more tracks come in ([onSync]).
  */
 class LibraryTab(
     private val content: View,
@@ -52,11 +54,14 @@ class LibraryTab(
     private val onOpen: (Track) -> Unit,
     /** Tracks were deleted: the map and the other lists are out of date. */
     private val onDeleted: (List<String>) -> Unit,
+    /** Sync was tapped: the Sync sheet opens over this one. */
+    private val onSync: () -> Unit,
 ) {
     private val context = content.context
     private val res = context.resources
 
     private val search: TextView = content.findViewById(R.id.library_search)
+    private val syncButton: MaterialButton = content.findViewById(R.id.library_sync)
     private val sortChip: Chip = content.findViewById(R.id.library_sort)
     private val typeChip: Chip = content.findViewById(R.id.library_type)
     private val datesChip: Chip = content.findViewById(R.id.library_dates)
@@ -70,6 +75,7 @@ class LibraryTab(
     private val deleteButton: ImageButton = content.findViewById(R.id.library_delete)
     private val progress: View = content.findViewById(R.id.library_progress)
     private val empty: TextView = content.findViewById(R.id.library_empty)
+    private val firstPage: View = content.findViewById(R.id.library_first_page)
     private val list: RecyclerView = content.findViewById(R.id.library_list)
     private val pagerRow: View = content.findViewById(R.id.library_pager)
     private val range: TextView = content.findViewById(R.id.library_range)
@@ -87,6 +93,9 @@ class LibraryTab(
     private var reading: Job? = null
     private var showing = false
 
+    /** The map's view is gone: a late search or delete reads nothing, since [scope] is gone too. */
+    private var destroyed = false
+
     private val dates = DatesDialog(
         fragment,
         onChange = { end, value -> setDates(DateFilter(state.after, state.before).setting(end, value, dateBounds()).filter) },
@@ -102,6 +111,7 @@ class LibraryTab(
             handler.removeCallbacks(searchSoon)
             handler.postDelayed(searchSoon, SEARCH_DELAY_MS)
         }
+        syncButton.setOnClickListener { onSync() }
         sortChip.setOnClickListener { showSort() }
         typeChip.setOnClickListener { showTypes() }
         datesChip.setOnClickListener { showDates() }
@@ -115,6 +125,7 @@ class LibraryTab(
         content.findViewById<View>(R.id.library_uncheck).setOnClickListener { setChecked(emptySet()) }
         downloadButton.setOnClickListener { downloadChecked() }
         deleteButton.setOnClickListener { confirmDelete() }
+        firstPage.setOnClickListener { goTo(1) }
         prev.setOnClickListener { goTo(state.page - 1) }
         next.setOnClickListener { goTo(state.page + 1) }
     }
@@ -123,12 +134,32 @@ class LibraryTab(
     fun start() {
         showing = true
         read()
+        scope().launch { setSyncWaiting(if (Session.isDemo) 0 else RecordedTrackStore(context).all().size) }
         HoldMyTrackApi.trips { result -> result.onSuccess { trips = it; render() } }
     }
 
     fun stop() {
         showing = false
         dates.dismiss()
+    }
+
+    /** The map's view is being destroyed: the search waiting to be read goes, and nothing reads after. */
+    fun destroy() {
+        destroyed = true
+        handler.removeCallbacks(searchSoon)
+        reading?.cancel()
+    }
+
+    /** Sync's count: the recordings on this phone waiting to be sent, as the bar's Library badge
+     *  counts them. */
+    fun setSyncWaiting(waiting: Int) {
+        syncButton.text = if (waiting > 0) waiting.toString() else ""
+        syncButton.iconPadding = if (waiting > 0) res.getDimensionPixelSize(R.dimen.hmt_space_6) else 0
+        syncButton.contentDescription = if (waiting > 0) {
+            res.getQuantityString(R.plurals.library_sync_waiting, waiting, waiting)
+        } else {
+            res.getString(R.string.library_add)
+        }
     }
 
     private fun change(block: LibraryRules.State.() -> LibraryRules.State) {
@@ -150,6 +181,7 @@ class LibraryTab(
 
     /** Reads the page [state] asks for; a newer read replaces one under way. */
     private fun read() {
+        if (destroyed) return
         reading?.cancel()
         // Checked stays within the page: changing page, sort or filter clears it.
         checked = emptySet()
@@ -159,6 +191,8 @@ class LibraryTab(
             // Every type left out matches nothing: no need to ask.
             page = page?.copy(tracks = emptyList(), total = 0)
             failed = null
+            // A read this one replaced was cancelled before it could hide its spinner.
+            progress.visibility = View.GONE
             render()
             return
         }
@@ -206,6 +240,9 @@ class LibraryTab(
 
         empty.visibility = if (page != null && rows.isEmpty() || failed != null) View.VISIBLE else View.GONE
         empty.text = failed?.let { res.getString(R.string.library_failed, it) } ?: page?.let { emptyText(it) }
+        firstPage.visibility = if (failed == null && page != null && rows.isEmpty() &&
+            LibraryRules.emptyReason(state, page.total, page.types.isNotEmpty()) == LibraryRules.EmptyReason.PAST_LAST
+        ) View.VISIBLE else View.GONE
 
         checked = LibraryRules.keepListed(checked, rows.map { it.id })
         bar.visibility = if (checked.isNotEmpty()) View.VISIBLE else View.GONE
@@ -279,7 +316,7 @@ class LibraryTab(
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_library_distance, null)
         val slider: RangeSlider = view.findViewById(R.id.library_distance_slider)
         val readout: TextView = view.findViewById(R.id.library_distance_readout)
-        val current = state.distance?.let { DistanceRange(it.min.coerceAtLeast(min), (it.max ?: max).coerceAtMost(max)) } ?: bounds
+        val current = state.distance?.let { sliderRange(it, bounds) } ?: bounds
         slider.valueFrom = min.toFloat()
         slider.valueTo = max.toFloat()
         slider.values = listOf(current.min.toFloat(), current.max.toFloat())
@@ -408,6 +445,14 @@ class LibraryTab(
 
     companion object {
         private const val SEARCH_DELAY_MS = 300L
+
+        /** A Distance filter's knobs on the account's [bounds], which may have shrunk under it since
+         *  it was set: each inside them, the lower never past the upper, as the slider demands. */
+        internal fun sliderRange(filter: LibraryRules.Distance, bounds: DistanceRange): DistanceRange {
+            val low = filter.min.coerceIn(bounds.min, bounds.max)
+            val high = (filter.max ?: bounds.max).coerceIn(bounds.min, bounds.max)
+            return DistanceRange(low, high.coerceAtLeast(low))
+        }
 
         /** Why a track can't be downloaded, as `route_edit` says it. */
         private val BLOCKED = setOf("pending", "private", "no_original")

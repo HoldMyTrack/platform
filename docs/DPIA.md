@@ -40,7 +40,7 @@ HoldMyTrack keeps the outdoor tracks a user chooses to bring in and draws them a
 
 1. File upload on the web or in the app (GPX, FIT, TCX).
 2. Health Connect on Android: exercise sessions and their routes, read only while the Sync screen is open.
-3. In-app GPS recording on Android and iOS, kept on the phone until the user sends it.
+3. In-app GPS recording on Android and iOS, kept on the phone until sent: on Android once the user saves it, on iOS once they tick it.
 4. A Trip copy another user sends, added only once the recipient accepts it.
 
 **What happens on the server.** Private locations are applied when a track is processed, before routes, tiles or stats are stored. The original upload is kept unclipped so routes can be rebuilt after an edit or a Private location change.
@@ -90,7 +90,7 @@ No Article 9 special-category data is processed. Heart rate and other body data 
 
 **Data minimisation in place:**
 
-- **Only what the user ticks comes in.** No source starts ticked, and nothing is imported in bulk (ADR-0039).
+- **Only what the user chooses comes in.** No source starts ticked, a recording is sent only once saved, and nothing is imported in bulk (ADR-0039).
 - **No background location outside a recording, and no continuous location log.** Location is read in the background only between the user's start and stop of a recording, under the system's indicator: Android's foreground service notification, iOS's location indicator. Health Connect reads and Spot captures happen only in the foreground.
 - **No health data.** Only exercise sessions and their routes are read from Health Connect, one declared data type.
 - **The iOS app sees only the photos the user picks.** The system's picker hands over those alone, and the library is only ever written to, with exported map images.

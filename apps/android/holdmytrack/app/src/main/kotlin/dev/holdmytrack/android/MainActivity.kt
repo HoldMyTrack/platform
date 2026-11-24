@@ -22,6 +22,7 @@ import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.panel.PanelTab
 import dev.holdmytrack.android.recording.RecordingService
+import dev.holdmytrack.android.sync.RecordingSends
 import dev.holdmytrack.android.tour.TourController
 import dev.holdmytrack.android.tour.TourEvent
 import dev.holdmytrack.android.tour.TourHost
@@ -29,10 +30,10 @@ import dev.holdmytrack.android.tour.TourMenu
 import dev.holdmytrack.android.tour.TourTarget
 
 /**
- * The app's main window: the bottom bar — Tracks, Trips, Record, Sync, You — and the tab above it
- * (`apps/android/docs/IMPLEMENTATION.md` §1.3). Tracks, Trips
- * and Sync are all the map ([MapFragment]): Trips and Sync are its panel's Trips and Sync
- * tabs, Sync's list drawn on the map it covers. You is [YouFragment]. Tabs are shown and hidden
+ * The app's main window: the bottom bar — Tracks, Trips, Record, Library, You — and the tab above it
+ * (`apps/android/docs/IMPLEMENTATION.md` §1.3). Tracks, Trips, Library
+ * and Sync are all the map ([MapFragment]): its panel's tabs, Sync opened from Library's head
+ * with Library lit in the bar, and its list drawn on the map it covers. You is [YouFragment]. Tabs are shown and hidden
  * rather than replaced, so the map — its camera, its layers, a recording on it — is just as it
  * was on coming back to it. The record button over the bar's middle slot is the map's to drive
  * (`MapFragment.onRecordTap`).
@@ -45,9 +46,18 @@ import dev.holdmytrack.android.tour.TourTarget
  */
 class MainActivity : AppCompatActivity() {
 
-    /** The bottom bar's tabs, Record aside — a button rather than a tab. */
+    /** The bottom bar's tabs, Record aside — a button rather than a tab — and Sync, Library's. */
     enum class Tab {
         TRACKS, TRIPS, LIBRARY, SYNC, YOU;
+
+        /** Where Back goes: from Sync to Library, where it opens, from another tab to Tracks,
+         *  and from Tracks out of the app (null). */
+        val back: Tab?
+            get() = when (this) {
+                TRACKS -> null
+                SYNC -> LIBRARY
+                else -> TRACKS
+            }
 
         companion object {
             /** The tab a saved state or an intent names, or null for a name no tab has, such as an older build's. */
@@ -65,10 +75,11 @@ class MainActivity : AppCompatActivity() {
     /** Set while the bar's selection is moved in code, so its listener doesn't act on it. */
     private var selectingInCode = false
 
-    /** Back from any tab but Tracks goes to Tracks, and only then leaves the app. */
-    /** Back goes to Tracks from another tab, and from Sync to You, where it was opened. */
-    private val backToTracks = object : OnBackPressedCallback(false) {
-        override fun handleOnBackPressed() = showTab(if (tab == Tab.SYNC) Tab.YOU else Tab.TRACKS)
+    /** Back within the bar ([Tab.back]); disabled on Tracks, so Back leaves the app. */
+    private val backInBar = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            tab.back?.let(::showTab)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,6 +109,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             true
+        }
+        // Library lit over Sync: a tap on it is a reselect, and goes back to Library.
+        nav.setOnItemReselectedListener { item ->
+            if (!selectingInCode) tabOf(item.itemId)?.takeIf { it != tab }?.let(::showTab)
         }
         tour = TourController(this, tourHost)
         // The bar pads itself clear of the gesture bar, so the tabs above it get no bottom inset
@@ -129,7 +144,7 @@ class MainActivity : AppCompatActivity() {
             )
             insets
         }
-        onBackPressedDispatcher.addCallback(this, backToTracks)
+        onBackPressedDispatcher.addCallback(this, backInBar)
 
         // A recreation (rotation, theme, language) restores the tabs' fragments, which tab was
         // showing and each one's own state.
@@ -140,10 +155,14 @@ class MainActivity : AppCompatActivity() {
         } else {
             tab = savedInstanceState.getString(STATE_TAB)?.let(Tab::named) ?: Tab.TRACKS
             markTab(tab)
-            // The map's panel comes back on its Tracks tab; Trips and Sync put it back on
-            // their own once the map's view is up.
-            if (tab == Tab.TRIPS) nav.post { map()?.showTrips() }
-            if (tab == Tab.SYNC) nav.post { map()?.showSync() }
+            // The map's panel comes back on its Tracks tab; the others put it back on their own
+            // once the map's view is up.
+            when (tab) {
+                Tab.TRIPS -> nav.post { map()?.showTrips() }
+                Tab.LIBRARY -> nav.post { map()?.showLibrary() }
+                Tab.SYNC -> nav.post { map()?.showSync() }
+                Tab.TRACKS, Tab.YOU -> Unit
+            }
         }
     }
 
@@ -155,6 +174,8 @@ class MainActivity : AppCompatActivity() {
             refreshTripsBadge()
             refreshSyncBadge()
         }
+        // A recording that couldn't go when saved, with no signal, goes now.
+        RecordingSends.send(this)
         ImportFailureAlert.check(this)
     }
 
@@ -232,17 +253,19 @@ class MainActivity : AppCompatActivity() {
         HoldMyTrackApi.tripSends { result -> result.onSuccess { setTripsWaiting(it.sends.size) } }
     }
 
-    /** You's badge: the recordings on this phone waiting to be sent from You › Sync, the way
-     *  to them now that Sync isn't in the bar. Read on every return to the app and after a sync. */
+    /** Library's badge, and the count on its +: the recordings on this phone waiting to be sent
+     *  from Library › Sync. Read on every return to the map, a recording's Save screen included,
+     *  and after a send. */
     fun refreshSyncBadge() {
         if (Session.isDemo) return
         lifecycleScope.launch {
             val waiting = RecordedTrackStore(this@MainActivity).all().size
+            map()?.setSyncWaiting(waiting)
             if (waiting <= 0) {
-                nav.removeBadge(R.id.nav_you)
+                nav.removeBadge(R.id.nav_library)
                 return@launch
             }
-            nav.getOrCreateBadge(R.id.nav_you).apply {
+            nav.getOrCreateBadge(R.id.nav_library).apply {
                 backgroundColor = getColor(R.color.hmt_accent)
                 badgeTextColor = getColor(R.color.hmt_surface)
                 number = waiting
@@ -282,7 +305,7 @@ class MainActivity : AppCompatActivity() {
         selectingInCode = true
         nav.selectedItemId = itemOf(shown)
         selectingInCode = false
-        backToTracks.isEnabled = shown != Tab.TRACKS
+        backInBar.isEnabled = shown.back != null
     }
 
     private fun map() = supportFragmentManager.findFragmentByTag(TAG_MAP) as? MapFragment
@@ -341,9 +364,9 @@ class MainActivity : AppCompatActivity() {
     private fun itemOf(tab: Tab) = when (tab) {
         Tab.TRACKS -> R.id.nav_tracks
         Tab.TRIPS -> R.id.nav_trips
-        Tab.LIBRARY -> R.id.nav_library
-        // Sync is opened from You, so the bar keeps You lit.
-        Tab.SYNC, Tab.YOU -> R.id.nav_you
+        // Sync is opened from Library, so the bar keeps Library lit.
+        Tab.LIBRARY, Tab.SYNC -> R.id.nav_library
+        Tab.YOU -> R.id.nav_you
     }
 
     private fun tabOf(itemId: Int) = when (itemId) {

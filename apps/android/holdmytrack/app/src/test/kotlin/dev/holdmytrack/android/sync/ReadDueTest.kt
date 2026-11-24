@@ -20,4 +20,10 @@ class ReadDueTest {
     fun `a source just switched on is read whenever it was last read`() {
         assertTrue(ReadDue.onOpen(firstLoadPending = true, lastRead = now, now = now))
     }
+
+    @Test
+    fun `back on screen, only a source just switched on is read`() {
+        assertTrue(ReadDue.onReturn(firstLoadPending = true))
+        assertFalse(ReadDue.onReturn(firstLoadPending = false))
+    }
 }

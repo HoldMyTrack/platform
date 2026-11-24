@@ -10,16 +10,19 @@ class SyncRowRulesTest {
         type = "walking", recording = true, ticked = false, hidden = false, highlighted = false,
     )
 
+    private val session = row.copy(key = "health_connect:1", recording = false)
+
     @Test
-    fun `a row waiting can be ticked`() {
-        assertTrue(SyncRowRules.tickable(row, demo = false))
+    fun `a session waiting can be ticked`() {
+        assertTrue(SyncRowRules.tickable(session, demo = false))
     }
 
     @Test
-    fun `a hidden row, one on its way, or any for the demo account can't`() {
-        assertFalse(SyncRowRules.tickable(row.copy(hidden = true), demo = false))
-        assertFalse(SyncRowRules.tickable(row.copy(processing = true), demo = false))
-        assertFalse(SyncRowRules.tickable(row, demo = true))
+    fun `a recording, a hidden row, one on its way, or any for the demo account can't`() {
+        assertFalse(SyncRowRules.tickable(row, demo = false))
+        assertFalse(SyncRowRules.tickable(session.copy(hidden = true), demo = false))
+        assertFalse(SyncRowRules.tickable(session.copy(processing = true), demo = false))
+        assertFalse(SyncRowRules.tickable(session, demo = true))
     }
 
     @Test

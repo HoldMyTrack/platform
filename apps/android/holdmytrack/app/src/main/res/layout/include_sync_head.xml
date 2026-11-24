@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The top of the Sync tab's list (panel/SyncTab): why this account can't sync, if it can't;
      what the last run did and what it couldn't (selectable, since a rejection's reason is what
-     someone would paste into a bug report); what Health Connect wouldn't give; then the type
-     filters and Select all over the rows. -->
+     someone would paste into a bug report); Health Connect's row — when it was last read, and
+     Refresh — over its window, what it wouldn't give, or what to set up; the recordings not sent
+     yet, with Retry; then the type filters and Select all over the rows. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -44,6 +45,37 @@
         android:textIsSelectable="true"
         android:visibility="gone" />
 
+    <!-- Health Connect, when it was last read (sync/WaitingLoader), and Refresh, which reads it
+         again (panel/SyncSourceRow). -->
+    <LinearLayout
+        android:id="@+id/sync_source_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/hmt_space_16"
+        android:paddingEnd="@dimen/hmt_space_4"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/sync_source_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:accessibilityLiveRegion="polite"
+            android:textAppearance="@style/TextAppearance.HoldMyTrack.CardRowTitle"
+            tools:text="Health Connect · read Nov 24, 07:12" />
+
+        <Button
+            android:id="@+id/sync_refresh"
+            style="@style/Widget.HoldMyTrack.Button.RowIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/sync_refresh"
+            android:tooltipText="@string/sync_refresh"
+            app:icon="@drawable/ic_refresh_cw" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/sync_source_note"
         android:layout_width="match_parent"
@@ -67,6 +99,37 @@
         android:minHeight="48dp"
         android:text="@string/sync_open_sources"
         android:visibility="gone" />
+
+    <!-- Recordings on this phone not sent yet, which send themselves (sync/RecordingSends), and
+         Retry, which sends them again now, refused ones too. -->
+    <LinearLayout
+        android:id="@+id/sync_recordings_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/hmt_space_16"
+        android:paddingEnd="@dimen/hmt_space_4"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/sync_recordings_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:accessibilityLiveRegion="polite"
+            android:textAppearance="@style/TextAppearance.HoldMyTrack.CardRowTitle"
+            tools:text="2 recordings not sent yet" />
+
+        <Button
+            android:id="@+id/sync_recordings_retry"
+            style="@style/Widget.HoldMyTrack.Button.RowIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/sync_recordings_retry"
+            android:tooltipText="@string/sync_recordings_retry"
+            app:icon="@drawable/ic_refresh_cw" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/sync_filters"

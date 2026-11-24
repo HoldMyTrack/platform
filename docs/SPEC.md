@@ -205,7 +205,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 
 ### FR-3.4 Mobile sync (Android / Health Connect)
 
-The Android app sends the Health Connect sessions and recordings (FR-3.6) the user ticks: nothing is ticked by default, and nothing unticked reaches the server. The app side is `apps/android/docs/SPEC.md` FR-3.
+The Android app sends the Health Connect sessions the user ticks: nothing is ticked by default, and nothing unticked reaches the server. Recordings are sent when saved (FR-3.6). The app side is `apps/android/docs/SPEC.md` FR-3.
 
 - Only a session with a route is offered (not an indoor workout, nor any Samsung Galaxy Watch session). Routes can only be read in the foreground, a Health Connect constraint. Only the session and its positions, times and altitudes are read; no other health permission is requested.
 - The server says which Health Connect records the account already has (in any state, or queued) and which are still processing. The phone keeps no record of what it sent, so a reinstall or second phone agrees, and a record whose track was deleted is offered again.
@@ -224,11 +224,11 @@ A candidate on the phone covering the same time as an account track, or another 
 
 ### FR-3.6 In-app GPS recording (Android)
 
-The Android app records GPS-only tracks on the phone; nothing reaches the server until the user ticks a recording and sends it (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
+The Android app records GPS-only tracks on the phone and sends each one the user saves; a discarded one never reaches the server (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
 
 - Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. It is refused or taken by the rules of FR-3.4.
 - It is the only path that sets a name and description at ingest.
-- A recording the server takes is deleted from the phone once it is on the map, and listed again if its ingest fails; a refused one stays.
+- A recording the server takes is deleted from the phone once it is on the map; a refused one, or one whose ingest fails, stays on the phone to send again.
 
 ### FR-3.7 The Sync page
 

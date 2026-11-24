@@ -208,7 +208,12 @@
     <string name="recording_type_new">new</string>
     <string name="recording_type_no_match">No type matches “%1$s”</string>
     <string name="recording_download">Download GPX</string>
-    <string name="recording_saved_until_sync">Recording saved. It will appear on the map after you sync.</string>
+    <string name="recording_saved_sending">Recording saved. It\'s on its way to your map.</string>
+    <string name="recording_saved_demo">Recording saved on this phone. The demo account can\'t add it to the map.</string>
+    <string name="recording_failed_on_server">the server couldn\'t add it</string>
+    <string name="recording_note_sending">Sending…</string>
+    <string name="recording_note_waiting">Not sent yet. It goes the next time the app opens with a connection.</string>
+    <string name="recording_note_refused">Not sent: %1$s</string>
     <string name="recording_downloaded">Track saved.</string>
     <string name="recording_download_failed">Could not save the track.</string>
     <string name="recording_stat_time">Time</string>
@@ -249,7 +254,7 @@
     <string name="recorded_row_delete_named">Delete %1$s</string>
     <string name="recording_delete">Delete</string>
     <string name="recorded_delete_confirm_title">Delete this recording?</string>
-    <string name="recorded_delete_confirm_message">It hasn\'t been synced, so this is the only copy. This can\'t be undone.</string>
+    <string name="recorded_delete_confirm_message">It hasn\'t reached your account, so this is the only copy. This can\'t be undone.</string>
 
     <string name="sync_title">Sync</string>
     <string name="sync_rationale">HoldMyTrack reads your recorded exercise sessions and their GPS routes from Health Connect, and adds the outdoor ones to your map. It reads nothing else — no heart rate, no weight, no sleep — and it never writes anything back. Sessions recorded indoors have no route, so they are skipped.</string>
@@ -266,10 +271,15 @@
     <string name="sync_routes_steps">The button below opens Health Connect. Android only lets an app open its home screen, so from there:\n\n1. Tap App permissions\n2. Choose HoldMyTrack\n3. Scroll down to Additional access\n4. Tap Access exercise routes\n5. Choose Always allow\n\nThen come back here.</string>
     <string name="sync_allow_access">Allow Health Connect access</string>
     <string name="sync_open_health_connect">Open Health Connect</string>
-    <string name="sync_now">Sync</string>
+    <string name="sync_now">Add ticked</string>
     <string name="sync_failed">Sync failed: %1$s</string>
     <string name="sync_rejected_row">Rejected: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Stopped early. %1$s</string>
+    <string name="library_add">Add tracks</string>
+    <plurals name="library_sync_waiting">
+        <item quantity="one">Add tracks, %d recording waiting to be sent</item>
+        <item quantity="other">Add tracks, %d recordings waiting to be sent</item>
+    </plurals>
     <plurals name="recordings_waiting">
         <item quantity="one">%d recording waiting to be sent</item>
         <item quantity="other">%d recordings waiting to be sent</item>
@@ -284,8 +294,14 @@
     </plurals>
     <string name="sync_request_failed">the sync request failed</string>
     <string name="sync_no_report">the server did not report on this track (status %1$s)</string>
-    <string name="sync_subtext">What\'s on this phone and not on your map yet. Tick what to add — nothing else is sent.</string>
-    <string name="sync_window_note">Health Connect sessions from the last 3 months. Older ones stay in Health Connect.</string>
+    <string name="sync_add_hint">Health Connect sessions on this phone. Tick what to add — nothing else is sent.</string>
+    <plurals name="sync_recordings_unsent">
+        <item quantity="one">%d recording not sent yet</item>
+        <item quantity="other">%d recordings not sent yet</item>
+    </plurals>
+    <string name="sync_recordings_sending">Sending recordings…</string>
+    <string name="sync_recordings_retry">Send recordings again</string>
+    <string name="sync_window_note">Sessions from the last 3 months. Older ones stay in Health Connect.</string>
     <plurals name="sync_routes_refused">
         <item quantity="one">Health Connect wouldn\'t hand over %1$d route. Keep HoldMyTrack on screen and check that exercise routes are still allowed.</item>
         <item quantity="other">Health Connect wouldn\'t hand over %1$d routes. Keep HoldMyTrack on screen and check that exercise routes are still allowed.</item>
@@ -295,7 +311,7 @@
     <string name="sync_select_all">Select all</string>
     <string name="sync_select_none">Select none</string>
     <string name="sync_list_loading">Reading what\'s on this phone…</string>
-    <string name="sync_list_empty">Nothing waiting. Tracks from Health Connect and recordings from the record button show up here.</string>
+    <string name="sync_list_empty">Nothing waiting. Sessions from Health Connect show up here, and recordings until they\'re sent.</string>
     <string name="sync_show_hidden">Show hidden (%1$d)</string>
     <string name="sync_hide_hidden">Don\'t show hidden</string>
     <string name="sync_hidden">Hidden — it won\'t be offered again</string>
@@ -306,7 +322,6 @@
         <item quantity="one">%1$d of %2$d ticked · %3$d is similar</item>
         <item quantity="other">%1$d of %2$d ticked · %3$d are similar</item>
     </plurals>
-    <string name="sync_send">Sync %1$d</string>
     <string name="sync_progress">Sent %1$d of %2$d…</string>
     <plurals name="sync_summary">
         <item quantity="one">Sent %1$d track. It stays listed until it\'s on your map.</item>
@@ -358,23 +373,20 @@
     <string name="sync_open_sources">Open Sync settings</string>
     <string name="sync_hc_is_off">Health Connect is off. Turn it on in Sync settings to list its sessions here.</string>
     <string name="sync_hc_needs_setup">Health Connect needs one more step before its sessions can be listed.</string>
-    <string name="you_sync_sub">Health Connect and recordings</string>
     <string name="sync_refresh">Refresh</string>
     <string name="sync_loading_health_connect">Reading Health Connect…</string>
-    <string name="sync_not_loaded_yet">Not loaded yet</string>
-    <string name="sync_last_load">Last load: %1$s</string>
-    <string name="sync_no_source">No source set up yet</string>
+    <string name="sync_hc_not_read">Health Connect · not read yet</string>
+    <string name="sync_hc_read">Health Connect · read %1$s</string>
     <string name="sync_source_not_set_up">Health Connect isn\'t set up yet</string>
-    <string name="sync_list_not_loaded">Recordings show up straight away. Tap Load to see what\'s new in Health Connect.</string>
+    <string name="sync_list_not_loaded">Recordings show up straight away. Tap Refresh beside Health Connect to see what\'s new there.</string>
     <string name="sync_refusal_gone">It\'s no longer in Health Connect.</string>
     <string name="sync_refusal_route">Health Connect wouldn\'t hand over its route. Keep HoldMyTrack on screen and check that exercise routes are still allowed.</string>
     <plurals name="sync_first_load_found">
         <item quantity="one">Found %1$d session with a route. It\'s on the Sync tab.</item>
         <item quantity="other">Found %1$d sessions with a route. They\'re on the Sync tab.</item>
     </plurals>
-    <string name="sync_upload_title">Upload</string>
-    <string name="library_title">Library</string>
-    <string name="upload_title">Upload</string>
+    <string name="sync_upload_title">Upload files</string>
+    <string name="upload_title">Upload files</string>
     <string name="upload_demo">Not available for demo accounts — create an account to upload your own tracks.</string>
     <string name="upload_see_library">See them in Library</string>
     <string name="upload_hint">.gpx, .fit or .tcx files, up to 20 at a time.</string>
@@ -626,9 +638,7 @@
 
     <!-- Trips (panel/TripsTab.kt, panel/TripDialog.kt, Add to trip (panel/TracksPanel.kt) and the
          rows' Trip badge), after the web's trips.* messages. -->
-    <string name="panel_tab_trips">Trips</string>
-    <string name="trip_subtext">Hand-picked sets of your tracks. Only you can see them.</string>
-    <string name="trip_empty">No trips yet. On the Tracks tab, check the tracks you want, or tap one, then choose Add to trip.</string>
+    <string name="trip_empty">Trips are hand-picked sets of your tracks, and only you can see them. To make one, check tracks on the Tracks tab, or tap one, then choose Add to trip.</string>
     <string name="trip_add_target">Add %1$s to a trip</string>
     <string name="trip_demo_add">Not available for demo accounts — create an account to make trips</string>
     <string name="trip_new">New trip…</string>
@@ -731,9 +741,9 @@
     <string name="tour_fog_countries_title">Fog of War: countries</string>
     <string name="tour_fog_countries_body">And a whole country. Auto follows the zoom, as you just saw. Pick a level to keep it at every zoom, or Exact to clear the fog only along your routes.</string>
     <string name="tour_record_title">Record</string>
-    <string name="tour_record_body">Tap to record a walk or a ride with the phone\'s GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from You › Sync.</string>
+    <string name="tour_record_body">Tap to record a walk or a ride with the phone\'s GPS, tap again to pause, and hold to stop. Saving a recording adds it to your map.</string>
     <string name="tour_sync_title">Sync</string>
-    <string name="tour_sync_body">Bring in tracks from Health Connect and this phone\'s recordings. Nothing is ticked to start with: only what you tick is sent. You don\'t need to bring everything, only the journeys you want to keep.</string>
+    <string name="tour_sync_body">Bring in tracks from Health Connect. Nothing is ticked to start with: only what you tick is sent. You don\'t need to bring everything, only the journeys you want to keep.</string>
     <string name="tour_sync_demo_body">In your own account, tracks from Health Connect and your recordings come in here. The demo can\'t send: create an account from You to start yours.</string>
     <string name="tour_done_title">That\'s the tour</string>
     <string name="tour_done_body">Take it again any time from Take a tour, here on the You tab.</string>
@@ -1029,8 +1039,9 @@
     <string name="library_blocked_pending">it\'s still being processed</string>
     <string name="library_blocked_private">it\'s entirely inside a Private location</string>
     <string name="library_blocked_no_original">its original file isn\'t kept</string>
-    <string name="library_empty_no_tracks">No tracks yet. Add some from You › Sync.</string>
+    <string name="library_empty_no_tracks">No tracks yet. Add some with + above.</string>
     <string name="library_empty_past_last">This page is past the last one.</string>
+    <string name="library_first_page">Go to the first page</string>
     <string name="library_empty_search">No track\'s name or description has “%1$s”.</string>
     <string name="library_empty_search_and_filters">No track with “%1$s” passes these filters.</string>
     <string name="library_empty_filters">No track passes these filters.</string>

@@ -31,6 +31,8 @@
     <color name="hmt_accent">#B07E2E</color>
     <!-- The tour's dimmed screen (tour/TourOverlay): the web's 45% shadow ink. -->
     <color name="hmt_tour_scrim">#73202B25</color>
+    <!-- Behind a sheet opened over another screen (activity_upload.xml). -->
+    <color name="hmt_sheet_scrim">#52202B25</color>
     <color name="hmt_accent_strong">#8F661E</color>
     <color name="hmt_accent_container">#F3E6CE</color>
 

@@ -1,7 +1,9 @@
 package dev.holdmytrack.android.imports
 
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.holdmytrack.android.R
@@ -45,11 +47,20 @@ object ImportFailureAlert {
             }
             if (failures.isEmpty() || !activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
             busy = true
+            // The activity going (a rotation) takes the dialog with it unclosed: free again, and
+            // nothing dismissed, so the next check shows the same failures.
+            val gone = object : DefaultLifecycleObserver {
+                override fun onDestroy(owner: LifecycleOwner) {
+                    busy = false
+                }
+            }
+            activity.lifecycle.addObserver(gone)
             MaterialAlertDialogBuilder(activity)
                 .setTitle(activity.resources.getQuantityString(R.plurals.import_failed_title, failures.size, failures.size))
                 .setMessage(message(failures))
                 .setPositiveButton(android.R.string.ok, null)
                 .setOnDismissListener {
+                    activity.lifecycle.removeObserver(gone)
                     busy = false
                     scope.launch { for (f in failures) runCatching { HoldMyTrackApi.dismissImportFailure(f.id) } }
                 }

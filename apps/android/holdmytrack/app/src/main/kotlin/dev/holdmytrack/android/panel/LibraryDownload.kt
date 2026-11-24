@@ -10,7 +10,6 @@ import androidx.lifecycle.lifecycleScope
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
-import dev.holdmytrack.android.web.GpxDownload
 import java.io.File
 import java.util.concurrent.Executors
 import kotlin.coroutines.cancellation.CancellationException

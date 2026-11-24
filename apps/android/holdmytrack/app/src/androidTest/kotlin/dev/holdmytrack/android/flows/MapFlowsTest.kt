@@ -15,7 +15,6 @@ import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Configurator
 import androidx.test.uiautomator.BySelector
-import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
@@ -111,7 +110,7 @@ class MapFlowsTest {
         signIn()
         val members = listOf(account.idsByDay.getValue("2026-10-01"), account.idsByDay.getValue("2026-10-06"))
         account.createTrip(TRIP, members)
-        openTab("nav_trips")
+        openTrips()
         expandSheet()
         need(By.text(TRIP))
         expect("the Trip's two rows", count(id("track_text"), 2))
@@ -163,8 +162,10 @@ class MapFlowsTest {
     private fun keyboardShown(): Boolean = device.executeShellCommand("dumpsys input_method").contains("mInputShown=true")
 
     @Test
-    fun c_aStoppedRecordingReachesTheSyncSheet() {
+    fun c_aSavedRecordingReachesLibrary() {
         signIn()
+        // Its own name each run, so a walk an earlier run left can't pass for this one.
+        val walk = "$WALK ${System.currentTimeMillis() % 100_000}"
         val locations = context.getSystemService(LocationManager::class.java)
         locations.addTestProvider(
             LocationManager.GPS_PROVIDER, false, false, false, false, true, true, true,
@@ -199,7 +200,7 @@ class MapFlowsTest {
             // The Save screen fills its fields once the recording loads, replacing the views.
             need(id("recording_save"))
             device.waitForIdle()
-            retrying { need(id("recording_name")).text = WALK }
+            retrying { need(id("recording_name")).text = walk }
             retrying { need(id("recording_save")).click() }
             assertTrue("the Save screen closed", device.wait(Until.gone(id("recording_save")), TIMEOUT_MS))
         } finally {
@@ -208,21 +209,25 @@ class MapFlowsTest {
             runCatching { locations.removeTestProvider(LocationManager.GPS_PROVIDER) }
         }
         need(id("panel_handle"))
-        // Sync is You's: its row opens the map with the Sync sheet.
-        tapUntil({ still(id("nav_you")) }) { device.hasObject(id("you_sync")) }
-        tapUntil({ still(id("you_sync")) }) { device.hasObject(id("panel_title")) && device.hasObject(id("sync_list")) }
-        expandSheet()
-        // The row sits below the source notes. Half-expanded, the sheet's bottom is past the
-        // screen's, so the list has nothing to scroll: the sheet is dragged up by its handle,
-        // slowly as a finger would, and then the list scrolls.
-        if (device.wait(Until.hasObject(By.textContains(WALK)), SHORT_MS)) return
-        val handle = need(id("panel_handle")).visibleBounds
-        device.swipe(handle.centerX(), handle.centerY(), handle.centerX(), device.displayHeight / 6, SWIPE_STEPS)
-        repeat(SCROLLS) {
-            if (device.wait(Until.hasObject(By.textContains(WALK)), SHORT_MS)) return
-            retrying { need(id("sync_list")).scroll(Direction.DOWN, 1f) }
+        // Save sends it: once the server has processed it, Library lists it. Library reads its
+        // page each time it opens, so it's opened again until the walk is there.
+        tapUntil({ still(id("nav_library")) }) { device.hasObject(id("library_search")) }
+        retrying { need(id("library_search")).text = walk }
+        // The row's title: the search field holds the same text.
+        val row = id("track_title").text(walk)
+        val deadline = SystemClock.uptimeMillis() + INGEST_MS
+        while (!device.wait(Until.hasObject(row), SHORT_MS)) {
+            if (SystemClock.uptimeMillis() > deadline) fail("the saved walk never reached Library")
+            retrying { need(id("nav_tracks")).click() }
+            retrying { need(id("nav_library")).click() }
         }
-        need(By.textContains(WALK))
+        // Gone again, so the test account doesn't fill up with walks: checked by its tile, the
+        // search leaving it the only row, then Delete. A page read that lands mid-tap redraws the
+        // row, so the tile is tapped until it's checked.
+        tapUntil({ need(id("track_tile_target")) }) { device.hasObject(id("library_delete")) }
+        retrying { need(id("library_delete")).click() }
+        retrying { need(By.res("android", "button1")).click() }
+        assertTrue("the walk was deleted", device.wait(Until.gone(row), TIMEOUT_MS))
     }
 
     private fun need(selector: BySelector): UiObject2 =
@@ -320,14 +325,14 @@ class MapFlowsTest {
         fail("tapped three times, nothing changed")
     }
 
-    /** The bottom bar's [tab] tapped until it's the one marked and the sheet shows its title, which
-     *  only Trips and Sync have. Each tap waits for the bar to stop moving: back from the Save
-     *  screen it's still being laid out, and a tap read from those bounds lands on the record
-     *  button and starts a recording, which then hides the sheet from every flow after. */
-    private fun openTab(tab: String) {
-        tapUntil({ still(id(tab)) }) {
-            if (device.hasObject(id("recording_status"))) fail("a tap on $tab started a recording")
-            device.hasObject(id(tab).selected(true)) && device.hasObject(id("panel_title"))
+    /** The bottom bar's Trips tapped until it's the one marked and the sheet shows its list.
+     *  Each tap waits for the bar to stop moving: back from the Save screen it's still being laid
+     *  out, and a tap read from those bounds lands on the record button and starts a recording,
+     *  which then hides the sheet from every flow after. */
+    private fun openTrips() {
+        tapUntil({ still(id("nav_trips")) }) {
+            if (device.hasObject(id("recording_status"))) fail("a tap on Trips started a recording")
+            device.hasObject(id("nav_trips").selected(true)) && device.hasObject(id("trips_list"))
         }
     }
 
@@ -380,15 +385,14 @@ class MapFlowsTest {
         // Generous: an emulator on a busy machine takes seconds to draw a screen.
         const val TIMEOUT_MS = 60_000L
         const val SHORT_MS = 5_000L
-        const val SCROLLS = 3
+        /** How long the server may take to process a sent recording. */
+        const val INGEST_MS = 120_000L
         /** Months the picker may page forward to reach a day: Dates' bounds span the account. */
         const val MONTHS = 24
         /** Quarter seconds the map's height is read under the keyboard. */
         const val KEYBOARD_SAMPLES = 12
         /** Quarter-second readings a view's bounds must hold before it's tapped ([still]). */
         const val STILL_READINGS = 2
-        /** About a second per swipe: a fling would snap the sheet back. */
-        const val SWIPE_STEPS = 200
         const val SIGN_IN_MS = 15_000L
         const val RECORDING_MS = 70_000L
         const val TRIP = "Flows trip"

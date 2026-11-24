@@ -59,8 +59,17 @@ class SyncListTest {
     fun `what's on its way is listed but not drawn, ticked or sent`() {
         val l = list(ticked = setOf(sending.key, session.key))
         assertEquals(listOf("s1", "s3", "r1"), keys(l.drawn))
-        assertEquals(listOf("s1", "s3", "r1"), keys(l.tickable))
+        assertEquals(listOf("s1", "s3"), keys(l.tickable))
         assertEquals(listOf("s1"), keys(l.sendable))
+    }
+
+    @Test
+    fun `a recording is listed and drawn, never ticked, since it sends itself`() {
+        val l = list(ticked = setOf(recording.key))
+        assertEquals(true, "r1" in keys(l.shown))
+        assertEquals(true, "r1" in keys(l.drawn))
+        assertEquals(false, "r1" in keys(l.tickable))
+        assertEquals(emptyList<String>(), keys(l.sendable))
     }
 
     @Test

@@ -211,7 +211,12 @@
     <string name="recording_type_new">новый</string>
     <string name="recording_type_no_match">Нет типа, подходящего под «%1$s»</string>
     <string name="recording_download">Скачать GPX</string>
-    <string name="recording_saved_until_sync">Запись сохранена. Она появится на карте после синхронизации.</string>
+    <string name="recording_saved_sending">Запись сохранена и уже отправляется на вашу карту.</string>
+    <string name="recording_saved_demo">Запись сохранена на телефоне. Демо-аккаунт не может добавить её на карту.</string>
+    <string name="recording_failed_on_server">сервер не смог её добавить</string>
+    <string name="recording_note_sending">Отправляется…</string>
+    <string name="recording_note_waiting">Ещё не отправлена. Уйдёт, когда приложение откроется с интернетом.</string>
+    <string name="recording_note_refused">Не отправлена: %1$s</string>
     <string name="recording_downloaded">Трек сохранён.</string>
     <string name="recording_download_failed">Не удалось сохранить трек.</string>
     <string name="recording_stat_time">Время</string>
@@ -251,7 +256,7 @@
     <string name="recorded_row_delete_named">Удалить: %1$s</string>
     <string name="recording_delete">Удалить</string>
     <string name="recorded_delete_confirm_title">Удалить эту запись?</string>
-    <string name="recorded_delete_confirm_message">Она не синхронизирована, так что это единственная копия. Это нельзя отменить.</string>
+    <string name="recorded_delete_confirm_message">Она ещё не попала в ваш аккаунт, так что это единственная копия. Это нельзя отменить.</string>
 
     <string name="sync_title">Синхронизация</string>
     <string name="sync_rationale">HoldMyTrack читает из Health Connect ваши записанные тренировки и их GPS-маршруты и добавляет тренировки на улице на вашу карту. Больше он ничего не читает — ни пульс, ни вес, ни сон — и никогда ничего не записывает обратно. У тренировок в помещении нет маршрута, поэтому они пропускаются.</string>
@@ -268,10 +273,17 @@
     <string name="sync_routes_steps">Кнопка ниже открывает Health Connect. Android позволяет приложению открыть только его главный экран, поэтому дальше:\n\n1. Нажмите «Разрешения приложений»\n2. Выберите HoldMyTrack\n3. Прокрутите до «Дополнительный доступ»\n4. Нажмите «Доступ к маршрутам тренировок»\n5. Выберите «Разрешать всегда»\n\nЗатем вернитесь сюда.</string>
     <string name="sync_allow_access">Разрешить доступ к Health Connect</string>
     <string name="sync_open_health_connect">Открыть Health Connect</string>
-    <string name="sync_now">Отправить</string>
+    <string name="sync_now">Добавить</string>
     <string name="sync_failed">Ошибка синхронизации: %1$s</string>
     <string name="sync_rejected_row">Отклонено: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Остановлено досрочно. %1$s</string>
+    <string name="library_add">Добавить треки</string>
+    <plurals name="library_sync_waiting">
+        <item quantity="one">Добавить треки, %d запись ждёт отправки</item>
+        <item quantity="few">Добавить треки, %d записи ждут отправки</item>
+        <item quantity="many">Добавить треки, %d записей ждут отправки</item>
+        <item quantity="other">Добавить треки, %d записи ждут отправки</item>
+    </plurals>
     <plurals name="recordings_waiting">
         <item quantity="one">%d запись ждёт отправки</item>
         <item quantity="few">%d записи ждут отправки</item>
@@ -292,8 +304,16 @@
     </plurals>
     <string name="sync_request_failed">запрос синхронизации не удался</string>
     <string name="sync_no_report">сервер ничего не сообщил об этом треке (статус %1$s)</string>
-    <string name="sync_subtext">То, что есть на этом телефоне, но ещё не на вашей карте. Отметьте, что добавить, — больше ничего не отправляется.</string>
-    <string name="sync_window_note">Тренировки Health Connect за последние 3 месяца. Более старые остаются в Health Connect.</string>
+    <string name="sync_add_hint">Тренировки Health Connect на этом телефоне. Отметьте, что добавить, — больше ничего не отправляется.</string>
+    <plurals name="sync_recordings_unsent">
+        <item quantity="one">%d запись ещё не отправлена</item>
+        <item quantity="few">%d записи ещё не отправлены</item>
+        <item quantity="many">%d записей ещё не отправлено</item>
+        <item quantity="other">%d записи ещё не отправлены</item>
+    </plurals>
+    <string name="sync_recordings_sending">Отправляем записи…</string>
+    <string name="sync_recordings_retry">Отправить записи снова</string>
+    <string name="sync_window_note">Тренировки за последние 3 месяца. Более старые остаются в Health Connect.</string>
     <plurals name="sync_routes_refused">
         <item quantity="one">Health Connect не отдал маршрутов: %1$d. Не уходите из HoldMyTrack и проверьте, что доступ к маршрутам тренировок всё ещё разрешён.</item>
         <item quantity="few">Health Connect не отдал маршрутов: %1$d. Не уходите из HoldMyTrack и проверьте, что доступ к маршрутам тренировок всё ещё разрешён.</item>
@@ -305,7 +325,7 @@
     <string name="sync_select_all">Выбрать все</string>
     <string name="sync_select_none">Снять все</string>
     <string name="sync_list_loading">Читаем, что есть на этом телефоне…</string>
-    <string name="sync_list_empty">Ничего не ждёт. Тренировки из Health Connect и записи с кнопки записи появятся здесь.</string>
+    <string name="sync_list_empty">Ничего не ждёт. Здесь появляются тренировки из Health Connect, а записи — пока они не отправлены.</string>
     <string name="sync_show_hidden">Показать скрытые (%1$d)</string>
     <string name="sync_hide_hidden">Не показывать скрытые</string>
     <string name="sync_hidden">Скрыто — больше не будет предлагаться</string>
@@ -318,7 +338,6 @@
         <item quantity="many">Отмечено %1$d из %2$d · похожих: %3$d</item>
         <item quantity="other">Отмечено %1$d из %2$d · похожих: %3$d</item>
     </plurals>
-    <string name="sync_send">Отправить %1$d</string>
     <string name="sync_progress">Отправлено %1$d из %2$d…</string>
     <plurals name="sync_summary">
         <item quantity="one">Отправлено: %1$d. Тренировки остаются в списке, пока не появятся на карте.</item>
@@ -376,14 +395,12 @@
     <string name="sync_open_sources">Открыть настройки синхронизации</string>
     <string name="sync_hc_is_off">Health Connect выключен. Включите его в настройках синхронизации, чтобы увидеть здесь его тренировки.</string>
     <string name="sync_hc_needs_setup">Health Connect нужно донастроить, прежде чем его тренировки появятся здесь.</string>
-    <string name="you_sync_sub">Health Connect и записи</string>
     <string name="sync_refresh">Обновить</string>
     <string name="sync_loading_health_connect">Читаем Health Connect…</string>
-    <string name="sync_not_loaded_yet">Ещё не загружалось</string>
-    <string name="sync_last_load">Последняя загрузка: %1$s</string>
-    <string name="sync_no_source">Нет настроенных источников</string>
+    <string name="sync_hc_not_read">Health Connect · ещё не прочитан</string>
+    <string name="sync_hc_read">Health Connect · прочитан %1$s</string>
     <string name="sync_source_not_set_up">Health Connect ещё не настроен</string>
-    <string name="sync_list_not_loaded">Записи появляются сразу. Нажмите «Загрузить», чтобы увидеть новое из Health Connect.</string>
+    <string name="sync_list_not_loaded">Записи появляются сразу. Нажмите «Обновить» рядом с Health Connect, чтобы увидеть новое оттуда.</string>
     <string name="sync_refusal_gone">Её больше нет в Health Connect.</string>
     <string name="sync_refusal_route">Health Connect не отдал её маршрут. Держите HoldMyTrack на экране и проверьте, что доступ к маршрутам тренировок ещё разрешён.</string>
     <plurals name="sync_first_load_found">
@@ -392,9 +409,8 @@
         <item quantity="many">Найдено %1$d тренировок с маршрутом. Они на вкладке «Синхронизация».</item>
         <item quantity="other">Найдено %1$d тренировки с маршрутом. Они на вкладке «Синхронизация».</item>
     </plurals>
-    <string name="sync_upload_title">Загрузить</string>
-    <string name="library_title">Библиотека</string>
-    <string name="upload_title">Загрузить</string>
+    <string name="sync_upload_title">Загрузить файлы</string>
+    <string name="upload_title">Загрузить файлы</string>
     <string name="upload_demo">Недоступно в демо-аккаунте — создайте аккаунт, чтобы загружать свои треки.</string>
     <string name="upload_see_library">Смотреть в библиотеке</string>
     <string name="upload_hint">Файлы .gpx, .fit или .tcx, до 20 за раз.</string>
@@ -666,9 +682,7 @@
 
     <!-- Trips (panel/TripsTab.kt, panel/TripDialog.kt, Add to trip (panel/TracksPanel.kt) and the
          rows' Trip badge), after the web's trips.* messages. -->
-    <string name="panel_tab_trips">Путешествия</string>
-    <string name="trip_subtext">Подборки ваших треков. Видны только вам.</string>
-    <string name="trip_empty">Путешествий пока нет. На вкладке «Треки» отметьте нужные треки или нажмите на один из них, затем — «Добавить в путешествие».</string>
+    <string name="trip_empty">Путешествия — это подборки ваших треков, и видны они только вам. Чтобы создать путешествие, на вкладке «Треки» отметьте нужные треки или нажмите на один из них, затем — «Добавить в путешествие».</string>
     <string name="trip_add_target">Добавить в путешествие: %1$s</string>
     <string name="trip_demo_add">Недоступно в демо-аккаунте — создайте аккаунт, чтобы собирать путешествия</string>
     <string name="trip_new">Новое путешествие…</string>
@@ -779,9 +793,9 @@
     <string name="tour_fog_countries_title">Туман: страны</string>
     <string name="tour_fog_countries_body">И целая страна. «Авто» следует за масштабом, как вы только что видели. Выберите уровень, чтобы оставить его на любом масштабе, или «Точно», чтобы туман рассеивался только вдоль маршрутов.</string>
     <string name="tour_record_title">Запись</string>
-    <string name="tour_record_body">Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. Записи ждут на телефоне, пока вы не отправите их в разделе Вы › Синхронизация.</string>
+    <string name="tour_record_body">Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. Сохранённая запись сама добавляется на вашу карту.</string>
     <string name="tour_sync_title">Синхронизация</string>
-    <string name="tour_sync_body">Треки из Health Connect и записи с этого телефона. Сначала ничего не отмечено: отправляется только то, что вы отметите. Вы не обязаны добавлять всё подряд — только те треки, которые хотите сохранить.</string>
+    <string name="tour_sync_body">Треки из Health Connect. Сначала ничего не отмечено: отправляется только то, что вы отметите. Вы не обязаны добавлять всё подряд — только те треки, которые хотите сохранить.</string>
     <string name="tour_sync_demo_body">В своём аккаунте сюда приходят треки из Health Connect и ваши записи. Демо не может отправлять: создайте аккаунт на вкладке «Вы», чтобы начать свой.</string>
     <string name="tour_done_title">Вот и весь тур</string>
     <string name="tour_done_body">Пройти его снова можно в любой момент — «Пройти тур» здесь, на вкладке «Вы».</string>
@@ -1173,7 +1187,8 @@
     <string name="library_blocked_pending">он ещё обрабатывается</string>
     <string name="library_blocked_private">он целиком внутри приватного места</string>
     <string name="library_blocked_no_original">его исходный файл не хранится</string>
-    <string name="library_empty_no_tracks">Треков пока нет. Добавьте их в разделе Вы › Синхронизация.</string>
+    <string name="library_empty_no_tracks">Треков пока нет. Добавьте их кнопкой + выше.</string>
+    <string name="library_first_page">Перейти на первую страницу</string>
     <string name="library_empty_past_last">Эта страница дальше последней.</string>
     <string name="library_empty_search">Ни в одном названии или описании нет «%1$s».</string>
     <string name="library_empty_search_and_filters">Ни один трек с «%1$s» не проходит эти фильтры.</string>

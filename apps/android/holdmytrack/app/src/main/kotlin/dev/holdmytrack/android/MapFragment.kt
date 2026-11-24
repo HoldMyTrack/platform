@@ -150,10 +150,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /** Something the Sync tab sent has landed, whichever tab shows: the list, its days and the
      *  tiles catch up. Until then its job is only queued, with no row to show Pending. */
-    private val syncProgressListener = SyncProgress.Listener(onChange = {}, onLanded = {
-        onSyncedFromPhone()
-        host?.refreshSyncBadge()
-    })
+    private val syncProgressListener = SyncProgress.Listener(onChange = {}, onLanded = { onSyncedFromPhone() })
     /** The area and Dates or the Trip the list and tracks show, and whether the camera moves next. */
     private val session = MapSession(panelState)
     private var imageryStatus = SatelliteStatus.LOADING
@@ -236,11 +233,16 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The bottom bar's Trips: the panel's Trips tab. */
     fun showTrips() = show(PanelTab.TRIPS)
 
-    /** You › Sync: the panel's Sync tab, in Normal mode, where the sheet is. */
+    /** Library › Sync: the panel's Sync tab, in Normal mode, where the sheet is. */
     fun showSync() = show(PanelTab.SYNC)
 
     /** The bottom bar's Library: the panel's Library tab. */
     fun showLibrary() = show(PanelTab.LIBRARY)
+
+    /** The recordings waiting, as the bar's Library badge counts them, on Library's +. */
+    fun setSyncWaiting(waiting: Int) {
+        views?.panel?.libraryTab?.setSyncWaiting(waiting)
+    }
 
     /** Library's Download, made with the fragment: the save screen's launchers can't be
      *  registered later. */
@@ -399,6 +401,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             download = libraryDownload,
             onOpen = { track -> host?.let { MainActivity.viewOnMap(it, track.id, LibraryTab.day(track)) } },
             onDeleted = { views?.refresh?.afterDelete(it) },
+            onSync = { host?.showTab(MainActivity.Tab.SYNC) },
         )
         val panel = TracksPanel(
             sheet,
@@ -746,8 +749,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         if (modeBarReady && !normalMode()) privacy.stop()
     }
 
-    /** The Sync tab sent tracks; an empty map frames them once they're in. */
+    /** The Sync tab sent tracks; an empty map frames them once they're in, and the recordings
+     *  waiting are counted again. */
     private fun onSyncedFromPhone() {
+        host?.refreshSyncBadge()
         val v = views ?: return
         v.refresh.afterSync()
         if (v.notices.shown == MapNotice.EMPTY) v.camera.openAgain { v.area.followArea() }
@@ -1031,6 +1036,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val v = views
         v?.export?.close()
         recording.dismissDialogs()
+        // A search waiting to be read, or a Delete finishing, would read in the scope going now.
+        v?.panel?.libraryTab?.destroy()
         layers.dismiss()
         v?.modes?.dismissFogLevel()
         spots.stopCapture()
