@@ -474,10 +474,13 @@ func TestAppShellRoutes(t *testing.T) {
 
 func TestNotFound(t *testing.T) {
 	s := newPagesTestServer(t)
-	rec := httptest.NewRecorder()
-	s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/no-such-page", nil))
-	if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "Page not found") || !strings.Contains(rec.Body.String(), `class="page-header"`) {
-		t.Errorf("/no-such-page: status %d, want the 404 page with the shared header", rec.Code)
+	// The retired /v1 API is an unknown address like any other.
+	for _, path := range []string{"/no-such-page", "/v1/activities"} {
+		rec := httptest.NewRecorder()
+		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "Page not found") || !strings.Contains(rec.Body.String(), `class="page-header"`) {
+			t.Errorf("%s: status %d, want the 404 page with the shared header", path, rec.Code)
+		}
 	}
 	for _, path := range []string{"/v2/no-such-endpoint", "/tiles/v1/nope/1/2/3"} {
 		rec := httptest.NewRecorder()
@@ -486,7 +489,7 @@ func TestNotFound(t *testing.T) {
 			t.Errorf("%s: status %d; want a plain 404, not a page", path, rec.Code)
 		}
 	}
-	rec = httptest.NewRecorder()
+	rec := httptest.NewRecorder()
 	s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/static/header.css", nil))
 	if rec.Code != http.StatusOK {
 		t.Errorf("/static/header.css: status %d", rec.Code)

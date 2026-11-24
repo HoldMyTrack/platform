@@ -516,7 +516,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-9.4).
 ### FR-9.1 About page
 
 - `/about` says what HoldMyTrack is, isn't and how it's funded. Without a session `/` is the same page, with `/` as canonical; with one, `/` is the map. Opening it never starts a demo.
-- `/robots.txt` disallows `/v1/`, `/v2/` and `/tiles/`; `/sitemap.xml` lists the indexable pages.
+- `/robots.txt` disallows `/v2/` and `/tiles/`; `/sitemap.xml` lists the indexable pages.
 
 ### FR-9.2 Help page
 
@@ -532,7 +532,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-9.4).
 
 - Menus work without JavaScript.
 - With a session no page is cached anywhere, since the header names the account; without one, public pages may be cached for five minutes, and a copy cached signed out is never reused signed in.
-- An unknown address gets a "Page not found" page, or a JSON error under `/v1/`, `/v2/` and `/tiles/` (§1.4).
+- An unknown address gets a "Page not found" page, or a JSON error under `/v2/` and `/tiles/` (§1.4).
 
 ### FR-9.5 Privacy policy
 

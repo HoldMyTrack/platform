@@ -59,7 +59,7 @@ func TestWriteAPIError(t *testing.T) {
 func TestIsAPIPath(t *testing.T) {
 	for path, want := range map[string]bool{
 		"/v2/tracks":                 true,
-		"/v1/activities":             true,
+		"/v1/activities":             false,
 		"/tiles/v1/fog-vector/1/2/3": true,
 		"/v1":                        false,
 		"/settings":                  false,
