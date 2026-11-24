@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"net"
 	"runtime/debug"
 	"slices"
 	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/budget"
@@ -34,7 +37,7 @@ const pollInterval = 500 * time.Millisecond
 const claimLease = 30 * time.Minute
 
 // maxCrashes bounds how many runs of a job may end with the worker dying: claims counted in
-// jobs.attempts that no retry (jobs.retries) or release accounts for. A job that kills its
+// jobs.attempts that no retry (jobs.retries) or release (jobs.releases) accounts for. A job that kills its
 // worker every time it runs (a file that panics a parser below the recover, or exhausts
 // memory) is failed on its next claim instead of being handed out first again on every
 // restart, stalling the queue for every account behind it.
@@ -49,6 +52,9 @@ type job struct {
 	kind    string
 	userID  string // "" for a job no account owns
 	payload []byte
+	// token is the claim's attempts, which every write the claim makes names: once another loop
+	// claims the job, they match nothing.
+	token int
 }
 
 // exportSweepInterval is how often expired exports are removed (export_job.go).
@@ -262,8 +268,9 @@ var (
 // time.
 const heartbeat = 5 * time.Minute
 
-// keepClaimed refreshes jobID's locked_at every heartbeat until the returned stop is called.
-func keepClaimed(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger, jobID int64) (stop func()) {
+// keepClaimed refreshes j's locked_at every heartbeat until the returned stop is called, while
+// j's claim holds it.
+func keepClaimed(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger, j job) (stop func()) {
 	hctx, cancel := context.WithCancel(ctx)
 	go func() {
 		t := time.NewTicker(heartbeat)
@@ -273,8 +280,8 @@ func keepClaimed(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger, jobI
 			case <-hctx.Done():
 				return
 			case <-t.C:
-				if _, err := pool.Exec(hctx, `UPDATE jobs SET locked_at = NOW() WHERE id = $1`, jobID); err != nil && hctx.Err() == nil {
-					log.Error("job heartbeat failed", "job_id", jobID, "err", err)
+				if _, err := pool.Exec(hctx, `UPDATE jobs SET locked_at = NOW() WHERE id = $1 AND attempts = $2`, j.id, j.token); err != nil && hctx.Err() == nil {
+					log.Error("job heartbeat failed", "job_id", j.id, "err", err)
 				}
 			}
 		}
@@ -324,7 +331,7 @@ const claimQuery = `
 			 WHERE s.user_id = h.user_id AND (s.kind = ANY($2)) = NOT $3) AS served
 		FROM heads h
 	)
-	SELECT j.id, j.kind, COALESCE(j.user_id::text, ''), j.payload, j.attempts - j.retries, j.retries
+	SELECT j.id, j.kind, COALESCE(j.user_id::text, ''), j.payload, j.attempts - j.retries - j.releases, j.retries
 	FROM jobs j JOIN ranked r ON r.id = j.id
 	WHERE j.state = 'pending'
 	  AND (j.locked_at IS NULL OR j.locked_at < NOW() - make_interval(secs => $1))
@@ -367,7 +374,7 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 		return true, nil
 	}
 
-	if _, err := tx.Exec(ctx, `UPDATE jobs SET locked_at = NOW(), attempts = attempts + 1 WHERE id = $1`, j.id); err != nil {
+	if err := tx.QueryRow(ctx, `UPDATE jobs SET locked_at = NOW(), attempts = attempts + 1 WHERE id = $1 RETURNING attempts`, j.id).Scan(&j.token); err != nil {
 		return false, fmt.Errorf("worker: mark locked: %w", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -378,19 +385,22 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 	runErr := runJobSafely(ctx, pool, store, log, j)
 	metrics.JobDuration.WithLabelValues(j.kind).Observe(time.Since(start).Seconds())
 
-	// The rest records the outcome on a context that outlives a shutdown: a job that finished
-	// as SIGTERM arrived is still done, and one cut off by it is still owed a release.
+	// The rest records the outcome (recordOutcome), past a shutdown too: a job that finished as
+	// SIGTERM arrived is still done, and one cut off by it is still owed a release.
 	wctx := context.WithoutCancel(ctx)
+	record := func(what, sql string, args ...any) (bool, error) {
+		return recordOutcome(ctx, pool.Exec, log, j.id, what, sql, append([]any{j.id, j.token}, args...)...)
+	}
 
 	// The worker is shutting down (a deploy, SIGTERM): the job didn't fail, it was cut off.
 	// Hand it back for the next start rather than failing it or leaving it locked for a whole
 	// lease.
 	if runErr != nil && ctx.Err() != nil {
-		_, uerr := pool.Exec(wctx, `
-			UPDATE jobs SET locked_at = NULL, attempts = attempts - 1 WHERE id = $1 AND state = 'pending'
-		`, j.id)
-		if uerr != nil {
-			return true, fmt.Errorf("worker: release on shutdown: %w", uerr)
+		if _, err := record("release on shutdown", `
+			UPDATE jobs SET locked_at = NULL, releases = releases + 1
+			WHERE id = $1 AND attempts = $2 AND state = 'pending'
+		`); err != nil {
+			return true, err
 		}
 		return true, nil
 	}
@@ -399,13 +409,12 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 	// bytes and state kept (retryable).
 	if delay, ok := retryDelay(j.kind, retries); runErr != nil && ok && retryable(j.kind, runErr) {
 		log.Warn("job failed, will retry", "job_id", j.id, "kind", j.kind, "retry", retries+1, "in", delay, "err", runErr)
-		_, uerr := pool.Exec(wctx, `
-			UPDATE jobs SET locked_at = NULL, last_error = $2, run_after = NOW() + make_interval(secs => $3),
+		if _, err := record("schedule retry", `
+			UPDATE jobs SET locked_at = NULL, last_error = $3, run_after = NOW() + make_interval(secs => $4),
 				retries = retries + 1
-			WHERE id = $1 AND state = 'pending'
-		`, j.id, runErr.Error(), delay.Seconds())
-		if uerr != nil {
-			return true, fmt.Errorf("worker: schedule retry: %w", uerr)
+			WHERE id = $1 AND attempts = $2 AND state = 'pending'
+		`, runErr.Error(), delay.Seconds()); err != nil {
+			return true, err
 		}
 		return true, nil
 	}
@@ -413,24 +422,76 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 	if runErr != nil {
 		log.Error("job failed", "job_id", j.id, "kind", j.kind, "err", runErr)
 		code := failureCode(j.kind, runErr)
-		_, uerr := pool.Exec(wctx, `
-			UPDATE jobs SET state = 'failed', last_error = $2, error_code = $3, finished_at = NOW()
-			WHERE id = $1
-		`, j.id, runErr.Error(), code)
-		if uerr != nil {
-			return true, fmt.Errorf("worker: mark failed: %w", uerr)
+		owned, err := record("mark failed", `
+			UPDATE jobs SET state = 'failed', last_error = $3, error_code = $4, finished_at = NOW()
+			WHERE id = $1 AND attempts = $2
+		`, runErr.Error(), code)
+		if err != nil {
+			return true, err
 		}
-		finished(j.kind, "failed", code)
-		discardFailedRaw(wctx, pool, store, log, j)
+		if owned {
+			finished(j.kind, "failed", code)
+			discardFailedRaw(wctx, pool, store, log, j)
+		}
 		return true, nil // the queue made progress even though this job failed
 	}
 
-	if _, err := pool.Exec(wctx, `UPDATE jobs SET state = 'done', finished_at = NOW() WHERE id = $1`, j.id); err != nil {
-		return true, fmt.Errorf("worker: mark done: %w", err)
+	owned, err := record("mark done", `UPDATE jobs SET state = 'done', finished_at = NOW() WHERE id = $1 AND attempts = $2`)
+	if err != nil {
+		return true, err
 	}
-	log.Info("job done", "job_id", j.id, "kind", j.kind)
-	finished(j.kind, "done", nil)
+	if owned {
+		log.Info("job done", "job_id", j.id, "kind", j.kind)
+		finished(j.kind, "done", nil)
+	}
 	return true, nil
+}
+
+// outcomeBackoff is recordOutcome's wait between tries: the first, doubling up to the second.
+var outcomeBackoff = [2]time.Duration{time.Second, 30 * time.Second}
+
+// outcomeGrace is how long recordOutcome keeps trying once the worker is stopping: long enough
+// to ride out a blip, short of the container's stop timeout.
+var outcomeGrace = 5 * time.Second
+
+// execFunc is pgxpool.Pool's Exec, which recordOutcome takes so a test can fail it.
+type execFunc func(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+
+// recordOutcome runs one of a run's outcome writes until it reaches the database. A run whose
+// outcome is lost reads as a worker that died with it (maxCrashes), and during an outage the
+// write fails for the same reason the job did, so a write failing on something passing is tried
+// again: until it gets through, or for outcomeGrace once ctx ends. Any other failure is
+// returned. The write names the claim's token: owned is false when it matched nothing, the
+// claim being no longer held (another loop claimed the job, or its account was purged).
+func recordOutcome(ctx context.Context, exec execFunc, log *slog.Logger, jobID int64, what, sql string, args ...any) (owned bool, err error) {
+	wctx := context.WithoutCancel(ctx)
+	stopping := ctx.Done() // nil once the grace has started
+	wait := outcomeBackoff[0]
+	for {
+		if stopping != nil && ctx.Err() != nil {
+			var cancel context.CancelFunc
+			wctx, cancel = context.WithTimeout(context.WithoutCancel(ctx), outcomeGrace)
+			defer cancel()
+			stopping = nil
+		}
+		tag, err := exec(wctx, sql, args...)
+		if err == nil {
+			if tag.RowsAffected() == 0 {
+				log.Warn("job outcome not recorded: claim no longer held", "job_id", jobID, "what", what)
+			}
+			return tag.RowsAffected() > 0, nil
+		}
+		if !passing(err) || wctx.Err() != nil {
+			return false, fmt.Errorf("worker: %s: %w", what, err)
+		}
+		log.Warn("job outcome not recorded, trying again", "job_id", jobID, "what", what, "in", wait, "err", err)
+		select {
+		case <-time.After(wait):
+		case <-stopping: // the grace starts with the next try
+		case <-wctx.Done(): // the grace ran out: the next try fails at once
+		}
+		wait = min(2*wait, outcomeBackoff[1])
+	}
 }
 
 // discardFailedRaw drops a failed or abandoned ingest's original (ingest.DiscardRaw); a job of
@@ -526,7 +587,7 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 			return fmt.Errorf("unmarshal render_fog job: %w", err)
 		}
 		// A big account's first render can outlast claimLease.
-		defer keepClaimed(ctx, pool, log, j.id)()
+		defer keepClaimed(ctx, pool, log, j)()
 		return fog.RenderUser(ctx, pool, store, rj.UserID)
 	case "edit_route":
 		var ej ingest.EditJob
@@ -547,16 +608,37 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 		}
 		return tripcopy.Process(ctx, pool, store, sj)
 	case "export":
-		return runExport(ctx, pool, store, log, j.id, j.payload)
+		return runExport(ctx, pool, store, log, j)
 	case "count_points":
 		var cj ingest.CountPointsJob
 		if err := json.Unmarshal(j.payload, &cj); err != nil {
 			return fmt.Errorf("unmarshal count_points job: %w", err)
 		}
 		// An account's every original is parsed, which can outlast claimLease.
-		defer keepClaimed(ctx, pool, log, j.id)()
+		defer keepClaimed(ctx, pool, log, j)()
 		return ingest.CountPoints(ctx, pool, store, cj)
 	default:
 		return fmt.Errorf("unhandled job kind %q", j.kind)
 	}
+}
+
+// passing reports an error a later try may not meet: the connection to Postgres failing, or
+// Postgres answering that it can't serve now (SQLSTATE class 08 connection, 40 transaction
+// rollback, 53 resources, 57 shutting down or starting up, 58 system error). An error the client
+// makes before sending, such as a value it can't encode, would repeat on every try.
+func passing(err error) bool {
+	var pe *pgconn.PgError
+	if errors.As(err, &pe) {
+		if len(pe.Code) < 2 {
+			return false
+		}
+		switch pe.Code[:2] {
+		case "08", "40", "53", "57", "58":
+			return true
+		}
+		return false
+	}
+	var ne net.Error
+	return pgconn.SafeToRetry(err) || pgconn.Timeout(err) || errors.As(err, &ne) ||
+		errors.As(err, new(*pgconn.ConnectError)) || errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF)
 }

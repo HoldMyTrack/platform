@@ -12,8 +12,15 @@
 // # Retries
 //
 // A job failing on something passing runs again after retryDelays, counted in jobs.retries; an
-// ingest without limit (retryDelay). attempts counts claims, so attempts - retries is the runs
-// its worker died in, which maxCrashes bounds.
+// ingest without limit (retryDelay). A claim a shutdown hands back counts in jobs.releases.
+// attempts counts claims and only rises, so attempts - retries - releases is the runs its worker
+// died in, which maxCrashes bounds.
+//
+// That count is inferred from outcomes recorded, and an outage that fails a job fails the write
+// recording it too, so recordOutcome tries the write again until it gets through, or for a few
+// seconds once the worker is stopping. A claim's attempts is its token: its outcome writes and
+// heartbeat (keepClaimed) name it, so a run that outlived its lease can't touch the job once
+// another loop claims it.
 //
 // # Lanes
 //

@@ -44,9 +44,9 @@ type ExportJob struct {
 // and emails the owner a link to Settings, where it is downloaded. A request whose account
 // or row is gone by now is done with nothing to do. A failed email is logged, not retried:
 // the archive is ready on the Settings page either way.
-func runExport(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, jobID int64, payload []byte) error {
+func runExport(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, j job) error {
 	var ej ExportJob
-	if err := json.Unmarshal(payload, &ej); err != nil {
+	if err := json.Unmarshal(j.payload, &ej); err != nil {
 		return fmt.Errorf("unmarshal export job: %w", err)
 	}
 	var userID, lang, email, timezone string
@@ -61,7 +61,7 @@ func runExport(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 		return fmt.Errorf("export lookup: %w", err)
 	}
 
-	defer keepClaimed(ctx, pool, log, jobID)()
+	defer keepClaimed(ctx, pool, log, j)()
 
 	sizes, err := export.Build(ctx, pool, store, userID, ej.ExportID, lang)
 	if err != nil {

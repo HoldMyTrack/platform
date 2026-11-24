@@ -369,8 +369,12 @@ func TestShutdownReleasesTheRunningJob(t *testing.T) {
 	if err := pool.QueryRow(context.Background(), `SELECT locked_at FROM jobs WHERE id = $1`, id).Scan(&lockedAt); err != nil {
 		t.Fatal(err)
 	}
-	if r.state != "pending" || r.attempts != 0 || lockedAt != nil {
-		t.Fatalf("job = %+v locked_at %v, want pending, unlocked, no attempt counted", r, lockedAt)
+	var crashes int
+	if err := pool.QueryRow(context.Background(), `SELECT attempts - retries - releases FROM jobs WHERE id = $1`, id).Scan(&crashes); err != nil {
+		t.Fatal(err)
+	}
+	if r.state != "pending" || crashes != 0 || lockedAt != nil {
+		t.Fatalf("job = %+v locked_at %v, %d crashes; want pending, unlocked, no crash counted", r, lockedAt, crashes)
 	}
 }
 
