@@ -88,6 +88,8 @@ class TracksPanel(
     val syncTab: SyncTab,
     /** The Library tab, `MapFragment`'s to build: its Download needs the fragment. */
     val libraryTab: LibraryTab,
+    /** The selection bar's Download, Library's too: its save screen needs the fragment. */
+    private val download: TrackDownload,
 ) {
     private val context = sheet.context
     private val res = context.resources
@@ -129,14 +131,15 @@ class TracksPanel(
     private val cardVisibility: MaterialButton = sheet.findViewById(R.id.card_visibility)
 
     /** The actions over the toolbar's target, twice: the selection bar's icons, and the selected
-     *  track's card's — the same rules and the same enabled states, whichever shows. */
-    private class Actions(val visibility: View, val edit: View, val addToTrip: View, val delete: View, val focus: View)
+     *  track's card's — the same rules and the same enabled states, whichever shows. [delete] is
+     *  the card's; the selection bar's is in its ⋯ menu ([SelectionMoreMenu]). */
+    private class Actions(val visibility: View, val edit: View, val addToTrip: View, val delete: View?, val focus: View)
     private val checkAll: MaterialCheckBox = selectionBar.findViewById(R.id.panel_check_all)
     private val selectMenu: ImageButton = selectionBar.findViewById(R.id.panel_select_menu)
     private val visibility: ImageButton = selectionBar.findViewById(R.id.panel_visibility)
     private val edit: ImageButton = selectionBar.findViewById(R.id.panel_edit)
     private val addToTrip: ImageButton = selectionBar.findViewById(R.id.panel_add_to_trip)
-    private val delete: ImageButton = selectionBar.findViewById(R.id.panel_delete)
+    private val more = SelectionMoreMenu(selectionBar.findViewById(R.id.panel_more), download, onDelete = { confirmDelete() })
     private val focus: ImageButton = selectionBar.findViewById(R.id.panel_focus)
     private val list: RecyclerView = sheet.findViewById(R.id.panel_list)
 
@@ -146,7 +149,7 @@ class TracksPanel(
     private val showProgress = Runnable { if (loading && !zoomedOut) progress.visibility = View.VISIBLE }
     private val footer: TextView = sheet.findViewById(R.id.panel_footer)
 
-    private val toolbarActions = Actions(visibility, edit, addToTrip, delete, focus)
+    private val toolbarActions = Actions(visibility, edit, addToTrip, null, focus)
     private val cardActions = Actions(
         cardVisibility,
         sheet.findViewById(R.id.card_edit),
@@ -262,7 +265,7 @@ class TracksPanel(
             }
             actions.edit.setOnClickListener { state.targets.takeIf { it.isNotEmpty() }?.let(onEdit) }
             actions.addToTrip.setOnClickListener { anchor -> if (tripMenu.target == null) showAddToTrip(anchor) else tripMenu.dismiss() }
-            actions.delete.setOnClickListener { confirmDelete() }
+            actions.delete?.setOnClickListener { confirmDelete() }
         }
         selectionClose.setOnClickListener { endSelecting() }
         sheet.findViewById<View>(R.id.card_close).setOnClickListener { clearFocus() }
@@ -577,7 +580,9 @@ class TracksPanel(
         fun text(of: ToolbarRules.Use, demo: Int, ready: () -> String) = when (of) {
             ToolbarRules.Use.DEMO -> res.getString(demo)
             ToolbarRules.Use.NO_TARGET -> noTarget
-            ToolbarRules.Use.READY, ToolbarRules.Use.PENDING -> ready()
+            ToolbarRules.Use.READY -> ready()
+            // Only Delete waits for a Pending target, so it alone names the track.
+            ToolbarRules.Use.PENDING -> res.getString(R.string.panel_delete_pending, PanelFormat.rowLabel(res, targets.first { it.pending }))
         }
         fun ToolbarRules.Use.enabled() = this == ToolbarRules.Use.READY
         describe(
@@ -593,7 +598,8 @@ class TracksPanel(
             use.edit.enabled(),
         )
         describe(actions.addToTrip, text(use.addToTrip, R.string.trip_demo_add) { res.getString(R.string.trip_add_target, targetName) }, use.addToTrip.enabled())
-        describe(actions.delete, text(use.delete, R.string.panel_demo_delete) { res.getString(R.string.panel_delete_target, targetName) }, use.delete.enabled())
+        val deleteText = text(use.delete, R.string.panel_demo_delete) { res.getString(R.string.panel_delete_target, targetName) }
+        if (actions.delete != null) describe(actions.delete, deleteText, use.delete.enabled()) else more.update(targets, targetName, noTarget, deleteText, use.delete.enabled())
         describe(actions.focus, text(use.focus, 0) { res.getString(R.string.panel_focus_target, targetName) }, use.focus.enabled())
     }
 

@@ -13,10 +13,14 @@ export type DownloadBlock<T> = { kind: 'too_many'; count: number } | { kind: 'pe
 /**
  * Why the target can't be downloaded, or null when it can: more tracks than one download takes,
  * else the first Pending track, else the first entirely inside Private locations. A missing or
- * unreadable original only the server can tell; its refusal names the track.
+ * unreadable original only the server can tell; its refusal names the track. Its cases are
+ * `testdata/client-rules/download-block.json`, which Android runs too.
  */
-export function downloadBlock<T extends { pending: boolean; private: boolean }>(target: readonly T[]): DownloadBlock<T> | null {
-  if (target.length > MAX_DOWNLOAD_TRACKS) return { kind: 'too_many', count: target.length };
+export function downloadBlock<T extends { pending: boolean; private: boolean }>(
+  target: readonly T[],
+  max: number = MAX_DOWNLOAD_TRACKS,
+): DownloadBlock<T> | null {
+  if (target.length > max) return { kind: 'too_many', count: target.length };
   const pending = target.find((track) => track.pending);
   if (pending) return { kind: 'pending', track: pending };
   const privateTrack = target.find((track) => track.private);

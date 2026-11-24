@@ -474,6 +474,18 @@
     <string name="panel_edit_one">Edit %1$s: type, name, description and route</string>
     <string name="panel_edit_many">Edit type for %1$s</string>
     <string name="panel_delete_target">Delete %1$s</string>
+    <string name="panel_more_target">More for %1$s</string>
+    <string name="panel_more_download">Download as GPX</string>
+    <string name="panel_more_delete">Delete…</string>
+    <string name="panel_delete_pending">Can\'t delete: “%1$s” is still being processed</string>
+    <string name="panel_download_busy">Another download is still being prepared</string>
+    <string name="panel_download_target">Download %1$s as GPX</string>
+    <plurals name="panel_download_too_many">
+        <item quantity="one">Download takes at most %1$d tracks at a time; %2$d is checked</item>
+        <item quantity="other">Download takes at most %1$d tracks at a time; %2$d are checked</item>
+    </plurals>
+    <string name="panel_download_pending">Can\'t download: “%1$s” is still being processed</string>
+    <string name="panel_download_private">Can\'t download: “%1$s” lies entirely inside your private locations</string>
     <string name="panel_delete_one_title">Delete this track?</string>
     <string name="panel_delete_title">Delete this group?</string>
     <string name="panel_delete_one_body">%1$s will be permanently deleted — its route, fog coverage, and any performance records it contributed to. This can\'t be undone.</string>

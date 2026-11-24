@@ -1,0 +1,15 @@
+{
+  "rule": "downloadBlock",
+  "clients": ["web", "android"],
+  "description": "Why the Tracks panel's Download (docs/SPEC.md FR-5.14) can't take its target, so Download says why before a request the server would refuse: more tracks than one download takes (Checked in the panel can pass it while the map pans), else the first Pending track, else the first entirely inside Private locations. Null when it can. A missing or unreadable original only the server can tell. Without max, each client's own limit applies: 100, as the server's. plainTracks stands for that many ordinary tracks.",
+  "cases": [
+    { "name": "tracks that can go", "input": { "tracks": [{ "id": "a", "pending": false, "private": false }, { "id": "b", "pending": false, "private": false }], "max": 3 }, "expected": null },
+    { "name": "exactly the most one download takes", "input": { "tracks": [{ "id": "a", "pending": false, "private": false }, { "id": "b", "pending": false, "private": false }, { "id": "c", "pending": false, "private": false }], "max": 3 }, "expected": null },
+    { "name": "one past it, a Pending one among them", "input": { "tracks": [{ "id": "a", "pending": true, "private": false }, { "id": "b", "pending": false, "private": false }, { "id": "c", "pending": false, "private": false }, { "id": "d", "pending": false, "private": false }], "max": 3 }, "expected": { "kind": "too_many", "count": 4 } },
+    { "name": "Pending before Private, whatever the order", "input": { "tracks": [{ "id": "a", "pending": false, "private": false }, { "id": "h", "pending": false, "private": true }, { "id": "p", "pending": true, "private": false }], "max": 3 }, "expected": { "kind": "pending", "track": "p" } },
+    { "name": "the first entirely inside Private locations", "input": { "tracks": [{ "id": "a", "pending": false, "private": false }, { "id": "h", "pending": false, "private": true }, { "id": "i", "pending": false, "private": true }], "max": 3 }, "expected": { "kind": "private", "track": "h" } },
+    { "name": "nothing to download", "input": { "tracks": [], "max": 3 }, "expected": null },
+    { "name": "100 tracks, the most one download takes", "input": { "plainTracks": 100 }, "expected": null },
+    { "name": "101 tracks", "input": { "plainTracks": 101 }, "expected": { "kind": "too_many", "count": 101 } }
+  ]
+}

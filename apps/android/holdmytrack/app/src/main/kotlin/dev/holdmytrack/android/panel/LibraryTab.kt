@@ -49,7 +49,7 @@ class LibraryTab(
     private val fragment: Fragment,
     /** The scope pages are read in: the map's view's, so they end with it. */
     private val scope: () -> CoroutineScope,
-    private val download: LibraryDownload,
+    private val download: TrackDownload,
     /** A row was tapped: the map shows it. */
     private val onOpen: (Track) -> Unit,
     /** Tracks were deleted: the map and the other lists are out of date. */

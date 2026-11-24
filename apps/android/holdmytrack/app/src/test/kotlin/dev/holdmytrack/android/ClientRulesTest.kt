@@ -19,6 +19,7 @@ import dev.holdmytrack.android.net.deleteDone
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.RouteEdit
 import dev.holdmytrack.android.net.RoutePoint
+import dev.holdmytrack.android.panel.DownloadRules
 import dev.holdmytrack.android.panel.LibraryRules
 import dev.holdmytrack.android.panel.TrackFacets
 import dev.holdmytrack.android.recording.RecordingTypes
@@ -220,6 +221,19 @@ class ClientRulesTest {
                     q.trip?.let { put("trip", it) }
                 }
             } ?: JsonNull
+        },
+        "downloadBlock" to { input ->
+            val target = input["tracks"]?.jsonArray?.map {
+                val t = it.jsonObject
+                DownloadRules.Target(t.string("id")!!, t.bool("pending"), t.bool("private"))
+            } ?: List(input.int("plainTracks")) { DownloadRules.Target(it.toString(), pending = false, private = false) }
+            val block = if (input.containsKey("max")) DownloadRules.block(target, input.int("max")) else DownloadRules.block(target)
+            when (block) {
+                null -> JsonNull
+                is DownloadRules.Block.TooMany -> buildJsonObject { put("kind", "too_many"); put("count", block.count) }
+                is DownloadRules.Block.Pending -> buildJsonObject { put("kind", "pending"); put("track", block.id) }
+                is DownloadRules.Block.Private -> buildJsonObject { put("kind", "private"); put("track", block.id) }
+            }
         },
         "libraryPager" to { input ->
             LibraryRules.pager(input.int("page"), input.int("total"), input.int("pageSize"))?.let {

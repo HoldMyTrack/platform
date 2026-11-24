@@ -49,7 +49,7 @@ import dev.holdmytrack.android.panel.EditTrackWindow
 import dev.holdmytrack.android.panel.EditController
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.panel.PanelTab
-import dev.holdmytrack.android.panel.LibraryDownload
+import dev.holdmytrack.android.panel.TrackDownload
 import dev.holdmytrack.android.panel.LibraryTab
 import dev.holdmytrack.android.panel.PrivateLocationEditor
 import dev.holdmytrack.android.panel.SyncTab
@@ -244,9 +244,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         views?.panel?.libraryTab?.setSyncWaiting(waiting)
     }
 
-    /** Library's Download, made with the fragment: the save screen's launchers can't be
+    /** Download, Library's and the selection bar's, made with the fragment: the save screen's launchers can't be
      *  registered later. */
-    private val libraryDownload = LibraryDownload(this)
+    private val trackDownload = TrackDownload(this)
 
     /**
      * The Privacy screen's Add a location ([PrivateLocationEditor.NEW]) or one of its rows: the
@@ -398,7 +398,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             findViewById(R.id.panel_library_content),
             this,
             scope = { viewLifecycleOwner.lifecycleScope },
-            download = libraryDownload,
+            download = trackDownload,
             onOpen = { track -> host?.let { MainActivity.viewOnMap(it, track.id, LibraryTab.day(track)) } },
             onDeleted = { views?.refresh?.afterDelete(it) },
             onSync = { host?.showTab(MainActivity.Tab.SYNC) },
@@ -444,6 +444,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onSheetChanged = { views?.sheetChrome?.onSheetChanged() },
             syncTab = syncTab,
             libraryTab = libraryTab,
+            download = trackDownload,
         )
         val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, onEmpty = ::onEmptyChecked)
         val area = AreaController(

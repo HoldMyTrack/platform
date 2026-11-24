@@ -26,6 +26,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `libraryEmptyReason` (web and Android) | `state` (`q`, `exclude`, `distance`, `after`, `before`, `trip`), `total`, `anyTrack` | `"no_tracks"`, `"past_last"`, `"search"`, `"search_and_filters"` or `"filters"` |
 | `libraryPageQuery` (web and Android) | `state` (`sort`, `desc`, `page`, `q`, `exclude`, `distance` with `min` and `max`, null for unbounded; `after`, `before`, `trip`), `allTypes` | the query (`page`, `sort`, and `q`, `types`, `minDistance`, `maxDistance`, `from`, `to`, `trip` when set), or null |
 | `libraryPager` (web and Android) | `page`, `total`, `pageSize` | `{ from, to, prev, next }` or null |
+| `downloadBlock` (web and Android) | `tracks` (`{ id, pending, private }`) or `plainTracks` (a count of ordinary ones), `max` (the client's own, 100, when missing) | `{ kind: "too_many", count }`, `{ kind: "pending" \| "private", track }` (an id) or null |
 | `verifyAction` | `typed` (the code field's text) | `"check"` or `{ submit }` |
 | `similarSpans` | `a`, `b` (`{ start, end }`, epoch ms, maybe fractional) | boolean |
 | `profileStats` | `days` (`{ date, count, distanceMeters }`), `today`, `weeks` | `{ count, distanceMeters, activeDays, longestStreakDays, weeks }` |
