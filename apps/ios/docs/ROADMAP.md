@@ -137,7 +137,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 6 — The site's pages
 
-`apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1 and About (ADR-0042, root `docs/IMPLEMENTATION.md` §4.19).
+`apps/android/docs/SPEC.md` FR-1.5, FR-1.6, the Sync history page and About (ADR-0042, root `docs/IMPLEMENTATION.md` §4.19).
 
 - [x] **6.1 `WKWebView` signed in**
   - Set the session cookie and `hmt_app=ios` in the web view's `WKHTTPCookieStore` before the first load. Where a link goes is the `webPageRoute` rule (`testdata/client-rules/web-page-route.json`), shared with Android. Read the session again on leaving a page, since a page may change units, the name or the language.

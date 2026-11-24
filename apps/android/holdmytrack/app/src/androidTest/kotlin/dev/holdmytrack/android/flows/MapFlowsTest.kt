@@ -208,7 +208,9 @@ class MapFlowsTest {
             runCatching { locations.removeTestProvider(LocationManager.GPS_PROVIDER) }
         }
         need(id("panel_handle"))
-        openTab("nav_sync")
+        // Sync is You's: its row opens the map with the Sync sheet.
+        tapUntil({ still(id("nav_you")) }) { device.hasObject(id("you_sync")) }
+        tapUntil({ still(id("you_sync")) }) { device.hasObject(id("panel_title")) && device.hasObject(id("sync_list")) }
         expandSheet()
         // The row sits below the source notes. Half-expanded, the sheet's bottom is past the
         // screen's, so the list has nothing to scroll: the sheet is dragged up by its handle,

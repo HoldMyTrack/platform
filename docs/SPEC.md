@@ -556,7 +556,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-9.4).
 
 ### FR-9.6 Pages inside the Android app
 
-- The Android app shows Settings, Profile, Library and About as web pages; the `hmt_app` cookie drops their header and footer.
+- The Android app shows Settings, Profile and About as web pages; the `hmt_app` cookie drops their header and footer.
 - For the app, pages leave out what the app has natively. Signed out, the app's About is cached apart from the browser's.
 - The cookie's value names the app, `android` or `ios`, and a page names that platform's app and health store; any value but `ios` counts as Android.
 

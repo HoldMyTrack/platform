@@ -115,7 +115,7 @@ Each client's flows run against the dev stack, which `make e2e-stack` rebuilds f
 | Android | `make e2e-android` | an Android emulator image (AVD), JDK 17 and the Android SDK | no |
 | iOS | `make e2e-ios` | Xcode and an iPhone simulator (`IOS_DESTINATION=…` names another) | no |
 
-- The Android flows rebuild and install the debug app, which talks to `localhost:5173` through `adb reverse`, as every debug build does; it reverses the web's `VITE_API_BASE_URL` port too, which Library's page in the app calls.
+- The Android flows rebuild and install the debug app, which talks to `localhost:5173` through `adb reverse`, as every debug build does.
 - With no device attached, `make e2e-android` starts the AVD headless and shuts it down after the run, saving no snapshot; `ANDROID_AVD=<name>` picks one when there are several. An emulator already running is used and left running.
 - Both APKs stay installed after a run, so the emulator keeps its recordings: the store tests open a throwaway database file each, and the flows only sign out whoever was signed in. `make test-android-device ANDROID_TESTS=dev.holdmytrack.android.recording.db.RecordingStoresTest` runs the store tests without the dev stack.
 - `make e2e-ios` passes `HMT_API_BASE_URL` on the command line, which outranks `Config/Local.xcconfig`. Run from Xcode, the UI tests use the xcconfig's origin and skip when it doesn't answer. `IOS_UI_TESTS=HoldMyTrackUITests/LaunchTests` runs one class.

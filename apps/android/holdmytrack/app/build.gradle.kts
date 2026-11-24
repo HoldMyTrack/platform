@@ -133,28 +133,14 @@ tasks.withType<Test>().configureEach {
  * a device reaches only through `adb reverse`, and a reboot drops it. So every debug build sets it
  * up on each connected device: Android Studio's Run, `installDebug` and the instrumented tests
  * alike. A base that isn't localhost, no adb or no device leaves the build as it is.
- *
- * The web's own pages in the app (Library) call the API at the dev server's VITE_API_BASE_URL, a
- * port of its own, so that one is reversed too when it is on localhost: `apps/web/.env.local`,
- * then `apps/web/.env`, then `apps/web/src/api.ts`'s default.
  */
-val webApiPort: Int? = listOf(".env.local", ".env")
-    .map { rootDir.resolve("../../web/$it") }
-    .filter { it.isFile }
-    .firstNotNullOfOrNull { file -> file.readLines().firstOrNull { it.startsWith("VITE_API_BASE_URL=") }?.substringAfter('=')?.trim() }
-    .let { it ?: "http://localhost:8080" }
-    .let { runCatching { URI(it) }.getOrNull() }
-    ?.takeIf { it.host == "localhost" || it.host == "127.0.0.1" }
-    ?.let { if (it.port > 0) it.port else 80 }
-
 val adbReverse = tasks.register("adbReverseDevServer") {
     val base = providers.gradleProperty("holdmytrack.apiBaseUrl")
     val sdk = androidComponents.sdkComponents.sdkDirectory
-    val apiPort = webApiPort
     doLast {
         val uri = URI(base.get())
         if (uri.host != "localhost" && uri.host != "127.0.0.1") return@doLast
-        val ports = listOfNotNull(if (uri.port > 0) uri.port else 80, apiPort).distinct()
+        val port = if (uri.port > 0) uri.port else 80
         val adb = sdk.get().asFile.resolve("platform-tools/adb")
         if (!adb.canExecute()) return@doLast logger.lifecycle("adb reverse skipped: no adb at $adb")
         val devices = runCatching {
@@ -163,11 +149,9 @@ val adbReverse = tasks.register("adbReverseDevServer") {
             line.split('\t').takeIf { it.size == 2 && it[1] == "device" }?.first()
         }
         for (serial in devices) {
-            for (port in ports) {
-                runCatching { ProcessBuilder(adb.path, "-s", serial, "reverse", "tcp:$port", "tcp:$port").start().waitFor() }
-            }
+            runCatching { ProcessBuilder(adb.path, "-s", serial, "reverse", "tcp:$port", "tcp:$port").start().waitFor() }
         }
-        logger.lifecycle("adb reverse ${ports.joinToString { "tcp:$it" }} on ${devices.size} device(s)")
+        logger.lifecycle("adb reverse tcp:$port on ${devices.size} device(s)")
     }
 }
 tasks.matching { it.name == "assembleDebug" }.configureEach { finalizedBy(adbReverse) }

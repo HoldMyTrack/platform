@@ -181,14 +181,14 @@ The web's points of interest (`docs/SPEC.md` FR-14.2–FR-14.4) on the same tile
 
 ### FR-2.9 The bottom bar
 
-Tracks, Trips, the record button (FR-5.1), Sync and You.
+Tracks, Trips, the record button (FR-5.1), Library (FR-4.1) and You.
 
-- Each tab keeps its state: the map's camera, mode, range, focus, checked group and a recording are as they were on coming back. Back from another tab goes to Tracks, and from Tracks leaves the app.
-- Trips counts copies waiting to be answered. Starting a recording from another tab moves to the map.
-- The You tab leads to Settings (FR-1.5), Track graph & trends (FR-1.6), Settings › Sync (FR-3.1) and Privacy (FR-1.7), and shows the app's version and commit.
+- Each tab keeps its state: the map's camera, mode, range, focus, checked group and a recording are as they were on coming back. Back from another tab goes to Tracks, from Sync to You, and from Tracks leaves the app.
+- Trips counts copies waiting to be answered, and You the recordings waiting to be sent. Starting a recording from another tab moves to the map.
+- The You tab leads to Sync (FR-3.5), with the recordings waiting, Settings (FR-1.5), Track graph & trends (FR-1.6) and Privacy (FR-1.7), and shows the app's version and commit.
 - Theme belongs to the phone, not the account (`docs/SPEC.md` FR-4.8), so the demo account can change it. Language (FR-1.5) does nothing for the demo account.
 - About opens in the app (`docs/SPEC.md` FR-9.6); Help and Contacts in a browser tab, in the browser's language. The app has no Donate: Play doesn't allow pointing to payment outside its billing.
-- Delete account (`docs/SPEC.md` FR-1.12), for a real account, is confirmed by typing the email. On success the app also deletes that account's unsynced recordings, one under way or interrupted before Stop, its last recording type, hidden Sync rows, Health Connect switch and last Load, since a new account could take the same email, then signs out.
+- Delete account (`docs/SPEC.md` FR-1.12), for a real account, is confirmed by typing the email. On success the app also deletes that account's unsynced recordings, one under way or interrupted before Stop, its last recording type, hidden Sync rows, Health Connect switch and last read, since a new account could take the same email, then signs out.
 
 ### FR-2.10 Photos
 
@@ -227,7 +227,7 @@ sequenceDiagram
     participant A as App
     participant HC as Health Connect
     participant S as Server
-    U->>A: Load (app on screen)
+    U->>A: open Sync (app on screen)
     A->>HC: sessions and routes, last 90 days
     HC-->>A: sessions with routes
     A->>S: POST /v2/sync/known (record ids)
@@ -245,7 +245,7 @@ sequenceDiagram
 ### FR-3.1 Settings › Sync — the sources and Health Connect's setup
 
 - Health Connect's switch starts off, also on an install that granted its permissions before the switch existed, and is kept per account (FR-5.3). Off, Health Connect is read nowhere in the app.
-- Turning it on with nothing granted opens Health Connect's dialog for sessions and history; once readable, it's read once without Load. Turning it off forgets the last Load and leaves the grants alone.
+- Turning it on with nothing granted opens Health Connect's dialog for sessions and history; once readable, it's read at once. Turning it off forgets the last read and leaves the grants alone.
 - Only exercise sessions and their routes are asked for; no heart rate or other health permission is declared (ADR-0017).
 - Readiness is worked out again on every resume:
   1. **Unavailable**: no Health Connect; the switch can't turn on.
@@ -254,7 +254,6 @@ sequenceDiagram
   4. **Needs routes permission**: Android offers no request for it, so the app names the path in Health Connect's settings.
   5. **Needs history permission**: not blocking; the list reaches back 30 days instead of 90.
   6. **Ready**.
-- Recorded on this phone is always on. Location and notifications are asked on the first recording (FR-5.1).
 - Health Connect's rationale request opens the app's own rationale, with the privacy policy (`docs/SPEC.md` FR-9.5).
 - Signed out, unverified or demo, the screen only says why nothing can sync.
 
@@ -262,7 +261,7 @@ sequenceDiagram
 
 The Sync sheet lists every candidate and draws it on the map.
 
-- **Load** reads Health Connect, and nothing else does except the first read after switching it on. What it finds is kept on the phone per account until the next Load; opening the sheet shows that and the recordings without reading Health Connect. A failed read keeps what was kept.
+- Opening Sync shows what was last read and the recordings at once, then reads Health Connect when its last read is a minute old or more. **Refresh** reads it whatever the age; nothing else does, except the first read after switching it on. What a read finds is kept on the phone per account until the next one. A failed read keeps what was kept.
 - Health Connect: sessions started in the last 90 days, read 100 at a time. A session is a candidate when its route is readable with at least 2 points. One with no route isn't listed and isn't an error. One whose route Health Connect withholds is counted with advice to keep the app on screen and check the routes permission.
 - The record ids go to `POST /v2/sync/known`; what the account has, in any state, is left out, so a reinstall or second phone agrees and a deleted track is offered again. One still processing shows as on its way.
 - Every recording on the phone is listed, whatever its age.
@@ -270,7 +269,7 @@ The Sync sheet lists every candidate and draws it on the map.
 - A row overlapping another candidate or an account track (`docs/SPEC.md` FR-3.5) is marked, as a hint only. Hidden and on-their-way rows aren't compared.
 - **Foreground only**: a read runs only while its screen shows. Leaving the tab, the app going to the background or the You tab covering the map cancels it, since Health Connect withholds routes from a background read whatever was granted. Nothing schedules a read or a send.
 - The map draws the candidates from the phone's data, and none of the account's routes.
-- Load sends the server only the record ids; showing the list sends only the spans for the overlap check.
+- A read sends the server only the record ids; showing the list sends only the spans for the overlap check.
 
 ### FR-3.4 Ticking, sending and the run's feedback
 
@@ -280,16 +279,16 @@ The Sync sheet lists every candidate and draws it on the map.
 - What the server took or already had is unticked (a recording leaves the phone) and stays listed as being added, not tickable, until its ingest ends; the app asks every 2 seconds on any tab. Landed, it leaves the list and the map refreshes; failed on the server's side, it's back on the list to send again, a recording back on the phone.
 - An alert lists the imports that failed on the server's side, files and synced tracks alike, each with the server's reason; closing it dismisses them. It's checked whenever the map comes to the front and when a sent row fails.
 - Each refused row is listed with its reason and stays ticked. A run cut short leaves what wasn't confirmed ticked. Ticked rows that overlap don't stop a send.
-- Leaving the tab or the app cancels a run safely: the server is idempotent on each track's id (`docs/SPEC.md` FR-3.4), and the next Load knows what it took.
+- Leaving the tab or the app cancels a run safely: the server is idempotent on each track's id (`docs/SPEC.md` FR-3.4), and the next read knows what it took.
 
 ### FR-3.5 The Sync sheet — sending what's on the phone
 
-The bottom bar's Sync is the map in Normal mode with the sheet on its Sync tab, also while recording.
+You › Sync is the map in Normal mode with the sheet on its Sync tab, also while recording, with You lit in the bar.
 
 - Leaving it takes its lines off the map.
-- The demo account sees its recordings, to edit and delete, with nothing to tick, no Load and no upload.
-- Swiping a row hides it from the list, kept on the phone per account and undoable. A hidden row is forgotten once its candidate is gone (synced, deleted or out of the window); a hidden session is forgotten only after a Load that withheld nothing, so a route unreadable once keeps its place.
-- Upload (FR-3.6) beside Library (FR-4.1) sit above Load and Sync, and Settings › Sync (FR-3.1) is at the list's foot. Upload is gone for the demo account.
+- The demo account sees its recordings, to edit and delete, with nothing to tick, no read of Health Connect and no upload.
+- Swiping a row hides it from the list, kept on the phone per account and undoable. A hidden row is forgotten once its candidate is gone (synced, deleted or out of the window); a hidden session is forgotten only after a read that withheld nothing, so a route unreadable once keeps its place.
+- Upload (FR-3.6) sits beside Sync, over when Health Connect was last read and Refresh, and Settings › Sync (FR-3.1) is at the list's foot. Upload is gone for the demo account.
 
 ### FR-3.6 Upload
 
@@ -304,9 +303,10 @@ The web's upload (`docs/SPEC.md` FR-3.1, FR-3.2) as a screen, for a verified, no
 
 ### FR-4.1 Library
 
-The web's Library (`docs/SPEC.md` FR-5.13) shown in the app (`docs/SPEC.md` FR-9.6), read again each time it comes to the front.
+The web's Library (`docs/SPEC.md` FR-5.13) as the bottom bar's Library: a sheet over the map, as Tracks and Trips are, its page read again each time the tab opens.
 
-- Opening a track opens the app's map in Normal mode with the track focused. When its day is outside the range, the range becomes that day, as if picked.
+- The search, the sort and the Type, Dates, Distance and Trip filters, pages of 100, Checked within the page, Download and Delete are the web's (`testdata/client-rules/library-*.json`).
+- Opening a track opens it on the Tracks tab with the track focused. When its day is outside the range, the range becomes that day, as if picked.
 - Download saves through Android's save screen, with no storage permission: one track as GPX, Checked tracks as a zip.
 
 ## 7. FR-5 — In-App GPS Recording
@@ -362,7 +362,7 @@ Recordings are candidates on the Sync tab (FR-3.2), sent only when ticked.
 
 ### FR-5.3 Local storage is scoped per signed-in account
 
-Recordings belong to the account signed in when they began (the demo account has a key of its own). Hidden Sync rows, the Health Connect switch and the last Load are kept the same way. One account never sees, or sends, another's recordings on a shared phone.
+Recordings belong to the account signed in when they began (the demo account has a key of its own). Hidden Sync rows, the Health Connect switch and the last read are kept the same way. One account never sees, or sends, another's recordings on a shared phone.
 
 Nothing the app keeps on the phone goes into a backup or moves to a new phone: unsent recordings are sent from the phone they were made on, and the new phone signs in again.
 
@@ -373,7 +373,7 @@ Nothing the app keeps on the phone goes into a backup or moves to a new phone: u
 | **Credentials** | The session token goes as `Authorization: Bearer` to HoldMyTrack's own API origin only, never to a base-map asset origin (FR-1.2). |
 | **Session security** | A kept token is confirmed before any signed-in layer; sign-out ends the session on the server (FR-1.2, FR-1.3). |
 | **Foreground-only Health Connect** | No background service or scheduled job reads Health Connect (FR-3.2). |
-| **Safe interruption** | A cancelled read leaves what was kept; a cancelled run is known to the server at the next Load (FR-3.2, FR-3.4). |
+| **Safe interruption** | A cancelled read leaves what was kept; a cancelled run is known to the server at the next read (FR-3.2, FR-3.4). |
 | **Nothing sent unasked** | Only ticked candidates reach the server; none is ticked when the list shows (FR-3.4). |
 | **Idempotency** | Syncing a Health Connect record or a recording twice makes one track, keyed on its own id (`docs/SPEC.md` FR-3.4). |
 | **Language** | English or Russian by the per-app language, else the phone's, else English; sent as `Accept-Language` (`docs/SPEC.md` FR-12.1). |

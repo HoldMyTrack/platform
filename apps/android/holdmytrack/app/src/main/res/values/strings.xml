@@ -731,7 +731,7 @@
     <string name="tour_fog_countries_title">Fog of War: countries</string>
     <string name="tour_fog_countries_body">And a whole country. Auto follows the zoom, as you just saw. Pick a level to keep it at every zoom, or Exact to clear the fog only along your routes.</string>
     <string name="tour_record_title">Record</string>
-    <string name="tour_record_body">Tap to record a walk or a ride with the phone\'s GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from Sync.</string>
+    <string name="tour_record_body">Tap to record a walk or a ride with the phone\'s GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from You › Sync.</string>
     <string name="tour_sync_title">Sync</string>
     <string name="tour_sync_body">Bring in tracks from Health Connect and this phone\'s recordings. Nothing is ticked to start with: only what you tick is sent. You don\'t need to bring everything, only the journeys you want to keep.</string>
     <string name="tour_sync_demo_body">In your own account, tracks from Health Connect and your recordings come in here. The demo can\'t send: create an account from You to start yours.</string>
