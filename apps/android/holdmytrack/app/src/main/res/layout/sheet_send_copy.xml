@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Send a copy (panel/SendCopyDialog.kt), after the web's SendCopyDialog.tsx: what the person
-     gets, their email address, and then "Sent to …" — the same whether or not the address has
-     an account — or the server's reason when the request fails. The dialog's own buttons are
-     Cancel (Close once sent) and Send. -->
+<!-- Send a copy (panel/SendCopySheet.kt), after the web's SendCopyDialog.tsx: what the person
+     gets, their email address, and then "Sent to …", the same whether or not the address has an
+     account, or the server's reason when the request fails. The sheet's toolbar (sheet_form) holds
+     ✕ (Close once sent) and Send. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

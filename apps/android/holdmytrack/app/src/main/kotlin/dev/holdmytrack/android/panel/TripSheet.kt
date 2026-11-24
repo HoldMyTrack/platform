@@ -2,14 +2,11 @@ package dev.holdmytrack.android.panel
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.textfield.TextInputEditText
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.FailureText
@@ -17,17 +14,15 @@ import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Trip
 
 /**
- * Create trip and Edit trip, the web's `TripDialog.tsx` (`docs/SPEC.md` FR-13.2, FR-13.6
- * item 7): Name (required, up to 200 characters) and Description (optional, up to 2000) over
- * `dialog_trip`. The confirm button stays disabled until Name has something besides spaces,
- * and the keyboard's Done in Name does the same as tapping it. The dialog stays up while its
- * request runs and keeps a refusal on screen, the fields as typed, closing only once the server
- * has answered with the Trip.
+ * Create trip and Edit trip, the web's `TripDialog.tsx` (`docs/SPEC.md` FR-13.2, FR-13.6), as a
+ * [FormSheet] over `sheet_trip`: Name (required, up to 200 characters) and Description (optional,
+ * up to 2000). The action waits for a Name ([TripForms]), and the keyboard's Done in
+ * Name does the same as tapping it. The sheet stays up while its request runs and keeps a refusal
+ * on screen with the fields as typed, closing once the server has answered with the Trip.
  */
-object TripDialog {
+object TripSheet {
 
-    /** Create trip from [trackIds] — [summary] says what it's made of ("3 checked
-     *  tracks (58 km)"). */
+    /** Create trip from [trackIds]; [summary] says what it's made of ("3 checked tracks (58 km)"). */
     fun create(context: Context, summary: String, trackIds: Collection<String>, onCreated: (Trip) -> Unit) {
         show(
             context,
@@ -55,7 +50,7 @@ object TripDialog {
         )
     }
 
-    @SuppressLint("InflateParams") // A dialog's content has no parent to inflate against.
+    @SuppressLint("InflateParams") // FormSheet adds the content to its own body.
     private fun show(
         context: Context,
         title: Int,
@@ -66,7 +61,7 @@ object TripDialog {
         request: (name: String, description: String, done: (Result<Trip>) -> Unit) -> Unit,
         onDone: (Trip) -> Unit,
     ) {
-        val content = LayoutInflater.from(context).inflate(R.layout.dialog_trip, null)
+        val content = LayoutInflater.from(context).inflate(R.layout.sheet_trip, null)
         val bodyView: TextView = content.findViewById(R.id.trip_dialog_body)
         val name: TextInputEditText = content.findViewById(R.id.trip_dialog_name)
         val description: TextInputEditText = content.findViewById(R.id.trip_dialog_description)
@@ -76,58 +71,43 @@ object TripDialog {
         name.setText(trip?.name.orEmpty())
         description.setText(trip?.description.orEmpty())
 
-        val dialog = MaterialAlertDialogBuilder(context)
-            .setTitle(title)
-            .setView(content)
-            .setPositiveButton(confirm, null)
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
         var saving = false
-
-        fun positive() = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        lateinit var sheet: FormSheet
         fun nameText() = name.text?.toString().orEmpty().trim()
-        fun renderButtons() {
-            positive().isEnabled = !saving && nameText().isNotEmpty()
-            positive().setText(if (saving) busy else confirm)
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).isEnabled = !saving
+        fun render() {
+            sheet.setAction(context.getString(if (saving) busy else confirm), TripForms.actionEnabled(nameText(), saving))
+            sheet.setBusy(saving)
             name.isEnabled = !saving
             description.isEnabled = !saving
-            dialog.setCancelable(!saving)
         }
 
         fun submit() {
-            if (saving || nameText().isEmpty()) return
+            if (!TripForms.actionEnabled(nameText(), saving)) return
             saving = true
             error.visibility = View.GONE
-            renderButtons()
+            render()
             request(nameText(), description.text?.toString().orEmpty().trim()) { result ->
                 saving = false
                 result.onSuccess { saved ->
-                    dialog.dismiss()
+                    sheet.dismiss()
                     onDone(saved)
                 }.onFailure { failure ->
-                    renderButtons()
+                    render()
                     error.text = FailureText.of(failure, context.getString(R.string.trip_save_failed))
                     error.visibility = View.VISIBLE
                 }
             }
         }
 
-        name.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) = renderButtons()
-        })
+        sheet = FormSheet(context, context.getString(title), content, ::submit)
+        name.doAfterTextChanged { render() }
         name.setOnEditorActionListener { _, actionId, _ ->
             if (actionId != EditorInfo.IME_ACTION_DONE) return@setOnEditorActionListener false
             submit()
             true
         }
-        dialog.setOnShowListener {
-            positive().setOnClickListener { submit() }
-            renderButtons()
-        }
-        dialog.show()
+        render()
+        sheet.show()
         name.requestFocus()
         name.setSelection(name.length())
     }

@@ -647,7 +647,7 @@
     <string name="privacy_download_sub">A copy of everything, emailed when it\'s ready</string>
     <string name="privacy_opens_browser">Opens in the browser</string>
 
-    <!-- Trips (panel/TripsTab.kt, panel/TripDialog.kt, Add to trip (panel/TracksPanel.kt) and the
+    <!-- Trips (panel/TripsTab.kt, panel/TripSheet.kt, Add to trip (panel/TracksPanel.kt) and the
          rows' Trip badge), after the web's trips.* messages. -->
     <string name="trip_empty">Trips are hand-picked sets of your tracks, and only you can see them. To make one, check tracks on the Tracks tab, or tap one, then choose Add to trip.</string>
     <string name="trip_add_target">Add %1$s to a trip</string>

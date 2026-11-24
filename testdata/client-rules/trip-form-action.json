@@ -1,0 +1,13 @@
+{
+  "rule": "tripFormAction",
+  "clients": ["android", "ios"],
+  "description": "Whether a Trip sheet's action can be tapped: Create trip or Save on its Name, Send on its address (docs/SPEC.md FR-13.2, FR-13.7). text is the field as typed; busy is whether the sheet's request is running. The text needs something besides whitespace, and nothing may be running.",
+  "cases": [
+    { "name": "a name", "input": { "text": "Lakeside", "busy": false }, "expected": true },
+    { "name": "spaces around a name", "input": { "text": "  Lakeside ", "busy": false }, "expected": true },
+    { "name": "empty", "input": { "text": "", "busy": false }, "expected": false },
+    { "name": "spaces only", "input": { "text": "   ", "busy": false }, "expected": false },
+    { "name": "a newline and a tab only", "input": { "text": "\n\t", "busy": false }, "expected": false },
+    { "name": "a request already running", "input": { "text": "Lakeside", "busy": true }, "expected": false }
+  ]
+}

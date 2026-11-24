@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A form as a bottom sheet (panel/FormSheet.kt): a toolbar with ✕ to cancel, the title and the
+     form's one action, over the form's own content, which scrolls when the keyboard leaves it
+     too little room. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/form_sheet_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:navigationContentDescription="@android:string/cancel"
+        android:theme="@style/ThemeOverlay.HoldMyTrack.FormSheetToolbar"
+        app:navigationIcon="@drawable/ic_x"
+        app:navigationIconTint="@color/hmt_ink"
+        app:titleTextAppearance="?attr/textAppearanceTitleMedium" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true">
+
+        <FrameLayout
+            android:id="@+id/form_sheet_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="@dimen/hmt_space_24" />
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>
