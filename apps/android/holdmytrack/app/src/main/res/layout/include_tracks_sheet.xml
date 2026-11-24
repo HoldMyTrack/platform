@@ -349,5 +349,8 @@
 
         <!-- The Sync tab: what's on this phone, waiting, to tick and send (panel/SyncTab). -->
         <include layout="@layout/include_sync_content" />
+
+        <!-- The Library tab: every track the account keeps (panel/LibraryTab). -->
+        <include layout="@layout/include_library_content" />
     </FrameLayout>
 </LinearLayout>

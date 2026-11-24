@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The bottom bar (activity_main.xml, MainActivity): Tracks, Trips, an empty middle slot the
-     record button sits over, Sync and You. -->
+     record button sits over, Library and You, which holds Sync. -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_tracks"
@@ -16,9 +16,9 @@
         android:icon="@drawable/ic_nav_gap"
         android:title="" />
     <item
-        android:id="@+id/nav_sync"
-        android:icon="@drawable/ic_refresh_cw"
-        android:title="@string/nav_sync" />
+        android:id="@+id/nav_library"
+        android:icon="@drawable/ic_library"
+        android:title="@string/nav_library" />
     <item
         android:id="@+id/nav_you"
         android:icon="@drawable/ic_user"

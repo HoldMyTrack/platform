@@ -732,6 +732,39 @@ object HoldMyTrackApi {
     }
 
     /**
+     * `GET /v2/tracks?page=`: one page of Library (root `docs/SPEC.md` FR-5.13), as [query]
+     * asks for it.
+     */
+    suspend fun trackPage(query: TrackPageQuery): TrackPage = withContext(Dispatchers.IO) {
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks").toHttpUrl().newBuilder().apply {
+            addQueryParameter("page", query.page.toString())
+            addQueryParameter("sort", query.sort)
+            query.q?.let { addQueryParameter("q", it) }
+            query.types?.let { addQueryParameter("types", it.joinToString(",")) }
+            query.minDistance?.let { addQueryParameter("min_distance", it.toString()) }
+            query.maxDistance?.let { addQueryParameter("max_distance", it.toString()) }
+            query.from?.let { addQueryParameter("from", it) }
+            query.to?.let { addQueryParameter("to", it) }
+            query.trip?.let { addQueryParameter("trip", it) }
+        }.build()
+        val response = waitingClient.newCall(Request.Builder().url(url).build()).await()
+        val text = response.use { it.body.string() }
+        if (!response.isSuccessful) throw ApiException.from(response.code, text)
+        val decoded = decode<TrackPageJson>(text)
+        heard(decoded.types.described())
+        val bounds = decoded.bounds ?: throw IOException("no bounds in a track page")
+        TrackPage(
+            tracks = decoded.tracks.map { it.toTrack() },
+            total = decoded.total ?: 0,
+            pageSize = decoded.pageSize ?: 100,
+            distance = if (bounds.minDistanceMeters != null && bounds.maxDistanceMeters != null) bounds.minDistanceMeters to bounds.maxDistanceMeters else null,
+            firstDate = bounds.firstDate,
+            lastDate = bounds.lastDate,
+            types = bounds.types.map { it.type to it.count },
+        )
+    }
+
+    /**
      * `GET /v2/tracks/area`: the newest tracks, at most [limit], whose track crosses [box]
      * (`[west, south, east, north]`), all of them without one, recorded on [from] or after and on
      * [to] or before, `YYYY-MM-DD` and either null (`docs/SPEC.md` FR-5.11). Its rows are slim:

@@ -29,6 +29,7 @@ import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.RecordingActivity
 import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
+import dev.holdmytrack.android.sync.ReadDue
 import dev.holdmytrack.android.sync.Candidate
 import dev.holdmytrack.android.sync.HealthConnectCard.Companion.isReadable
 import dev.holdmytrack.android.sync.HiddenCandidates
@@ -100,7 +101,7 @@ class SyncTab(
     private val syncNow: Button = content.findViewById(R.id.sync_now)
     private val loadColumn: View = content.findViewById(R.id.sync_load_column)
     private val checkedLine: TextView = content.findViewById(R.id.sync_checked)
-    private val loadUpdates: Button = content.findViewById(R.id.sync_load)
+    private val refresh: Button = content.findViewById(R.id.sync_refresh)
     private val waiting = WaitingStore(activity)
 
     private val head: View = LayoutInflater.from(activity).inflate(R.layout.include_sync_head, list, false)
@@ -179,7 +180,7 @@ class SyncTab(
         list.adapter = ConcatAdapter(ViewAdapter(head), rows, ViewAdapter(foot))
         ItemTouchHelper(SwipeToHide()).attachToRecyclerView(list)
         syncNow.setOnClickListener { startSync() }
-        loadUpdates.setOnClickListener { loadUpdates() }
+        refresh.setOnClickListener { loadUpdates() }
         selectAll.setOnClickListener { toggleAll() }
         showHiddenButton.setOnClickListener {
             showHidden = !showHidden
@@ -189,7 +190,6 @@ class SyncTab(
         for (link in listOf(foot.findViewById<View>(R.id.sync_sources), sourceSettings)) {
             link.setOnClickListener { activity.startActivity(Intent(activity, SyncActivity::class.java)) }
         }
-        LargeText.stack(content.findViewById(R.id.sync_links))
         LargeText.stack(content.findViewById(R.id.sync_buttons))
     }
 
@@ -241,10 +241,10 @@ class SyncTab(
     }
 
     /**
-     * Lists what's kept: the recordings on the phone and Health Connect's sessions as Load
-     * last read them, and asks the server which tracks they overlap. Then, if Health Connect
-     * was just switched on and hasn't been read yet, it reads it — the one load the user didn't
-     * tap for ([SyncSources.firstLoadPending]).
+     * Lists what's kept: the recordings on the phone and Health Connect's sessions as they were
+     * last read, and asks the server which tracks they overlap. Then it reads Health Connect, when
+     * it was just switched on ([SyncSources.firstLoadPending]) or last read a minute or more ago
+     * ([ReadDue]).
      */
     private fun restore() {
         if (runJob != null || loading) return
@@ -280,12 +280,12 @@ class SyncTab(
             render()
             frameOnce()
             loadJob = null
-            if (sources.healthConnect && sources.firstLoadPending && readiness?.isReadable() == true) loadUpdates()
+            if (sources.healthConnect && readiness?.isReadable() == true && ReadDue.onOpen(sources.firstLoadPending, checkedAt, Instant.now())) loadUpdates()
         }
     }
 
-    /** Load: Health Connect read now, and kept until the next one. A failure keeps what
-     *  was listed, and says why over the list. */
+    /** Health Connect read now, and kept until the next read: on opening ([restore]) or Refresh.
+     *  A failure keeps what was listed, and says why over the list. */
     private fun loadUpdates() {
         if (runJob != null || loading) return
         loadJob?.cancel()
@@ -388,7 +388,7 @@ class SyncTab(
         sourceNote.visibility = if (setUp != null || (!demo && readable)) View.VISIBLE else View.GONE
         sourceSettings.visibility = if (setUp != null) View.VISIBLE else View.GONE
 
-        // Load, over when it last ran — or, greyed out, why there's nothing to load from: no
+        // When Health Connect was last read, with Refresh — or why there's nothing to read: no
         // source switched on, or Health Connect on and not set up yet.
         val healthConnect = !demo && healthConnectOn()
         val loadable = healthConnect && readable
@@ -400,7 +400,8 @@ class SyncTab(
             else -> checkedAt?.let { res.getString(R.string.sync_last_load, PanelFormat.phoneDateTime(res, it)) }
                 ?: res.getString(R.string.sync_not_loaded_yet)
         }
-        loadUpdates.isEnabled = loadable && !loading && runJob == null
+        refresh.visibility = if (loadable) View.VISIBLE else View.GONE
+        refresh.isEnabled = !loading && runJob == null
 
         val tickable = list.tickable
         filters.visibility = if (everything.isEmpty()) View.GONE else View.VISIBLE

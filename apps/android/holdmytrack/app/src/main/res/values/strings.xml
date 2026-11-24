@@ -151,6 +151,7 @@
     <string name="locate_needs_location">HoldMyTrack needs location access to show where you are.</string>
     <string name="nav_tracks">Tracks</string>
     <string name="nav_trips">Trips</string>
+    <string name="nav_library">Library</string>
     <string name="nav_sync">Sync</string>
     <string name="nav_you">You</string>
     <string name="menu_about">About</string>
@@ -269,6 +270,10 @@
     <string name="sync_failed">Sync failed: %1$s</string>
     <string name="sync_rejected_row">Rejected: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Stopped early. %1$s</string>
+    <plurals name="recordings_waiting">
+        <item quantity="one">%d recording waiting to be sent</item>
+        <item quantity="other">%d recordings waiting to be sent</item>
+    </plurals>
     <plurals name="import_failed_title">
         <item quantity="one">An import couldn\'t be added</item>
         <item quantity="other">%d imports couldn\'t be added</item>
@@ -349,16 +354,12 @@
     <string name="sync_check_allowed">%1$s: allowed</string>
     <string name="sync_check_missing">%1$s: not allowed yet</string>
     <string name="sync_sources_intro">Where your journeys come from. Health Connect is read only while it\'s switched on, and when you tap Load on the Sync tab.</string>
-    <string name="sync_recorded_title">The record button</string>
-    <string name="sync_recorded_sub">Always on. Recordings wait on the Sync tab until you send them.</string>
-    <string name="sync_recorded_allowed">Location and notifications allowed</string>
-    <string name="sync_recorded_not_yet">Location and notifications are asked for on your first recording.</string>
     <string name="sync_sources_link">Sync settings</string>
     <string name="sync_open_sources">Open Sync settings</string>
     <string name="sync_hc_is_off">Health Connect is off. Turn it on in Sync settings to list its sessions here.</string>
     <string name="sync_hc_needs_setup">Health Connect needs one more step before its sessions can be listed.</string>
     <string name="you_sync_sub">Health Connect and recordings</string>
-    <string name="sync_load">Load</string>
+    <string name="sync_refresh">Refresh</string>
     <string name="sync_loading_health_connect">Reading Health Connect…</string>
     <string name="sync_not_loaded_yet">Not loaded yet</string>
     <string name="sync_last_load">Last load: %1$s</string>
@@ -372,11 +373,7 @@
         <item quantity="other">Found %1$d sessions with a route. They\'re on the Sync tab.</item>
     </plurals>
     <string name="sync_upload_title">Upload</string>
-    <string name="sync_history_title">Sync history</string>
     <string name="library_title">Library</string>
-    <string name="library_downloading">Downloading…</string>
-    <string name="library_saved">Saved</string>
-    <string name="library_save_failed">Couldn\'t save the file</string>
     <string name="upload_title">Upload</string>
     <string name="upload_demo">Not available for demo accounts — create an account to upload your own tracks.</string>
     <string name="upload_see_library">See them in Library</string>
@@ -997,4 +994,45 @@
         <item quantity="one">%1$s of %2$s zone</item>
         <item quantity="other">%1$s of %2$s zones</item>
     </plurals>
+    <!-- The Library tab (panel/LibraryTab), after the web's library.* messages. -->
+    <string name="library_search_hint">Search names and descriptions</string>
+    <string name="library_dates">Dates</string>
+    <string name="library_trip">Trip</string>
+    <string name="library_any_trip">Any trip</string>
+    <string name="library_sort_title">Sort</string>
+    <string name="library_sort_started_desc">Newest first</string>
+    <string name="library_sort_started_asc">Oldest first</string>
+    <string name="library_sort_distance_desc">Longest first</string>
+    <string name="library_sort_distance_asc">Shortest first</string>
+    <string name="library_sort_moving_desc">Most moving time first</string>
+    <string name="library_sort_moving_asc">Least moving time first</string>
+    <string name="library_sort_added_desc">Recently added first</string>
+    <string name="library_sort_added_asc">First added first</string>
+    <plurals name="library_count">
+        <item quantity="one">%1$d track</item>
+        <item quantity="other">%1$d tracks</item>
+    </plurals>
+    <plurals name="library_count_filtered">
+        <item quantity="one">%1$d of %2$d track</item>
+        <item quantity="other">%1$d of %2$d tracks</item>
+    </plurals>
+    <string name="library_distance_band">%1$s – %2$s</string>
+    <string name="library_range">%1$d–%2$d of %3$d</string>
+    <string name="library_prev">Previous page</string>
+    <string name="library_next">Next page</string>
+    <string name="library_uncheck">Uncheck all</string>
+    <string name="library_download">Download as GPX</string>
+    <string name="library_downloading">Downloading…</string>
+    <string name="library_saved">Saved</string>
+    <string name="library_save_failed">Couldn\'t save the file</string>
+    <string name="library_download_blocked">%1$s can\'t be downloaded: %2$s</string>
+    <string name="library_blocked_pending">it\'s still being processed</string>
+    <string name="library_blocked_private">it\'s entirely inside a Private location</string>
+    <string name="library_blocked_no_original">its original file isn\'t kept</string>
+    <string name="library_empty_no_tracks">No tracks yet. Add some from You › Sync.</string>
+    <string name="library_empty_past_last">This page is past the last one.</string>
+    <string name="library_empty_search">No track\'s name or description has “%1$s”.</string>
+    <string name="library_empty_search_and_filters">No track with “%1$s” passes these filters.</string>
+    <string name="library_empty_filters">No track passes these filters.</string>
+    <string name="library_failed">Couldn\'t load Library: %1$s</string>
 </resources>

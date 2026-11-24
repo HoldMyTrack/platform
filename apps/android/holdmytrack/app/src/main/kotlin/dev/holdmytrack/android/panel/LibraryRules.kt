@@ -1,5 +1,7 @@
 package dev.holdmytrack.android.panel
 
+import dev.holdmytrack.android.net.TrackPageQuery
+
 /**
  * What the Library tab (`apps/android/docs/SPEC.md` FR-4.1, root `docs/SPEC.md` FR-5.13) decides,
  * as plain values: the request a state asks for, the pager and why a page is empty. The web's
@@ -33,29 +35,16 @@ object LibraryRules {
             get() = q.isNotEmpty() || exclude.isNotEmpty() || distance != null || after != null || before != null || trip != null
     }
 
-    /** `GET /v2/tracks`'s query for one page. */
-    data class Query(
-        val page: Int,
-        val sort: String,
-        val q: String? = null,
-        val types: List<String>? = null,
-        val minDistance: Double? = null,
-        val maxDistance: Double? = null,
-        val from: String? = null,
-        val to: String? = null,
-        val trip: String? = null,
-    )
-
     /** The query [state] asks for, given every type the account has ([allTypes], the bounds'):
      *  the Type filter sent as the types kept. Null when every type is left out, which matches
      *  no track. */
-    fun pageQuery(state: State, allTypes: List<String>): Query? {
+    fun pageQuery(state: State, allTypes: List<String>): TrackPageQuery? {
         var types: List<String>? = null
         if (state.exclude.isNotEmpty() && allTypes.isNotEmpty()) {
             types = allTypes.filter { it !in state.exclude }
             if (types.isEmpty()) return null
         }
-        return Query(
+        return TrackPageQuery(
             page = state.page,
             sort = "${state.sort.key}_${if (state.desc) "desc" else "asc"}",
             q = state.q.ifEmpty { null },

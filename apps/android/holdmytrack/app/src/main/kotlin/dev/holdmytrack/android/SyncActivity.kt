@@ -26,8 +26,7 @@ import kotlinx.coroutines.launch
 /**
  * Settings › Sync (`apps/android/docs/SPEC.md` FR-3.1): where journeys come from. Health Connect,
  * off until switched on here ([SyncSources]) and then its permissions as one checklist
- * ([HealthConnectCard]), and Recorded on this phone, always on. Opened from the You tab and the
- * Sync tab, and by Health Connect itself: the screen it opens as this app's permission
+ * ([HealthConnectCard]). Opened from the Sync tab, and by Health Connect itself: the screen it opens as this app's permission
  * *rationale*, and from "see how this app used your data" — so it opens even signed out, which
  * the app's own Sync tab (`MainActivity`, `panel/SyncTab`) never is. Launched to answer exactly
  * the rationale question, it opens the rationale straight away; for a signed-in account a button
@@ -37,7 +36,6 @@ class SyncActivity : AppCompatActivity() {
 
     private lateinit var card: HealthConnectCard
     private lateinit var accountNotice: TextView
-    private lateinit var recorded: View
     private lateinit var openList: View
     /** The first load after switching on, while it reads ([WaitingLoader]). */
     private var firstLoad: Job? = null
@@ -53,7 +51,6 @@ class SyncActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sync)
         card = HealthConnectCard(findViewById(R.id.sync_health_connect_section), permissionLauncher::launch, ::switched)
         accountNotice = findViewById(R.id.sync_account_notice)
-        recorded = findViewById(R.id.sync_recorded_section)
         openList = findViewById(R.id.sync_open_list)
         openList.setOnClickListener {
             MainActivity.openTab(this, MainActivity.Tab.SYNC)
@@ -117,23 +114,9 @@ class SyncActivity : AppCompatActivity() {
         accountNotice.text = block
         accountNotice.visibility = if (block == null) View.GONE else View.VISIBLE
         card.visible = block == null
-        recorded.visibility = if (block == null) View.VISIBLE else View.GONE
         openList.visibility = if (block == null) View.VISIBLE else View.GONE
         if (block == null) card.render(sources().healthConnect, access)
         if (block == null) firstLoadIfDue(access.readiness)
-        if (block == null) renderRecorded()
-    }
-
-    /** The record button's card: green once it has what a recording needs — precise location and
-     *  the notification it runs under — which the button asks for on its first tap, not here. */
-    private fun renderRecorded() {
-        val allowed = RECORDING_PERMISSIONS.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }
-        findViewById<ImageView>(R.id.sync_recorded_icon).imageTintList =
-            ColorStateList.valueOf(getColor(if (allowed) R.color.hmt_success else R.color.hmt_ink_secondary))
-        findViewById<TextView>(R.id.sync_recorded_status).apply {
-            setText(if (allowed) R.string.sync_recorded_allowed else R.string.sync_recorded_not_yet)
-            setTextColor(getColor(if (allowed) R.color.hmt_success else R.color.hmt_ink_secondary))
-        }
     }
 
     /** Switched on and readable, and not read yet: read now, on this screen, rather than when
@@ -155,9 +138,6 @@ class SyncActivity : AppCompatActivity() {
     }
 
     private companion object {
-        /** What the record button asks for before its first recording (`MapFragment.onRecordTap`). */
-        val RECORDING_PERMISSIONS = listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS)
-
         /** Health Connect's rationale request, and its "see how this app used your data" link
          *  (the manifest's `ViewPermissionUsageActivity` alias). */
         val RATIONALE_ACTIONS = setOf(

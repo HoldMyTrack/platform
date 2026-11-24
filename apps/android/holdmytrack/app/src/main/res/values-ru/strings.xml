@@ -152,6 +152,7 @@
     <string name="locate_needs_location">HoldMyTrack нужен доступ к местоположению, чтобы показать, где вы.</string>
     <string name="nav_tracks">Треки</string>
     <string name="nav_trips">Путешествия</string>
+    <string name="nav_library">Библиотека</string>
     <string name="nav_sync">Синхр.</string>
     <string name="nav_you">Вы</string>
     <string name="menu_about">О проекте</string>
@@ -271,6 +272,12 @@
     <string name="sync_failed">Ошибка синхронизации: %1$s</string>
     <string name="sync_rejected_row">Отклонено: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Остановлено досрочно. %1$s</string>
+    <plurals name="recordings_waiting">
+        <item quantity="one">%d запись ждёт отправки</item>
+        <item quantity="few">%d записи ждут отправки</item>
+        <item quantity="many">%d записей ждут отправки</item>
+        <item quantity="other">%d записи ждут отправки</item>
+    </plurals>
     <plurals name="import_failed_title">
         <item quantity="one">%d импорт не удалось добавить</item>
         <item quantity="few">%d импорта не удалось добавить</item>
@@ -365,16 +372,12 @@
     <string name="sync_check_allowed">%1$s: разрешено</string>
     <string name="sync_check_missing">%1$s: пока не разрешено</string>
     <string name="sync_sources_intro">Откуда берутся ваши пути. Health Connect читается, только пока он включён, и когда вы нажимаете «Загрузить» на вкладке «Синхронизация».</string>
-    <string name="sync_recorded_title">Кнопка записи</string>
-    <string name="sync_recorded_sub">Всегда включена. Записи ждут на вкладке «Синхронизация», пока вы их не отправите.</string>
-    <string name="sync_recorded_allowed">Геолокация и уведомления разрешены</string>
-    <string name="sync_recorded_not_yet">Геолокация и уведомления запрашиваются при первой записи.</string>
     <string name="sync_sources_link">Настройки синхронизации</string>
     <string name="sync_open_sources">Открыть настройки синхронизации</string>
     <string name="sync_hc_is_off">Health Connect выключен. Включите его в настройках синхронизации, чтобы увидеть здесь его тренировки.</string>
     <string name="sync_hc_needs_setup">Health Connect нужно донастроить, прежде чем его тренировки появятся здесь.</string>
     <string name="you_sync_sub">Health Connect и записи</string>
-    <string name="sync_load">Загрузить</string>
+    <string name="sync_refresh">Обновить</string>
     <string name="sync_loading_health_connect">Читаем Health Connect…</string>
     <string name="sync_not_loaded_yet">Ещё не загружалось</string>
     <string name="sync_last_load">Последняя загрузка: %1$s</string>
@@ -390,11 +393,7 @@
         <item quantity="other">Найдено %1$d тренировки с маршрутом. Они на вкладке «Синхронизация».</item>
     </plurals>
     <string name="sync_upload_title">Загрузить</string>
-    <string name="sync_history_title">История синхронизации</string>
     <string name="library_title">Библиотека</string>
-    <string name="library_downloading">Загрузка…</string>
-    <string name="library_saved">Сохранено</string>
-    <string name="library_save_failed">Не удалось сохранить файл</string>
     <string name="upload_title">Загрузить</string>
     <string name="upload_demo">Недоступно в демо-аккаунте — создайте аккаунт, чтобы загружать свои треки.</string>
     <string name="upload_see_library">Смотреть в библиотеке</string>
@@ -1135,4 +1134,49 @@
         <item quantity="many">%1$s из %2$s зон</item>
         <item quantity="other">%1$s из %2$s зоны</item>
     </plurals>
+    <!-- The Library tab (panel/LibraryTab), after the web's library.* messages. -->
+    <string name="library_search_hint">Поиск по названиям и описаниям</string>
+    <string name="library_dates">Даты</string>
+    <string name="library_trip">Поездка</string>
+    <string name="library_any_trip">Любая поездка</string>
+    <string name="library_sort_title">Сортировка</string>
+    <string name="library_sort_started_desc">Сначала новые</string>
+    <string name="library_sort_started_asc">Сначала старые</string>
+    <string name="library_sort_distance_desc">Сначала длинные</string>
+    <string name="library_sort_distance_asc">Сначала короткие</string>
+    <string name="library_sort_moving_desc">Сначала с большим временем в движении</string>
+    <string name="library_sort_moving_asc">Сначала с меньшим временем в движении</string>
+    <string name="library_sort_added_desc">Сначала недавно добавленные</string>
+    <string name="library_sort_added_asc">Сначала давно добавленные</string>
+    <plurals name="library_count">
+        <item quantity="one">%1$d трек</item>
+        <item quantity="few">%1$d трека</item>
+        <item quantity="many">%1$d треков</item>
+        <item quantity="other">%1$d трека</item>
+    </plurals>
+    <plurals name="library_count_filtered">
+        <item quantity="one">%1$d из %2$d треков</item>
+        <item quantity="few">%1$d из %2$d треков</item>
+        <item quantity="many">%1$d из %2$d треков</item>
+        <item quantity="other">%1$d из %2$d треков</item>
+    </plurals>
+    <string name="library_distance_band">%1$s – %2$s</string>
+    <string name="library_range">%1$d–%2$d из %3$d</string>
+    <string name="library_prev">Предыдущая страница</string>
+    <string name="library_next">Следующая страница</string>
+    <string name="library_uncheck">Снять отметки</string>
+    <string name="library_download">Скачать как GPX</string>
+    <string name="library_downloading">Загрузка…</string>
+    <string name="library_saved">Сохранено</string>
+    <string name="library_save_failed">Не удалось сохранить файл</string>
+    <string name="library_download_blocked">%1$s нельзя скачать: %2$s</string>
+    <string name="library_blocked_pending">он ещё обрабатывается</string>
+    <string name="library_blocked_private">он целиком внутри приватного места</string>
+    <string name="library_blocked_no_original">его исходный файл не хранится</string>
+    <string name="library_empty_no_tracks">Треков пока нет. Добавьте их в разделе Вы › Синхронизация.</string>
+    <string name="library_empty_past_last">Эта страница дальше последней.</string>
+    <string name="library_empty_search">Ни в одном названии или описании нет «%1$s».</string>
+    <string name="library_empty_search_and_filters">Ни один трек с «%1$s» не проходит эти фильтры.</string>
+    <string name="library_empty_filters">Ни один трек не проходит эти фильтры.</string>
+    <string name="library_failed">Не удалось загрузить библиотеку: %1$s</string>
 </resources>

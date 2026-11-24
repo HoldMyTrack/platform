@@ -84,6 +84,34 @@ data class SyncKnown(val known: Set<String>, val processing: Set<String>)
 /** What `POST /v2/tracks/upload` said about one file: "enqueued" or "already_processed". */
 data class UploadOutcome(val status: String)
 
+/** `GET /v2/tracks`'s query for one page of Library: [sort] is `key_desc` or `key_asc`, and a
+ *  null field asks for no filter. */
+data class TrackPageQuery(
+    val page: Int,
+    val sort: String,
+    val q: String? = null,
+    val types: List<String>? = null,
+    val minDistance: Double? = null,
+    val maxDistance: Double? = null,
+    val from: String? = null,
+    val to: String? = null,
+    val trip: String? = null,
+)
+
+/** One page of Library ([HoldMyTrackApi.trackPage]): its rows, how many tracks pass the filters,
+ *  the page size, and the filters' bounds over every track of the account. */
+data class TrackPage(
+    val tracks: List<Track>,
+    val total: Int,
+    val pageSize: Int,
+    /** Null when no track has a route. */
+    val distance: Pair<Double, Double>?,
+    val firstDate: String?,
+    val lastDate: String?,
+    /** Each type the account's tracks use, with how many do, most first. */
+    val types: List<Pair<String, Int>>,
+)
+
 /** An import that failed on the server's side, unseen: what [HoldMyTrackApi.importFailures] reads. */
 data class ImportFailure(val id: Long, val title: String, val reason: String)
 

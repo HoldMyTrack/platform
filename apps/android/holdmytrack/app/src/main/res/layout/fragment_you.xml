@@ -190,7 +190,8 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Sync: where journeys come from, its own screen (SyncActivity). -->
+        <!-- Sync: what's on this phone to add, and files to upload: the map's Sync sheet
+             (panel/SyncTab), with You lit in the bar. -->
         <LinearLayout
             android:id="@+id/you_sync"
             style="@style/Widget.HoldMyTrack.CardRow"
@@ -218,6 +219,7 @@
                     android:textAppearance="@style/TextAppearance.HoldMyTrack.CardRowTitle" />
 
                 <TextView
+                    android:id="@+id/you_sync_sub"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/hmt_space_2"

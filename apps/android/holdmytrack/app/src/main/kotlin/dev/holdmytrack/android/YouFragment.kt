@@ -1,5 +1,8 @@
 package dev.holdmytrack.android
 
+import dev.holdmytrack.android.recording.db.RecordedTrackStore
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -73,8 +76,9 @@ class YouFragment : Fragment(R.layout.fragment_you) {
         findViewById<View>(R.id.you_stats).setOnClickListener {
             WebPageActivity.open(context, WebPageActivity.Page.PROFILE)
         }
+        // The Sync screen, the map with its sheet; its sources are a link on it (SyncActivity).
         findViewById<View>(R.id.you_sync).setOnClickListener {
-            startActivity(Intent(context, SyncActivity::class.java))
+            (activity as? MainActivity)?.showTab(MainActivity.Tab.SYNC)
         }
         findViewById<View>(R.id.you_privacy).setOnClickListener {
             startActivity(Intent(context, PrivacyActivity::class.java))
@@ -108,6 +112,7 @@ class YouFragment : Fragment(R.layout.fragment_you) {
         // Back from Settings, Profile or Privacy is a resume; a hidden tab reads when it next
         // shows, as a return.
         if (isHidden) resumedHidden = true else load(resumed = true)
+        renderSyncWaiting()
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
@@ -115,6 +120,21 @@ class YouFragment : Fragment(R.layout.fragment_you) {
         if (hidden) return
         load(resumed = resumedHidden)
         resumedHidden = false
+        renderSyncWaiting()
+    }
+
+    /** Sync's line: the recordings waiting to be sent, when there are any, as You's badge
+     *  counts them. */
+    private fun renderSyncWaiting() {
+        val view = view ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val waiting = if (Session.isDemo) 0 else RecordedTrackStore(requireContext()).all().size
+            view.findViewById<TextView>(R.id.you_sync_sub).text = if (waiting > 0) {
+                resources.getQuantityString(R.plurals.recordings_waiting, waiting, waiting)
+            } else {
+                getString(R.string.you_sync_sub)
+            }
+        }
     }
 
     /** The app came back while another tab showed: the next show counts as a return. */

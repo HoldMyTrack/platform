@@ -137,6 +137,29 @@ internal data class TrackRowJson(
     val trips: List<TripRefJson>,
 )
 
+/** `GET /v2/tracks` with `page`: one page of Library (root `docs/SPEC.md` FR-5.13). */
+@Serializable
+internal data class TrackPageJson(
+    val tracks: List<TrackRowJson>,
+    val types: Map<String, TrackTypeJson> = emptyMap(),
+    @SerialName("page_size") val pageSize: Int? = null,
+    val total: Int? = null,
+    val bounds: TrackPageBoundsJson? = null,
+)
+
+/** The filters' bounds over every track of the account; null where no track sets one. */
+@Serializable
+internal data class TrackPageBoundsJson(
+    @SerialName("min_distance_meters") val minDistanceMeters: Double?,
+    @SerialName("max_distance_meters") val maxDistanceMeters: Double?,
+    @SerialName("first_date") val firstDate: String?,
+    @SerialName("last_date") val lastDate: String?,
+    val types: List<TypeCountJson>,
+)
+
+@Serializable
+internal data class TypeCountJson(val type: String, val count: Int)
+
 @Serializable
 internal data class TracksJson(
     val tracks: List<TrackRowJson>,

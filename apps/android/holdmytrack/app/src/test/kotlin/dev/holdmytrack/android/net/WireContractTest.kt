@@ -55,6 +55,7 @@ class WireContractTest {
         request(EmailJson.serializer().descriptor, "/trips/{id}/send", "post")
 
         response(TracksJson.serializer().descriptor, "/tracks", "get")
+        response(TrackPageJson.serializer().descriptor, "/tracks", "get")
         response(AreaTracksJson.serializer().descriptor, "/tracks/area", "get")
         response(TracksJson.serializer().descriptor, "/tracks/{id}", "get")
         response(TrackTypesJson.serializer().descriptor, "/track-types", "get")

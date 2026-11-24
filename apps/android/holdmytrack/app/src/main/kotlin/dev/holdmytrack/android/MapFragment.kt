@@ -49,6 +49,8 @@ import dev.holdmytrack.android.panel.EditTrackWindow
 import dev.holdmytrack.android.panel.EditController
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.panel.PanelTab
+import dev.holdmytrack.android.panel.LibraryDownload
+import dev.holdmytrack.android.panel.LibraryTab
 import dev.holdmytrack.android.panel.PrivateLocationEditor
 import dev.holdmytrack.android.panel.SyncTab
 import dev.holdmytrack.android.photos.PhotosController
@@ -148,7 +150,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /** Something the Sync tab sent has landed, whichever tab shows: the list, its days and the
      *  tiles catch up. Until then its job is only queued, with no row to show Pending. */
-    private val syncProgressListener = SyncProgress.Listener(onChange = {}, onLanded = { onSyncedFromPhone() })
+    private val syncProgressListener = SyncProgress.Listener(onChange = {}, onLanded = {
+        onSyncedFromPhone()
+        host?.refreshSyncBadge()
+    })
     /** The area and Dates or the Trip the list and tracks show, and whether the camera moves next. */
     private val session = MapSession(panelState)
     private var imageryStatus = SatelliteStatus.LOADING
@@ -231,8 +236,15 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The bottom bar's Trips: the panel's Trips tab. */
     fun showTrips() = show(PanelTab.TRIPS)
 
-    /** The bottom bar's Sync: the panel's Sync tab, in Normal mode, where the sheet is. */
+    /** You › Sync: the panel's Sync tab, in Normal mode, where the sheet is. */
     fun showSync() = show(PanelTab.SYNC)
+
+    /** The bottom bar's Library: the panel's Library tab. */
+    fun showLibrary() = show(PanelTab.LIBRARY)
+
+    /** Library's Download, made with the fragment: the save screen's launchers can't be
+     *  registered later. */
+    private val libraryDownload = LibraryDownload(this)
 
     /**
      * The Privacy screen's Add a location ([PrivateLocationEditor.NEW]) or one of its rows: the
@@ -260,6 +272,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             PanelTab.TRACKS -> panel.showTracks()
             PanelTab.TRIPS -> panel.showTrips()
             PanelTab.SYNC -> panel.showSync()
+            PanelTab.LIBRARY -> panel.showLibrary()
             null -> Unit
         }
     }
@@ -379,6 +392,14 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onFrame = { candidates -> BoxUnion.of(candidates.map { it.bbox }.filter { it.isNotEmpty() })?.let { views?.camera?.flyTo(it) } },
             onSynced = ::onSyncedFromPhone,
         )
+        val libraryTab = LibraryTab(
+            findViewById(R.id.panel_library_content),
+            this,
+            scope = { viewLifecycleOwner.lifecycleScope },
+            download = libraryDownload,
+            onOpen = { track -> host?.let { MainActivity.viewOnMap(it, track.id, LibraryTab.day(track)) } },
+            onDeleted = { views?.refresh?.afterDelete(it) },
+        )
         val panel = TracksPanel(
             sheet,
             findViewById(R.id.selection_bar),
@@ -419,6 +440,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onTripsWaiting = { host?.setTripsWaiting(it) },
             onSheetChanged = { views?.sheetChrome?.onSheetChanged() },
             syncTab = syncTab,
+            libraryTab = libraryTab,
         )
         val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, onEmpty = ::onEmptyChecked)
         val area = AreaController(

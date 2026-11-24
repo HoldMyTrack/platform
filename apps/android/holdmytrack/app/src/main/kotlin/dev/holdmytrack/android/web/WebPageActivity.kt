@@ -32,12 +32,12 @@ import java.util.concurrent.Executors
 
 /**
  * One of the web's own pages, shown in the app (root `docs/SPEC.md` FR-9.6): Activity graph &
- * trends, Sync history, Settings (a new account's first run included) and About. The server
+ * trends, Settings (a new account's first run included) and About. The server
  * renders a page for the app when the request carries the `hmt_app` cookie — no site header,
  * footer or Back to map, and none of what the app keeps as screens of its own — and this screen
  * hands the WebView the session as the cookie a browser would hold.
  *
- * Where a link goes ([route]): the map (`/`, Sync history's View on map) opens the native map;
+ * Where a link goes ([route]): the map (`/`, a link to a track on it) opens the native map;
  * the same page again (a pager, Week/Month, Shade by, a form's redirect back to it) and a form's
  * POST to the site stay here; anything else opens in a browser tab. The page follows the app's Theme with no help from
  * here: a WebView answers `prefers-color-scheme` from the screen's own light or dark theme.
@@ -48,7 +48,6 @@ class WebPageActivity : AppCompatActivity() {
      *  screen comes back to the front, as the native screens before it did. */
     enum class Page(val path: String, val title: Int, val refreshOnReturn: Boolean) {
         PROFILE("/profile", R.string.you_graph_link, true),
-        SYNC_HISTORY("/sync", R.string.sync_history_title, true),
         SETTINGS("/settings", R.string.settings_title, false),
         ABOUT("/about", R.string.menu_about, false),
     }

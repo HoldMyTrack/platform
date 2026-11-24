@@ -1,5 +1,8 @@
 package dev.holdmytrack.android
 
+import dev.holdmytrack.android.recording.db.RecordedTrackStore
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 import android.content.Context
 import android.content.Intent
 import android.graphics.Rect
@@ -44,7 +47,7 @@ class MainActivity : AppCompatActivity() {
 
     /** The bottom bar's tabs, Record aside — a button rather than a tab. */
     enum class Tab {
-        TRACKS, TRIPS, SYNC, YOU;
+        TRACKS, TRIPS, LIBRARY, SYNC, YOU;
 
         companion object {
             /** The tab a saved state or an intent names, or null for a name no tab has, such as an older build's. */
@@ -63,8 +66,9 @@ class MainActivity : AppCompatActivity() {
     private var selectingInCode = false
 
     /** Back from any tab but Tracks goes to Tracks, and only then leaves the app. */
+    /** Back goes to Tracks from another tab, and from Sync to You, where it was opened. */
     private val backToTracks = object : OnBackPressedCallback(false) {
-        override fun handleOnBackPressed() = showTab(Tab.TRACKS)
+        override fun handleOnBackPressed() = showTab(if (tab == Tab.SYNC) Tab.YOU else Tab.TRACKS)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -145,8 +149,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Copies of Trips may have been sent while the app was away, and an import may have failed.
-        if (::nav.isInitialized) refreshTripsBadge()
+        // Copies of Trips may have been sent while the app was away, a recording made, and an
+        // import may have failed.
+        if (::nav.isInitialized) {
+            refreshTripsBadge()
+            refreshSyncBadge()
+        }
         ImportFailureAlert.check(this)
     }
 
@@ -188,6 +196,7 @@ class MainActivity : AppCompatActivity() {
         tab = next
         when (next) {
             Tab.TRIPS -> map()?.showTrips()
+            Tab.LIBRARY -> map()?.showLibrary()
             Tab.SYNC -> map()?.showSync()
             Tab.TRACKS -> map()?.showTracks()
             else -> Unit
@@ -223,6 +232,25 @@ class MainActivity : AppCompatActivity() {
         HoldMyTrackApi.tripSends { result -> result.onSuccess { setTripsWaiting(it.sends.size) } }
     }
 
+    /** You's badge: the recordings on this phone waiting to be sent from You › Sync, the way
+     *  to them now that Sync isn't in the bar. Read on every return to the app and after a sync. */
+    fun refreshSyncBadge() {
+        if (Session.isDemo) return
+        lifecycleScope.launch {
+            val waiting = RecordedTrackStore(this@MainActivity).all().size
+            if (waiting <= 0) {
+                nav.removeBadge(R.id.nav_you)
+                return@launch
+            }
+            nav.getOrCreateBadge(R.id.nav_you).apply {
+                backgroundColor = getColor(R.color.hmt_accent)
+                badgeTextColor = getColor(R.color.hmt_surface)
+                number = waiting
+                setContentDescriptionQuantityStringsResource(R.plurals.recordings_waiting)
+            }
+        }
+    }
+
     /** The bottom bar, and the record button over it, gone while something on the map has the
      *  screen (`MapChromeRules.bottomBarShown`). */
     fun setBottomBarShown(shown: Boolean) {
@@ -242,6 +270,7 @@ class MainActivity : AppCompatActivity() {
         markTab(
             when (panelTab) {
                 PanelTab.TRIPS -> Tab.TRIPS
+                PanelTab.LIBRARY -> Tab.LIBRARY
                 PanelTab.SYNC -> Tab.SYNC
                 PanelTab.TRACKS -> Tab.TRACKS
             },
@@ -300,7 +329,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun tagOf(tab: Tab) = when (tab) {
-        Tab.TRACKS, Tab.TRIPS, Tab.SYNC -> TAG_MAP
+        Tab.TRACKS, Tab.TRIPS, Tab.LIBRARY, Tab.SYNC -> TAG_MAP
         Tab.YOU -> TAG_YOU
     }
 
@@ -312,14 +341,15 @@ class MainActivity : AppCompatActivity() {
     private fun itemOf(tab: Tab) = when (tab) {
         Tab.TRACKS -> R.id.nav_tracks
         Tab.TRIPS -> R.id.nav_trips
-        Tab.SYNC -> R.id.nav_sync
-        Tab.YOU -> R.id.nav_you
+        Tab.LIBRARY -> R.id.nav_library
+        // Sync is opened from You, so the bar keeps You lit.
+        Tab.SYNC, Tab.YOU -> R.id.nav_you
     }
 
     private fun tabOf(itemId: Int) = when (itemId) {
         R.id.nav_tracks -> Tab.TRACKS
         R.id.nav_trips -> Tab.TRIPS
-        R.id.nav_sync -> Tab.SYNC
+        R.id.nav_library -> Tab.LIBRARY
         R.id.nav_you -> Tab.YOU
         else -> null
     }
