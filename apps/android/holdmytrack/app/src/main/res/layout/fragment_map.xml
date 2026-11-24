@@ -184,8 +184,9 @@
                 <!-- While any of the Tracks sheet's rows is checked, the selection bar in the mode
                      toggle's place, the rail stepping aside for it: × unchecks all, ending selecting,
                      then the master checkbox and its All / None / Invert, and the actions over the
-                     checked group — Show/Hide, Edit, Add to trip, ⋯ with Download and Delete, then Focus on map in the
-                     accent (panel/TracksPanel; MapFragment.renderSelectionBar). -->
+                     checked group — Show/Hide, Edit, Add to trip, Download and Delete. No Focus on map: the
+                     checked tracks are listed, so on screen already, and checking one flies to it
+                     (panel/TracksPanel; MapFragment.renderSelectionBar). -->
                 <LinearLayout
                     android:id="@+id/selection_bar"
                     style="@style/Widget.HoldMyTrack.MapPanel"
@@ -249,20 +250,18 @@
                         android:contentDescription="@string/panel_no_target"
                         android:src="@drawable/ic_book_plus" />
 
-                    <!-- Download (panel/TrackDownload, panel/DownloadRules) and Delete, in a menu:
-                         nine 48 dp controls don't fit across a phone. -->
+                    <!-- The checked tracks as GPX, or a zip of them (panel/SelectionDownload). -->
                     <ImageButton
-                        android:id="@+id/panel_more"
+                        android:id="@+id/panel_download"
                         style="@style/Widget.HoldMyTrack.PanelChip"
                         android:contentDescription="@string/panel_no_target"
-                        android:src="@drawable/ic_ellipsis" />
+                        android:src="@drawable/ic_download" />
 
                     <ImageButton
-                        android:id="@+id/panel_focus"
-                        style="@style/Widget.HoldMyTrack.PanelChip.Accent"
-                        android:layout_marginStart="@dimen/hmt_space_4"
+                        android:id="@+id/panel_delete"
+                        style="@style/Widget.HoldMyTrack.PanelChip"
                         android:contentDescription="@string/panel_no_target"
-                        android:src="@drawable/ic_focus" />
+                        android:src="@drawable/ic_trash_2" />
                 </LinearLayout>
 
                 <!-- "Show in this area" (map/ShowInArea): centred under the toggle, wrapping to a

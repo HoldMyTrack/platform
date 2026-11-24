@@ -500,9 +500,6 @@
     <string name="panel_edit_one">Изменить тип, название, описание и маршрут: %1$s</string>
     <string name="panel_edit_many">Изменить тип: %1$s</string>
     <string name="panel_delete_target">Удалить: %1$s</string>
-    <string name="panel_more_target">Ещё для: %1$s</string>
-    <string name="panel_more_download">Скачать в GPX</string>
-    <string name="panel_more_delete">Удалить…</string>
     <string name="panel_delete_pending">Нельзя удалить: «%1$s» ещё обрабатывается</string>
     <string name="panel_download_busy">Другой файл для скачивания ещё готовится</string>
     <string name="panel_download_target">Скачать %1$s в GPX</string>
