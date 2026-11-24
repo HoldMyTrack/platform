@@ -63,7 +63,7 @@ class UploadActivity : AppCompatActivity() {
 
         choose.setOnClickListener { picker.launch(arrayOf("*/*")) }
         seeLibrary.setOnClickListener {
-            WebPageActivity.open(this, WebPageActivity.Page.LIBRARY)
+            WebPageActivity.open(this, WebPageActivity.Page.SYNC_HISTORY)
             finish()
         }
 

@@ -16,6 +16,7 @@ import { insertionPoint, needsLift } from '../src/map/mapLayers.ts';
 import { pendingAnswer, pendingBatches, pendingChange, pendingWatched } from '../src/map/pending.ts';
 import { deleteDone } from '../src/apiError.ts';
 import { attachmentName } from '../src/attachmentName.ts';
+import { emptyReason, pageQuery, pager } from '../src/library/libraryState.ts';
 import { drawOrder } from '../src/ui/privateLocationPick.ts';
 import { clusterPoints, photoMarkerLayout, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
@@ -69,6 +70,11 @@ export const rules = {
   },
   pendingBatches: ({ ids, size }) => pendingBatches(ids, size),
   attachmentName: ({ header }) => attachmentName(header ?? null),
+  libraryPageQuery: ({ state, allTypes }) =>
+    pageQuery({ ...state, distance: state.distance && { min: state.distance.min, max: state.distance.max ?? Infinity }, dates: { after: state.after ?? null, before: state.before ?? null } }, allTypes),
+  libraryPager: ({ page, total, pageSize }) => pager(page, total, pageSize),
+  libraryEmptyReason: ({ state, total, anyTrack }) =>
+    emptyReason({ ...state, sort: 'started', desc: true, page: 1, dates: { after: state.after ?? null, before: state.before ?? null } }, total, anyTrack),
   deleteDone: ({ status }) => deleteDone(status),
   privateDrawOrder: ({ saved, editing }) => drawOrder(saved.map((id) => ({ id })), editing ? { id: editing } : null).map((l) => l.id),
   pendingChange: ({ previous, now, awaiting, listed }) => {

@@ -390,6 +390,7 @@
         <item quantity="other">Найдено %1$d тренировки с маршрутом. Они на вкладке «Синхронизация».</item>
     </plurals>
     <string name="sync_upload_title">Загрузить</string>
+    <string name="sync_history_title">История синхронизации</string>
     <string name="library_title">Библиотека</string>
     <string name="library_downloading">Загрузка…</string>
     <string name="library_saved">Сохранено</string>

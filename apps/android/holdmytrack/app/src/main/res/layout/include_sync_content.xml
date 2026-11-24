@@ -36,15 +36,6 @@
             android:layout_weight="1"
             android:text="@string/sync_upload_title"
             app:icon="@drawable/ic_upload" />
-
-        <Button
-            android:id="@+id/library"
-            style="@style/Widget.HoldMyTrack.Button.Outlined"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/library_title"
-            app:icon="@drawable/ic_library" />
     </LinearLayout>
 
     <!-- Load and Sync side by side, each over its status — at the top, so the half-open sheet

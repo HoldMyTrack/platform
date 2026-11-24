@@ -1,0 +1,12 @@
+{
+  "rule": "libraryEmptyReason",
+  "clients": ["web", "android"],
+  "description": "Why a Library page (docs/SPEC.md FR-5.13) has no row: the account has no track; the page is past the last, whatever the filters; the search matches nothing, with or without other filters to clear; or only the filters match nothing.",
+  "cases": [
+    { "name": "no track at all", "input": { "state": { "q": "lake", "exclude": [], "distance": null, "after": null, "before": null, "trip": null }, "total": 0, "anyTrack": false }, "expected": "no_tracks" },
+    { "name": "past the last page", "input": { "state": { "q": "", "exclude": [], "distance": null, "after": null, "before": null, "trip": null }, "total": 12, "anyTrack": true }, "expected": "past_last" },
+    { "name": "the search alone", "input": { "state": { "q": "lake", "exclude": [], "distance": null, "after": null, "before": null, "trip": null }, "total": 0, "anyTrack": true }, "expected": "search" },
+    { "name": "the search and a filter", "input": { "state": { "q": "lake", "exclude": [], "distance": null, "after": "2026-01-01", "before": null, "trip": null }, "total": 0, "anyTrack": true }, "expected": "search_and_filters" },
+    { "name": "the filters alone", "input": { "state": { "q": "", "exclude": ["walking"], "distance": null, "after": null, "before": null, "trip": null }, "total": 0, "anyTrack": true }, "expected": "filters" }
+  ]
+}

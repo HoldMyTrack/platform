@@ -43,7 +43,6 @@ import dev.holdmytrack.android.sync.SyncSources
 import dev.holdmytrack.android.sync.WaitingLoader
 import dev.holdmytrack.android.sync.WaitingStore
 import dev.holdmytrack.android.ui.LargeText
-import dev.holdmytrack.android.web.WebPageActivity
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -187,9 +186,6 @@ class SyncTab(
             render()
         }
         upload.setOnClickListener { activity.startActivity(Intent(activity, UploadActivity::class.java)) }
-        content.findViewById<View>(R.id.library).setOnClickListener {
-            WebPageActivity.open(activity, WebPageActivity.Page.LIBRARY)
-        }
         for (link in listOf(foot.findViewById<View>(R.id.sync_sources), sourceSettings)) {
             link.setOnClickListener { activity.startActivity(Intent(activity, SyncActivity::class.java)) }
         }

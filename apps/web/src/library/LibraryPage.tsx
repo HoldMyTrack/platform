@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Lock, Trash2, X } from 'lucide-react';
-import { appBridge } from './appBridge.ts';
 import { deleteTrack, downloadTracksGpx, listTrackPage, listTrips, type LibraryTrack, type TrackPageResult } from '../api.ts';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { t, tn } from '../i18n/index.ts';
@@ -161,11 +160,6 @@ export function LibraryPage() {
 
   // Download and Delete act on one row's icons or on the Checked rows' bar alike.
   const download = async (rows: readonly LibraryTrack[]) => {
-    const bridge = appBridge();
-    if (bridge) {
-      bridge.downloadGpx(rows.map((row) => row.id).join(','));
-      return;
-    }
     setBusy(true);
     setMessage(t('library.downloading'));
     try {

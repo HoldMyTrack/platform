@@ -19,6 +19,7 @@ import dev.holdmytrack.android.net.deleteDone
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.RouteEdit
 import dev.holdmytrack.android.net.RoutePoint
+import dev.holdmytrack.android.panel.LibraryRules
 import dev.holdmytrack.android.panel.TrackFacets
 import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.sync.Similar
@@ -71,6 +72,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.int
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -121,6 +123,19 @@ class ClientRulesTest {
         val l = it.jsonObject
         FogLevels.Level(l.string("level")!!, (l["from"] as? JsonPrimitive)?.doubleOrNull, (l["below"] as? JsonPrimitive)?.doubleOrNull)
     }
+
+    /** A case's Library state; a field it leaves out is at its default. */
+    private fun libraryState(json: JsonObject) = LibraryRules.State(
+        sort = json.string("sort")?.let { LibraryRules.Sort.valueOf(enumName(it)) } ?: LibraryRules.Sort.STARTED,
+        desc = (json["desc"] as? JsonPrimitive)?.booleanOrNull ?: true,
+        page = (json["page"] as? JsonPrimitive)?.intOrNull ?: 1,
+        q = json.string("q").orEmpty(),
+        exclude = json.strings("exclude").toSet(),
+        distance = (json["distance"] as? JsonObject)?.let { LibraryRules.Distance(it.number("min"), (it["max"] as? JsonPrimitive)?.doubleOrNull) },
+        after = json.string("after"),
+        before = json.string("before"),
+        trip = json.string("trip"),
+    )
 
     private fun enumName(name: String) = name.uppercase()
     private fun caseName(enumName: String) = enumName.lowercase()
@@ -191,6 +206,29 @@ class ClientRulesTest {
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
         "attachmentName" to { input -> JsonPrimitive(AttachmentName.of(input.string("header"))) },
+        "libraryPageQuery" to { input ->
+            LibraryRules.pageQuery(libraryState(input["state"]!!.jsonObject), input.strings("allTypes"))?.let { q ->
+                buildJsonObject {
+                    put("page", q.page)
+                    put("sort", q.sort)
+                    q.q?.let { put("q", it) }
+                    q.types?.let { put("types", buildJsonArray { it.forEach { t -> add(JsonPrimitive(t)) } }) }
+                    q.minDistance?.let { put("minDistance", it) }
+                    q.maxDistance?.let { put("maxDistance", it) }
+                    q.from?.let { put("from", it) }
+                    q.to?.let { put("to", it) }
+                    q.trip?.let { put("trip", it) }
+                }
+            } ?: JsonNull
+        },
+        "libraryPager" to { input ->
+            LibraryRules.pager(input.int("page"), input.int("total"), input.int("pageSize"))?.let {
+                buildJsonObject { put("from", it.from); put("to", it.to); put("prev", it.prev); put("next", it.next) }
+            } ?: JsonNull
+        },
+        "libraryEmptyReason" to { input ->
+            JsonPrimitive(caseName(LibraryRules.emptyReason(libraryState(input["state"]!!.jsonObject), input.int("total"), input.bool("anyTrack")).name))
+        },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
         "privateDrawOrder" to { input ->
             val circle = { id: String -> Circle(id, 0.0, 0.0, 200) }

@@ -1,0 +1,12 @@
+{
+  "rule": "libraryPager",
+  "clients": ["web", "android"],
+  "description": "Library's pager (docs/SPEC.md FR-5.13): the rows a page shows, 1-based, and whether there is a page before and after. Null when the page shows no row.",
+  "cases": [
+    { "name": "the first of three pages", "input": { "page": 1, "total": 250, "pageSize": 100 }, "expected": { "from": 1, "to": 100, "prev": false, "next": true } },
+    { "name": "the last, part full", "input": { "page": 3, "total": 250, "pageSize": 100 }, "expected": { "from": 201, "to": 250, "prev": true, "next": false } },
+    { "name": "one exact page", "input": { "page": 1, "total": 100, "pageSize": 100 }, "expected": { "from": 1, "to": 100, "prev": false, "next": false } },
+    { "name": "past the last", "input": { "page": 4, "total": 250, "pageSize": 100 }, "expected": null },
+    { "name": "nothing", "input": { "page": 1, "total": 0, "pageSize": 100 }, "expected": null }
+  ]
+}

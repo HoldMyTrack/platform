@@ -372,6 +372,7 @@
         <item quantity="other">Found %1$d sessions with a route. They\'re on the Sync tab.</item>
     </plurals>
     <string name="sync_upload_title">Upload</string>
+    <string name="sync_history_title">Sync history</string>
     <string name="library_title">Library</string>
     <string name="library_downloading">Downloading…</string>
     <string name="library_saved">Saved</string>
