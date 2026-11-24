@@ -721,10 +721,11 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         bands.render()
     }
 
-    /** The Private location editor opened or closed. */
-    private fun onPrivacyEditorChanged(open: Boolean) {
+    /** The Private location editor opened or closed: placed as it opens, and the top row lowered
+     *  again as it closes. */
+    private fun onPrivacyEditorChanged(@Suppress("UNUSED_PARAMETER") open: Boolean) {
         val v = views ?: return
-        if (open) v.chrome.placeEditors()
+        v.chrome.placeEditors()
         v.sheetChrome.renderRail()
         renderSheet()
         renderBottomBar()

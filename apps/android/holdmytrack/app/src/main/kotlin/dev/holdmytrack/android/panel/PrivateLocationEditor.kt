@@ -2,6 +2,7 @@ package dev.holdmytrack.android.panel
 
 import android.content.res.Resources
 import android.graphics.PointF
+import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -33,8 +34,8 @@ import kotlin.math.roundToInt
  * The Private location editor on the map — the web's `apps/web/src/ui/PrivateLocationsPanel.tsx`
  * window (`docs/SPEC.md` FR-7.1), opened from the Privacy screen (`PrivacyActivity`): the
  * account's Private locations, circles whose contents are clipped off the ends of every track,
- * drawn on the map (`map/PrivateLocationsOverlay`), and one of them — or a new one — in a card
- * along the bottom: Name, Radius, Delete for a saved one, Cancel and Save. A new one is a 200 m
+ * drawn on the map (`map/PrivateLocationsOverlay`), and one of them — or a new one — in a sheet
+ * along the bottom, the map live above it: Cancel and Save over Name, Radius and a saved one's Delete. A new one is a 200 m
  * circle at the map's centre, flying in first when the map is too far out to place one
  * sensibly; moving it is dragging its handle, and another circle tapped on the map opens that
  * one instead. Saving or deleting one reprocesses the tracks it touches ([onChanged]).
@@ -351,9 +352,12 @@ class PrivateLocationEditor(
         nameField.isEnabled = !busy
     }
 
+    /** The error line sits under the fields, which can scroll it out of sight while Save, in the
+     *  header, stays in view: it's scrolled to as it shows. */
     private fun showError(message: String?) {
         error.text = message
         error.visibility = if (message == null) View.GONE else View.VISIBLE
+        if (message != null) error.post { error.requestRectangleOnScreen(Rect(0, 0, error.width, error.height)) }
     }
 
     private fun radius(meters: Int) = radius(res, meters)

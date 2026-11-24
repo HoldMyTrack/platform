@@ -3,7 +3,7 @@ import MapLibre
 import UIKit
 
 /// The Private location editor on the map (root docs/SPEC.md FR-7.1,
-/// apps/android/docs/SPEC.md FR-2.7), opened from Privacy: the map switches to Normal, the sheet steps aside for the card,
+/// apps/android/docs/SPEC.md FR-2.7), opened from Privacy: the map switches to Normal, the Tracks sheet steps aside for the editor's,
 /// and every Private location is drawn, the one being edited stronger with a handle at its centre
 /// to drag it by. A new one is 200 m at the middle of the map left showing, flying in first from
 /// too far out; a tap on another circle opens that one. Cancel, a mode change or leaving the Tracks
@@ -73,7 +73,7 @@ extension MapViewController {
         renderPrivateEditor()
     }
 
-    /// A new one at the middle of the map left showing between the controls and the card.
+    /// A new one at the middle of the map left showing between the controls and the editor.
     private func openNewDraft() {
         privateLocations.editor.isHidden = false
         view.layoutIfNeeded()
@@ -84,7 +84,7 @@ extension MapViewController {
         flyToDraft(zoom: PrivateLocationEditing.placeZoom(mapView.zoomLevel))
     }
 
-    /// The map's room above the card and below the controls.
+    /// The map's room above the editor and below the controls.
     private var privateOpenArea: UIEdgeInsets {
         UIEdgeInsets(top: chromeBottom, left: 0, bottom: view.bounds.height - privateLocations.editor.frame.minY, right: 0)
     }
@@ -98,16 +98,20 @@ extension MapViewController {
         mapView.setCamera(camera, withDuration: 0.6, animationTimingFunction: nil, edgePadding: privateOpenArea, completionHandler: nil)
     }
 
-    // MARK: The card
+    // MARK: The sheet
 
     func bindPrivateEditor() {
         let editor = privateLocations.editor
         editor.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(editor)
+        // With no keyboard the guide ends at the screen's edge, not above the hidden tab bar.
+        view.keyboardLayoutGuide.usesBottomSafeArea = false
         NSLayoutConstraint.activate([
             editor.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             editor.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             editor.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),
+            // Never above the top of the screen: its fields scroll instead.
+            editor.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: DesignTokens.Space.s8),
         ])
         editor.onName = { [weak self] name in self?.changeDraft { $0.name = name } }
         editor.onRadius = { [weak self] radius in self?.changeDraft { $0.radiusM = radius } }
@@ -304,7 +308,7 @@ extension MapViewController {
     }
 }
 
-/// The editor's card, its draft and the saved list it edits.
+/// The editor's sheet, its draft and the saved list it edits.
 @MainActor
 final class PrivateLocationsState {
     let editor = PrivateLocationEditorView()

@@ -8,6 +8,8 @@ import android.location.LocationManager
 import android.location.provider.ProviderProperties
 import android.os.SystemClock
 import android.view.View
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -44,7 +46,7 @@ import kotlin.concurrent.thread
  * on the tracks still listed, a dimmed Edit tab saying why on a tap, a Trip opened from the Trips
  * tab and closed by Back, a recording
  * reaching the Sync sheet, the keyboard covering the map without shortening it, and a Trip
- * renamed and sent from its sheets. One fresh
+ * renamed and sent from its sheets, and the Private location editor keeping Save above the keyboard. One fresh
  * account ([TestAccount]) serves the class, in method-name order.
  */
 @RunWith(AndroidJUnit4::class)
@@ -158,22 +160,57 @@ class MapFlowsTest {
         openTrips()
         expandSheet()
         need(By.text(SHEET_TRIP))
-        // The newest Trip's folder is the first.
-        retrying { need(id("trip_edit")).click() }
+        // The newest Trip's folder is the first. A list redraw that lands mid-tap loses it.
+        tapUntil({ need(id("trip_edit")) }) { device.hasObject(id("trip_dialog_name")) }
         val name = need(id("trip_dialog_name"))
         name.text = ""
         expect("no Save without a Name", waitUntil { device.findObject(By.text("Save"))?.isEnabled == false })
         name.text = RENAMED_TRIP
-        retrying { need(By.text("Save").enabled(true)).click() }
+        // The sheet rides up with the keyboard: tapped once it has settled.
+        retrying { still(By.text("Save").enabled(true)).click() }
         assertTrue("the sheet closed once saved", device.wait(Until.gone(id("trip_dialog_name")), TIMEOUT_MS))
         need(By.text(RENAMED_TRIP))
 
-        retrying { need(id("trip_send")).click() }
+        tapUntil({ need(id("trip_send")) }) { device.hasObject(id("send_copy_email")) }
         need(id("send_copy_email")).text = "nobody@example.com"
-        retrying { need(By.text("Send").enabled(true)).click() }
+        retrying { still(By.text("Send").enabled(true)).click() }
         need(id("send_copy_status").textStartsWith("Sent to nobody@example.com"))
         need(By.desc("Close")).click()
         assertTrue("Close closed it", device.wait(Until.gone(id("send_copy_email")), TIMEOUT_MS))
+    }
+
+    /** The Private location editor is a sheet over the live map: with the keyboard up for Name,
+     *  Save stays above it, and Cancel closes it without saving. */
+    @Test
+    fun f_thePrivateLocationEditorKeepsSaveAboveTheKeyboard() {
+        signIn()
+        // You › Privacy › Add, as a person gets there.
+        tapUntil({ still(id("nav_you")) }) { device.hasObject(id("you_privacy")) }
+        retrying { need(id("you_privacy")).click() }
+        retrying { need(id("privacy_add")).click() }
+        retrying { need(id("private_editor_name")).click() }
+        expect("the keyboard up", waitUntil { keyboardShown() })
+        expect("Save above the keyboard", waitUntil { saveAboveKeyboard() })
+        // Cancel with the keyboard still up: Back would close the editor once it's down.
+        retrying { still(id("private_editor_cancel")).click() }
+        assertTrue("Cancel closed the editor", device.wait(Until.gone(id("private_editor")), TIMEOUT_MS))
+    }
+
+    /** Whether the editor's Save is wholly on screen above the keyboard, read in the app: UI
+     *  Automator sees a view the keyboard covers as on screen. An emulator with a hardware keyboard
+     *  shows only a floating bar, with no inset, so there Save needs only to be on screen. */
+    private fun saveAboveKeyboard(): Boolean {
+        var above = false
+        instrumentation.runOnMainSync {
+            val main = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                .filterIsInstance<MainActivity>().singleOrNull() ?: return@runOnMainSync
+            val save = main.findViewById<View>(R.id.private_editor_save)
+            val insets = ViewCompat.getRootWindowInsets(save) ?: return@runOnMainSync
+            val keyboard = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            val at = IntArray(2).also(save::getLocationOnScreen)
+            above = save.isShown && at[1] + save.height <= main.window.decorView.height - keyboard
+        }
+        return above
     }
 
     /** The map view's height in the app, read on its main thread: UI Automator sees only the
