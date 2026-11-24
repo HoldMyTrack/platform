@@ -192,10 +192,10 @@
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
-    <string name="settings_search_hint">Search</string>
-    <string name="settings_no_match">Nothing matches.</string>
 
     <string name="recording_name_hint">Name</string>
+    <!-- A picker sheet's ✕ (panel/PickerSheet.kt). -->
+    <string name="picker_close">Close</string>
     <string name="recording_type_hint">Track type</string>
     <string name="recording_description_hint">Description (optional)</string>
     <string name="recording_pause">Pause</string>
