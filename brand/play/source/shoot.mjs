@@ -60,11 +60,14 @@ const SHOTS = {
     await sleep(1500);
   },
   "03-fog-exact": async (locale) => {
-    // Satellite along every cleared street, Cleveland down to Brecksville.
-    await layers({ satellite: true, roads: true });
+    // Every cleared street from Cleveland down to Parma, the map plain under them.
+    await layers({ satellite: false, roads: false });
     await mode(FOG[locale].exact);
-    await pinch(...MAP, -1.34);
-    await drag(300, 600, 420, 871);
+    await pinch(...MAP, -0.46);
+    for (let i = 0; i < 3; i++) {
+      await drag(300, 500, 334, 587);
+      await sleep(600);
+    }
   },
   "04-trip": async () => {
     await layers({ satellite: true, roads: true });
@@ -72,6 +75,10 @@ const SHOTS = {
     await sleep(3000);
     await tapView("tour_next", { optional: true, timeout: 2000 });
     await scrollTo("trips_list", (v) => v.id === "trip_toggle" && v.desc === "Greater Cleveland trails", { towards: "start" });
+    // Left of the Trip's fit, Cleveland's rides in the middle: once the Trip's flight has landed.
+    await sleep(3000);
+    await drag(600, 760, -220, 0);
+    await sleep(1500);
   },
   "05-spots": async () => {
     await layers({ satellite: false, roads: true });
