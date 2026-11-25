@@ -11,6 +11,9 @@ public struct PrivateLocation: Equatable, Sendable {
     /// The server's bounds on a radius.
     public static let radiusRange = 50...2000
 
+    /// radiusM as an account reads it: metres, or whole feet for an imperial one.
+    public static func shown(radiusM: Int, imperial: Bool) -> Int { imperial ? Int((Double(radiusM) * 3.28084).rounded()) : radiusM }
+
     /// How much of a Privacy row's tile a circle of radiusM fills, 0 to 1: on a log scale from
     /// the smallest radius to the largest, so 50 m and 2 km both read (Android's
     /// CirclePreviewView).

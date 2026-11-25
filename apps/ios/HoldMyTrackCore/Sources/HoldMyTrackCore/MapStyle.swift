@@ -77,9 +77,12 @@ public enum TabMode {
         onTracksTab && !recording ? picked : .normal
     }
 
-    /// The groups a recording or the Sync tab hides: every track and the focused one's pace bands.
-    /// The Sync tab's own lines (SyncLines) are drawn instead.
-    public static func hiddenGroups(recording: Bool, syncing: Bool = false) -> Set<String> { recording || syncing ? ["tracks", "route-bands"] : [] }
+    /// The groups a recording or the Sync tab hides: every track and the focused one's pace bands,
+    /// the Sync tab's own lines (SyncLines) being drawn instead. A route being edited hides the
+    /// places.
+    public static func hiddenGroups(recording: Bool, syncing: Bool = false, editingRoute: Bool = false) -> Set<String> {
+        Set(recording || syncing ? ["tracks", "route-bands"] : []).union(editingRoute ? [Spots.group] : [])
+    }
 }
 
 /// What the app decides about the map; the rest is the documents'.

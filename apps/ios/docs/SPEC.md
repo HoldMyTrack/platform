@@ -32,7 +32,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 
 ### FR-1.5 Settings
 
-- Avatar: the page's file input, which iOS answers with its own photo picker, camera or Files.
+- Avatar: the page's file input, which iOS answers with its own photo picker, camera or Files. The picked image is shrunk as on Android; one the page can't decode goes as picked.
 - Language is the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11); the page's Language sets only the account's.
 
 ### FR-1.7 Privacy
