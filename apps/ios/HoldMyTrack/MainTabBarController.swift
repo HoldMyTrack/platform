@@ -65,19 +65,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         tabBar.backgroundColor = UIColor(resource: .surface)
         sync.tabBarItem.accessibilityIdentifier = "tabLibrary"
         sync.delegate = self
-        syncPanel.onEvent = { [weak self, weak sync, weak map, weak libraryHost] event in
-            guard let self, let sync else { return }
+        syncPanel.onEvent = { [weak self, weak map, weak libraryHost] event in
+            guard let self else { return }
             switch event {
             case .library: libraryHost?.switchTo(.library)
-            case .upload: sync.pushViewController(UploadViewController(api: flow.api), animated: true)
-            case .history:
-                let page = WebPageViewController(flow: flow, page: .syncHistory)
-                page.onViewOnMap = { [weak self, weak map] track, day in
-                    guard let self, let map, let mapHost = self.viewControllers?.first else { return }
-                    self.selectedViewController = mapHost
-                    map.viewOnMap(track: track, day: day)
-                }
-                sync.pushViewController(page, animated: true)
+            case .upload: self.presentUpload()
             case .lines(let tracks, let highlight):
                 map?.drawSyncLines(tracks, highlight: highlight)
             case .frame(let box):
@@ -93,12 +85,15 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             }
         }
         home.onTour = { [weak self] in self?.tour.request() }
-        home.onOpenSync = { [weak self] in self?.openSync() }
         home.tileVersion = { [weak map] in map?.pair?.layers.tileVersion ?? "" }
         map.onHistoryKnown = { [weak self] any in self?.tour.historyKnown(any) }
         map.onModePicked = { [weak self] mode in self?.tour.notice(.mode(mode)) }
         map.onMapFreed = { [weak self] in self?.tour.mapFreed() }
         map.onWaiting = { [weak trips] count in trips?.tabBarItem.badgeValue = count > 0 ? "\(count)" : nil }
+        NotificationCenter.default.addObserver(forName: RecordingsSync.changed, object: recordings, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.countWaiting() }
+        }
+        countWaiting()
         map.onWantsSync = { [weak self] in self?.openSync() }
         map.onOpenTrack = { [weak self, weak map] track, day in
             guard let self, let map, let mapHost = self.viewControllers?.first else { return }
@@ -383,7 +378,14 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private var libraryNav: UINavigationController? { viewControllers?[3] as? UINavigationController }
     private var libraryHost: MapHostViewController? { libraryNav?.viewControllers.first as? MapHostViewController }
 
-    /// Sync, in Library's place: the empty map's pointer, Library's + and You's Sync row.
+    /// Library counts the recordings waiting to be sent, on its item and beside its +.
+    private func countWaiting() {
+        let waiting = SyncList.waiting(recordings.all, isDemo: account.isDemo)
+        libraryNav?.tabBarItem.badgeValue = waiting > 0 ? "\(waiting)" : nil
+        map.syncWaiting = waiting
+    }
+
+    /// Sync, in Library's place: the empty map's pointer and Library's +.
     private func openSync() {
         guard let nav = libraryNav else { return }
         nav.popToRootViewController(animated: false)
@@ -421,9 +423,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     }
 
     /// Files opened or shared from another app: Upload over Sync, in Library's place, for an
-    /// account that can; Back from Upload lands on Sync.
+    /// account that can; closing Upload leaves Sync.
     func upload(_ files: [URL]) {
         guard let sync = libraryNav else { return }
+        sync.popToRootViewController(animated: false)
         libraryHost?.switchTo(.sync)
         selectedViewController = sync
         guard !account.isDemo else {
@@ -431,8 +434,14 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             return
         }
         Uploads.shared.share(files)
-        guard !(sync.topViewController is UploadViewController) else { return }
-        sync.popToRootViewController(animated: false)
-        sync.pushViewController(UploadViewController(api: flow.api), animated: true)
+        presentUpload()
+    }
+
+    /// Upload as a sheet over what shows, unless it's up already.
+    private func presentUpload() {
+        var top: UIViewController = self
+        while let presented = top.presentedViewController, !presented.isBeingDismissed { top = presented }
+        if (top as? UINavigationController)?.viewControllers.first is UploadViewController { return }
+        top.present(UploadViewController.sheet(api: flow.api), animated: true)
     }
 }

@@ -11,7 +11,7 @@ public enum WebRoute: Equatable, Sendable {
     case close
     /// The first run's save reached the map: the session is read before the map opens.
     case onboarded
-    /// Sync history's View on map.
+    /// A link to a track on the map, the web's Sync page's View on map.
     case viewOnMap(track: String, day: String)
 
     /// The route for a link of scheme, authority and path, with the map's track and day query

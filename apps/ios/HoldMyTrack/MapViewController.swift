@@ -73,6 +73,11 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var tracksPanel: TracksPanel!
     var tripsPanel: TripsPanel!
     var libraryPanel: LibraryPanel!
+    /// The recordings waiting to be sent, beside Library's +; held here, since the tab bar counts
+    /// them before the panel is built.
+    var syncWaiting = 0 {
+        didSet { libraryPanel?.setSyncWaiting(syncWaiting) }
+    }
     /// The Sync tab's sheet, handed in by the tab bar, which owns the recordings it lists.
     var syncPanel: SyncPanel?
     /// The Sync tab's routes, simplified and banded once each (SyncLines.Shape), and what was

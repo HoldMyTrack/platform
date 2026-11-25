@@ -234,7 +234,7 @@ The Android app records GPS-only tracks on the phone and sends each one the user
 
 ### FR-3.7 The Sync page
 
-`/sync` is the iOS app's Sync history; the web and Android don't link it. It lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed.
+`/sync` is Sync history for app releases from before Library; the web and the apps don't link it. It lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed.
 
 ### FR-3.8 A track's own timezone
 
