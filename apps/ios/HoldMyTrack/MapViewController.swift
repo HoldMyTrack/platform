@@ -143,9 +143,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var onHistoryKnown: ((Bool) -> Void)?
     /// The Edit window or the Private location editor gave the map back (tourBlocked).
     var onMapFreed: (() -> Void)?
-    /// Whether each account (AccountKey) has any track, as its first framing found, for a later
-    /// signed-in screen in the same app session, which doesn't frame again.
-    static var hasTracks: [String: Bool] = [:]
+    /// Whether the account has any track, as the first framing found; nil until then.
+    var hasTracks: Bool?
     /// A recording runs: the map shows only it (MapViewController+Recording).
     var recordingLive = false
     /// Whether the camera has flown to this recording's first fix; later fixes only pan.
@@ -167,8 +166,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Find my location was tapped and waits on the prompt or the first position.
     private var locating = false
 
-    /// The first framing happens once per app session, not on every return to the map.
-    static var framed: Set<String> = []
+    /// The first framing happens once per sign-in, not on every return to the map.
+    var framed = false
 
     var format: PanelFormat { PanelFormat(account: account) }
 
@@ -216,18 +215,32 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             self.exportLookChanged()
         }
         location.delegate = self
+        // iOS calls no viewDidAppear as the app comes back to the front.
+        NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.viewIfLoaded?.window != nil else { return }
+                self.returned()
+            }
+        }
         load()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        checkCoverage()
         countSatelliteWait(onScreen: true)
+        returned()
+    }
+
+    /// The map is back, from another tab, the background or Upload over it: what may have changed
+    /// meanwhile is read again (apps/android/docs/SPEC.md FR-2.2, FR-2.3, FR-2.7, FR-2.8).
+    func returned() {
+        checkCoverage()
         loadCaptures()
         openOnce()
         loadHistory()
         loadList()
-        if panelTab != .trips { tripsPanel.refreshCount() }
+        tripsPanel.reloadOpen()
+        tripsPanel.refreshCount()
     }
 
     override func viewDidLayoutSubviews() {

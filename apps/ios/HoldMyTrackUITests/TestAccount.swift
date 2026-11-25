@@ -26,6 +26,12 @@ final class TestAccount {
     /// A sample file's bytes, from the dev stack.
     func sample(_ name: String) throws -> Data { try get("/static/testing/\(name)") }
 
+    /// Uploads a sample file behind the app's back, as the web would, and waits for its track.
+    func add(_ name: String) throws {
+        try upload(name, data: try sample(name))
+        try settle(count: ids.count + 1)
+    }
+
     /// How many tracks the account has, Pending ones included; throws when the server doesn't
     /// answer with a list.
     func trackCount() throws -> Int {
