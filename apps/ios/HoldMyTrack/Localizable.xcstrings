@@ -418,6 +418,80 @@
         }
       }
     },
+    "import.failedTitle" : {
+      "comment" : "The failed-imports alert's title; the number is how many it lists.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "An import couldn't be added"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg imports couldn't be added"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg импорт не удалось добавить"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg импорта не удалось добавить"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg импортов не удалось добавить"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg импорта не удалось добавить"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "More" : {
       "comment" : "Tracks tab: the selection bar's ⋯, before it names a target.",
       "localizations" : {
@@ -11084,13 +11158,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A recording couldn't be added. It's back on the Sync tab; Sync history says why."
+            "value" : "A recording couldn't be added: something went wrong on our side. It's back on the Sync tab to try again."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Запись не удалось добавить. Она снова на вкладке «Синхр.», а причина — в истории синхронизации."
+            "value" : "Запись не удалось добавить: что-то пошло не так на нашей стороне. Она снова на вкладке «Синхр.», можно попробовать ещё раз."
           }
         }
       }
@@ -11390,13 +11464,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Couldn't add %1$@ %2$@ — Sync history says why. It's back on the list."
+            "value" : "Couldn't add %1$@ %2$@: something went wrong on our side. It's back on the list to try again."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось добавить %1$@ %2$@ — причина в истории синхронизации. Тренировка снова в списке."
+            "value" : "Не удалось добавить %1$@ %2$@: что-то пошло не так на нашей стороне. Тренировка снова в списке, можно попробовать ещё раз."
           }
         }
       }

@@ -77,6 +77,10 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 ## 5. FR-3 — Sync and Imports
 
+### FR-3.4 Imports that failed
+
+- The alert for imports that failed on the server's side is the Android app's (`apps/android/docs/SPEC.md` FR-3.4), checked whenever the app comes to the front on any tab and when a sent recording fails.
+
 ### FR-3.6 Upload
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-3.6), except as below.

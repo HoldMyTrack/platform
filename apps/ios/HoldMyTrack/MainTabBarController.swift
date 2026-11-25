@@ -16,6 +16,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private let recorder: RecordingController
     /// The recordings on the phone and their sending, followed on every tab.
     private let recordings: RecordingsSync
+    /// Imports that failed on the server's side, shown as they're found (ImportFailureAlert).
+    private let importFailures: ImportFailureAlert
     private let recordButton = RecordButton()
     /// Whether the leftover check has run for this screen, once on its first appearance.
     private var leftoverChecked = false
@@ -32,6 +34,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         self.account = account
         recorder = RecordingController(account: AccountKey.of(email: account.email, isDemo: account.isDemo))
         recordings = RecordingsSync(api: flow.api, account: AccountKey.of(email: account.email, isDemo: account.isDemo), isDemo: account.isDemo)
+        importFailures = ImportFailureAlert(api: flow.api, enabled: !account.isDemo)
         self.flow = flow
         super.init(nibName: nil, bundle: nil)
         delegate = self
@@ -117,6 +120,12 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         NotificationCenter.default.addObserver(forName: RecordingResume.asked, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.checkLeftover() }
         }
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.viewIfLoaded?.window != nil else { return }
+                self.importFailures.check(over: self)
+            }
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -125,6 +134,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             leftoverChecked = true
             checkLeftover()
         }
+        importFailures.check(over: self)
     }
 
     /// What a crash or a swipe left: resumed for the notification's tap, else asked about. A
@@ -217,7 +227,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         recorder.onSaved = { [weak self] track in self?.openRecording(track) }
         recordings.onLanded = { [weak self] in self?.map.recordingLanded() }
         recordings.onFailed = { [weak self] in
-            self?.map.say(String(localized: "sync.failed", defaultValue: "A recording couldn't be added. It's back on the Sync tab; Sync history says why.", comment: "Sync: a sent recording's ingest failed."))
+            guard let self else { return }
+            self.map.say(String(localized: "sync.failed", defaultValue: "A recording couldn't be added: something went wrong on our side. It's back on the Sync tab to try again.",
+                                comment: "Sync: a sent recording's ingest failed."))
+            // The server's reason for it, and for any upload that failed meanwhile.
+            self.importFailures.check(over: self)
         }
     }
 

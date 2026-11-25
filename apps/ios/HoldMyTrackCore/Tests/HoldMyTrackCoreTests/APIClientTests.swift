@@ -401,6 +401,27 @@ struct APIClientTests {
         }
     }
 
+    @Test func importFailuresAreReadAndDismissedOneByOne() async throws {
+        StubProtocol.answer = { request in
+            #expect(request.url?.path == "/v2/uploads/active")
+            return .init(body: self.json(["imports": [], "unseen_failures": 2, "failures": [
+                ["id": 7, "title": "ride.fit", "reason": "Something went wrong on our side.", "finished_at": "2026-11-24T10:00:00Z"],
+                ["id": 5, "title": "Walk, 3 Nov", "reason": "Try again later.", "finished_at": "2026-11-23T10:00:00Z"],
+            ]]))
+        }
+        let failures = try await client().importFailures()
+        #expect(failures == [ImportFailure(id: 7, title: "ride.fit", reason: "Something went wrong on our side."),
+                             ImportFailure(id: 5, title: "Walk, 3 Nov", reason: "Try again later.")])
+        #expect(ImportFailure.message(failures) == "ride.fit: Something went wrong on our side.\n\nWalk, 3 Nov: Try again later.")
+        StubProtocol.answer = { request in
+            #expect(request.httpMethod == "POST")
+            #expect(request.url?.path == "/v2/uploads/seen")
+            #expect(String(data: request.httpBody ?? Data(), encoding: .utf8) == #"{"id":7}"#)
+            return .init(status: 204)
+        }
+        try await client().dismissImportFailure(7)
+    }
+
     @Test func oneTrackIsReadInFull() async throws {
         let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "track_type": "walking", "name": "Walk",
                                   "distance_meters": 1200.5, "moving_seconds": 600, "duration_seconds": 700, "description": "Along the river",
