@@ -24,7 +24,7 @@ final class SitePageTests: XCTestCase {
         XCTAssertTrue(app.cells["youSettings"].waitForExistence(timeout: 5))
 
         // Sync history is a row of the Sync tab.
-        app.tabBars.buttons["tabSync"].tap()
+        app.openSync()
         app.cells["syncHistory"].tap()
         XCTAssertTrue(app.webViews["webPage"].waitForExistence(timeout: 10))
     }
@@ -62,7 +62,7 @@ final class SitePageTests: XCTestCase {
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
-        app.tabBars.buttons["tabSync"].tap()
+        app.openSync()
         app.cells["syncHistory"].tap()
         let link = app.webViews["webPage"].links["View on map"].firstMatch
         XCTAssertTrue(link.waitForExistence(timeout: 15))

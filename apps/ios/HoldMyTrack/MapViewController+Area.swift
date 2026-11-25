@@ -129,15 +129,7 @@ extension MapViewController {
     }
 
     func renderDates() {
-        let format = { (day: String) in DateFilter.short(day, today: self.today, locale: .current) }
-        let text = switch session.dates.label {
-        case .all: String(localized: "Dates")
-        case let .between(a, b): String(localized: "\(format(a)) – \(format(b))", comment: "Dates: both ends set.")
-        // Its own key: "From %@" is a Trip copy's sender, which Russian words differently.
-        case let .after(a): String(localized: "dates.from", defaultValue: "From \(format(a))", comment: "Dates: only the first day set.")
-        case let .before(b): String(localized: "Until \(format(b))")
-        }
-        tracksPanel.setDates(text, set: session.dates != .allTime)
+        tracksPanel.setDates(session.dates.buttonText(today: today), set: session.dates != .allTime)
     }
 
     /// Setting Dates moves the camera once onto what they match, wherever it is, asked for without
@@ -172,5 +164,19 @@ extension MapViewController {
         if tracksVersion > 0 { parts.append("v=\(tracksVersion)") }
         state.queries["tracks"] = parts.joined(separator: "&")
         render()
+    }
+}
+
+extension DateFilter {
+    /// The Dates button's words, the Tracks tab's and Library's: "Dates", or the days set.
+    func buttonText(today: String) -> String {
+        let format = { (day: String) in DateFilter.short(day, today: today, locale: .current) }
+        return switch label {
+        case .all: String(localized: "Dates")
+        case let .between(a, b): String(localized: "\(format(a)) – \(format(b))", comment: "Dates: both ends set.")
+        // Its own key: "From %@" is a Trip copy's sender, which Russian words differently.
+        case let .after(a): String(localized: "dates.from", defaultValue: "From \(format(a))", comment: "Dates: only the first day set.")
+        case let .before(b): String(localized: "Until \(format(b))")
+        }
     }
 }

@@ -88,7 +88,7 @@ final class RecordingTests: XCTestCase {
         name.typeText("Test walk")
         app.buttons["recordingSave"].tap()
         XCTAssertTrue(app.staticTexts["Recording saved. It will appear on the map after you sync."].waitForExistence(timeout: 5))
-        app.tabBars.buttons["tabSync"].tap()
+        app.openSync()
         let row = app.cells.matching(identifier: "recordingRow").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         XCTAssertTrue(row.staticTexts["Test walk"].exists, "listed by its name")
@@ -110,7 +110,7 @@ final class RecordingTests: XCTestCase {
         app.buttons["syncSelectAll"].tap()
         XCTAssertEqual(app.buttons["syncSend"].label, "Sync 1")
         app.tabBars.buttons["tabYou"].tap()
-        app.tabBars.buttons["tabSync"].tap()
+        app.openSync()
         XCTAssertEqual(app.buttons["syncSend"].label, "Sync", "a fresh tab ticks nothing")
 
         // Select all ticks it; sent, it's on its way, then on the map and off the phone.
@@ -179,7 +179,7 @@ final class RecordingTests: XCTestCase {
         let cancel = app.navigationBars.buttons["Cancel"]
         XCTAssertTrue(cancel.waitForExistence(timeout: 5))
         cancel.tap()
-        app.tabBars.buttons["tabSync"].tap()
+        app.openSync()
         let row = app.cells.matching(identifier: "recordingRow").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.buttons["recordingDelete"].tap()

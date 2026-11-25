@@ -21,9 +21,9 @@ public enum MapChrome {
         empty && !demo && !closed
     }
 
-    /// Whether the empty and capped notices show: they step aside while recording and on the Sync
-    /// tab, whose lists aren't the area's; failures stay up.
-    public static func areaNoticesShown(recording: Bool, onSync: Bool) -> Bool { !recording && !onSync }
+    /// Whether the empty and capped notices show: they step aside while recording and on Library
+    /// and its Sync, whose lists aren't the area's; failures stay up.
+    public static func areaNoticesShown(recording: Bool, onLibrary: Bool) -> Bool { !recording && !onLibrary }
 
     /// The Layers button: Roads and each path picked; places have their own button.
     public static func layers(_ state: MapState) -> RailLook {
@@ -43,11 +43,11 @@ public enum MapChrome {
         onTracksTab && !recording && !editOpen && !selectionShown
     }
 
-    /// The sheet: Normal mode's, and the Sync tab's even while recording, so what's on the phone
-    /// can be sent mid-walk; hidden while the Edit window or the Private location editor is open,
-    /// so the map above the Edit sheet stays clear.
-    public static func sheetShown(normal: Bool, recording: Bool, onSync: Bool, editing: Bool) -> Bool {
-        normal && (!recording || onSync) && !editing
+    /// The sheet: Normal mode's, and Library's and its Sync's even while recording, so what's on
+    /// the phone can be sent mid-walk; hidden while the Edit window or the Private location editor
+    /// is open, so the map above the Edit sheet stays clear.
+    public static func sheetShown(normal: Bool, recording: Bool, onLibrary: Bool, editing: Bool) -> Bool {
+        normal && (!recording || onLibrary) && !editing
     }
 
     /// A flight a list or Dates asked for, taken unless a recording is live: the recording owns the

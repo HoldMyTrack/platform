@@ -14,7 +14,7 @@ What the iOS app does, as a user can rely on it: where it differs from the Andro
 
 ### 1.2 Scope
 
-Every built feature of the app: so far signing in and out, email verification, the first run, the Update screen, the map and its Tracks and Trips panel, the site's pages, the You tab, Privacy, deleting the account, and Upload.
+Every built feature of the app: so far signing in and out, email verification, the first run, the Update screen, the map and its Tracks and Trips panel, Library, the site's pages, the You tab, Privacy, deleting the account, and Upload.
 
 ## 3. FR-1 — Authentication & Session
 
@@ -63,7 +63,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 ### FR-2.9 The bottom bar
 
-- Tracks, Trips, the record button, Sync and You. Sync's sheet lists the recordings on the phone (FR-5.2) and leads to Upload and Sync history, the web's `/sync` page.
+- Tracks, Trips, the record button, Library (FR-4.1) and You. Sync's sheet, opened from Library's head, lists the recordings on the phone (FR-5.2) and leads to Upload and Sync history, the web's `/sync` page; ‹ or a tap on Library goes back to Library.
 - You's Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). Settings › Sync lists only the record button until HealthKit sync (`ROADMAP.md`, 7c).
 
 ### FR-2.10 Photos
@@ -87,6 +87,15 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-3.6), except as below.
 
 - Files come from the document picker, or are opened in HoldMyTrack from Files or another app's share sheet.
 - Files go on even after the app is left, sent by iOS one at a time. Imports still running show on the Upload screen.
+
+## 6. FR-4 — Library
+
+### FR-4.1 Library
+
+As the Android app's (`apps/android/docs/SPEC.md` FR-4.1), except as below.
+
+- Download hands the file to the share sheet, whose Save to Files keeps it.
+- Library's sheet stays while recording, so Sync can be reached mid-walk.
 
 ## 7. FR-5 — In-App GPS Recording
 
