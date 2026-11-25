@@ -50,12 +50,13 @@ const SHOTS = {
     await sleep(1500);
   },
   "02-fog": async (locale) => {
-    await layers({ satellite: false, roads: false });
+    // Satellite under the cleared towns, Cleveland to Akron, Kent's popup open.
+    await layers({ satellite: true, roads: true });
     await mode(FOG[locale].city);
-    await pinch(...MAP, -2.2);
-    await drag(...MAP, 53, 235);
+    await pinch(...MAP, -3.0);
+    await drag(800, 1000, -610, -50);
     await sleep(1500);
-    await tap(615, 840); // Bedford
+    await tap(770, 1160); // Kent
     await sleep(1500);
   },
   "03-fog-exact": async (locale) => {
