@@ -13,13 +13,40 @@ object RecordingSendRules {
     fun sends(signedIn: Boolean, emailVerified: Boolean, demo: Boolean): Boolean = signedIn && emailVerified && !demo
 
     /** Of the unsent recordings' [keys], those to send now: none on their way already, none swiped
-     *  aside ([hidden]), none whose Delete is being asked about ([held]), and none the server refused this session unless the user asked again ([retry]), so a refusal isn't
-     *  sent on every return to the app. */
-    fun toSend(keys: List<String>, onItsWay: Set<String>, hidden: Set<String>, held: Set<String>, refused: Set<String>, retry: Boolean): List<String> =
-        keys.filter { it !in onItsWay && it !in hidden && it !in held && (retry || it !in refused) }
+     *  aside ([hidden]), none whose Delete is being asked about ([held]), and none the server
+     *  refused this session unless the user asked again ([retry]), so a refusal isn't sent on every
+     *  return to the app. Those whose last request failed ([setBack], the latest last) go last
+     *  in that order, or one that stops every send would keep the rest on the phone. */
+    fun toSend(
+        keys: List<String>,
+        onItsWay: Set<String>,
+        hidden: Set<String>,
+        held: Set<String>,
+        refused: Set<String>,
+        setBack: List<String>,
+        retry: Boolean,
+    ): List<String> {
+        val going = keys.filter { it !in onItsWay && it !in hidden && it !in held && (retry || it !in refused) }
+        return going.filter { it !in setBack } + setBack.filter { it in going }
+    }
 
-    /** Whether Delete may remove the phone's copy: one sent lands whatever the phone keeps. */
-    fun deletable(sending: Boolean, onItsWay: Boolean): Boolean = !sending && !onItsWay
+    /** What Delete does with a recording, as the phone has it when the question is answered. */
+    enum class Deletion {
+        DELETED,
+
+        /** Being sent or on its way: it lands whatever the phone keeps. */
+        SENDING,
+
+        /** Off the phone already, on the map. */
+        LANDED,
+    }
+
+    /** [landed], whether the app saw it land: a missing copy may be one deleted already. */
+    fun deletion(stored: Boolean, going: Boolean, landed: Boolean): Deletion = when {
+        going -> Deletion.SENDING
+        !stored && landed -> Deletion.LANDED
+        else -> Deletion.DELETED
+    }
 
     /** Of the unsent recordings' [keys], how many wait to be sent: none swiped aside. */
     fun unsent(keys: List<String>, hidden: Set<String>): Int = keys.count { it !in hidden }
@@ -36,17 +63,20 @@ object RecordingSendRules {
         REFUSE,
     }
 
+    /** Whether [e] says nothing from the server: the recording's fault, too long to upload or to
+     *  handle, or the connection's. */
+    fun unanswered(e: Exception): Boolean = if (e is ApiException) e.code in setOf(408, 502, 504) else e is IOException
+
     /** Only a failure every recording would meet stops the send, or one the server can't take
      *  would keep all those after it on the phone; only an answer about the recording itself
-     *  refuses it. A request with no answer may be this recording's, too long to upload, or the
-     *  connection's: a second in one send ([unanswered] before it) says it's the connection. */
-    fun failure(e: Exception, unanswered: Int): Failure = when {
+     *  refuses it. Two in a row with no answer ([afterUnanswered]) say it's the connection. */
+    fun failure(e: Exception, afterUnanswered: Boolean): Failure = when {
+        unanswered(e) -> if (afterUnanswered) Failure.STOP else Failure.NEXT
         e is ApiException -> when (e.code) {
             400, 413, 422 -> Failure.REFUSE
-            408, 500 -> Failure.NEXT
+            500 -> Failure.NEXT
             else -> Failure.STOP
         }
-        e is IOException -> if (unanswered == 0) Failure.NEXT else Failure.STOP
         // An answer the app can't read.
         else -> Failure.NEXT
     }
