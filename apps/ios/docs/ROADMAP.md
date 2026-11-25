@@ -137,14 +137,14 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 6 — The site's pages
 
-`apps/android/docs/SPEC.md` FR-1.5, FR-1.6, the Sync history page and About (ADR-0042, root `docs/IMPLEMENTATION.md` §4.19).
+`apps/android/docs/SPEC.md` FR-1.5, FR-1.6 and About (ADR-0042, root `docs/IMPLEMENTATION.md` §4.19).
 
 - [x] **6.1 `WKWebView` signed in**
   - Set the session cookie and `hmt_app=ios` in the web view's `WKHTTPCookieStore` before the first load. Where a link goes is the `webPageRoute` rule (`testdata/client-rules/web-page-route.json`), shared with Android. Read the session again on leaving a page, since a page may change units, the name or the language.
   - Done when: the rule's cases pass, and saving Settings changes the map's units on return. Built, and checked against a dev stack with the app at the web's dev server (`docs/DEVELOPMENT.md`): a saved name shows on return, and a Country changed while the page shows changes the map's units when it closes. A Country picked and saved by hand changes the units on return, whether the page is left by Back or by another tab.
-- [ ] **6.2 Settings, Profile, Sync history, About**
-  - First run: a verified account with no Country opens Settings, and only saving gets past it. The avatar uses the page's file input, which iOS answers with its own photo picker. Sync history's View on map opens the native map on that track.
-  - Done when: each page works offline with an error and Try again, and in both languages and themes. Built, with the first-run gate and View on map checked against a dev stack; left: offline, both languages and themes, and the avatar's upload.
+- [ ] **6.2 Settings, Profile, About**
+  - First run: a verified account with no Country opens Settings, and only saving gets past it. The avatar uses the page's file input, which iOS answers with its own photo picker.
+  - Done when: each page works offline with an error and Try again, and in both languages and themes. Built, with the first-run gate checked against a dev stack; left: offline, both languages and themes, and the avatar's upload.
 
 ## Phase 7a — The map
 
@@ -181,8 +181,8 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 `apps/android/docs/SPEC.md` FR-3.1–FR-3.5, with HealthKit in Health Connect's place. Go only on phase 1's result. The gate rule holds: nothing ticked, nothing sent unasked, nothing guessed (ADR-0039).
 
-- [ ] **7c.1 Settings › Sync and access**
-  - A switch per account, off at first. Turning it on asks for workouts and workout routes and nothing else; never heart rate or any other body signal (ADR-0017). `NSHealthShareUsageDescription` says only the routes are read, with its Russian in an `InfoPlist.xcstrings` the Check translations build phase is given.
+- [ ] **7c.1 HealthKit access**
+  - Reached from Sync's head, as Android's Health Connect access is (`apps/android/docs/SPEC.md` FR-3.1). A switch per account, off at first. Turning it on asks for workouts and workout routes and nothing else; never heart rate or any other body signal (ADR-0017). `NSHealthShareUsageDescription` says only the routes are read, with its Russian in an `InfoPlist.xcstrings` the Check translations build phase is given.
   - Readiness differs from Android's six states: HealthKit never says whether reading was denied. States: unavailable, not yet asked, asked. When asked and nothing is found, the list says where to check access (Settings › Health › Data Access & Devices).
   - The privacy policy, `docs/DPIA.md`, Help and `PrivacyInfo.xcprivacy` name HealthKit and what is read from it.
   - Done when: the readiness rule is a pure function with tests, and no health type beyond the two is in the entitlement or the request.
@@ -222,11 +222,11 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 `apps/android/docs/SPEC.md` FR-1.7, FR-2.9 and FR-3.6.
 
-- [ ] **7e.1 You tab**: account card, theme (kept on the phone), Language (D11), About in the app, Help and Contacts in the browser, the version and commit. No Donate: App Review allows payment links only through Apple's purchase system, with exceptions to recheck before relying on one. Done when: it matches Android's tab apart from Language. Built; Settings › Sync lists the record button, and HealthKit joins it with 7c.
+- [ ] **7e.1 You tab**: account card, theme (kept on the phone), Language (D11), About in the app, Help and Contacts in the browser, the version and commit. No Donate: App Review allows payment links only through Apple's purchase system, with exceptions to recheck before relying on one. Done when: it matches Android's tab apart from Language. Built.
 - [ ] **7e.2 Privacy**: Private locations, Download your data saved through the share sheet or Files, the privacy policy. Done when: an archive downloads and opens in Files. Built; left: an archive saved to Files and opened.
 - [ ] **7e.3 Delete account**: confirmed by typing the email; on success the phone deletes that account's recordings, hidden rows, HealthKit switch and last Load, then signs out. Done when: a deleted account leaves nothing on the phone, and an Apple-linked one is revoked (2.2). Built, and a deleted account signs out against a dev stack; left: an Apple-linked account on production.
 - [ ] **7e.4 Upload**: `.gpx`, `.fit` and `.tcx` declared as document types the app opens, picked in the document picker or shared from Files and other apps, sent one at a time on a background `URLSession` so they carry on when the screen is left. The web's limits apply (`apps/android/docs/SPEC.md` FR-3.6). Done when: a file opened from Files and one shared from another app both import. Built, and an opened file imports against a dev stack; left: from Files and a share sheet on a device.
-- [ ] **7e.5 Library**: Library as a tab with Sync in its head, Upload heading Sync, the failed-imports alert in place of Sync history, and Download in Library and the Tracks panel's selection bar (`apps/android/docs/SPEC.md` FR-2.7, FR-2.9, FR-3.5, FR-4.1). Done when: a track found in Library opens focused on the map, and Checked tracks download as a zip. Built: Library's rules, `downloadBlock` and `attachmentName` in `HoldMyTrackCore`, with the paged `GET /v2/tracks` and `GET /v2/tracks/gpx`; Download in the selection bar's ⋯; the failed-imports alert; Library as a tab, with Sync from its +. Left: Upload as a sheet heading Sync, no Sync history or Settings › Sync, and Library's count of recordings waiting.
+- [x] **7e.5 Library**: Library as a tab with Sync in its head, Upload heading Sync, the failed-imports alert in place of Sync history, and Download in Library and the Tracks panel's selection bar (`apps/android/docs/SPEC.md` FR-2.7, FR-2.9, FR-3.5, FR-4.1). Done when: a track found in Library opens focused on the map, and Checked tracks download as a zip.
 
 ## Phase 8 — App Store preparation
 

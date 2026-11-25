@@ -4,7 +4,7 @@ import UIKit
 import WebKit
 
 /// One of the site's own pages in the app (root docs/SPEC.md FR-9.6, ADR-0042): Settings, a new
-/// account's first run included, Track graph & trends, Sync history and About. The server
+/// account's first run included, Track graph & trends and About. The server
 /// renders a page for the app when it carries the `hmt_app` cookie; this screen hands the web view
 /// the session as the cookie a browser would hold (apps/ios/docs/IMPLEMENTATION.md §1.4).
 ///
@@ -17,8 +17,6 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
     private unowned let flow: AppFlow
     let page: SitePage
     private let onboarding: Bool
-    /// Sync history's View on map; the map takes it from there.
-    var onViewOnMap: ((_ track: String, _ day: String) -> Void)?
 
     private var web: WKWebView!
     private let spinner = UIActivityIndicatorView(style: .medium)
@@ -48,7 +46,6 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
         switch page {
         case .settings: String(localized: "Settings")
         case .profile: String(localized: "Track graph & trends")
-        case .syncHistory: String(localized: "Sync history")
         case .about: String(localized: "About")
         }
     }
@@ -152,11 +149,11 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
         case .close:
             leaving = true
             close()
-        case .viewOnMap(let track, let day):
+        // Only the web's Sync page links a track to the map, and the app shows it no more: such a
+        // link closes the page, as the plain map does.
+        case .viewOnMap:
             leaving = true
-            onViewOnMap?(track, day)
-            if navigationController?.viewControllers.first !== self { close() }
-            leaving = false
+            close()
         // The map gates on a Country only the server has heard of: the session is read first.
         case .onboarded:
             leaving = true

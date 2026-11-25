@@ -8,7 +8,7 @@ import Testing
 struct WebPageTests {
     private let base = URL(string: "http://localhost:8081")!
 
-    private func route(_ link: String, _ page: SitePage = .syncHistory, onboarding: Bool = false) -> WebRoute {
+    private func route(_ link: String, _ page: SitePage = .profile, onboarding: Bool = false) -> WebRoute {
         WebPageSession.route(URL(string: link)!, base: base, page: page, leaving: false, onboarding: onboarding)
     }
 
@@ -23,17 +23,17 @@ struct WebPageTests {
     }
 
     @Test func aLinkIsReadWithItsPortAndQuery() {
-        #expect(route("http://localhost:8081/sync?page=2") == .stay)
-        #expect(route("http://LOCALHOST:8081/sync") == .stay)
-        #expect(route("http://localhost:8080/sync") == .outside)
+        #expect(route("http://localhost:8081/profile?weeks=12") == .stay)
+        #expect(route("http://LOCALHOST:8081/profile") == .stay)
+        #expect(route("http://localhost:8080/profile") == .outside)
         #expect(route("http://localhost:8081/?track=a1&day=2026-10-01") == .viewOnMap(track: "a1", day: "2026-10-01"))
         #expect(route("http://localhost:8081", .settings, onboarding: true) == .onboarded)
         #expect(route("mailto:hello@holdmytrack.com") == .outside)
         #expect(route("http://localhost:8081/signin") == .close)
     }
 
-    @Test func onlyProfileAndSyncHistoryAreReadAgainOnReturn() {
-        #expect(SitePage.allCases.filter(\.refreshOnReturn) == [.profile, .syncHistory])
+    @Test func onlyProfileIsReadAgainOnReturn() {
+        #expect(SitePage.allCases.filter(\.refreshOnReturn) == [.profile])
     }
 
 }

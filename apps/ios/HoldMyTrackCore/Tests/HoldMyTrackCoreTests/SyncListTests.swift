@@ -16,6 +16,12 @@ struct SyncListTests {
         [track("old", hours: 0), track("new", hours: 2, type: "ride", meters: 5000), track("mid", hours: 1), track("away", hours: 3, sent: true)]
     }
 
+    @Test func libraryCountsWhatsNotSentYetAndNothingForTheDemo() {
+        #expect(SyncList.waiting(walks, isDemo: false) == 3, "the one on its way isn't waiting")
+        #expect(SyncList.waiting(walks, isDemo: true) == 0)
+        #expect(SyncList.waiting([], isDemo: false) == 0)
+    }
+
     @Test func newestFirstWithWhatsOnItsWayListedButNeverTickable() {
         let list = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: [])
         #expect(list.shown.map(\.id) == ["away", "new", "mid", "old"])

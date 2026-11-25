@@ -25,6 +25,12 @@ public struct SyncList: Equatable, Sendable {
     /// the similar-tracks hint never names a row the list doesn't show.
     public let comparable: [RecordedTrack]
 
+    /// What Library's badge and its + count (apps/android/docs/SPEC.md FR-2.9): the recordings on
+    /// the phone not sent yet, hidden or not; none for the demo account, which sends nothing.
+    public static func waiting(_ recordings: [RecordedTrack], isDemo: Bool) -> Int {
+        isDemo ? 0 : recordings.filter { !$0.sent }.count
+    }
+
     /// The list for recordings under the tab's choices. types is the chips picked; empty is
     /// every type. A type no longer listed is dropped from it (`pickedTypes`).
     public static func of(_ recordings: [RecordedTrack], hidden: Set<String>, showHidden: Bool, types: Set<String>, ticked: Set<String>,

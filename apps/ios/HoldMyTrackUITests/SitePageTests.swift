@@ -22,11 +22,6 @@ final class SitePageTests: XCTestCase {
         XCTAssertFalse(page.buttons["Sign in"].exists)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.cells["youSettings"].waitForExistence(timeout: 5))
-
-        // Sync history is a row of the Sync tab.
-        app.openSync()
-        app.cells["syncHistory"].tap()
-        XCTAssertTrue(app.webViews["webPage"].waitForExistence(timeout: 10))
     }
 
     /// A verified account with no Country opens on Settings, with no map behind it.
@@ -48,26 +43,5 @@ final class SitePageTests: XCTestCase {
         XCTAssertTrue(page.buttons["Save and continue"].exists)
         // Saving reaches the map only where the API is APP_BASE_URL's origin, which the stock dev
         // stack's isn't (docs/DEVELOPMENT.md), so the save itself isn't driven here.
-    }
-
-    /// Sync history's View on map opens the native map with that track focused, its day the
-    /// range when it was outside it.
-    @MainActor
-    func testViewOnMapFocusesTheTrack() throws {
-        let base = try LaunchTests.requireDevStack(self)
-        let account = try TestAccount(base: base, samples: ["west-side.gpx"])
-        defer { account.delete() }
-        let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
-        app.launch()
-        account.signIn(app)
-        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
-        app.openSync()
-        app.cells["syncHistory"].tap()
-        let link = app.webViews["webPage"].links["View on map"].firstMatch
-        XCTAssertTrue(link.waitForExistence(timeout: 15))
-        link.tap()
-        XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 15), "the track is focused on the map")
-        XCTAssertTrue(app.tabBars.buttons["tabTracks"].isSelected)
     }
 }

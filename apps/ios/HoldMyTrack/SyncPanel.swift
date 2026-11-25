@@ -1,11 +1,11 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The sheet's Sync tab, the tab bar's Sync (apps/android/docs/SPEC.md FR-3.5): every recording
-/// on this phone not on the map yet, newest first, the user's to choose. Nothing starts ticked,
-/// and only what's ticked and shown is sent. Type chips narrow the list and Select all ticks
+/// The sheet's Sync tab, opened from Library's head (apps/android/docs/SPEC.md FR-3.5): every
+/// recording on this phone not on the map yet, newest first, the user's to choose. Nothing starts
+/// ticked, and only what's ticked and shown is sent. Type chips narrow the list and Select all ticks
 /// what's shown; a row swiped aside is hidden, with Undo, and Show hidden brings it back. One sent
-/// stays listed, on its way, until it lands. Under the list, Upload files and Sync history. Which
+/// stays listed, on its way, until it lands. Upload heads it, beside its title. Which
 /// rows are offered is SyncList's. The rows are drawn dashed on the map (SyncLines), the first
 /// showing framed; a tap on a row or its line picks it out, and ⓘ says what else covers its time
 /// (SyncSimilar, and the server for the account's tracks).
@@ -14,8 +14,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
         /// ‹: Library again, in Sync's place.
         case library
+        /// Upload, over Sync as a sheet.
         case upload
-        case history
         /// A row hidden or back: said over the map, with Undo.
         case hid(String, undo: () -> Void)
         /// The rows to draw on the map, highlight picked out.
@@ -70,8 +70,6 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         case row(RecordedTrack)
         case note(String)
         case showHidden
-        case upload
-        case history
     }
     private var items: [Item] = []
 
@@ -89,7 +87,11 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         // Sync opens from Library's head (apps/android/docs/SPEC.md FR-4.1); ‹ goes back to it.
         let back = Controls.iconButton(UIImage(resource: .chevronLeft), label: String(localized: "sync.back", defaultValue: "Back to Library", comment: "Sync: the ‹ that goes back to Library."), id: "syncBack")
         back.addAction(UIAction { [weak self] _ in self?.onEvent?(.library) }, for: .primaryActionTriggered)
-        let title = UIStackView(arrangedSubviews: [back, Controls.label(String(localized: "Sync"), font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))])
+        // Upload heads the sheet, apart from Sync's own send (apps/android/docs/SPEC.md FR-3.5).
+        let upload = Controls.secondaryButton(String(localized: "Upload"), id: "syncUpload", icon: UIImage(resource: .upload))
+        upload.addAction(UIAction { [weak self] _ in self?.onEvent?(.upload) }, for: .primaryActionTriggered)
+        upload.isHidden = account.isDemo
+        let title = UIStackView(arrangedSubviews: [back, Controls.label(String(localized: "Sync"), font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink)), UIView(), upload])
         title.alignment = .center
         head.addArrangedSubview(title)
         head.addArrangedSubview(bar)
@@ -191,8 +193,6 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             items.append(.note(String(localized: "sync.listEmpty", defaultValue: "Nothing waiting. Recordings from the record button show up here.", comment: "Sync: nothing on the phone to send.")))
         }
         if list.hiddenCount > 0 || showHidden { items.append(.showHidden) }
-        if !account.isDemo { items.append(.upload) }
-        items.append(.history)
         self.items = items
         table.reloadData()
         renderBar()
@@ -468,18 +468,6 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             config.textProperties.color = UIColor(resource: .accent)
             cell.selectionStyle = .default
             cell.accessibilityIdentifier = "syncShowHidden"
-        case .upload:
-            (config.text, config.secondaryText, config.image) = (String(localized: "sync.uploadTitle", defaultValue: "Upload files", comment: "Sync: the Upload tile."),
-                                                                 String(localized: "sync.uploadSub", defaultValue: "GPX, FIT or TCX files", comment: "Sync: what Upload takes."), UIImage(resource: .upload))
-            cell.accessoryType = .disclosureIndicator
-            cell.selectionStyle = .default
-            cell.accessibilityIdentifier = "syncUpload"
-        case .history:
-            (config.text, config.secondaryText, config.image) = (String(localized: "Sync history"),
-                                                                 String(localized: "sync.historySub", defaultValue: "Every import and how it went", comment: "Sync: what Sync history shows."), UIImage(resource: .history))
-            cell.accessoryType = .disclosureIndicator
-            cell.selectionStyle = .default
-            cell.accessibilityIdentifier = "syncHistory"
         case .row, .filters: break
         }
         config.imageProperties.tintColor = UIColor(resource: .inkSecondary)
@@ -549,8 +537,6 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         case .showHidden:
             showHidden.toggle()
             render()
-        case .upload: onEvent?(.upload)
-        case .history: onEvent?(.history)
         case .notice, .note, .filters: break
         }
     }

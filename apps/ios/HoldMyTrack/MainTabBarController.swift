@@ -4,7 +4,7 @@ import UIKit
 /// The signed-in app: Tracks, Trips, the record button, Sync and You
 /// (apps/android/docs/SPEC.md FR-2.9), each tab keeping its state across a switch. Tracks, Trips
 /// and Sync are one map screen with its sheet on that tab (MapHostViewController); Sync's sits in
-/// a navigation controller, whose bar shows only for Upload and Sync history over it. Trips counts
+/// a navigation controller whose bar stays hidden, and Upload opens as a sheet over it. Trips counts
 /// copies waiting to be answered. The record button sits
 /// over an empty middle item, with the recording's status above it (RecordingController). The
 /// tour runs over all of it (TourController).
@@ -65,19 +65,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         tabBar.backgroundColor = UIColor(resource: .surface)
         sync.tabBarItem.accessibilityIdentifier = "tabLibrary"
         sync.delegate = self
-        syncPanel.onEvent = { [weak self, weak sync, weak map, weak libraryHost] event in
-            guard let self, let sync else { return }
+        syncPanel.onEvent = { [weak self, weak map, weak libraryHost] event in
+            guard let self else { return }
             switch event {
             case .library: libraryHost?.switchTo(.library)
-            case .upload: sync.pushViewController(UploadViewController(api: flow.api), animated: true)
-            case .history:
-                let page = WebPageViewController(flow: flow, page: .syncHistory)
-                page.onViewOnMap = { [weak self, weak map] track, day in
-                    guard let self, let map, let mapHost = self.viewControllers?.first else { return }
-                    self.selectedViewController = mapHost
-                    map.viewOnMap(track: track, day: day)
-                }
-                sync.pushViewController(page, animated: true)
+            case .upload: self.presentUpload()
             case .lines(let tracks, let highlight):
                 map?.drawSyncLines(tracks, highlight: highlight)
             case .frame(let box):
@@ -93,12 +85,15 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             }
         }
         home.onTour = { [weak self] in self?.tour.request() }
-        home.onOpenSync = { [weak self] in self?.openSync() }
         home.tileVersion = { [weak map] in map?.pair?.layers.tileVersion ?? "" }
         map.onHistoryKnown = { [weak self] any in self?.tour.historyKnown(any) }
         map.onModePicked = { [weak self] mode in self?.tour.notice(.mode(mode)) }
         map.onMapFreed = { [weak self] in self?.tour.mapFreed() }
         map.onWaiting = { [weak trips] count in trips?.tabBarItem.badgeValue = count > 0 ? "\(count)" : nil }
+        NotificationCenter.default.addObserver(forName: RecordingsSync.changed, object: recordings, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.countWaiting() }
+        }
+        countWaiting()
         map.onWantsSync = { [weak self] in self?.openSync() }
         map.onOpenTrack = { [weak self, weak map] track, day in
             guard let self, let map, let mapHost = self.viewControllers?.first else { return }
@@ -169,6 +164,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             guard let self, self.recorder.isCurrent(left) else { return }
             // Saved, it opens for naming as a Stop's does.
             if let saved = self.recorder.save(left) {
+                self.recordings.recorded()
                 self.openRecording(saved)
             } else {
                 self.map.say(String(localized: "recording.tooShort", defaultValue: "Too short — not saved.", comment: "Recording: Stop on less than a minute or two points."))
@@ -224,8 +220,12 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         recorder.onMessage = { [weak self] text in self?.map.say(text) }
         recorder.onRefused = { [weak self] in self?.offerLocationSettings() }
         recorder.onLeftover = { [weak self] left in self?.askAboutLeftover(left) }
-        // Stop opens the new recording on the Save screen.
-        recorder.onSaved = { [weak self] track in self?.openRecording(track) }
+        // Stop opens the new recording on the Save screen; it counts as waiting at once, whether
+        // the Save screen saves it or is cancelled.
+        recorder.onSaved = { [weak self] track in
+            self?.recordings.recorded()
+            self?.openRecording(track)
+        }
         recordings.onLanded = { [weak self] in self?.map.recordingLanded() }
         recordings.onFailed = { [weak self] in
             guard let self else { return }
@@ -308,10 +308,15 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     /// controller over whatever is presented; when an alert is still closing, such as Stop's
     /// question, once it has gone, since iOS refuses a presentation during another's dismissal.
     private func presentWhenFree(_ controller: UIViewController) {
+        whenFree { top in top.present(controller, animated: true) }
+    }
+
+    /// action with the top-most presented controller, once nothing is being dismissed.
+    private func whenFree(_ action: @escaping (UIViewController) -> Void) {
         var top: UIViewController = self
         while let presented = top.presentedViewController {
             if presented.isBeingDismissed {
-                let again: () -> Void = { [weak self] in self?.presentWhenFree(controller) }
+                let again: () -> Void = { [weak self] in self?.whenFree(action) }
                 if presented.transitionCoordinator?.animate(alongsideTransition: nil, completion: { _ in again() }) != true {
                     DispatchQueue.main.async(execute: again)
                 }
@@ -319,11 +324,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             }
             top = presented
         }
-        top.present(controller, animated: true)
+        action(top)
     }
 
-    /// The Sync and You tabs' bars show only over the pages pushed from them, never over Sync's
-    /// map or the You page, which has its own title.
+    /// The You tab's bar shows only over the pages pushed from it, never over the You page, which
+    /// has its own title; Sync's map never shows it, and nothing is pushed over Sync.
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
         navigationController.setNavigationBarHidden(viewController is MapHostViewController || viewController is YouViewController, animated: animated)
     }
@@ -383,7 +388,14 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private var libraryNav: UINavigationController? { viewControllers?[3] as? UINavigationController }
     private var libraryHost: MapHostViewController? { libraryNav?.viewControllers.first as? MapHostViewController }
 
-    /// Sync, in Library's place: the empty map's pointer, Library's + and You's Sync row.
+    /// Library counts the recordings waiting to be sent, on its item and beside its +.
+    private func countWaiting() {
+        let waiting = SyncList.waiting(recordings.all, isDemo: account.isDemo)
+        libraryNav?.tabBarItem.badgeValue = waiting > 0 ? "\(waiting)" : nil
+        map.syncWaiting = waiting
+    }
+
+    /// Sync, in Library's place: the empty map's pointer and Library's +.
     private func openSync() {
         guard let nav = libraryNav else { return }
         nav.popToRootViewController(animated: false)
@@ -421,9 +433,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     }
 
     /// Files opened or shared from another app: Upload over Sync, in Library's place, for an
-    /// account that can; Back from Upload lands on Sync.
+    /// account that can; closing Upload leaves Sync.
     func upload(_ files: [URL]) {
         guard let sync = libraryNav else { return }
+        sync.popToRootViewController(animated: false)
         libraryHost?.switchTo(.sync)
         selectedViewController = sync
         guard !account.isDemo else {
@@ -431,8 +444,21 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             return
         }
         Uploads.shared.share(files)
-        guard !(sync.topViewController is UploadViewController) else { return }
-        sync.popToRootViewController(animated: false)
-        sync.pushViewController(UploadViewController(api: flow.api), animated: true)
+        presentUpload()
+    }
+
+    /// Upload as a sheet over what shows, unless it's up already anywhere in what's presented,
+    /// such as under its own file picker or an alert. Checked once nothing is closing, so a
+    /// second ask during a dismissal doesn't open a second sheet.
+    private func presentUpload() {
+        whenFree { [weak self] top in
+            guard let self else { return }
+            var shown = self.presentedViewController
+            while let controller = shown {
+                if (controller as? UINavigationController)?.viewControllers.first is UploadViewController { return }
+                shown = controller.presentedViewController
+            }
+            top.present(UploadViewController.sheet(api: self.flow.api), animated: true)
+        }
     }
 }

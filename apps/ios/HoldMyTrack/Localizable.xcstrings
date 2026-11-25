@@ -1108,6 +1108,80 @@
         }
       }
     },
+    "library.syncWaiting" : {
+      "comment" : "Library: the + that opens Sync, with how many recordings wait to be sent.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Add tracks, %arg recording waiting to be sent"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Add tracks, %arg recordings waiting to be sent"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Добавить треки, %arg запись ждёт отправки"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Добавить треки, %arg записи ждут отправки"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Добавить треки, %arg записей ждут отправки"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Добавить треки, %arg записи ждут отправки"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "library.title" : {
       "comment" : "Library: the tab's title.",
       "extractionState" : "manual",
@@ -4609,28 +4683,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Синхр."
-          }
-        }
-      }
-    },
-    "Sync history" : {
-      "comment" : "Site page: the Sync tab's page title.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "История синхронизации"
-          }
-        }
-      }
-    },
-    "Sync history comes with the site's pages." : {
-      "comment" : "Sync tab: its screen is still to come.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "История синхронизации появится вместе со страницами сайта."
           }
         }
       }
@@ -11875,24 +11927,6 @@
         }
       }
     },
-    "sync.historySub" : {
-      "comment" : "Sync: what Sync history shows.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Every import and how it went"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Все импорты и чем они закончились"
-          }
-        }
-      }
-    },
     "sync.listEmpty" : {
       "comment" : "Sync: nothing on the phone to send.",
       "extractionState" : "manual",
@@ -11925,24 +11959,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отправить"
-          }
-        }
-      }
-    },
-    "sync.openList" : {
-      "comment" : "Settings › Sync: go to the Sync tab.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose what to sync"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Выбрать, что синхронизировать"
           }
         }
       }
@@ -11997,96 +12013,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Записано на этом телефоне"
-          }
-        }
-      }
-    },
-    "sync.recordedAllowed" : {
-      "comment" : "Settings › Sync: the record button can record.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Location and notifications allowed"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Геолокация и уведомления разрешены"
-          }
-        }
-      }
-    },
-    "sync.recordedNotYet" : {
-      "comment" : "Settings › Sync: the record button hasn't been allowed yet.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Location and notifications are asked for on your first recording."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Геолокация и уведомления запрашиваются при первой записи."
-          }
-        }
-      }
-    },
-    "sync.recordedRefused" : {
-      "comment" : "Settings › Sync: a permission the record button needs was refused.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Location or notifications are off for HoldMyTrack. Turn them on in Settings to record."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Геолокация или уведомления для HoldMyTrack выключены. Включите их в настройках, чтобы записывать."
-          }
-        }
-      }
-    },
-    "sync.recordedSub" : {
-      "comment" : "Settings › Sync: the record button's note.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Always on. Recordings wait on the Sync tab until you send them."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Всегда включена. Записи ждут на вкладке «Синхронизация», пока вы их не отправите."
-          }
-        }
-      }
-    },
-    "sync.recordedTitle" : {
-      "comment" : "Settings › Sync: the record button as a source.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The record button"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Кнопка записи"
           }
         }
       }
@@ -12199,24 +12125,6 @@
         }
       }
     },
-    "sync.settingsTitle" : {
-      "comment" : "Settings › Sync: the screen's title.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sync"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Синхронизация"
-          }
-        }
-      }
-    },
     "sync.showHidden" : {
       "comment" : "Sync: list the hidden rows, and how many.",
       "extractionState" : "manual",
@@ -12305,24 +12213,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "sync.sourcesIntro" : {
-      "comment" : "Settings › Sync: what the screen is for.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Where your journeys come from."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Откуда берутся ваши пути."
           }
         }
       }
@@ -12651,42 +12541,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Снять отметку: %@"
-          }
-        }
-      }
-    },
-    "sync.uploadSub" : {
-      "comment" : "Sync: what Upload takes.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "GPX, FIT or TCX files"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Файлы GPX, FIT или TCX"
-          }
-        }
-      }
-    },
-    "sync.uploadTitle" : {
-      "comment" : "Sync: the Upload tile.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Upload files"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Файлы"
           }
         }
       }
@@ -14079,24 +13933,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение"
-          }
-        }
-      }
-    },
-    "you.syncSub" : {
-      "comment" : "The You tab's Sync row: where journeys come from on iOS.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The record button"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Кнопка записи"
           }
         }
       }

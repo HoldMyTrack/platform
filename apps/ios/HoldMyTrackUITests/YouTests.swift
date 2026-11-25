@@ -21,8 +21,10 @@ final class YouTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["sharedFiles"].label.contains("west-side.gpx"), "listed")
         Thread.sleep(forTimeInterval: 4)
         XCTAssertEqual(try account.trackCount(), 0, "nothing is sent unasked")
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        app.cells["syncUpload"].tap()
+        // Upload is a sheet over Sync: closed, Sync's own Upload opens it again.
+        app.buttons["uploadClose"].tap()
+        XCTAssertTrue(app.tables["sync"].waitForExistence(timeout: 5), "Sync under Upload")
+        app.buttons["syncUpload"].tap()
         XCTAssertTrue(app.staticTexts["sharedFiles"].waitForExistence(timeout: 5), "still listed after leaving Upload")
         app.buttons["uploadShared"].tap()
         XCTAssertFalse(app.buttons["uploadShared"].isHittable, "the list empties")
@@ -52,14 +54,7 @@ final class YouTests: XCTestCase {
         add(shot)
         XCTAssertTrue(app.segmentedControls["themeControl"].exists, "Theme inline")
         XCTAssertTrue(app.buttons["youAbout"].exists && app.buttons["youHelp"].exists && app.buttons["youContacts"].exists, "the tiles")
-        // Sync: Settings › Sync with the record button, and on to the Sync tab.
-        app.cells["youSync"].tap()
-        XCTAssertTrue(app.staticTexts["recordedStatus"].waitForExistence(timeout: 5))
-        app.buttons["syncOpenList"].tap()
-        XCTAssertTrue(app.tabBars.buttons["tabLibrary"].isSelected, "Choose what to sync opens the Library tab")
-        XCTAssertTrue(app.tables["sync"].waitForExistence(timeout: 5), "with Sync in Library's place")
-        app.tabBars.buttons["tabYou"].tap()
-        XCTAssertTrue(app.cells["youSync"].waitForExistence(timeout: 5), "back on the You page itself")
+        XCTAssertFalse(app.cells["youSync"].exists, "Sync is Library's, not the You tab's")
         for id in ["youPrivacy", "youTheme", "youLanguage", "youTour"] {
             XCTAssertTrue(app.cells[id].exists, id)
         }

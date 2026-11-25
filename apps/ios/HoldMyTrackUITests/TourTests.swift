@@ -31,10 +31,8 @@ final class TourTests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons.element(boundBy: 0).isSelected, "the Tracks tab comes back")
         XCTAssertTrue(app.buttons["modeNormal"].isSelected, "Normal comes back")
 
-        // A page over Sync's map, Sync history here, gives way for the Sync step's sheet.
+        // Taken again from the You tab, with Library left on Sync.
         app.openSync()
-        app.cells["syncHistory"].tap()
-        XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 10))
         app.tabBars.buttons["tabYou"].tap()
         app.cells["youTour"].tap()
         XCTAssertTrue(app.staticTexts["1 of 15"].waitForExistence(timeout: 10))
@@ -42,7 +40,7 @@ final class TourTests: XCTestCase {
             next.tap()
             XCTAssertTrue(app.staticTexts["\(step) of 15"].waitForExistence(timeout: 10), "again, step \(step)")
         }
-        XCTAssertTrue(app.tables["sync"].exists, "Sync's step is on the sheet, the page gone")
+        XCTAssertTrue(app.tables["sync"].exists, "Sync's step is on the sheet")
         app.buttons["tourSkip"].tap()
         XCTAssertTrue(app.otherElements["tourCard"].waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.tabBars.buttons["tabYou"].isSelected, "Skip puts the user back where the tour started")

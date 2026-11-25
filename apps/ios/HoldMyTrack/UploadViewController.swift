@@ -35,6 +35,20 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
+    /// Upload as a sheet over the screen it opens from (apps/android/docs/SPEC.md FR-3.6), closed
+    /// by Close or a swipe; files carry on once it's gone.
+    static func sheet(api: APIClient) -> UINavigationController {
+        let upload = UploadViewController(api: api)
+        let close = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak upload] _ in upload?.dismiss(animated: true) })
+        close.accessibilityIdentifier = "uploadClose"
+        upload.navigationItem.rightBarButtonItem = close
+        let nav = UINavigationController(rootViewController: upload)
+        nav.modalPresentationStyle = .pageSheet
+        nav.sheetPresentationController?.detents = [.medium(), .large()]
+        nav.sheetPresentationController?.prefersGrabberVisible = true
+        return nav
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .bg)

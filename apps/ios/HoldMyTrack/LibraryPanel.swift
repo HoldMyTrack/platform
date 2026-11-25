@@ -32,6 +32,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var format: PanelFormat { PanelFormat(account: account) }
     private let downloads: TrackDownload
 
+    /// The + that opens Sync, with the count of recordings waiting to be sent beside it.
+    private let addButton = UIButton(type: .system)
     private let search = UISearchTextField()
     private let sortButton = UIButton(type: .system)
     private let typeButton = UIButton(type: .system)
@@ -97,15 +99,31 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         datesSheet?.dismiss(animated: true)
     }
 
+    /// The recordings on the phone waiting to be sent (SyncList.waiting), as the tab bar's Library
+    /// badge counts them.
+    func setSyncWaiting(_ waiting: Int) {
+        addButton.configuration?.title = waiting > 0 ? format.count(waiting) : nil
+        addButton.accessibilityLabel = waiting > 0
+            ? String(localized: "library.syncWaiting", defaultValue: "Add tracks, \(waiting) recordings waiting to be sent", comment: "Library: the + that opens Sync, with how many recordings wait to be sent.")
+            : String(localized: "library.add", defaultValue: "Add tracks", comment: "Library: the + that opens Sync.")
+    }
+
     // MARK: Building
 
     private func buildHead() {
         let title = Controls.label(String(localized: "library.title", defaultValue: "Library", comment: "Library: the tab's title."),
                                    font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
-        let add = Controls.iconButton(UIImage(resource: .plus), label: String(localized: "library.add", defaultValue: "Add tracks", comment: "Library: the + that opens Sync."), id: "librarySync")
-        add.configuration?.baseForegroundColor = UIColor(resource: .accent)
-        add.addAction(UIAction { [weak self] _ in self?.onEvent?(.sync) }, for: .primaryActionTriggered)
-        let titleRow = UIStackView(arrangedSubviews: [title, UIView(), add])
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(resource: .plus)
+        config.baseForegroundColor = UIColor(resource: .accent)
+        config.imagePadding = DesignTokens.Space.s4
+        addButton.configuration = config
+        addButton.accessibilityIdentifier = "librarySync"
+        addButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        addButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        addButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.sync) }, for: .primaryActionTriggered)
+        setSyncWaiting(0)
+        let titleRow = UIStackView(arrangedSubviews: [title, UIView(), addButton])
         titleRow.alignment = .center
         search.placeholder = String(localized: "library.search", defaultValue: "Search names and descriptions", comment: "Library: the search field's hint.")
         search.accessibilityIdentifier = "librarySearch"

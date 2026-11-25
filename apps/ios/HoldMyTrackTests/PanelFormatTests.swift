@@ -1,5 +1,3 @@
-import CoreLocation
-import UserNotifications
 import Foundation
 import HoldMyTrackCore
 import Testing
@@ -28,25 +26,5 @@ struct PanelFormatTests {
         let moment = PanelFormat.dateTime(Date(timeIntervalSince1970: 1_790_000_000), zone: utc)
         // iOS writes a narrow no-break space before PM.
         #expect(moment == "Sep 21, 2026, 2:13\u{202F}PM", "Android’s form, without iOS’s “at”")
-    }
-}
-
-/// Settings › Sync's word on the record button.
-@MainActor
-struct SyncSourcesTests {
-    @Test func bothAllowedIsAllowed() {
-        #expect(SyncSources.recording(location: .authorizedWhenInUse, notifications: .authorized) == .allowed)
-        #expect(SyncSources.recording(location: .authorizedAlways, notifications: .provisional) == .allowed)
-    }
-
-    @Test func eitherRefusedIsRefusedSinceIOSWontAskAgain() {
-        #expect(SyncSources.recording(location: .denied, notifications: .authorized) == .refused)
-        #expect(SyncSources.recording(location: .restricted, notifications: .notDetermined) == .refused)
-        #expect(SyncSources.recording(location: .authorizedWhenInUse, notifications: .denied) == .refused)
-    }
-
-    @Test func otherwiseTheyreAskedOnTheFirstRecording() {
-        #expect(SyncSources.recording(location: .notDetermined, notifications: .notDetermined) == .notAsked)
-        #expect(SyncSources.recording(location: .authorizedWhenInUse, notifications: .notDetermined) == .notAsked)
     }
 }

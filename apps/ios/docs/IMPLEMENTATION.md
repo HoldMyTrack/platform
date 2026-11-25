@@ -6,7 +6,7 @@
 
 ### 1.4 The web's pages in a web view
 
-Settings, Track graph & trends, Sync history and About are the server's pages in `WebPageViewController` (ADR-0042); how the server renders a page for the app is root `docs/IMPLEMENTATION.md` §4.19.
+Settings, Track graph & trends and About are the server's pages in `WebPageViewController` (ADR-0042); how the server renders a page for the app is root `docs/IMPLEMENTATION.md` §4.19.
 
 - **Signed in by cookie, in a store of its own.** A `WKWebView`'s requests never pass through `APIClient`, so the session, the `hmt_app` marker and the app's language (`WebPageSession.cookies`) go into the page's cookie store before its first load. Each page gets a non-persistent `WKWebsiteDataStore`, gone with the page, so sign-out has nothing to clear and no cookie reaches another account.
 - **`route` acts on where a navigation goes**, decided by the shared `webPageRoute` rule (`WebPageSession.route` reads a URL into its parts, the port in the authority). It runs in `decidePolicyFor`, told whether the navigation is a POST, and again on a server redirect. A form the server refuses, answering with the page at the form's path, stays in the page; first-run Settings' save, redirecting to `/`, reaches `AppFlow.check` and so the map.

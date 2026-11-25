@@ -26,6 +26,7 @@ extension MapViewController {
 
         libraryPanel = LibraryPanel(api: flow.api, account: { [unowned self] in self.account }, downloads: downloads)
         libraryPanel.onEvent = { [weak self] in self?.handle($0) }
+        libraryPanel.setSyncWaiting(syncWaiting)
 
         for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head, libraryPanel.head, syncPanel?.head].compactMap({ $0 }) as [UIView] { sheet.head.addArrangedSubview(v) }
         // In the mode toggle's place while rows are checked (MapViewController+TopRow).

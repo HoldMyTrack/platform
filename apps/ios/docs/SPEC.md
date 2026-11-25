@@ -63,8 +63,8 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 
 ### FR-2.9 The bottom bar
 
-- Tracks, Trips, the record button, Library (FR-4.1) and You. Sync's sheet, opened from Library's head, lists the recordings on the phone (FR-5.2) and leads to Upload and Sync history, the web's `/sync` page; ‹ or a tap on Library goes back to Library.
-- You's Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). Settings › Sync lists only the record button until HealthKit sync (`ROADMAP.md`, 7c).
+- Tracks, Trips, the record button, Library (FR-4.1) and You. Sync's sheet, opened from Library's head, lists the recordings on the phone (FR-5.2), with Upload (FR-3.6) at its head; ‹ or a tap on Library goes back to Library.
+- You's Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11).
 
 ### FR-2.10 Photos
 
@@ -86,7 +86,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 As the Android app's (`apps/android/docs/SPEC.md` FR-3.6), except as below.
 
 - Files come from the document picker, or are opened in HoldMyTrack from Files or another app's share sheet.
-- Files go on even after the app is left, sent by iOS one at a time. Imports still running show on the Upload screen.
+- Files go on even after the app is left, sent by iOS one at a time. Imports still running show on the Upload sheet.
 
 ## 6. FR-4 — Library
 

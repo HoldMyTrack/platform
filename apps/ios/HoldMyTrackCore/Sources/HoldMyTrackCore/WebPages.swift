@@ -3,14 +3,13 @@ import Foundation
 /// A page of the site the app shows in a web view (root docs/SPEC.md FR-9.6, ADR-0042).
 public enum SitePage: String, CaseIterable, Sendable {
     case profile = "/profile"
-    case syncHistory = "/sync"
     case settings = "/settings"
     case about = "/about"
 
     public var path: String { rawValue }
 
-    /// Read again each time the screen comes back to the front: their numbers change with syncs.
-    public var refreshOnReturn: Bool { self == .profile || self == .syncHistory }
+    /// Read again each time the screen comes back to the front: its numbers change with syncs.
+    public var refreshOnReturn: Bool { self == .profile }
 }
 
 /// A cookie the web view's store gets before the first load.

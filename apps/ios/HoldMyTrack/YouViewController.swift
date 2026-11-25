@@ -47,8 +47,6 @@ final class YouViewController: UITableViewController {
     private var avatar: UIImage?
     /// Take a tour (TourController.request).
     var onTour: (() -> Void)?
-    /// Settings › Sync's Choose what to sync: the Sync tab.
-    var onOpenSync: (() -> Void)?
     /// The account's tile version as the map last read it: a sync, upload, delete or edit moves
     /// it, so the numbers are read again (YouRefresh).
     var tileVersion: () -> String = { "" }
@@ -59,11 +57,11 @@ final class YouViewController: UITableViewController {
     private var numbersTask: Task<Void, Never>?
     private var privacyTask: Task<Void, Never>?
 
-    private enum Row { case settings, profile, sync, privacy, theme, language, tour, web, delete, signOut }
+    private enum Row { case settings, profile, privacy, theme, language, tour, web, delete, signOut }
     private var sections: [[Row]] {
         [
             [.settings, .profile],
-            [.sync, .privacy],
+            [.privacy],
             [.theme, .language, .tour],
             [.web],
             [.signOut] + (account.isDemo ? [] : [.delete]),
@@ -346,13 +344,6 @@ final class YouViewController: UITableViewController {
             cell.accessoryType = .none
             cell.accessibilityIdentifier = "youProfile"
             return cell
-        case .sync:
-            config = UIListContentConfiguration.subtitleCell()
-            config.textProperties.font = Typeface.sans(DesignTokens.Text.xl)
-            config.secondaryTextProperties.color = UIColor(resource: .inkSecondary)
-            (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Sync"), UIImage(resource: .refreshCw), "youSync")
-            config.secondaryText = String(localized: "you.syncSub", defaultValue: "The record button", comment: "The You tab's Sync row: where journeys come from on iOS.")
-            config.imageProperties.tintColor = UIColor(resource: .inkSecondary)
         case .privacy:
             config = UIListContentConfiguration.subtitleCell()
             config.textProperties.font = Typeface.sans(DesignTokens.Text.xl)
@@ -451,13 +442,6 @@ final class YouViewController: UITableViewController {
         switch sections[indexPath.section][indexPath.row] {
         case .settings: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .settings), animated: true)
         case .profile: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .profile), animated: true)
-        case .sync:
-            let settings = SyncSettingsViewController()
-            settings.onOpenList = { [weak self] in
-                self?.navigationController?.popToRootViewController(animated: false)
-                self?.onOpenSync?()
-            }
-            navigationController?.pushViewController(settings, animated: true)
         case .privacy: navigationController?.pushViewController(PrivacyViewController(flow: flow, account: account), animated: true)
         // D11: the app's language is iOS's per-app setting, in the system's Settings.
         case .language: UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
