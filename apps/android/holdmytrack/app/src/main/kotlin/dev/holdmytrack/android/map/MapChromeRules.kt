@@ -69,11 +69,11 @@ object MapChromeRules {
         return (normal || syncing) && !editing
     }
 
-    /** Whether [next] may replace the notice up: a less important one never replaces a more important one. */
     /** The opening view moves the camera, unless a recording is live, whose camera is on the live
      *  track, or a Trip is open, whose own flight frames it. */
     fun opens(recording: Boolean, tripOpen: Boolean): Boolean = !recording && !tripOpen
 
+    /** Whether [next] may replace the notice up: a less important one never replaces a more important one. */
     fun noticeReplaces(current: MapNotice?, next: MapNotice): Boolean = current == null || current.ordinal >= next.ordinal
 
     /** The empty notice points a real account with nothing on the map at Sync, until this phone

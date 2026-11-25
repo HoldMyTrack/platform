@@ -34,14 +34,25 @@ extension MapViewController {
             }
             guard let newest = try? await flow.api.areaList(box: nil, dates: .allTime, limit: OpeningView.tracks) else {
                 followArea()
+                // Over an empty map, whose pointer would stay up.
+                if noticeShown(.empty), openRetries < 5 {
+                    openRetries += 1
+                    Task { [weak self] in
+                        try? await Task.sleep(for: .seconds(5))
+                        guard let self, self.noticeShown(.empty) else { return }
+                        self.openOnce()
+                    }
+                }
                 return
             }
+            openRetries = 0
             framed = true
             hasTracks = !newest.tracks.isEmpty
             onHistoryKnown?(!newest.tracks.isEmpty)
             let boxes = FitBoxes.of(newest.tracks)
             if let view = OpeningView.of(boxes, width: mapView.bounds.width, height: mapView.bounds.height) {
                 hideNotice(.empty)
+                openingHeld = session.tripID != nil
                 if MapChrome.opens(flightAsked: session.flyRequest, recording: recordingLive, tripOpen: session.tripID != nil) {
                     appFlying = true
                     mapView.setCenter(CLLocationCoordinate2D(latitude: view.lat, longitude: view.lon), zoomLevel: view.zoom, animated: false)
@@ -55,6 +66,15 @@ extension MapViewController {
             }
             followArea()
         }
+    }
+
+    /// A Trip closed: an opening view it held back is taken, unless a flight has framed anything.
+    func tripClosed() {
+        guard openingHeld else { return }
+        openingHeld = false
+        guard !flew else { return }
+        framed = false
+        openOnce()
     }
 
     // MARK: Following the map

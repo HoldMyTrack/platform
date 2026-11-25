@@ -91,6 +91,7 @@ extension MapViewController {
                 tripsPanel.setOpen(nil)
                 updateTracksQuery()
                 followArea(always: true)
+                tripClosed()
             }
             sheet.setDetent(next == .tracks ? .collapsed : .half, animated: false)
         }
@@ -372,6 +373,7 @@ extension MapViewController {
             tripsPanel.setOpen(nil)
             updateTracksQuery()
             followArea(always: true)
+            tripClosed()
         case .select(let id):
             session.panel.focus(id)
             fly([id])

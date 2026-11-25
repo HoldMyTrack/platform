@@ -52,6 +52,10 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var inboxTask: Task<Void, Never>?
     /// The list's read under way.
     private var tripsTask: Task<Void, Never>?
+    /// Counts the changes made here, so a list asked for before one doesn't undo it.
+    private var changes = 0
+    /// When the tab last opened, which read everything.
+    private var openedAt: ContinuousClock.Instant?
 
     private enum Item {
         case send(TripSend), copying(TripCopying), folder(Trip, open: Bool, expanded: Bool), text(String, small: Bool), stats(Trip)
@@ -100,6 +104,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         ready = false
         error = nil
         foldedID = nil
+        openedAt = .now
         render()
         loadTrips()
         loadInbox()
@@ -119,27 +124,32 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     /// The map is back: with the tab showing the list and the copies waiting are read again, unless
-    /// the tab's own opening is reading them, else only the count. A failed read leaves the last
+    /// the tab has just opened and read them, else only the count. A failed read leaves the last
     /// one shown.
     func refresh() {
         guard showing else { return refreshCount() }
-        guard tripsTask == nil else { return }
+        if let openedAt, openedAt.duration(to: .now) < .seconds(1) { return }
         loadTrips(quiet: true)
         loadInbox()
     }
 
     private func loadTrips(quiet: Bool = false) {
         tripsTask?.cancel()
+        let asked = changes
         tripsTask = Task {
-            defer { if !Task.isCancelled { tripsTask = nil } }
             do {
                 let read = try await api.trips()
                 guard showing, !Task.isCancelled else { return }
+                guard asked == changes else { return loadTrips(quiet: quiet) }
                 read.forEach { TrackTypes.shared.merge($0.types) }
                 trips = read.map(\.trip)
                 ready = true
                 self.error = nil
-                if openID == nil, let newest = trips.first { onEvent?(.open(newest.id, collapse: false)) }
+                if quiet, let openID, !trips.contains(where: { $0.id == openID }) {
+                    openGone()
+                } else if openID == nil, let newest = trips.first {
+                    onEvent?(.open(newest.id, collapse: false))
+                }
             } catch {
                 guard !Task.isCancelled else { return }
                 if !quiet || !ready { self.error = Self.message(error, String(localized: "Could not load your trips")) }
@@ -151,7 +161,14 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private func loadInbox() {
         inboxTask?.cancel()
         inboxTask = Task {
-            guard let inbox = try? await api.tripInbox(), showing, !Task.isCancelled else { return }
+            guard let inbox = try? await api.tripInbox() else {
+                // A failed read of an arriving copy is made again.
+                guard !Task.isCancelled, showing, !copying.isEmpty else { return }
+                try? await Task.sleep(for: .seconds(3))
+                if !Task.isCancelled { loadInbox() }
+                return
+            }
+            guard showing, !Task.isCancelled else { return }
             let arrived = inbox.copying.count < copying.count
             sends = inbox.sends
             copying = inbox.copying
@@ -221,6 +238,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     /// A Trip Add to trip made: in the list at once, ahead of the next read.
     func added(_ trip: Trip) {
+        changes += 1
         trips.removeAll { $0.id == trip.id }
         trips.insert(trip, at: 0)
         render()
@@ -480,6 +498,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             do {
                 let read = try await api.changeTripTracks(tripID, trackIDs: [trackID], add: false)
                 removeError = nil
+                changes += 1
                 trips = trips.map { $0.id == read.trip.id ? read.trip : $0 }
                 if read.trip.id == openID { openTrip = read.trip }
                 onEvent?(.removed(trackID))
@@ -496,6 +515,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             guard let self else { return nil }
             do {
                 let read = try await self.api.updateTrip(trip.id, name: name, description: description)
+                self.changes += 1
                 self.trips = self.trips.map { $0.id == trip.id ? read.trip : $0 }
                 if trip.id == self.openID { self.openTrip = read.trip }
                 self.onEvent?(.tripsChanged)
@@ -529,14 +549,18 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             } catch {
                 return Self.message(error, String(localized: "Could not delete the trip"))
             }
+            self.changes += 1
             self.trips.removeAll { $0.id == trip.id }
             self.onEvent?(.tripsChanged)
-            if trip.id == self.openID {
-                if let next = self.trips.first { self.onEvent?(.open(next.id, collapse: false)) } else { self.onEvent?(.close) }
-            }
+            if trip.id == self.openID { self.openGone() }
             self.render()
             return nil
         }
+    }
+
+    /// The open Trip is gone, deleted here or elsewhere: the next newest opens in its place, or none.
+    private func openGone() {
+        if let next = trips.first { onEvent?(.open(next.id, collapse: false)) } else { onEvent?(.close) }
     }
 
     static func message(_ error: Error, _ fallback: String) -> String {

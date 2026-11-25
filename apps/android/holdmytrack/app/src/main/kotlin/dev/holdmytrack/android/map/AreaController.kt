@@ -287,6 +287,7 @@ class AreaController(
         onSelectionReset()
         style()?.let { MapOverlays.setTrackTrip(it, null, session.dates) }
         followArea(always = true)
+        framer()?.tripClosed { followArea() }
     }
 
     /** Dates carried through a recreation. */

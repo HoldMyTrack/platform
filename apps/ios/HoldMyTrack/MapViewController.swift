@@ -174,6 +174,11 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// The opening view's read is out, and was asked for again meanwhile.
     var opening = false
     var openAgain = false
+    /// How often a failed read for an empty map is made again.
+    var openRetries = 0
+    /// An open Trip held the opening view's move back; and whether any flight has framed anything.
+    var openingHeld = false
+    var flew = false
 
     var format: PanelFormat { PanelFormat(account: account) }
 
@@ -449,6 +454,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                                          ne: CLLocationCoordinate2D(latitude: lat + halfLat, longitude: lon + halfLon))
         }
         appFlying = true
+        flew = true
         mapView.setVisibleCoordinateBounds(target, edgePadding: padding, animated: animated) { [weak self] in
             DispatchQueue.main.async {
                 self?.appFlying = false

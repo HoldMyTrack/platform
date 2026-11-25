@@ -41,6 +41,17 @@ class CameraFramer(
      *  fight the user for the camera. */
     var framed = false
 
+    /** A read for the opening view is out; asked again meanwhile, it reads once more. */
+    private var opening = false
+    private var askedAgain = false
+
+    /** An open Trip held the opening view's move back; and whether any flight has framed anything. */
+    private var held = false
+    private var flew = false
+
+    /** How often a failed read for [openAgain] is made again. */
+    private var retries = 0
+
     /** The camera is on the app's own flight, which the list doesn't follow ([consumeAppFlight]). */
     private var appFlight = false
 
@@ -52,13 +63,29 @@ class CameraFramer(
     fun open(onOpened: () -> Unit) {
         if (framed) return onOpened()
         framed = true
+        opening = true
         HoldMyTrackApi.areaTracks(null, from = null, to = null, limit = OpeningView.TRACKS) { result ->
+            opening = false
             val page = result.getOrNull()
-            if (page == null) return@areaTracks onOpened()
+            if (page == null) {
+                if (retries > 0) {
+                    retries--
+                    root.postDelayed({ again(onOpened) }, RETRY_MS)
+                }
+                return@areaTracks onOpened()
+            }
+            retries = 0
             val boxes = FitBoxes.of(page.tracks)
             val instance = map()
             val view = OpeningView.of(boxes, root.width / density.toDouble(), root.height / density.toDouble())
             onEmpty(view == null)
+            // Asked while this one read an empty account: something may have come since.
+            if (askedAgain && view == null) {
+                askedAgain = false
+                return@areaTracks again(onOpened)
+            }
+            askedAgain = false
+            held = view != null && tripOpen()
             if (view != null && instance != null && MapChromeRules.opens(recording(), tripOpen())) {
                 appFlight = true
                 instance.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(view.lat, view.lon), view.zoom))
@@ -67,10 +94,28 @@ class CameraFramer(
         }
     }
 
-    /** [open] again, for an account that had nothing to frame. */
+    /** [open] again, for an account that had nothing to frame: one read at a time, or a later
+     *  answer would pull the camera back from the user, and a failed one is made again. */
     fun openAgain(onOpened: () -> Unit) {
+        if (opening) {
+            askedAgain = true
+            return
+        }
+        retries = MAX_RETRIES
+        again(onOpened)
+    }
+
+    private fun again(onOpened: () -> Unit) {
+        if (opening) return
         framed = false
         open(onOpened)
+    }
+
+    /** A Trip closed: an opening view it held back is taken, unless a flight has framed anything. */
+    fun tripClosed(onOpened: () -> Unit) {
+        if (!held) return
+        held = false
+        if (!flew) again(onOpened)
     }
 
     /** Whether the camera just settled from the app's own flight, which this answer uses up. */
@@ -112,6 +157,7 @@ class CameraFramer(
             .zoom(minOf(fitted.zoom, maxZoom))
             .build()
         appFlight = true
+        flew = true
         instance.animateCamera(CameraUpdateFactory.newCameraPosition(target), DURATION_MS, object : MapLibreMap.CancelableCallback {
             override fun onFinish() {
                 onLanded?.invoke()
@@ -130,5 +176,7 @@ class CameraFramer(
         /** The least height of map a fit keeps between the top row and the sheet. */
         private const val MIN_SPAN_DP = 96
         private const val DURATION_MS = 900
+        private const val RETRY_MS = 5_000L
+        private const val MAX_RETRIES = 5
     }
 }
