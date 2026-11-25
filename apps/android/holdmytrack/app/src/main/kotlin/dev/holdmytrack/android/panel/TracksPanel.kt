@@ -236,12 +236,14 @@ class TracksPanel(
         // Before each frame, after BottomSheetBehavior has moved the sheet to its state's top: a
         // rotation or a new window size lays it out at the old top first, so a padding computed on
         // layout left the content's bottom off screen. A frame whose padding changes is skipped
-        // and drawn again with it, so the old one never shows.
+        // and drawn again with it, so the old one never shows. A moving sheet keeps its padding
+        // until it comes to rest ([SheetFit]).
         sheet.viewTreeObserver.addOnPreDrawListener { !fitContent() }
         behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 if (newState !in RESTING_STATES) return
                 resting = newState
+                fitContent()
                 // Dragged by hand: that's the sheet's height now. Held down, the drag is off and
                 // the wish to come back open stays.
                 if (!held) expanded = newState != BottomSheetBehavior.STATE_COLLAPSED
@@ -421,11 +423,17 @@ class TracksPanel(
     private fun fitContent(): Boolean {
         val parentHeight = (sheet.parent as? View)?.height?.takeIf { it > 0 } ?: return false
         val halfTop = (parentHeight * (1 - behavior.halfExpandedRatio)).toInt()
-        val padding = SheetFit.bottomPadding(sheet.top, behavior.expandedOffset, halfTop)
+        val fitFor = behavior.expandedOffset to halfTop
+        val moving = behavior.state !in RESTING_STATES
+        val padding = SheetFit.bottomPadding(sheet.top, fitFor.first, halfTop, sheet.paddingBottom, moving, resized = fitFor != fittedFor)
+        fittedFor = fitFor
         if (sheet.paddingBottom == padding) return false
         sheet.setPadding(sheet.paddingLeft, sheet.paddingTop, sheet.paddingRight, padding)
         return true
     }
+
+    /** The open and half tops the padding was last fitted for. */
+    private var fittedFor: Pair<Int, Int>? = null
 
     /** The offset last asked for, before [setExpandedOffset] clamps it. */
     private var expandedOffsetWanted = 0
