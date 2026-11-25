@@ -12,7 +12,7 @@ SWIFT_VERSION = 6.0
 
 // The release number, major.minor.patch, raised by hand (docs/DEPLOY.md §10). The build number is
 // the commit count, written into the built Info.plist by scripts/stamp-build.sh (D9).
-MARKETING_VERSION = 0.29.1
+MARKETING_VERSION = 0.30.0
 CURRENT_PROJECT_VERSION = 1
 
 CODE_SIGN_STYLE = Automatic
