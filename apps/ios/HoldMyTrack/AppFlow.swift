@@ -8,7 +8,8 @@ final class AppFlow {
     private let window: UIWindow
     let store = SessionStore()
     private(set) var api: APIClient!
-    private var checking = false
+    /// The check under way, which a second caller waits for.
+    private var checking: Task<APIError?, Never>?
     private var updateShown = false
 
     init(window: UIWindow) {
@@ -95,16 +96,27 @@ final class AppFlow {
     /// that asked keeps its place to say "not yet".
     @discardableResult
     func recheck() async -> APIError? {
-        guard !checking, store.stored != nil else { return nil }
-        checking = true
-        defer { checking = false }
+        if let checking { return await checking.value }
+        guard store.stored != nil else { return nil }
+        let check = Task { await runCheck() }
+        checking = check
+        defer { checking = nil }
+        return await check.value
+    }
+
+    private func runCheck() async -> APIError? {
+        let token = store.stored?.token
         (window.rootViewController as? SessionCheckScreen)?.checkStarted()
         let before = store.route
         do {
-            store.confirm(try await api.me())
+            let account = try await api.me()
+            guard store.stored?.token == token else { return nil }
+            store.confirm(account)
             if store.route != before { show() }
             return nil
         } catch let error as APIError {
+            // Signed out meanwhile: the answer is the last session's.
+            guard store.stored?.token == token else { return nil }
             if SessionCheck.signsOut(error) {
                 endSession()
                 show()
@@ -131,16 +143,22 @@ final class AppFlow {
         show()
     }
 
-    /// Posted with the account, read again after a site page closed, when it changed.
+    /// Posted with the account, read again (refreshAccount), when it changed.
     static let accountChanged = Notification.Name("AppFlow.accountChanged")
 
-    /// The account read again once a site page closes, since Settings can change the units, the
-    /// name, the Country or the language; the screens that show it hear accountChanged.
-    func refreshAccount() {
+    /// The account read again once a site page closes or You shows, since Settings, here or on the
+    /// web, can change the units, the name, the Country or the language; the screens that show it hear accountChanged.
+    /// done hears whether it was read.
+    func refreshAccount(done: ((Bool) -> Void)? = nil) {
         guard store.route == .home else { return }
-        let before = store.confirmed
+        let token = store.stored?.token
         Task {
-            guard let account = try? await api.me() else { return }
+            let read = try? await api.me()
+            // Signed out meanwhile: the answer is the last session's.
+            guard store.stored?.token == token else { return }
+            done?(read != nil)
+            guard let account = read else { return }
+            let before = store.confirmed
             store.confirm(account)
             if store.route != .home { return show() }
             if account != before { NotificationCenter.default.post(name: Self.accountChanged, object: nil, userInfo: ["account": account]) }

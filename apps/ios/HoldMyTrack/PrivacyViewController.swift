@@ -139,7 +139,7 @@ final class PrivacyViewController: UITableViewController {
         switch rows(Section(rawValue: indexPath.section)!)[indexPath.row] {
         case .location(let location):
             config.text = location.name.isEmpty ? String(localized: "Unnamed") : location.name
-            config.secondaryText = String(localized: "privacy.rowMeta", defaultValue: "Radius · \(location.radiusM) m", comment: "Privacy: a location's radius.")
+            config.secondaryText = String(localized: "privacy.rowMeta", defaultValue: "Radius · \(PanelFormat(account: account).radius(location.radiusM))", comment: "Privacy: a location's radius.")
             config.image = CirclePreviewView.image(radiusM: location.radiusM)
             config.imageProperties.tintColor = nil
             config.imageProperties.maximumSize = CGSize(width: 44, height: 44)

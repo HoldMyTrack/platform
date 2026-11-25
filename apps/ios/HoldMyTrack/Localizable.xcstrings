@@ -166,6 +166,28 @@
         }
       }
     },
+    "%@ ft" : {
+      "comment" : "A Private location's radius in feet.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ фт"
+          }
+        }
+      }
+    },
+    "%@ m" : {
+      "comment" : "A Private location's radius in metres.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ м"
+          }
+        }
+      }
+    },
     "%lld ft" : {
       "comment" : "Capture: a short distance in feet.",
       "localizations" : {
@@ -4181,13 +4203,13 @@
         }
       }
     },
-    "Radius · %lld m" : {
+    "Radius · %@" : {
       "comment" : "Privacy: a row's radius, written as label: N.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Радиус · %lld м"
+            "value" : "Радиус · %@"
           }
         }
       }
@@ -10926,13 +10948,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Radius · %lld m"
+            "value" : "Radius · %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Радиус · %lld м"
+            "value" : "Радиус · %@"
           }
         }
       }
@@ -10987,6 +11009,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удерживайте, чтобы остановить."
+          }
+        }
+      }
+    },
+    "record.holdToStop" : {
+      "comment" : "Recording: said on a pause, since a tap is the obvious guess at stop.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold to stop recording"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удерживайте, чтобы остановить запись"
           }
         }
       }

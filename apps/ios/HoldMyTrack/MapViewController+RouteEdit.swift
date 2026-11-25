@@ -16,7 +16,14 @@ extension MapViewController {
         let was = routeEdit.shape != nil
         routeEdit.shape = shape
         (mapView.style?.source(withIdentifier: Self.routeEditSource) as? MLNShapeSource)?.shape = Self.features(shape)
-        if was != (shape != nil) { panelChanged() }
+        guard was != (shape != nil) else { return }
+        if !was {
+            // The route editor has the map: a capture stops, and the places step aside.
+            capturing.stop()
+            spotViews.popup.close()
+        }
+        applyTabMode()
+        panelChanged()
     }
 
     /// The Route tab opened: the camera onto the track, clear of the Edit sheet.

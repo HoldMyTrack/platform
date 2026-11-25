@@ -57,6 +57,12 @@ struct PanelFormat {
         }
     }
 
+    /// A Private location's radius: "200 m", or "656 ft".
+    func radius(_ meters: Int) -> String {
+        let n = count(PrivateLocation.shown(radiusM: meters, imperial: imperial))
+        return imperial ? String(localized: "\(n) ft", comment: "A Private location's radius in feet.") : String(localized: "\(n) m", comment: "A Private location's radius in metres.")
+    }
+
     func count(_ n: Int) -> String { NumberFormatter.localizedString(from: NSNumber(value: n), number: .decimal) }
 
     /// Pace on foot ("8:47 /mi"), speed otherwise ("17.1 km/h"); a dash with no distance or time.

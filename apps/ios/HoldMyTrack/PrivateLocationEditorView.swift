@@ -132,8 +132,8 @@ final class PrivateLocationEditorView: UIView {
         UIAccessibility.post(notification: .screenChanged, argument: title)
     }
 
-    func render(_ draft: PrivateLocationEditing.Draft, dirty: Bool, busy: Bool) {
-        radius.text = String(localized: "Radius · \(draft.radiusM) m")
+    func render(_ draft: PrivateLocationEditing.Draft, dirty: Bool, busy: Bool, format: PanelFormat) {
+        radius.text = String(localized: "Radius · \(format.radius(draft.radiusM))")
         if !slider.isTracking { slider.value = Float(draft.radiusM) }
         slider.accessibilityValue = radius.text
         delete.isHidden = draft.id == nil

@@ -168,7 +168,10 @@ final class RecordingController: NSObject, @preconcurrency CLLocationManagerDele
                 onLeftover?(left)
                 return
             }
-            guard save(left) != nil else {
+            if Recording.restored(left).finished(at: Date(), type: "") == nil {
+                // Too short for Stop to keep: dropped, as Stop would.
+                clearJournal()
+            } else if save(left) == nil {
                 onMessage?(String(localized: "recording.saveFailed", defaultValue: "The recording couldn't be saved.", comment: "Recording: Stop failed to write it."))
                 return
             }

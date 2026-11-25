@@ -67,6 +67,19 @@ struct RecordingTests {
         #expect(kept6)
     }
 
+    @Test func aPhoneStandingStillAddsNothing() {
+        var r = Recording()
+        r.start(at: t0)
+        r.add(point(0, 0, 0), accuracy: 5)
+        for i in 1 ... 20 {
+            let kept = r.add(point(0, i % 2 == 0 ? 0.00003 : 0, Double(i) * 5), accuracy: 5)
+            #expect(!kept, "3 m of drift")
+        }
+        #expect(r.points.count == 1 && r.meters == 0)
+        let walked = r.add(point(0, 0.00006, 120), accuracy: 5)
+        #expect(walked, "6 m on")
+    }
+
     @Test func aFixFromBeforeTheStartOrResumeIsDropped() {
         var r = Recording()
         r.start(at: t0.addingTimeInterval(100))
@@ -129,6 +142,7 @@ struct RecordingTests {
         #expect(!MapChrome.modeBarShown(recording: true, editOpen: false, selectionShown: false, onTracksTab: true))
         #expect(TabMode.hiddenGroups(recording: true) == ["tracks", "route-bands"])
         #expect(TabMode.hiddenGroups(recording: false).isEmpty)
+        #expect(TabMode.hiddenGroups(recording: false, editingRoute: true) == [Spots.group], "the places step aside for the route editor")
         #expect(TabMode.hiddenGroups(recording: false, syncing: true) == ["tracks", "route-bands"], "the Sync tab's lines stand alone")
         #expect(TabMode.shown(picked: .fog, onTracksTab: true) == .fog)
     }
