@@ -47,7 +47,8 @@ import kotlin.concurrent.thread
  * tab and closed by Back, a recording
  * reaching the Sync sheet, the keyboard covering the map without shortening it, and a Trip
  * renamed and sent from its sheets, the Private location editor keeping Save above the keyboard,
- * and the Type picker adding a type from its sheet. One fresh
+ * the Type picker adding a type from its sheet, and the open Trip's totals on screen after a
+ * rotation. One fresh
  * account ([TestAccount]) serves the class, in method-name order.
  */
 @RunWith(AndroidJUnit4::class)
@@ -205,7 +206,8 @@ class MapFlowsTest {
     fun g_theTypePickerAddsANewTypeFromItsSheet() {
         signIn()
         expandSheet()
-        tapUntil({ device.findObjects(id("track_tile_target")).first() }) { checkedRows() > 0 }
+        // need waits for a row: the list may still be loading once the sheet has opened.
+        tapUntil({ need(id("track_tile_target")) }) { checkedRows() > 0 }
         try {
             tapUntil({ still(id("panel_edit")) }) { device.hasObject(id("edit_type")) }
             tapUntil({ still(id("edit_type")) }) { device.hasObject(id("picker_search")) }
@@ -423,6 +425,34 @@ class MapFlowsTest {
         fail("tapped three times, nothing changed")
     }
 
+    /** The sheet's content ends where the screen does at its resting height, after a rotation too
+     *  (`TracksPanel.fitContent`): the open Trip's totals show above the bottom bar, the sheet
+     *  not dragged. */
+    @Test
+    fun h_theOpenTripsTotalsStayOnScreenAfterARotation() {
+        signIn()
+        account.createTrip(ROTATION_TRIP, listOf(account.idsByDay.getValue("2026-10-01")))
+        openTrips()
+        need(By.text(ROTATION_TRIP))
+        expect("the totals on screen", waitUntil { totalsOnScreen() })
+        try {
+            device.setOrientationLandscape()
+            device.waitForIdle()
+            device.setOrientationNatural()
+            device.waitForIdle()
+            expect("the totals on screen after a rotation", waitUntil { totalsOnScreen() })
+        } finally {
+            device.unfreezeRotation()
+        }
+    }
+
+    /** The open Trip's totals start above the bottom bar. */
+    private fun totalsOnScreen(): Boolean {
+        val totals = device.findObject(id("trips_stats")) ?: return false
+        val bar = device.findObject(id("bottom_bar")) ?: return false
+        return totals.visibleBounds.height() > 0 && totals.visibleBounds.top < bar.visibleBounds.top
+    }
+
     /** The bottom bar's Trips tapped until it's the one marked and the sheet shows its list.
      *  Each tap waits for the bar to stop moving: back from the Save screen it's still being laid
      *  out, and a tap read from those bounds lands on the record button and starts a recording,
@@ -503,6 +533,7 @@ class MapFlowsTest {
         const val RECORDING_MS = 70_000L
         const val TRIP = "Flows trip"
         const val SHEET_TRIP = "Sheets trip"
+        const val ROTATION_TRIP = "Rotation trip"
         const val NEW_TYPE = "Sheet picker walk"
         const val RENAMED_TRIP = "Sheets trip, renamed"
         const val WALK = "Flows walk"

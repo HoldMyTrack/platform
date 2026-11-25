@@ -233,10 +233,13 @@ class TracksPanel(
         // Material's default lets the list's swipe grow the sheet first, so short of full screen
         // its rows never scrolled.
         behavior.isDraggableOnNestedScroll = false
-        sheet.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> fitContent() }
+        // Before each frame, after BottomSheetBehavior has moved the sheet to its state's top: a
+        // rotation or a new window size lays it out at the old top first, so a padding computed on
+        // layout left the content's bottom off screen. A frame whose padding changes is skipped
+        // and drawn again with it, so the old one never shows.
+        sheet.viewTreeObserver.addOnPreDrawListener { !fitContent() }
         behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
-                fitContent()
                 if (newState !in RESTING_STATES) return
                 resting = newState
                 // Dragged by hand: that's the sheet's height now. Held down, the drag is off and
@@ -246,7 +249,7 @@ class TracksPanel(
                 onSheetChanged()
             }
 
-            override fun onSlide(bottomSheet: View, slideOffset: Float) = fitContent()
+            override fun onSlide(bottomSheet: View, slideOffset: Float) = Unit
         })
 
         datesChip.setOnClickListener { onDatesTap() }
@@ -413,12 +416,15 @@ class TracksPanel(
         else -> parentHeight - behavior.peekHeight
     }
 
-    /** Ends the content at the screen's bottom wherever the sheet's top is ([SheetFit]). */
-    private fun fitContent() {
-        val parentHeight = (sheet.parent as? View)?.height?.takeIf { it > 0 } ?: return
+    /** Ends the content at the screen's bottom wherever the sheet's top is ([SheetFit]); whether
+     *  the padding changed. */
+    private fun fitContent(): Boolean {
+        val parentHeight = (sheet.parent as? View)?.height?.takeIf { it > 0 } ?: return false
         val halfTop = (parentHeight * (1 - behavior.halfExpandedRatio)).toInt()
         val padding = SheetFit.bottomPadding(sheet.top, behavior.expandedOffset, halfTop)
-        if (sheet.paddingBottom != padding) sheet.setPadding(sheet.paddingLeft, sheet.paddingTop, sheet.paddingRight, padding)
+        if (sheet.paddingBottom == padding) return false
+        sheet.setPadding(sheet.paddingLeft, sheet.paddingTop, sheet.paddingRight, padding)
+        return true
     }
 
     /** The offset last asked for, before [setExpandedOffset] clamps it. */
