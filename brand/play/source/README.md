@@ -35,5 +35,6 @@ Each shot starts from the account's opening view, so the same pinch and drags gi
 - **A pinch zooms about half a level less than its levels**, the part of the spread the map ignores, so a pinch's levels are the measured zoom plus that shortfall, confirmed by a trial capture.
 - **A drag that lifts while moving flings.** Every gesture rests before lifting.
 - **The profile is a WebView**, which UI Automator can't see into, so its rows are tapped at measured positions, per language. Choosing Month reloads the page and scrolls it to the top, so it goes first.
+- **The Trip shot is framed by hand.** Its view sits half a level inside the Trip's fit, and no gesture gets there the same way twice: a tap on the Trips map picks the route under it, a half-level pinch is ignored, and the Trip's own flight moves what follows. `shoot.mjs 04-trip` takes it at the fit; for the listing, set the screen to 1080×1920 at 420 dpi, frame Greater Cleveland trails by hand with its totals showing, and capture `raw/<locale>/phone-04-trip.png` with `adb exec-out screencap -p`.
 - **Edit is closed to the demo account**, so the listing has no Edit shot.
 - **The location dot greys out** on a stale fix; the Spots shot sends a fresh one from a test provider just before the capture.

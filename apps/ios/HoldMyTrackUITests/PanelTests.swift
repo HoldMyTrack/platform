@@ -32,11 +32,19 @@ final class PanelTests: XCTestCase {
         app.buttons["cardClose"].tap()
         XCTAssertTrue(app.otherElements["cardBands"].waitForNonExistence(timeout: 5))
 
-        // The tile checks: the selection bar comes, with Delete off for the demo.
+        // The tile checks: the selection bar comes, its ⋯ with Download on and Delete off for the demo.
         app.buttons["panelHandle"].tap()
         rows.element(boundBy: 0).buttons["rowTile"].tap()
         XCTAssertTrue(app.otherElements["selectionBar"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["barDelete"].isEnabled)
+        app.buttons["barMore"].tap()
+        XCTAssertTrue(app.buttons["moreDownload"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["moreDownload"].isEnabled)
+        XCTAssertFalse(app.buttons["moreDelete"].isEnabled)
+        // Download hands the GPX to the share sheet, Save to Files among its choices.
+        app.buttons["moreDownload"].tap()
+        XCTAssertTrue(app.cells["Save to Files"].waitForExistence(timeout: 30), "the share sheet")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+        XCTAssertTrue(app.otherElements["ActivityListView"].waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '1 checked · '")).firstMatch.exists, "the footer counts the checked")
         app.buttons["endSelecting"].tap()
 

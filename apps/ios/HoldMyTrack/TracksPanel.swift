@@ -9,7 +9,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
         case tapRow(String), toggleChecked(String), clearFocus, endSelecting
         case checkAll, checkNone, invert
-        case toggleVisibility, fly, edit, delete
+        case toggleVisibility, fly, edit, delete, download
         case toggleType(String), allTypes, distance(DistanceRange?), resetFilters, dates
         case openTrip(String)
     }
@@ -40,12 +40,16 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private let checkAllButton = UIButton(type: .system)
     private let selectMenuButton = Controls.iconButton(Controls.icon(UIImage(resource: .chevronDown), size: 14), label: String(localized: "Check"), id: "selectMenu")
 
+    /// The actions over the toolbar's target, twice: the selection bar's icons and the focused
+    /// track's card's. Delete is the card's; the selection bar's is in its ⋯ menu, with Download.
     private struct ActionButtons {
-        let visibility: UIButton, edit: UIButton, addToTrip: UIButton, delete: UIButton, focus: UIButton
-        var all: [UIButton] { [visibility, edit, addToTrip, delete, focus] }
+        let visibility: UIButton, edit: UIButton, addToTrip: UIButton, delete: UIButton?, focus: UIButton
     }
     private var barActions: ActionButtons!
     private var cardActions: ActionButtons!
+    /// The selection bar's ⋯: Download (root docs/SPEC.md FR-17.2) and Delete, which don't fit
+    /// across a phone beside the others. A blocked one says why under its title.
+    private let moreButton = Controls.iconButton(UIImage(resource: .ellipsis), label: String(localized: "More"), id: "barMore")
 
     private let cardIcon = UIImageView()
     private let cardTitle = Controls.label("", font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
@@ -76,7 +80,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         self.format = format
         self.demo = demo
         super.init()
-        barActions = makeActions(prefix: "bar")
+        barActions = makeActions(prefix: "bar", delete: false)
         cardActions = makeActions(prefix: "card", labelled: true)
         buildContent()
         buildCard()
@@ -86,7 +90,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     /// The toolbar's icon buttons, or labelled ones for the card: Hide, Edit, Trip, Zoom and
     /// Delete, each its word under its icon, as Android's card has them.
-    private func makeActions(prefix: String, labelled: Bool = false) -> ActionButtons {
+    private func makeActions(prefix: String, labelled: Bool = false, delete: Bool = true) -> ActionButtons {
         func button(_ icon: UIImage, _ label: String, _ word: String, id: String, danger: Bool = false) -> UIButton {
             guard labelled else { return Controls.iconButton(icon, label: label, id: id) }
             var config = UIButton.Configuration.plain()
@@ -114,12 +118,12 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             visibility: button(UIImage(resource: .eye), String(localized: "Hide"), String(localized: "card.hide", defaultValue: "Hide", comment: "The focused track's card: hide it on the map."), id: "\(prefix)Visibility"),
             edit: button(UIImage(resource: .pencil), String(localized: "Edit"), String(localized: "card.edit", defaultValue: "Edit", comment: "The focused track's card: edit it."), id: "\(prefix)Edit"),
             addToTrip: button(UIImage(resource: .bookPlus), String(localized: "Add to trip"), String(localized: "card.trip", defaultValue: "Trip", comment: "The focused track's card: add it to a Trip."), id: "\(prefix)AddToTrip"),
-            delete: button(UIImage(resource: .trash2), String(localized: "Delete"), String(localized: "card.delete", defaultValue: "Delete", comment: "The focused track's card: delete it."), id: "\(prefix)Delete", danger: true),
+            delete: !delete ? nil : button(UIImage(resource: .trash2), String(localized: "Delete"), String(localized: "card.delete", defaultValue: "Delete", comment: "The focused track's card: delete it."), id: "\(prefix)Delete", danger: true),
             focus: button(UIImage(resource: .focus), String(localized: "Fly to"), String(localized: "card.zoom", defaultValue: "Zoom", comment: "The focused track's card: fly the camera to it."), id: "\(prefix)Focus")
         )
         a.visibility.addAction(UIAction { [weak self] _ in self?.onEvent?(.toggleVisibility) }, for: .primaryActionTriggered)
         a.edit.addAction(UIAction { [weak self] _ in self?.onEvent?(.edit) }, for: .primaryActionTriggered)
-        a.delete.addAction(UIAction { [weak self] _ in self?.onEvent?(.delete) }, for: .primaryActionTriggered)
+        a.delete?.addAction(UIAction { [weak self] _ in self?.onEvent?(.delete) }, for: .primaryActionTriggered)
         a.focus.addAction(UIAction { [weak self] _ in self?.onEvent?(.fly) }, for: .primaryActionTriggered)
         a.addToTrip.showsMenuAsPrimaryAction = true
         return a
@@ -171,7 +175,9 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let close = Controls.iconButton(UIImage(resource: .x), label: String(localized: "Uncheck all"), id: "endSelecting")
         close.addAction(UIAction { [weak self] _ in self?.onEvent?(.endSelecting) }, for: .primaryActionTriggered)
         barActions.focus.configuration?.baseForegroundColor = UIColor(resource: .accent)
-        let bar = UIStackView(arrangedSubviews: [close, checkAllButton, selectMenuButton, UIView()] + barActions.all)
+        moreButton.showsMenuAsPrimaryAction = true
+        let bar = UIStackView(arrangedSubviews: [close, checkAllButton, selectMenuButton, UIView(),
+                                                 barActions.visibility, barActions.edit, barActions.addToTrip, moreButton, barActions.focus])
         for v in bar.arrangedSubviews { Self.shrinkable(v) }
         bar.alignment = .center
         bar.translatesAutoresizingMaskIntoConstraints = false
@@ -242,7 +248,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         top.spacing = DesignTokens.Space.s8
         top.alignment = .center
         // Android's order: Hide, Edit, Trip, Zoom, Delete.
-        let actions = UIStackView(arrangedSubviews: [cardActions.visibility, cardActions.edit, cardActions.addToTrip, cardActions.focus, cardActions.delete])
+        let actions = UIStackView(arrangedSubviews: [cardActions.visibility, cardActions.edit, cardActions.addToTrip, cardActions.focus, cardActions.delete!])
         actions.distribution = .fillEqually
         for (label, value) in [(TracksPanel.statLabel(String(localized: "card.distance", defaultValue: "Distance", comment: "The focused track's card: its distance.")), cardDistance),
                                (TracksPanel.statLabel(String(localized: "card.moving", defaultValue: "Moving", comment: "The focused track's card: its moving time.")), cardMoving),
@@ -400,17 +406,53 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let use = ToolbarRules.actions(targets: targets.count, anyPending: targets.contains(where: \.pending), demo: demo)
         let anyHidden = targets.contains { state.hidden.contains($0.id) }
         let name = targets.isEmpty ? nil : targetName(targets)
+        let deleteDemo = String(localized: "Not available for demo accounts — create an account to delete tracks")
         for actions in [barActions!, cardActions!] {
             describe(actions.visibility, use.visibility, image: UIImage(resource: anyHidden ? .eyeOff : .eye),
                      anyHidden ? String(localized: "Show \(name ?? "") on the map") : String(localized: "Hide \(name ?? "") from the map"))
             describe(actions.edit, use.edit, demo: String(localized: "Not available for demo accounts — create an account to edit tracks"), targets.count == 1 ? String(localized: "Edit \(name ?? ""): type, name, description and route") : String(localized: "Edit type for \(name ?? "")"))
             describe(actions.addToTrip, use.addToTrip, demo: String(localized: "Not available for demo accounts — create an account to change trips"), String(localized: "Add \(name ?? "") to a trip"))
-            describe(actions.delete, use.delete, demo: String(localized: "Not available for demo accounts — create an account to delete tracks"), String(localized: "Delete \(name ?? "")"))
+            if let delete = actions.delete { describe(delete, use.delete, demo: deleteDemo, String(localized: "Delete \(name ?? "")")) }
             describe(actions.focus, use.focus, String(localized: "Zoom to \(name ?? "")"))
         }
+        renderMore(targets, name: name, delete: use.delete, deleteDemo: deleteDemo)
         cardActions.visibility.configuration?.title = anyHidden
             ? String(localized: "card.show", defaultValue: "Show", comment: "The focused track's card: show a hidden track on the map.")
             : String(localized: "card.hide", defaultValue: "Hide", comment: "The focused track's card: hide it on the map.")
+    }
+
+    /// The ⋯ menu over targets, named name: Download unless DownloadRules blocks it, then Delete
+    /// as ToolbarRules has it. A blocked item is disabled with why under its title.
+    private func renderMore(_ targets: [Track], name: String?, delete: ToolbarRules.Use, deleteDemo: String) {
+        moreButton.isEnabled = name != nil
+        moreButton.accessibilityLabel = name.map { String(localized: "panel.moreTarget", defaultValue: "More for \($0)", comment: "Tracks tab: the selection bar's ⋯, which holds Download and Delete for the target.") }
+            ?? String(localized: "Tap a track, or check some, first")
+        guard let name else {
+            moreButton.menu = nil
+            return
+        }
+        func label(_ id: String) -> String { targets.first { $0.id == id }.map(format.label) ?? "" }
+        let block = DownloadRules.block(targets.map { DownloadRules.Target(id: $0.id, pending: $0.pending, isPrivate: $0.isPrivate) })
+        let downloadWhy: String? = switch block {
+        case nil: nil
+        case .tooMany(let count): String(localized: "panel.downloadTooMany", defaultValue: "Download takes at most \(DownloadRules.maxTracks) tracks at a time; \(count) are checked",
+                                         comment: "Tracks tab: why Download can't take the checked tracks; the first number is the limit, the second how many are checked.")
+        case .pending(let id): String(localized: "panel.downloadPending", defaultValue: "Can't download: “\(label(id))” is still being processed", comment: "Tracks tab: why Download can't go; the placeholder names the track.")
+        case .private(let id): String(localized: "panel.downloadPrivate", defaultValue: "Can't download: “\(label(id))” lies entirely inside your private locations", comment: "Tracks tab: why Download can't go; the placeholder names the track.")
+        }
+        let deleteWhy: String? = switch delete {
+        case .ready: nil
+        case .demo: deleteDemo
+        case .noTarget: String(localized: "Tap a track, or check some, first")
+        case .pending: String(localized: "panel.deletePending", defaultValue: "Can't delete while a track is being processed", comment: "Tracks tab: why Delete is off while a checked or focused track is still being processed.")
+        }
+        let download = UIAction(title: String(localized: "panel.moreDownload", defaultValue: "Download as GPX", comment: "Tracks tab: the ⋯ menu's Download."),
+                                subtitle: downloadWhy, image: UIImage(resource: .download), attributes: downloadWhy == nil ? [] : .disabled) { [weak self] _ in self?.onEvent?(.download) }
+        download.accessibilityIdentifier = "moreDownload"
+        let remove = UIAction(title: String(localized: "panel.moreDelete", defaultValue: "Delete…", comment: "Tracks tab: the ⋯ menu's Delete, which asks first."),
+                              subtitle: deleteWhy, image: UIImage(resource: .trash2), attributes: deleteWhy == nil ? .destructive : .disabled) { [weak self] _ in self?.onEvent?(.delete) }
+        remove.accessibilityIdentifier = "moreDelete"
+        moreButton.menu = UIMenu(children: [download, remove])
     }
 
     /// Each action says what it would do, or why it can't; a disabled one stays in view.

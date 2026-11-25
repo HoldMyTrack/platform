@@ -307,6 +307,7 @@ extension MapViewController {
         case .fly: fly(session.panel.targets.map(\.id))
         case .edit: edit()
         case .delete: confirmDelete()
+        case .download: downloads.start(targets.map(\.id), from: self) { [weak self] in self?.say($0) }
         case .toggleType(let type): session.panel.toggleType(type)
         case .allTypes: session.panel.includeAllTypes()
         case .distance(let band): session.panel.distanceFilter = band
