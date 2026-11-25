@@ -131,11 +131,11 @@ final class AppFlow {
         show()
     }
 
-    /// Posted with the account, read again after a site page closed, when it changed.
+    /// Posted with the account, read again (refreshAccount), when it changed.
     static let accountChanged = Notification.Name("AppFlow.accountChanged")
 
-    /// The account read again once a site page closes, since Settings can change the units, the
-    /// name, the Country or the language; the screens that show it hear accountChanged.
+    /// The account read again once a site page closes or You shows, since Settings, here or on the
+    /// web, can change the units, the name, the Country or the language; the screens that show it hear accountChanged.
     func refreshAccount() {
         guard store.route == .home else { return }
         let before = store.confirmed

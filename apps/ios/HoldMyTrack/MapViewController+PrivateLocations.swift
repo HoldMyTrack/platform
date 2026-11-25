@@ -133,7 +133,7 @@ extension MapViewController {
     private func renderPrivateEditor() {
         let editing = privateLocations
         guard let draft = editing.draft else { return }
-        editing.editor.render(draft, dirty: PrivateLocationEditing.dirty(draft, saved: editing.locations ?? []), busy: editing.busy)
+        editing.editor.render(draft, dirty: PrivateLocationEditing.dirty(draft, saved: editing.locations ?? []), busy: editing.busy, format: format)
         drawPrivateLocations()
     }
 

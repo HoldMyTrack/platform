@@ -48,7 +48,7 @@ extension MapViewController {
             mapView.setCenter(at, animated: true)
         } else {
             recordingFollowed = true
-            mapView.setCenter(at, zoomLevel: max(mapView.zoomLevel, 15), animated: true)
+            mapView.setCenter(at, zoomLevel: max(mapView.zoomLevel, 16), animated: true)
         }
     }
 

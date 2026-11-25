@@ -57,6 +57,7 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
         // or reaches another account.
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
+        config.userContentController.addUserScript(AvatarScript.script)
         web = WKWebView(frame: view.bounds, configuration: config)
         web.navigationDelegate = self
         web.isOpaque = false

@@ -42,9 +42,8 @@ final class VerifyEmailViewController: UIViewController, SessionCheckScreen {
         Controls.host(column, in: self)
     }
 
-    func checkFailed(_ error: APIError) {
-        show(error.shownMessage)
-    }
+    /// Quiet: the check on a return wasn't asked for, and Confirm says its own failure.
+    func checkFailed(_ error: APIError) {}
 
     private func show(_ message: String) {
         status.text = message
@@ -71,9 +70,9 @@ final class VerifyEmailViewController: UIViewController, SessionCheckScreen {
                 } catch {}
             case .check:
                 // Confirmed, the flow moves on and this screen is gone; still here means not yet.
-                if await flow.recheck() == nil, viewIfLoaded?.window != nil {
-                    show(String(localized: "Enter the 6-digit code from the email."))
-                }
+                let failure = await flow.recheck()
+                guard viewIfLoaded?.window != nil, failure != .outdated else { return }
+                show(failure?.shownMessage ?? String(localized: "Enter the 6-digit code from the email."))
             }
         }
     }

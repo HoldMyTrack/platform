@@ -202,7 +202,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         recordButton.onTap = { [weak self] in
             guard let self else { return }
             if RecordingStatus.showsMap(stopping: false, state: self.recorder.state) { self.showMap() }
+            let pauses = self.recorder.state == .recording
             self.recorder.tap()
+            // A tap is the obvious guess at stop.
+            if pauses { self.map.say(String(localized: "record.holdToStop", defaultValue: "Hold to stop recording", comment: "Recording: said on a pause, since a tap is the obvious guess at stop.")) }
         }
         recordButton.onStop = { [weak self] in
             guard let self else { return }

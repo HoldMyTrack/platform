@@ -16,6 +16,12 @@ struct PanelFormatTests {
         #expect(format.trackCount(1234) == "1,234 tracks")
     }
 
+    @Test func aRadiusIsInTheAccountsUnits() {
+        #expect(format.radius(2000) == "2,000 m")
+        let imperial = PanelFormat(account: Account(email: "a@b.c", isDemo: false, emailVerified: true, country: "US", unitSystem: "imperial"))
+        #expect(imperial.radius(2000) == "6,562 ft")
+    }
+
     @Test func theFooterCountsTheCheckedAndTheirDistance() {
         #expect(format.checkedFooter(count: 2, meters: 2_400) == "2 checked · \(format.totalDistance(2_400))")
         #expect(format.checkedFooter(count: 1234, meters: 0).hasPrefix("1,234 checked · "))

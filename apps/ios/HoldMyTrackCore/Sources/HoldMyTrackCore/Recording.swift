@@ -68,6 +68,9 @@ public struct Recording: Equatable, Sendable {
     /// Fixes closer in time than this to the last kept one are dropped, as Android asks its GPS
     /// for one every 3 seconds.
     public static let minimumInterval: TimeInterval = 3
+    /// A fix nearer than this to the last kept one is dropped, Android's: a phone standing still
+    /// would add points and distance.
+    public static let minimumStep: Double = 5
     /// Fixes vaguer than this are dropped: iOS has no GPS-only provider, and a position from Wi-Fi
     /// or cell towers would draw a jump.
     public static let worstAccuracy: Double = 50
@@ -125,11 +128,15 @@ public struct Recording: Equatable, Sendable {
         return time.timeIntervalSince(last.time) >= Self.minimumInterval
     }
 
-    /// Keeps point if accepts says so, adding its step from the fix before; true when kept.
+    /// Keeps point if accepts says so and it's minimumStep on, adding its step from the fix before; true when kept.
     @discardableResult
     public mutating func add(_ point: RecordedPoint, accuracy: Double) -> Bool {
         guard accepts(accuracy: accuracy, at: point.time) else { return false }
-        if let last { meters += Self.distance(last, point) }
+        if let last {
+            let step = Self.distance(last, point)
+            guard step >= Self.minimumStep else { return false }
+            meters += step
+        }
         last = point
         points.append(point)
         return true

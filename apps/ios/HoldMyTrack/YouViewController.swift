@@ -50,6 +50,8 @@ final class YouViewController: UITableViewController {
     /// The account's tile version as the map last read it: a sync, upload, delete or edit moves
     /// it, so the numbers are read again (YouRefresh).
     var tileVersion: () -> String = { "" }
+    /// When the account was last read.
+    private var accountReadAtMs: Int64?
     /// When the numbers were last read, and against what.
     private var numbersRead: YouRefresh.Mark?
     /// A page was pushed over this one, or the app left: the next showing is a return.
@@ -129,7 +131,8 @@ final class YouViewController: UITableViewController {
         resumed = navigationController.map { $0.topViewController !== self } ?? false
     }
 
-    /// The numbers when they could have changed (YouRefresh), and the Private locations on every
+    /// The account, which the web can change, and its numbers when they could have changed
+    /// (YouRefresh), and the Private locations on every
     /// showing, since the map's editor changes them. A read overtaken by a newer one is dropped.
     private func load() {
         let zone = TimeZone(identifier: account.timezone) ?? .current
@@ -138,7 +141,12 @@ final class YouViewController: UITableViewController {
         let p = calendar.dateComponents([.year, .month, .day], from: Date())
         let today = String(format: "%04d-%02d-%02d", p.year!, p.month!, p.day!)
         let now = YouRefresh.Mark(atMs: Int64(Date().timeIntervalSince1970 * 1000), tileVersion: tileVersion(), today: today)
-        if YouRefresh.of(numbers: numbersRead, accountAtMs: nil, now: now, resumed: resumed).numbers {
+        let reads = YouRefresh.of(numbers: numbersRead, accountAtMs: accountReadAtMs, now: now, resumed: resumed)
+        if reads.account {
+            accountReadAtMs = now.atMs
+            flow.refreshAccount()
+        }
+        if reads.numbers {
             numbersRead = now
             numbersTask?.cancel()
             numbersTask = Task { [weak self, api = flow.api!] in
@@ -429,8 +437,8 @@ final class YouViewController: UITableViewController {
                 guard let self else { return }
                 self.navigationController?.pushViewController(WebPageViewController(flow: self.flow, page: .about), animated: true)
             },
-            tile(String(localized: "Help"), .circleHelp, id: "youHelp") { [weak self] in self.map { UIApplication.shared.open($0.page("/help")) } },
-            tile(String(localized: "Contacts"), .mail, id: "youContacts") { [weak self] in self.map { UIApplication.shared.open($0.page("/contacts")) } },
+            tile(String(localized: "Help"), .circleHelp, id: "youHelp") { [weak self] in self?.browse("/help") },
+            tile(String(localized: "Contacts"), .mail, id: "youContacts") { [weak self] in self?.browse("/contacts") },
         ])
         row.distribution = .fillEqually
         row.spacing = DesignTokens.Space.s8
@@ -452,7 +460,10 @@ final class YouViewController: UITableViewController {
         }
     }
 
-    private func page(_ path: String) -> URL { flow.api.app.apiBaseURL.appending(path: String(path.dropFirst())) }
+    /// A page of the site over the app, as Android's browser tab.
+    private func browse(_ path: String) {
+        present(SFSafariViewController(url: flow.api.app.apiBaseURL.appending(path: String(path.dropFirst()))), animated: true)
+    }
 
     // MARK: Delete account (root docs/SPEC.md FR-1.12)
 

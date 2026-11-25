@@ -409,7 +409,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         renderLevel()
         // The account's tracks step aside for a recording and for the Sync tab's own lines, and
         // their photos with them.
-        let hidden = TabMode.hiddenGroups(recording: recordingLive, syncing: panelTab == .sync)
+        let hidden = TabMode.hiddenGroups(recording: recordingLive, syncing: panelTab == .sync, editingRoute: routeEdit.shape != nil)
         photoViews.markers.isHidden = recordingLive || panelTab == .sync
         if photoViews.markers.isHidden { photoViews.popup.close() }
         let asideChanged = hidden != state.hiddenGroups

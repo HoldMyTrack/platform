@@ -5,6 +5,12 @@ import Testing
 
 /// The Private location editor's decisions (root docs/SPEC.md FR-7.1).
 struct PrivateLocationEditingTests {
+    @Test func aRadiusReadsInTheAccountsUnits() {
+        #expect(PrivateLocation.shown(radiusM: 200, imperial: false) == 200)
+        #expect(PrivateLocation.shown(radiusM: 200, imperial: true) == 656)
+        #expect(PrivateLocation.shown(radiusM: 2000, imperial: true) == 6562)
+    }
+
     private typealias E = PrivateLocationEditing
     private let home = PrivateLocation(id: "a", name: "Home", lon: -81.5, lat: 41.2, radiusM: 300)
 
