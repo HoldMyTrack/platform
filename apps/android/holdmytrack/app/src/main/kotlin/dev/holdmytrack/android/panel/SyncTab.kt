@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -591,7 +592,7 @@ class SyncTab(
                     if (!RecordingSends.deletable(candidate.key)) {
                         render()
                         Snackbar.make(list, R.string.recorded_delete_sending, Snackbar.LENGTH_LONG)
-                            .apply { if (bar.visibility == View.VISIBLE) anchorView = bar }
+                            .apply { if (bar.isVisible) anchorView = bar }
                             .show()
                         return@launch
                     }
