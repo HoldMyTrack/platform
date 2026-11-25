@@ -40,9 +40,9 @@ const demoSessionTTL = 24 * time.Hour
 // somewhere less secure than the session cookie it's standing in for.
 const passwordResetTTL = time.Hour
 
-// emailVerificationTTL is longer than passwordResetTTL — confirming a new signup is less
-// time-sensitive than a credential reset, and someone might reasonably not check their inbox
-// for a day.
+// emailVerificationTTL is how long a verification row holds its address: what /verify-pending
+// shows and a resend mails, and an address no other account can change to meanwhile. Its code
+// lives verificationCodeTTL; a resend mails a new one.
 const emailVerificationTTL = 24 * time.Hour
 
 const minPasswordLength = 8
@@ -379,12 +379,12 @@ func (s *Server) createAccount(ctx context.Context, rawEmail, password, timezone
 	return userID, nil
 }
 
-// sendVerificationEmail creates a fresh token and emails the verification link — called from
+// sendVerificationEmail creates a fresh row and emails its code — called from
 // handleSignup, handleChangeEmail, and handleResendVerification, the three places a real
 // account needs one (re)sent. lang is the language the email is written in.
 func (s *Server) sendVerificationEmail(ctx context.Context, userID, email, lang string) error {
 	now := time.Now()
-	tokenID, hash := newToken()
+	_, hash := newToken() // the row's key; only the code is mailed
 	code, err := newVerificationCode()
 	if err != nil {
 		return err
@@ -396,9 +396,8 @@ func (s *Server) sendVerificationEmail(ctx context.Context, userID, email, lang 
 		return err
 	}
 
-	link := s.verifyLinkURL(tokenID, nil)
 	l := i18n.Get(lang)
-	return s.mailer.Send(ctx, email, l.T("email.verify.subject", "code", code), l.T("email.verify.body", "code", code, "link", link))
+	return s.mailer.Send(ctx, email, l.T("email.verify.subject", "code", code), l.T("email.verify.body", "code", code))
 }
 
 // handleLogin serves `POST /v2/auth/login`.

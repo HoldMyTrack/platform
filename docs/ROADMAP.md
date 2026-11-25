@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-23.
+Last updated: 2026-11-25.
 
 ## How to read this document
 
@@ -15,10 +15,6 @@ The current milestone, from the public launch on, with no exit gate (`VISION.md`
 Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] Serve the basemap as `/{z}/{x}/{y}` tiles Cloudflare can cache, with `pmtiles serve` on the droplet first: every range read reaches R2, since the free plan caches files only up to 512 MB (`IMPLEMENTATION.md` §5.4). Worth it once traffic grows: about 97,000 basemap requests in the 30 days to 2026-10-14 were under 1% of R2's free reads. The web style (`apps/web/src/map/style.ts`) and the server-built Android style (`mapstyle.go`) move from `pmtiles://` to the tile URL.
-
-### Verification by code
-
-- [ ] When `MIN_ANDROID_BUILD` reaches a build whose "check your email" screen takes the code, make the email code-only: drop its link, the `/verify` page and its Confirm button, the Facebook round trip from that page, and `POST /v2/auth/verify-email` (`IMPLEMENTATION.md` §4.9).
 
 ### Library replaces Sync
 

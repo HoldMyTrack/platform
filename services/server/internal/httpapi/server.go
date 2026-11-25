@@ -138,7 +138,6 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("POST", "/auth/demo"), s.handleDemoStart)
 	s.mux.HandleFunc(route("POST", "/auth/forgot-password"), s.handleForgotPassword)
 	s.mux.HandleFunc(route("POST", "/auth/reset-password"), s.handleResetPassword)
-	s.mux.HandleFunc(route("POST", "/auth/verify-email"), s.handleVerifyEmail)
 	// Sign in with Google (google_auth.go) and Facebook (facebook_auth.go) — GET, not POST:
 	// start and callback are all full-page browser navigations, not fetch() calls.
 	s.mux.HandleFunc(route("GET", "/auth/providers"), s.handleAuthProviders)
@@ -283,8 +282,6 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("POST /forgot", s.sameOrigin(s.handleForgotForm))
 	s.mux.HandleFunc("GET /reset", s.handleResetPage)
 	s.mux.HandleFunc("POST /reset", s.sameOrigin(s.handleResetForm))
-	s.mux.HandleFunc("GET /verify", s.handleVerifyPage)
-	s.mux.HandleFunc("POST /verify", s.sameOrigin(s.handleVerifyForm))
 	s.mux.HandleFunc("GET /verify-pending", s.handleVerifyPendingPage)
 	s.mux.HandleFunc("POST /verify-pending/resend", s.sameOrigin(s.handleVerifyResendForm))
 	s.mux.HandleFunc("POST /verify-pending/email", s.sameOrigin(s.handleVerifyChangeEmailForm))

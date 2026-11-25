@@ -18,7 +18,7 @@ Three things had to be decided: where the OAuth flow runs and how much code it t
 
 - **Google and Apple link to the account with the same email**, since they vouch for it. If that account's email was never verified, linking removes its password, its Facebook link and its sessions: whoever set them never proved they own the address, and keeping them would let someone pre-register a victim's email and keep a way in after the victim signs in. An account already linked to a different identity of the same provider is refused.
 - **Facebook never links by email.** If the email already belongs to an account, the sign-in is refused with a message saying so. Otherwise a new account is made **unverified** and goes through email verification like a password sign-up. A Facebook account with no email is refused.
-- **A Facebook link made before the address was verified never outlives its owner taking over.** The address's owner may not be whoever holds the Facebook account. So the account's first verification counts only from a browser signed in to it, which a Continue with Facebook on the verification page returns to, and a password reset of an unverified account drops the link, as Google's and Apple's linking does.
+- **A Facebook link made before the address was verified never outlives its owner taking over.** The address's owner may not be whoever holds the Facebook account. So the account's first verification is the code typed in a session signed in to it, and a password reset of an unverified account drops the link, as Google's and Apple's linking does.
 
 **Links are rows of `user_identities (user_id, provider, subject)`**, primary key `(provider, subject)`, one identity per provider per account, deleted with the account.
 
@@ -32,14 +32,14 @@ Each provider is optional per deployment, and email and password never depend on
 - **Refuse to link and ask for the password first.** Safer only in the case already covered (an unverified account), and it strands the common case behind an error.
 - **Link Facebook by email, like Google.** Anyone who can put an unconfirmed address on a Facebook account would get into the account with that address.
 - **Link Facebook by email only to a verified account.** The dangerous direction: the verified account is the victim's.
-- **Drop the Facebook link at the first verification.** The Android app's verification link opens in the phone's browser, with no session, so every Facebook sign-up from the app would lose the only way into its account.
+- **Drop the Facebook link at the first verification.** A Facebook-made account has no password, so every Facebook sign-up would lose the only way into its account.
 - **Make new Facebook accounts verified.** Someone could claim an address they don't own, and its owner's later sign-up would find it taken.
 - **A column per provider on `users`.** Every lookup, the password-reset filter and the unverified-account cleanup would need a branch per provider.
 
 ## Consequences
 
 - Google's and Apple's email verification are part of this app's security boundary: whoever controls a Google or Apple account for an address can sign in to the account with that address, the same trust a password-reset email places in whoever controls the mailbox.
-- Someone with a password or Google account can't start using Facebook with it; they get "An account with this email already exists". A Facebook sign-up waits for its verification email where Google's and Apple's don't, and confirms it in a browser signed in with Facebook, which on Android means one more Continue with Facebook in the browser the link opens. That refusal tells the caller the address has an account, which the sign-up endpoint's `409` already does.
+- Someone with a password or Google account can't start using Facebook with it; they get "An account with this email already exists". A Facebook sign-up waits for its verification email where Google's and Apple's don't, and confirms it with the code, typed where it signed in with Facebook. That refusal tells the caller the address has an account, which the sign-up endpoint's `409` already does.
 - A provider-only account has no password until it sets one through Forgot password.
 - A failed callback can only redirect back, so failures show one generic message and the cause is only in the server log.
 - Apple's refresh token is kept, for nothing but revoking the link when the account is deleted.

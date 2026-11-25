@@ -93,28 +93,6 @@ auth_reset-password:
     responses:
       "200": { $ref: "../components/responses.yaml#/Session" }
       "400": { $ref: "../components/responses.yaml#/Error" }
-auth_verify-email:
-  post:
-    summary: Verify an address with a verification link's token
-    description: Signs in only a caller already signed in to the account; any other caller gets 204 and signs in with the password, or, on a first verification of an account made through Facebook, 403 verify_needs_facebook, whose token stays usable. A first verification also ends the account's other sessions (SPEC FR-1.8).
-    security: []
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            additionalProperties: false
-            required: [token]
-            properties:
-              token: { type: string }
-    responses:
-      "200": { $ref: "../components/responses.yaml#/Session" }
-      "204":
-        description: Verified, not signed in
-      "400": { $ref: "../components/responses.yaml#/Error" }
-      "403": { $ref: "../components/responses.yaml#/Error" }
-      "409": { $ref: "../components/responses.yaml#/Error" }
 auth_verify-code:
   post:
     summary: Verify the caller's address with the 6-digit code from its newest verification email
@@ -189,7 +167,6 @@ auth_facebook_start:
     parameters:
       - $ref: "../components/parameters.yaml#/OAuthTZ"
       - $ref: "../components/parameters.yaml#/OAuthAppChallenge"
-      - $ref: "../components/parameters.yaml#/OAuthVerify"
     responses:
       "302": { $ref: "../components/responses.yaml#/Redirect" }
       "400": { $ref: "../components/responses.yaml#/Error" }
@@ -339,7 +316,7 @@ auth_handoff:
       "401": { $ref: "../components/responses.yaml#/Error" }
 auth_resend-verification:
   post:
-    summary: Email a new verification code and link; works before the account is verified
+    summary: Email a new verification code; works before the account is verified
     responses:
       "200": { $ref: "../components/responses.yaml#/Message" }
       "400": { $ref: "../components/responses.yaml#/Error" }
@@ -347,7 +324,7 @@ auth_resend-verification:
       "429": { $ref: "../components/responses.yaml#/Error" }
 auth_email:
   patch:
-    summary: Change the address of an account that isn't verified yet, and send it a new link
+    summary: Change the address of an account that isn't verified yet, and send it a new code
     requestBody:
       required: true
       content:

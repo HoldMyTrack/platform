@@ -90,7 +90,7 @@ func (s *Server) handleAppleStart(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, "not found", http.StatusNotFound)
 		return
 	}
-	state, _, ok := s.beginOAuth(w, r, appleCookiePath, false, "")
+	state, _, ok := s.beginOAuth(w, r, appleCookiePath, false)
 	if !ok {
 		return
 	}

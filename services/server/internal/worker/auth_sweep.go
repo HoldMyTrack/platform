@@ -13,9 +13,9 @@ import (
 // when it's read; this is about not keeping it.
 const authSweepInterval = 24 * time.Hour
 
-// sweepExpiredAuth deletes expired sessions, password-reset links and email-verification links.
+// sweepExpiredAuth deletes expired sessions, password-reset links and email-verification rows.
 // Each refuses itself once past expires_at, but the row would otherwise stay until the account
-// is deleted: a verification link keeps the address it was sent to, a mistyped one included
+// is deleted: a verification row keeps the address it was sent to, a mistyped one included
 // (docs/DPIA.md).
 func sweepExpiredAuth(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger) error {
 	total := int64(0)

@@ -41,7 +41,7 @@ func (c Config) Configured() bool { return c.ZeptoMailToken != "" || c.SMTPHost 
 // reset link a real email would.
 //
 // logBodies says whether that log line carries the body. The caller passes false for a real
-// deployment (an https APP_BASE_URL): a body holds a live reset or verification link, and
+// deployment (an https APP_BASE_URL): a body holds a live reset link or verification code, and
 // written to the logs it would open the account to anyone who can read them.
 //
 // A configured sender whose From doesn't parse, or an API URL that isn't https outside the
@@ -172,7 +172,7 @@ func (s *smtpSender) open(ctx context.Context) (client *smtp.Client, done func()
 			return nil, nil, replyError("starttls", err)
 		}
 	} else if needsTLS(s.host) {
-		// Not sent in the clear: every message carries a sign-in, reset or verification link,
+		// Not sent in the clear: every message carries a reset link or a verification code,
 		// and a server, or something in between, that drops STARTTLS would expose them.
 		done()
 		return nil, nil, fmt.Errorf("mail: %s offers no STARTTLS", s.host)

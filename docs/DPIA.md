@@ -49,7 +49,7 @@ HoldMyTrack keeps the outdoor tracks a user chooses to bring in and draws them a
 
 | Data | Source | Stored at | Kept for |
 | --- | --- | --- | --- |
-| Email, password hash, Google/Facebook/Apple id and name; Apple's refresh token, kept only to revoke the link | User, sign-in provider | Database (DigitalOcean, US) | Until the account is deleted; an account never verified, from 7 days after signup once no link is valid |
+| Email, password hash, Google/Facebook/Apple id and name; Apple's refresh token, kept only to revoke the link | User, sign-in provider | Database (DigitalOcean, US) | Until the account is deleted; an account never verified, from 7 days after signup once no verification email is under 24 hours old |
 | Display name, avatar without EXIF, country, timezone, language | User | Database; avatar image in R2 | Until the account is deleted |
 | Track routes: points, times, elevation, derived stats, the places they pass through (country to city) | Uploads, Health Connect, recording | Database, map tiles in R2 | Until the track or account is deleted |
 | Original uploads, unclipped, points inside Private locations included | Uploads, Health Connect, recording | Cloudflare R2 | Until the track or account is deleted; no expiry yet |

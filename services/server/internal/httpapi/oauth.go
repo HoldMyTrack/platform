@@ -32,7 +32,7 @@ import (
 
 const (
 	// oauthCookieName carries state + PKCE verifier + the browser's timezone (+ an app's
-	// challenge, or a verification link's token) across the round trip through the provider.
+	// challenge) across the round trip through the provider.
 	// Each provider scopes it to its own /v2/auth/<provider> path, so no other request ever
 	// sends it and two flows never read each other's.
 	oauthCookieName = "holdmytrack_oauth"
@@ -50,26 +50,19 @@ const (
 )
 
 // oauthRoundTrip is what a callback carries: the provider's code plus what beginOAuth stored
-// in the cookie. appChallenge is set when a native app started the round trip; verifyToken
-// when Facebook's was started from the /verify page (errVerifyNeedsFacebook), which it returns
-// to.
+// in the cookie. appChallenge is set when a native app started the round trip.
 type oauthRoundTrip struct {
-	code, verifier, tz, appChallenge, verifyToken string
+	code, verifier, tz, appChallenge string
 }
 
 // beginOAuth starts a round trip: a fresh state, a PKCE verifier when withPKCE (empty
 // otherwise), the browser's timezone from ?tz= (anything invalid is dropped here and falls
-// back to UTC at account creation), an app's ?app_challenge= when there is one, and
-// verifyToken, all stored in the oauth cookie under cookiePath. ok false means the response
-// has already been written.
-func (s *Server) beginOAuth(w http.ResponseWriter, r *http.Request, cookiePath string, withPKCE bool, verifyToken string) (state, verifier string, ok bool) {
+// back to UTC at account creation) and an app's ?app_challenge= when there is one, all stored
+// in the oauth cookie under cookiePath. ok false means the response has already been written.
+func (s *Server) beginOAuth(w http.ResponseWriter, r *http.Request, cookiePath string, withPKCE bool) (state, verifier string, ok bool) {
 	appChallenge := r.URL.Query().Get("app_challenge")
 	if appChallenge != "" && !validPKCEValue(appChallenge) {
 		writeAPIError(w, "invalid app_challenge", http.StatusBadRequest)
-		return "", "", false
-	}
-	if appChallenge != "" && verifyToken != "" {
-		writeAPIError(w, "verify with app_challenge", http.StatusBadRequest)
 		return "", "", false
 	}
 	state, err := randomToken()
@@ -86,11 +79,7 @@ func (s *Server) beginOAuth(w http.ResponseWriter, r *http.Request, cookiePath s
 		}
 	}
 	tz, _ := normalizeTimezone(r.URL.Query().Get("tz"))
-	parts := []string{state, verifier, tz, appChallenge}
-	if verifyToken != "" {
-		parts = append(parts, verifyToken)
-	}
-	s.setOAuthCookie(w, cookiePath, strings.Join(parts, "."), oauthCookieTTL)
+	s.setOAuthCookie(w, cookiePath, strings.Join([]string{state, verifier, tz, appChallenge}, "."), oauthCookieTTL)
 	return state, verifier, true
 }
 
@@ -109,13 +98,10 @@ func (s *Server) readOAuthCallback(w http.ResponseWriter, r *http.Request, cooki
 	var rt oauthRoundTrip
 	if cookieErr == nil {
 		// State, verifier, timezone and an app's challenge (beginOAuth writes all four, empty
-		// or not), then a verification link's token when there is one.
-		parts = strings.SplitN(cookie.Value, ".", 5)
-		if len(parts) >= 4 {
+		// or not).
+		parts = strings.SplitN(cookie.Value, ".", 4)
+		if len(parts) == 4 {
 			rt.appChallenge = parts[3]
-		}
-		if len(parts) == 5 {
-			rt.verifyToken = parts[4]
 		}
 	}
 	if e := r.FormValue("error"); e != "" {
@@ -136,7 +122,7 @@ func (s *Server) readOAuthCallback(w http.ResponseWriter, r *http.Request, cooki
 
 // finishOAuth ends a successful round trip. A browser gets the same session every other
 // sign-in path starts and is sent to the app, which routes an unverified or not-yet-onboarded
-// account onward itself, or back to the verification link the round trip started from. A native app gets a one-time code for the account instead, at
+// account onward itself. A native app gets a one-time code for the account instead, at
 // appRedirectURI.
 func (s *Server) finishOAuth(w http.ResponseWriter, r *http.Request, rt oauthRoundTrip, userID string) error {
 	if rt.appChallenge != "" {
@@ -150,35 +136,17 @@ func (s *Server) finishOAuth(w http.ResponseWriter, r *http.Request, rt oauthRou
 	if _, err := s.startSession(w, r.Context(), userID, sessionTTL); err != nil {
 		return err
 	}
-	if rt.verifyToken != "" {
-		http.Redirect(w, r, s.verifyLinkURL(rt.verifyToken, nil), http.StatusFound)
-		return nil
-	}
 	http.Redirect(w, r, s.appBaseURL+"/", http.StatusFound)
 	return nil
 }
 
-// verifyLinkURL is the verification link for token, with extra query values.
-func (s *Server) verifyLinkURL(token string, extra url.Values) string {
-	q := url.Values{"token": {token}}
-	for k, v := range extra {
-		q[k] = v
-	}
-	return s.appBaseURL + "/verify?" + q.Encode()
-}
-
 // failOAuth ends a failed round trip with an error code — on the sign-in page for a browser,
 // back in the app for a native round trip, which shows its own wording for the same codes. A
-// round trip started from the /verify page goes back to its link with the code. A
 // callback whose round-trip cookie couldn't be read has nothing saying an app started it, so it
 // fails to the sign-in page.
 func (s *Server) failOAuth(w http.ResponseWriter, r *http.Request, rt oauthRoundTrip, code string) {
 	if rt.appChallenge != "" {
 		http.Redirect(w, r, appRedirectURI+"?"+url.Values{"error": {code}}.Encode(), http.StatusFound)
-		return
-	}
-	if rt.verifyToken != "" {
-		http.Redirect(w, r, s.verifyLinkURL(rt.verifyToken, url.Values{"error": {code}}), http.StatusFound)
 		return
 	}
 	http.Redirect(w, r, s.appBaseURL+"/signin?error="+code, http.StatusFound)

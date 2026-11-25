@@ -31,8 +31,8 @@ func TestMessageEncodesSubject(t *testing.T) {
 	}
 }
 
-// Without SMTP, a real deployment's log never carries a message body: it holds a live reset or
-// verification link.
+// Without SMTP, a real deployment's log never carries a message body: it holds a live reset link
+// or verification code.
 func TestLogSenderKeepsBodiesOutOfARealDeploymentsLog(t *testing.T) {
 	for _, logBodies := range []bool{false, true} {
 		var buf bytes.Buffer
