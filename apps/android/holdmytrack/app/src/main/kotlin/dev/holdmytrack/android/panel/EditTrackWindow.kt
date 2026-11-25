@@ -41,8 +41,8 @@ import dev.holdmytrack.android.recording.TypeSearch
  * another, a group's resending each track's own name and description), then the photos,
  * then the route edit — and closes; a refusal keeps the window open with the server's reason,
  * a retried Save skips what already went, and a later step failing still reports the earlier
- * ones saved. Cancel writes nothing; Back does the same, but asks first while there are photo
- * changes, which can be a lot of picking and sliding to lose to a reflex.
+ * ones saved. Cancel and Back write nothing, and ask first while anything is
+ * unsaved, which can be a lot of typing, chopping or sliding to lose.
  */
 class EditTrackWindow(
     private val card: View,
@@ -122,9 +122,12 @@ class EditTrackWindow(
     /** "Saving photos n of m…" while the photos are written. */
     private var photoProgress: Pair<Int, Int>? = null
 
-    /** Set once the fields are written, so a Save retried after a failure doesn't write them
-     *  twice, and a Cancel after one still reports that something changed. */
-    private var fieldsSaved = false
+    /** What Save has written, by id, so one retried after a failure writes the rest
+     *  ([EditPlan.writes]), and a Cancel after one still reports that something changed. */
+    private val written = mutableMapOf<String, EditPlan.Write>()
+
+    /** Tracks whose last write failed: the server may have taken it. */
+    private val unsure = mutableSetOf<String>()
 
     val isOpen: Boolean
         get() = card.visibility == View.VISIBLE
@@ -140,7 +143,7 @@ class EditTrackWindow(
     init {
         typeField.setOnClickListener { openTypePicker() }
         typeLayout.setEndIconOnClickListener { openTypePicker() }
-        cancel.setOnClickListener { close() }
+        cancel.setOnClickListener { back() }
         save.setOnClickListener { save() }
         tabTrack.setOnClickListener { showTab(EditTab.TRACK) }
         tabRoute.setOnClickListener { showTab(EditTab.ROUTE) }
@@ -227,7 +230,8 @@ class EditTrackWindow(
             }
         }
         val single = group.singleOrNull()
-        fieldsSaved = false
+        written.clear()
+        unsure.clear()
         saving = false
         photoProgress = null
         mixedTypes = group.any { it.trackType != group.first().trackType }
@@ -275,24 +279,24 @@ class EditTrackWindow(
      *  — `MapFragment` owns them, since they're also the map's markers. */
     fun setPhotos(photos: List<Photo>, failure: String?) = photosTab.setPhotos(photos, failure)
 
-    /** Cancel: nothing more is written. */
-    fun close() {
+    /** Nothing more is written. */
+    private fun close() {
         if (saving) return
         finish(trackApplied = false)
     }
 
-    /** Back: Cancel, but asking first while there are photo changes. */
+    /** Cancel and Back: closes, asking first while anything in the window is unsaved. */
     fun back() {
         if (saving) return
-        if (photosTab.draft.isEmpty) {
+        if (photosTab.draft.isEmpty && !routeEditor.changed && fieldWrites().isEmpty()) {
             close()
             return
         }
         MaterialAlertDialogBuilder(context, R.style.ThemeOverlay_HoldMyTrack_Dialog_Destructive)
-            .setTitle(R.string.photos_discard_title)
-            .setMessage(R.string.photos_discard_message)
-            .setPositiveButton(R.string.photos_discard) { _, _ -> close() }
-            .setNegativeButton(R.string.photos_keep_editing, null)
+            .setTitle(R.string.edit_discard_title)
+            .setMessage(R.string.edit_discard_message)
+            .setPositiveButton(R.string.edit_discard) { _, _ -> close() }
+            .setNegativeButton(R.string.edit_keep_editing, null)
             .show()
     }
 
@@ -305,8 +309,12 @@ class EditTrackWindow(
         }
     }
 
+    /** What Save would write of the fields as they are. */
+    private fun fieldWrites(): List<EditPlan.Write> = EditPlan.writes(
+        tracks, trackType, nameField.text?.toString().orEmpty(), descriptionField.text?.toString().orEmpty(), written.values, unsure,
+    )
+
     private fun save() {
-        val single = tracks.singleOrNull()
         val type = trackType.trim()
         val name = nameField.text?.toString().orEmpty().trim()
         val description = descriptionField.text?.toString().orEmpty()
@@ -328,12 +336,8 @@ class EditTrackWindow(
             showTab(EditTab.PHOTOS)
             return
         }
-        val changed = if (single != null) {
-            type != single.trackType || name != single.name.orEmpty() || description != single.description.orEmpty()
-        } else {
-            type.isNotEmpty() && tracks.any { it.trackType != type }
-        }
-        if (!changed || fieldsSaved) {
+        val writes = fieldWrites()
+        if (writes.isEmpty()) {
             savePhotos()
             return
         }
@@ -341,34 +345,27 @@ class EditTrackWindow(
         showError(null)
         renderBusy()
         hideKeyboard()
-        // One at a time, as the web does: a group is a handful of rows picked by hand.
-        val writes = tracks.map { track ->
-            if (single != null) {
-                Triple(track.id, name, description)
-            } else {
-                Triple(track.id, track.name.orEmpty(), track.description.orEmpty())
-            }
-        }
-        writeNext(writes, 0, type)
+        writeNext(writes, 0)
     }
 
-    private fun writeNext(writes: List<Triple<String, String, String>>, index: Int, type: String) {
+    /** One at a time, as the web does: a group is a handful of rows picked by hand. */
+    private fun writeNext(writes: List<EditPlan.Write>, index: Int) {
         if (index == writes.size) {
-            fieldsSaved = true
             savePhotos()
             return
         }
-        val (id, name, description) = writes[index]
-        HoldMyTrackApi.updateTrack(id, type, name, description) { result ->
-            result.onSuccess { writeNext(writes, index + 1, type) }
-                .onFailure { failure ->
-                    saving = false
-                    // A group that failed partway has written some rows; the list reload on
-                    // close shows which.
-                    if (index > 0) fieldsSaved = true
-                    renderBusy()
-                    showError(FailureText.of(failure, res.getString(R.string.edit_save_failed)))
-                }
+        val write = writes[index]
+        unsure += write.id
+        HoldMyTrackApi.updateTrack(write.id, write.trackType, write.name, write.description) { result ->
+            result.onSuccess {
+                unsure -= write.id
+                written[write.id] = write
+                writeNext(writes, index + 1)
+            }.onFailure { failure ->
+                saving = false
+                renderBusy()
+                showError(FailureText.of(failure, res.getString(R.string.edit_save_failed)))
+            }
         }
     }
 
@@ -446,7 +443,7 @@ class EditTrackWindow(
         val photosSaved = photosTab.photosSaved
         photosTab.close()
         card.visibility = View.GONE
-        onClose(fieldsSaved || trackApplied, trackApplied, photosSaved)
+        onClose(written.isNotEmpty() || unsure.isNotEmpty() || trackApplied, trackApplied, photosSaved)
     }
 
     private fun renderBusy() {

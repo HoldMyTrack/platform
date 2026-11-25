@@ -17,6 +17,7 @@ import { pendingAnswer, pendingBatches, pendingChange, pendingWatched } from '..
 import { deleteDone } from '../src/apiError.ts';
 import { attachmentName } from '../src/attachmentName.ts';
 import { emptyReason, pageQuery, pager } from '../src/library/libraryState.ts';
+import { fieldWrites } from '../src/ui/editSave.ts';
 import { downloadBlock } from '../src/ui/downloadTarget.ts';
 import { folderClick, isFolded } from '../src/ui/tripFold.ts';
 import { drawOrder } from '../src/ui/privateLocationPick.ts';
@@ -87,6 +88,8 @@ export const rules = {
   },
   libraryEmptyReason: ({ state, total, anyTrack }) =>
     emptyReason({ ...state, sort: 'started', desc: true, page: 1, dates: { after: state.after ?? null, before: state.before ?? null } }, total, anyTrack),
+  editWrites: ({ tracks, type, name, description, written, unsure }) =>
+    fieldWrites(tracks, tracks.length === 1, type, name, description, new Map(written.map(({ id, ...fields }) => [id, fields])), new Set(unsure)).map(({ id, fields }) => ({ id, ...fields })),
   deleteDone: ({ status }) => deleteDone(status),
   privateDrawOrder: ({ saved, editing }) => drawOrder(saved.map((id) => ({ id })), editing ? { id: editing } : null).map((l) => l.id),
   pendingChange: ({ previous, now, awaiting, listed }) => {

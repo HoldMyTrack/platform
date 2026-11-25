@@ -78,6 +78,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `photoClamp` | `view`, `fitted`, `stage` | a view |
 | `distanceParts`, `totalDistanceParts` | `meters`, `system` (`metric`, `imperial`) | `{ value, minDecimals, maxDecimals, grouping, unit }` |
 | `durationParts` | `seconds` | `{ key, args }` |
+| `editWrites` | `tracks`, `written` (`{ id, trackType, name, description }`), `type`, `name`, `description` (the form's), `unsure` (ids) | `[{ id, trackType, name, description }]` |
 | `editRouteFold` | `base` (an edit or `null`), `ops` | an edit `{ keep, remove, drop, move }` |
 | `editRouteApply` | `points` (`[lon, lat, t]`), `edit` | points |
 | `editRouteChop`, `editRouteCut` | `visible` (points), `lo`, `hi` | an op or `null` |

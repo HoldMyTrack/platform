@@ -197,7 +197,7 @@ The web's photos (`docs/SPEC.md` FR-15, ADR-0024) on the map and in the Edit win
 - The map shows, in Normal mode, the photos of the track being edited, else the focused one, else the open Trip's. None in Fog, on a hidden route, on the Route tab or while recording. Smaller below zoom 10, none below 4 (`docs/SPEC.md` FR-4.11).
 - Photos that would overlap share a marker; a tap zooms in to separate them (up to zoom 19) when they lie more than 15 m apart, else steps through them.
 - The Photos tab is for one track with a route. Added photos come from Android's photo picker, are redrawn upright at most 2,048 px with a 320 px thumbnail and placed by the server's placement check. One it can't place waits for the user to place it on the route, and Save is refused while any waits.
-- Nothing is written until Save, which writes the fields, then uploads, changes and deletes one at a time, then a route edit. A failure keeps the window open, and Save again carries on from the first unwritten change. Back asks before throwing photo changes away.
+- Nothing is written until Save, which writes the fields, then uploads, changes and deletes one at a time, then a route edit. A failure keeps the window open, and Save again carries on from the first unwritten change. Cancel and Back ask before throwing unsaved changes away.
 - The demo account has no Edit window, so no Photos tab.
 
 ### FR-2.11 Map image export

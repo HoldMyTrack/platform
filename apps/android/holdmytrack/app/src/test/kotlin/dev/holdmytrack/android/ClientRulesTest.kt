@@ -41,6 +41,7 @@ import dev.holdmytrack.android.panel.DistanceRange
 import dev.holdmytrack.android.panel.DistanceParts
 import dev.holdmytrack.android.panel.DurationParts
 import dev.holdmytrack.android.panel.EditOp
+import dev.holdmytrack.android.panel.EditPlan
 import dev.holdmytrack.android.map.Circle
 import dev.holdmytrack.android.map.PrivateLocationsOverlay
 import dev.holdmytrack.android.panel.EditRouteOps
@@ -299,6 +300,17 @@ class ClientRulesTest {
         "recordingSendWaiting" to { input ->
             val keys = input["recordings"]!!.jsonArray.map { it.jsonObject }.filterNot { it.bool("sent") }.map { it.string("id")!! }
             JsonPrimitive(RecordingSendRules.waiting(keys, input.strings("hidden").toSet(), input.bool("isDemo")))
+        },
+        "editWrites" to { input ->
+            val tracks = input["tracks"]!!.jsonArray.map { it.jsonObject }.map {
+                track(it.string("id")!!).copy(trackType = it.string("trackType")!!, name = it.string("name"), description = it.string("description"))
+            }
+            val written = input["written"]!!.jsonArray.map { it.jsonObject }.map {
+                EditPlan.Write(it.string("id")!!, it.string("trackType")!!, it.string("name")!!, it.string("description")!!)
+            }
+            JsonArray(EditPlan.writes(tracks, input.string("type")!!, input.string("name")!!, input.string("description")!!, written, input.strings("unsure").toSet()).map {
+                buildJsonObject { put("id", it.id); put("trackType", it.trackType); put("name", it.name); put("description", it.description) }
+            })
         },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
         "privateDrawOrder" to { input ->

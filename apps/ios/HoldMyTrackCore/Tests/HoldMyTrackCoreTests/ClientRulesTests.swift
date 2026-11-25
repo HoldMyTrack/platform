@@ -125,6 +125,17 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "recordingSendWaiting": { input in
         .number(Double(RecordingSends.waiting(input["recordings"].list!.map(ruleRecording), hidden: Set(input.strings("hidden")), isDemo: input["isDemo"].bool!)))
     },
+    "editWrites": { input in
+        let tracks = input["tracks"].list!.map {
+            Track(id: $0["id"].string!, startedAt: "2026-10-11T09:39:00Z", trackType: $0["trackType"].string!, name: $0["name"].string, description: $0["description"].string)
+        }
+        let written = input["written"].list!.map {
+            EditPlan.Write(id: $0["id"].string!, trackType: $0["trackType"].string!, name: $0["name"].string!, description: $0["description"].string!)
+        }
+        let writes = EditPlan.writes(group: tracks, type: input["type"].string!, name: input["name"].string!, description: input["description"].string!,
+                                     written: Dictionary(uniqueKeysWithValues: written.map { ($0.id, $0) }), unsure: Set(input.strings("unsure")))
+        return .array(writes.map { ["id": .string($0.id), "trackType": .string($0.trackType), "name": .string($0.name), "description": .string($0.description)] })
+    },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
     "attachmentName": { input in .string(AttachmentName.of(input["header"].string)) },
     "libraryPageQuery": { input in

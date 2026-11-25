@@ -29,7 +29,6 @@ import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.TrackPage
 import dev.holdmytrack.android.net.Trip
-import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import java.time.OffsetDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -56,6 +55,8 @@ class LibraryTab(
     private val onDeleted: (List<String>) -> Unit,
     /** Sync was tapped: the Sync sheet opens over this one. */
     private val onSync: () -> Unit,
+    /** The tab came to the front: the recordings waiting are counted again ([setSyncWaiting]). */
+    private val onShown: () -> Unit,
 ) {
     private val context = content.context
     private val res = context.resources
@@ -134,7 +135,7 @@ class LibraryTab(
     fun start() {
         showing = true
         read()
-        scope().launch { setSyncWaiting(if (Session.isDemo) 0 else RecordedTrackStore(context).all().size) }
+        onShown()
         HoldMyTrackApi.trips { result -> result.onSuccess { trips = it; render() } }
     }
 

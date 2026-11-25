@@ -5066,13 +5066,13 @@
         }
       }
     },
-    "The photos and route changes in this window haven't been saved yet." : {
+    "The changes you made in this window haven't been saved yet." : {
       "comment" : "Edit window: why Cancel asks.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Изменения фотографий и маршрута в этом окне ещё не сохранены."
+            "value" : "Изменения, сделанные в этом окне, ещё не сохранены."
           }
         }
       }

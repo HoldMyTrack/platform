@@ -16,16 +16,22 @@ export interface TrackFields {
  * else what the window opened with. One track takes all three fields from the form. A group
  * takes only the type, and keeps each track's own name and description: the endpoint
  * replaces all three, so a group edit still sends them unchanged. An empty type on a group
- * ("Mixed types") keeps each track's own type too.
+ * ("Mixed types") keeps each track's own type too. A track whose last
+ * write failed (`unsure`) is written whatever it holds: the server may have taken it and the
+ * answer been lost. The cases are
+ * `testdata/client-rules/edit-writes.json`.
  */
 export function fieldWrites(
   tracks: readonly Pick<TrackDetail, 'id' | 'trackType' | 'name' | 'description'>[],
   single: boolean,
-  type: string,
-  name: string,
+  typedType: string,
+  typedName: string,
   description: string,
   written: ReadonlyMap<string, TrackFields>,
+  unsure: ReadonlySet<string>,
 ): { id: string; fields: TrackFields }[] {
+  const type = typedType.trim();
+  const name = typedName.trim();
   return tracks.flatMap((track) => {
     const held = written.get(track.id) ?? {
       trackType: track.trackType,
@@ -34,7 +40,7 @@ export function fieldWrites(
     };
     const fields = single ? { trackType: type, name, description } : { ...held, trackType: type || held.trackType };
     const same = fields.trackType === held.trackType && fields.name === held.name && fields.description === held.description;
-    return same ? [] : [{ id: track.id, fields }];
+    return same && !unsure.has(track.id) ? [] : [{ id: track.id, fields }];
   });
 }
 

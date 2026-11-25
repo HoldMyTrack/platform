@@ -599,10 +599,10 @@
     <string name="photos_done">Done</string>
     <string name="photos_place_first">Place every new photo on the route before saving.</string>
     <string name="photos_saving_n">Saving photos %1$d of %2$d…</string>
-    <string name="photos_discard_title">Discard photo changes?</string>
-    <string name="photos_discard_message">The photos you added, moved or deleted in this window haven\'t been saved yet.</string>
-    <string name="photos_discard">Discard</string>
-    <string name="photos_keep_editing">Keep editing</string>
+    <string name="edit_discard_title">Discard changes?</string>
+    <string name="edit_discard_message">The changes you made in this window haven\'t been saved yet.</string>
+    <string name="edit_discard">Discard</string>
+    <string name="edit_keep_editing">Keep editing</string>
     <string name="photos_marker">Photo</string>
     <plurals name="photos_marker_group">
         <item quantity="one">%1$d photo</item>

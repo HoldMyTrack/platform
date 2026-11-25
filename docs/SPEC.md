@@ -383,7 +383,7 @@ Lists the types present among the tracks FR-5.1 starts from; types are free text
 - The Type picker lists every type the account's tracks use, with how many tracks use each, most used first, whatever the area, Dates or filters, and the current type even when no other track uses it.
 - Editing several tracks sets only their type, never their names or descriptions.
 - An edit doesn't change distance, coverage, Trends or the list's order.
-- When a save over several fails partway, what was written stays written.
+- When a save over several fails partway, what was written stays written, and saving again writes the rest.
 - Another account's track can't be told apart from a missing one.
 
 ### FR-5.6 Delete a track
