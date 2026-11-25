@@ -1,5 +1,5 @@
 {
-  "rule": "recordingSends",
+  "rule": "recordingSendAllowed",
   "description": "Whether the account's saved recordings send themselves (apps/android/docs/SPEC.md FR-5.2): a demo account's stay on the phone, since the server refuses its uploads.",
   "clients": ["android", "ios"],
   "cases": [

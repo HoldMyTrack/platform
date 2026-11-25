@@ -99,7 +99,7 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         datesSheet?.dismiss(animated: true)
     }
 
-    /// The recordings on the phone waiting to be sent (SyncList.waiting), as the tab bar's Library
+    /// The recordings on the phone waiting to be sent (RecordingSends.waiting), as the tab bar's Library
     /// badge counts them.
     func setSyncWaiting(_ waiting: Int) {
         addButton.configuration?.title = waiting > 0 ? format.count(waiting) : nil

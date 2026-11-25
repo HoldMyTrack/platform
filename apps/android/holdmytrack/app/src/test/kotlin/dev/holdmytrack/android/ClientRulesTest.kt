@@ -259,8 +259,8 @@ class ClientRulesTest {
         "libraryEmptyReason" to { input ->
             JsonPrimitive(caseName(LibraryRules.emptyReason(libraryState(input["state"]!!.jsonObject), input.int("total"), input.bool("anyTrack")).name))
         },
-        "recordingSends" to { input -> JsonPrimitive(RecordingSendRules.sends(signedIn = true, input.bool("emailVerified"), input.bool("isDemo"))) },
-        "recordingToSend" to { input ->
+        "recordingSendAllowed" to { input -> JsonPrimitive(RecordingSendRules.sends(signedIn = true, input.bool("emailVerified"), input.bool("isDemo"))) },
+        "recordingSendOrder" to { input ->
             val recordings = input["recordings"]!!.jsonArray.map { it.jsonObject }
             val unsent = recordings.map { RecordingSendRules.Unsent(it.string("id")!!, Instant.ofEpochMilli(it["startedAt"]!!.jsonPrimitive.long)) }
             val onItsWay = recordings.filter { it.bool("sent") }.map { it.string("id")!! }.toSet()
@@ -283,10 +283,10 @@ class ClientRulesTest {
                 put("unanswered", RecordingSendRules.unanswered(failure))
             }
         },
-        "recordingDeletion" to { input ->
+        "recordingSendDeletion" to { input ->
             JsonPrimitive(RecordingSendRules.deletion(input.bool("stored"), input.bool("going"), input.bool("landed")).name.lowercase())
         },
-        "recordingNote" to { input ->
+        "recordingSendNote" to { input ->
             val reason = if (input.bool("refused")) "why" else null
             when (RecordingSendRules.note(input.bool("sent"), input.bool("sending"), input.bool("hidden"), reason, input.bool("isDemo"))) {
                 null -> JsonNull
@@ -296,7 +296,7 @@ class ClientRulesTest {
                 is RecordingSendRules.Note.Refused -> JsonPrimitive("refused")
             }
         },
-        "recordingWaiting" to { input ->
+        "recordingSendWaiting" to { input ->
             val keys = input["recordings"]!!.jsonArray.map { it.jsonObject }.filterNot { it.bool("sent") }.map { it.string("id")!! }
             JsonPrimitive(RecordingSendRules.waiting(keys, input.strings("hidden").toSet(), input.bool("isDemo")))
         },
