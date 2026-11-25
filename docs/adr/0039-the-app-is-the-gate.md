@@ -11,7 +11,7 @@ Every source poured everything in. Health Connect sync and in-app recording sent
 Two pieces of the pipeline guessed on the user's behalf:
 
 - **Timeline endpoint trimming.** A trip's start or end place more than 1.5 km from its route and too fast to reach was dropped (46 of one account's 536 trips). Right most of the time, but the user couldn't see which trips it changed or why.
-- **Automatic cross-source duplicate handling.** A new track overlapping a live one by 80% of the longer one's time was matched to it, and the poorer copy was marked `superseded_by` the richer one and hidden (`IMPLEMENTATION.md` §4.6). It got splits wrong (`KNOWN_ISSUES.md`), it decided which copy was "richer" by a rule, and the hidden copies still had to be filtered out of every read: tiles, Fog and Heatmap, export, Trips and the rest.
+- **Automatic cross-source duplicate handling.** A new track overlapping a live one by 80% of the longer one's time was matched to it, and the poorer copy was marked `superseded_by` the richer one and hidden (`IMPLEMENTATION.md` §4.6). It got splits wrong, it decided which copy was "richer" by a rule, and the hidden copies still had to be filtered out of every read: tiles, Fog and Heatmap, export, Trips and the rest.
 
 Both exist to clean up after an import the user didn't choose track by track. Once the user chooses, they aren't needed.
 
