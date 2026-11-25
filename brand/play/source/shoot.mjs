@@ -60,10 +60,15 @@ const SHOTS = {
     await sleep(1500);
   },
   "03-fog-exact": async (locale) => {
-    await layers({ satellite: false, roads: false });
+    // Satellite along every cleared street, Cleveland down to Brecksville: 41 km east of the
+    // opening view, in drags short enough not to fling.
+    await layers({ satellite: true, roads: true });
     await mode(FOG[locale].exact);
-    await pinch(...MAP, -1.33);
-    await drag(300, 400, 350, 883);
+    await pinch(...MAP, -1.34);
+    for (let i = 0; i < 4; i++) {
+      await drag(800, 1000, -576, 22);
+      await sleep(600);
+    }
   },
   "04-trip": async () => {
     await layers({ satellite: true, roads: true });
