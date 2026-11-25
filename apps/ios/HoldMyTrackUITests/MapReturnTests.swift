@@ -48,6 +48,10 @@ final class MapReturnTests: XCTestCase {
         // The same track a day later and a little south, in the same view.
         try account.add("south.gpx", data: shifted(try account.sample("west-side.gpx")))
         app.activate()
+        // Not the home screen's pixels, nor the opening animation's.
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
+        XCTAssertTrue(app.buttons["panelHandle"].waitForHittable(timeout: 10))
+        sleep(3)
         let deadline = Date().addingTimeInterval(30)
         var after = trackPixels("After")
         while after < before * 3 / 2, Date() < deadline {

@@ -163,6 +163,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     private var basemapFailed = false
     private var basemapClock: Date?
     private var coverageTask: Task<Void, Never>?
+    private var loadTask: Task<Void, Never>?
+    /// The theme last loaded.
+    private var loadedFlavor: String?
     /// Find my location was tapped and waits on the prompt or the first position.
     private var locating = false
 
@@ -214,6 +217,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             }
         }
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
+            // iOS flips the theme in the background for its snapshots; a real change there is caught
+            // on the return (returned).
+            guard UIApplication.shared.applicationState != .background else { return }
             self.load()
             self.exportLookChanged()
         }
@@ -237,6 +243,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// The map is back, from another tab, the background or Upload over it: what may have changed
     /// meanwhile is read again (apps/android/docs/SPEC.md FR-2.2, FR-2.3, FR-2.7, FR-2.8).
     func returned() {
+        if loadedFlavor != flavor { load() }
         checkCoverage()
         loadCaptures()
         openOnce()
@@ -280,12 +287,17 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// version, comes through here.
     private func load() {
         let flavor = flavor, language = AppLanguage.current
+        loadedFlavor = flavor
+        loadTask?.cancel()
         if let kept = documents.kept(flavor: flavor, language: language) { show(kept) }
-        Task {
+        loadTask = Task {
             do {
-                show(try await documents.fetch(flavor: flavor, language: language))
+                let fetched = try await documents.fetch(flavor: flavor, language: language)
+                // An earlier theme's answer, landing late, would replace this one's.
+                guard !Task.isCancelled else { return }
+                show(fetched)
             } catch let error as APIError {
-                if pair == nil, error != .outdated { mapFailed(Self.describe(MapChrome.loadFailure(error))) }
+                if pair == nil, error != .outdated, !Task.isCancelled { mapFailed(Self.describe(MapChrome.loadFailure(error))) }
             } catch {}
         }
     }
