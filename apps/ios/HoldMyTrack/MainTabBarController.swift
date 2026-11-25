@@ -78,6 +78,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
                 guard let map, let mapHost = self.viewControllers?.first, let day = track.day(accountZone: self.account.timezone) else { return }
                 self.selectedViewController = mapHost
                 map.viewOnMap(track: track.trackID, day: day)
+            case .say(let text):
+                map?.say(text)
             case .hid(let text, let undo):
                 map?.say(text, action: (String(localized: "sync.undo", defaultValue: "Undo", comment: "Sync: put a hidden row back, or hide it again."), undo))
             }

@@ -10,8 +10,8 @@ struct RecordingSendsTests {
                       movingSeconds: 600, meters: 1000, type: "walk", points: [], sent: sent)
     }
 
-    private func toSend(hidden: Set<String> = [], held: Set<String> = [], refused: Set<String> = [], retry: Bool = false) -> [String] {
-        RecordingSends.toSend([track("a", sent: true), track("b"), track("c")], hidden: hidden, held: held, refused: refused, retry: retry).map(\.id)
+    private func toSend(hidden: Set<String> = [], held: Set<String> = [], refused: Set<String> = [], setBack: [String] = [], retry: Bool = false) -> [String] {
+        RecordingSends.toSend([track("a", sent: true), track("b"), track("c")], hidden: hidden, held: held, refused: refused, setBack: setBack, retry: retry).map(\.id)
     }
 
     @Test func onlyAVerifiedRealAccountSends() {
@@ -33,11 +33,35 @@ struct RecordingSendsTests {
     }
 
     @Test func onlyAFailureEveryRecordingWouldMeetStopsTheSend() {
-        func http(_ status: Int) -> RecordingSends.Failure { RecordingSends.failure(.http(status: status, code: nil, message: "why")) }
-        #expect(RecordingSends.failure(.unreachable) == .stop && RecordingSends.failure(.outdated) == .stop)
-        #expect(http(401) == .stop && http(403) == .stop && http(429) == .stop)
-        #expect(http(413) == .refuse(.server("why")) && http(400) == .refuse(.server("why")))
-        #expect(http(500) == .next && http(408) == .next && RecordingSends.failure(.unreadable) == .next)
+        func http(_ status: Int) -> RecordingSends.Failure { RecordingSends.failure(.http(status: status, code: nil, message: "why"), afterUnanswered: false) }
+        #expect(RecordingSends.failure(.outdated, afterUnanswered: false) == .stop)
+        for status in [401, 403, 404, 421, 429, 503] { #expect(http(status) == .stop) }
+        for status in [400, 413, 422] { #expect(http(status) == .refuse(.server("why"))) }
+        #expect(http(500) == .next)
+        #expect(RecordingSends.failure(.unreadable, afterUnanswered: true) == .next)
+    }
+
+    @Test func oneRequestWithNoAnswerMayBeTheRecordingsTwoInARowAreTheConnections() {
+        let silent: [APIError] = [.unreachable] + [408, 502, 504].map { .http(status: $0, code: nil, message: nil) }
+        for error in silent {
+            #expect(RecordingSends.unanswered(error))
+            #expect(RecordingSends.failure(error, afterUnanswered: false) == .next)
+            #expect(RecordingSends.failure(error, afterUnanswered: true) == .stop)
+        }
+        #expect(!RecordingSends.unanswered(.unreadable) && !RecordingSends.unanswered(.http(status: 500, code: nil, message: nil)))
+    }
+
+    @Test func whatFailedGoesLast() {
+        #expect(toSend(setBack: ["b"]) == ["c", "b"])
+        #expect(toSend(setBack: ["c", "b"]) == ["c", "b"], "the latest last, so the order turns")
+    }
+
+    @Test func deleteLeavesWhatsGoingAndSaysWhatLanded() {
+        #expect(RecordingSends.deletion(track("a"), sending: false, landed: false) == .deleted)
+        #expect(RecordingSends.deletion(track("a"), sending: true, landed: false) == .sending)
+        #expect(RecordingSends.deletion(track("a", sent: true), sending: false, landed: false) == .sending)
+        #expect(RecordingSends.deletion(nil, sending: false, landed: true) == .landed)
+        #expect(RecordingSends.deletion(nil, sending: false, landed: false) == .deleted, "gone by an earlier Delete")
     }
 
     @Test func oneOpenOnTheSaveScreenIsNeverSentFromUnderIt() {

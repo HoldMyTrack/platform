@@ -18,7 +18,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
         var total: Int64 = 0
     }
 
-    /// What a finished upload said that Sync history won't, or why a picked file wasn't sent.
+    /// What a finished upload said, or why a picked file wasn't sent.
     struct Note {
         let text: String
         let error: Bool

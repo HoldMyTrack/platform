@@ -12823,7 +12823,7 @@
       }
     },
     "tour.sync.body" : {
-      "comment" : "The tour: the Sync tab, which lists the phone's recordings and leads to Upload and Sync history.",
+      "comment" : "The tour: the Sync tab, which lists the phone's recordings, with Upload at its head.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -13922,6 +13922,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Запись сохранена на телефоне. Демо-аккаунт не может добавить её на карту."
+          }
+        }
+      }
+    },
+    "sync.deleteSending" : {
+      "comment" : "Sync: Delete on a recording whose send had started.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's already being sent. Once it's on your map, delete it there."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Она уже отправляется. Когда она появится на карте, удалите её там."
+          }
+        }
+      }
+    },
+    "sync.deleteLanded" : {
+      "comment" : "Sync: Delete on a recording that landed while the question was open.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's already on your map. Delete it there."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Она уже на карте. Удалите её там."
           }
         }
       }

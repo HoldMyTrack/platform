@@ -132,8 +132,13 @@ final class RecordingEditViewController: UIViewController {
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
         alert.addAction(UIAlertAction(title: String(localized: "recording.discard", defaultValue: "Discard", comment: "An unfinished recording: delete it."), style: .destructive) { [weak self] _ in
             guard let self else { return }
-            self.recordings.delete(self.track.id)
-            self.dismiss(animated: true)
+            guard let text = SyncPanel.words(self.recordings.delete(self.track.id)) else {
+                self.dismiss(animated: true)
+                return
+            }
+            let kept = UIAlertController(title: nil, message: text, preferredStyle: .alert)
+            kept.addAction(UIAlertAction(title: String(localized: "OK"), style: .default) { [weak self] _ in self?.dismiss(animated: true) })
+            self.present(kept, animated: true)
         })
         present(alert, animated: true)
     }
