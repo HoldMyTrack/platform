@@ -12,6 +12,12 @@ public enum EditPlan {
         public let trackType: String
         public let name: String
         public let description: String
+
+        /// Byte for byte, as the web and Android compare: Swift's == takes a composed and a
+        /// decomposed accent as equal.
+        func same(as other: Write) -> Bool {
+            zip([id, trackType, name, description], [other.id, other.trackType, other.name, other.description]).allSatisfy { $0.utf8.elementsEqual($1.utf8) }
+        }
     }
 
     public enum Invalid: Equatable, Sendable {
@@ -40,8 +46,9 @@ public enum EditPlan {
     /// The writes Save sends, one track at a time, for each whose fields differ from what the
     /// server holds: what an earlier Save in this window wrote (written, by id), else what it opened
     /// with. One track takes all three fields; a group only a picked type, each keeping its own
-    /// name and description. The cases are testdata/client-rules/edit-writes.json.
-    public static func writes(group: [Track], type: String, name: String, description: String, written: [String: Write] = [:]) -> [Write] {
+    /// name and description. One whose last write failed (unsure) is written whatever it holds: the
+    /// server may have taken it and the answer been lost. The cases are testdata/client-rules/edit-writes.json.
+    public static func writes(group: [Track], type: String, name: String, description: String, written: [String: Write] = [:], unsure: Set<String> = []) -> [Write] {
         let type = type.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         return group.compactMap { track in
@@ -49,7 +56,7 @@ public enum EditPlan {
             let next = group.count == 1
                 ? Write(id: track.id, trackType: type, name: name, description: description)
                 : Write(id: track.id, trackType: type.isEmpty ? held.trackType : type, name: held.name, description: held.description)
-            return next == held ? nil : next
+            return next.same(as: held) && !unsure.contains(track.id) ? nil : next
         }
     }
 }

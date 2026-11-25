@@ -215,10 +215,15 @@ class MapFlowsTest {
             retrying { still(By.textStartsWith(context.getString(R.string.recording_type_add, NEW_TYPE))).click() }
             assertTrue("the picker closed", device.wait(Until.gone(id("picker_search")), TIMEOUT_MS))
             expect("the field shows the new type", waitUntil { device.findObject(id("edit_type"))?.text?.contains(NEW_TYPE, ignoreCase = true) == true })
+            need(id("edit_cancel")).click()
+            val title = context.getString(R.string.edit_discard_title)
+            expect("Cancel asks before dropping the type", device.wait(Until.hasObject(By.text(title)), TIMEOUT_MS))
+            need(By.res("android", "button1")).click()
+            expect("Discard closes Edit", device.wait(Until.gone(id("edit_type")), TIMEOUT_MS))
         } finally {
             runCatching {
                 device.findObject(id("edit_cancel"))?.click()
-                device.findObject(By.res("android", "button1"))?.click()
+                if (device.hasObject(id("edit_type"))) device.wait(Until.findObject(By.res("android", "button1")), 2_000)?.click()
                 device.wait(Until.gone(id("edit_type")), TIMEOUT_MS)
                 expandSheet()
                 while (checkedRows() > 0) {

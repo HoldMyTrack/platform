@@ -147,6 +147,8 @@ export function EditTrackWindow({
   // now, where the `tracks` prop still has what the window opened with. A retry after a later
   // failure compares against these, and a Cancel still reports them so the list picks them up.
   const written = useRef(new Map<string, TrackFields>());
+  // Tracks whose last write failed: the server may have taken it (editSave.ts).
+  const unsure = useRef(new Set<string>());
 
   const onRouteChange = useCallback((pending: RoutePending | null) => {
     setRoutePending(pending);
@@ -154,14 +156,14 @@ export function EditTrackWindow({
   }, []);
 
   const cancel = useCallback(() => {
-    onClose({ saved: written.current.size > 0, routeApplied: false, photosSaved: photosSaved.current });
+    onClose({ saved: written.current.size > 0 || unsure.current.size > 0, routeApplied: false, photosSaved: photosSaved.current });
   }, [onClose]);
 
   // Anything Cancel would throw away: a field edit, a route edit, a photo change.
   const unsaved =
     !draftIsEmpty(photoDraft) ||
     routePending !== null ||
-    fieldWrites(tracks, single !== null, trackType, name, description, written.current).length > 0;
+    fieldWrites(tracks, single !== null, trackType, name, description, written.current, unsure.current).length > 0;
   const unsavedRef = useRef(unsaved);
   unsavedRef.current = unsaved;
 
@@ -221,8 +223,10 @@ export function EditTrackWindow({
       // Sequential, not Promise.all, matching TracksPanel.tsx's own group delete: a
       // hand-checked group is a handful of rows, not bulk-import scale. Each write is recorded
       // as it lands, so a failure partway leaves the rest for a retry.
-      for (const { id, fields } of fieldWrites(tracks, single !== null, trackType, name, description, written.current)) {
+      for (const { id, fields } of fieldWrites(tracks, single !== null, trackType, name, description, written.current, unsure.current)) {
+        unsure.current.add(id);
         await updateTrack(id, fields);
+        unsure.current.delete(id);
         written.current.set(id, fields);
       }
       if (single && !draftIsEmpty(photoDraft)) await savePhotos(single.id, photoDraft);
@@ -231,7 +235,7 @@ export function EditTrackWindow({
         onClose({ saved: true, routeApplied: true, photosSaved: photosSaved.current });
         return;
       }
-      onClose({ saved: written.current.size > 0, routeApplied: false, photosSaved: photosSaved.current });
+      onClose({ saved: written.current.size > 0 || unsure.current.size > 0, routeApplied: false, photosSaved: photosSaved.current });
     } catch (err) {
       if (photosSaved.current) photos.reload();
       if (err instanceof SplitHidesPartError) {

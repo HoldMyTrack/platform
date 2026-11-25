@@ -308,7 +308,7 @@ class ClientRulesTest {
             val written = input["written"]!!.jsonArray.map { it.jsonObject }.map {
                 EditPlan.Write(it.string("id")!!, it.string("trackType")!!, it.string("name")!!, it.string("description")!!)
             }
-            JsonArray(EditPlan.writes(tracks, input.string("type")!!, input.string("name")!!, input.string("description")!!, written).map {
+            JsonArray(EditPlan.writes(tracks, input.string("type")!!, input.string("name")!!, input.string("description")!!, written, input.strings("unsure").toSet()).map {
                 buildJsonObject { put("id", it.id); put("trackType", it.trackType); put("name", it.name); put("description", it.description) }
             })
         },

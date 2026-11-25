@@ -1,6 +1,7 @@
 package dev.holdmytrack.android
 
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 import android.content.Context
@@ -256,11 +257,15 @@ class MainActivity : AppCompatActivity() {
         HoldMyTrackApi.tripSends { result -> result.onSuccess { setTripsWaiting(it.sends.size) } }
     }
 
+    private var syncBadgeRead: Job? = null
+
     /** Library's badge, and the count on its +: the recordings on this phone waiting to be sent
      *  from Library › Sync, none swiped aside. Read on every return to the map, a recording's Save screen included,
      *  as Library opens and after a send. */
     fun refreshSyncBadge() {
-        lifecycleScope.launch {
+        // The latest read wins.
+        syncBadgeRead?.cancel()
+        syncBadgeRead = lifecycleScope.launch {
             val keys = RecordedTrackStore(this@MainActivity).all().map { SyncCandidates.key(HoldMyTrackApi.SOURCE_RECORDED, it.id) }
             val waiting = RecordingSendRules.waiting(keys, HiddenCandidates(this@MainActivity, Session.email).all(), Session.isDemo)
             map()?.setSyncWaiting(waiting)

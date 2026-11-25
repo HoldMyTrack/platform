@@ -51,6 +51,8 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
     private var type: String
     /// What Save has written, by id, so one retried after a failure writes the rest.
     private var written: [String: EditPlan.Write] = [:]
+    /// Tracks whose last write failed: the server may have taken it.
+    private var unsure: Set<String> = []
     /// The track whose route edit was written.
     private var routeWritten: String?
     private var saving = false
@@ -347,6 +349,19 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         TypeSearch.options(current: type, known: known, label: TrackTypes.shared.label)
     }
 
+    /// What Save would write of the fields as they are.
+    private var fieldWrites: [EditPlan.Write] {
+        EditPlan.writes(group: group, type: type, name: name.text ?? "", description: about.text ?? "", written: written, unsure: unsure)
+    }
+
+    /// Nothing in the window changes, nor does another Save start, while one runs.
+    private func setSaving(_ on: Bool) {
+        saving = on
+        photos?.busy = on
+        routeEditor?.busy = on
+        navigationItem.rightBarButtonItem?.isEnabled = !on
+    }
+
     private func save() {
         guard !saving else { return }
         let nameText = name.text ?? "", aboutText = about.text ?? ""
@@ -364,26 +379,22 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
             show(message)
             return
         }
-        let writes = EditPlan.writes(group: group, type: type, name: nameText, description: aboutText, written: written)
+        let writes = fieldWrites
         let routeChanged = routeEditor?.session?.changed == true
         guard !writes.isEmpty || photos?.draft.isEmpty == false || routeChanged else { return finish() }
-        saving = true
-        photos?.busy = true
-        routeEditor?.busy = true
+        setSaving(true)
         error.isHidden = true
-        navigationItem.rightBarButtonItem?.isEnabled = false
         view.endEditing(true)
         Task {
             defer {
-                saving = false
-                photos?.busy = false
-                routeEditor?.busy = false
+                setSaving(false)
                 status.isHidden = true
-                navigationItem.rightBarButtonItem?.isEnabled = true
             }
             for write in writes {
                 do {
+                    unsure.insert(write.id)
                     _ = try await api.updateTrack(write)
+                    unsure.remove(write.id)
                     written[write.id] = write
                 } catch {
                     show((error as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved."))
@@ -429,31 +440,29 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
         alert.addAction(UIAlertAction(title: String(localized: "Split anyway"), style: .destructive) { [weak self] _ in
             guard let self else { return }
-            self.saving = true
-            self.routeEditor?.busy = true
+            self.setSaving(true)
             Task {
                 let done = await self.saveRoute(allowHidden: true)
-                self.saving = false
-                self.routeEditor?.busy = false
+                self.setSaving(false)
                 if done { self.finish() }
             }
         })
         present(alert, animated: true)
     }
 
-    /// Cancel asks first when photo changes would be thrown away.
+    /// Cancel asks first when anything unsaved would be thrown away.
     private func cancel() {
         guard !saving else { return }
-        guard photos?.draft.isEmpty == false || routeEditor?.session?.changed == true else { return finish() }
+        guard photos?.draft.isEmpty == false || routeEditor?.session?.changed == true || !fieldWrites.isEmpty else { return finish() }
         let alert = UIAlertController(title: String(localized: "Discard changes?"),
-                                      message: String(localized: "The photos and route changes in this window haven't been saved yet."), preferredStyle: .alert)
+                                      message: String(localized: "The changes you made in this window haven't been saved yet."), preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: String(localized: "Keep editing"), style: .cancel))
         alert.addAction(UIAlertAction(title: String(localized: "Discard"), style: .destructive) { [weak self] _ in self?.finish() })
         present(alert, animated: true)
     }
 
     private func finish() {
-        let done = Array(Set(written.keys).union([routeWritten].compactMap { $0 })), photosSaved = photos?.photosSaved ?? false
+        let done = Array(Set(written.keys).union(unsure).union([routeWritten].compactMap { $0 })), photosSaved = photos?.photosSaved ?? false
         photos?.active = false
         routeEditor?.hide()
         dismiss(animated: true) { self.onDone(done, photosSaved) }

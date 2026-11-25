@@ -88,8 +88,8 @@ export const rules = {
   },
   libraryEmptyReason: ({ state, total, anyTrack }) =>
     emptyReason({ ...state, sort: 'started', desc: true, page: 1, dates: { after: state.after ?? null, before: state.before ?? null } }, total, anyTrack),
-  editWrites: ({ tracks, type, name, description, written }) =>
-    fieldWrites(tracks, tracks.length === 1, type, name, description, new Map(written.map(({ id, ...fields }) => [id, fields]))).map(({ id, fields }) => ({ id, ...fields })),
+  editWrites: ({ tracks, type, name, description, written, unsure }) =>
+    fieldWrites(tracks, tracks.length === 1, type, name, description, new Map(written.map(({ id, ...fields }) => [id, fields])), new Set(unsure)).map(({ id, fields }) => ({ id, ...fields })),
   deleteDone: ({ status }) => deleteDone(status),
   privateDrawOrder: ({ saved, editing }) => drawOrder(saved.map((id) => ({ id })), editing ? { id: editing } : null).map((l) => l.id),
   pendingChange: ({ previous, now, awaiting, listed }) => {

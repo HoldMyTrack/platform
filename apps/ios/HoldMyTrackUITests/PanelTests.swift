@@ -88,6 +88,10 @@ final class PanelTests: XCTestCase {
         search.typeText("Paragliding")
         app.tables["typeList"].staticTexts["Add “Paragliding”"].tap()
         XCTAssertTrue(app.buttons["editType"].staticTexts["Paragliding"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons["Cancel"].tap()
+        XCTAssertTrue(app.alerts["Discard changes?"].waitForExistence(timeout: 5), "Cancel asks before dropping the fields")
+        app.alerts.buttons["Keep editing"].tap()
+        XCTAssertTrue(app.alerts.firstMatch.waitForNonExistence(timeout: 5))
         app.buttons["editSave"].tap()
         XCTAssertTrue(app.staticTexts["Renamed by iOS"].waitForExistence(timeout: 15))
 

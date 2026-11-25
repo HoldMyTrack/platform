@@ -133,7 +133,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
             EditPlan.Write(id: $0["id"].string!, trackType: $0["trackType"].string!, name: $0["name"].string!, description: $0["description"].string!)
         }
         let writes = EditPlan.writes(group: tracks, type: input["type"].string!, name: input["name"].string!, description: input["description"].string!,
-                                     written: Dictionary(uniqueKeysWithValues: written.map { ($0.id, $0) }))
+                                     written: Dictionary(uniqueKeysWithValues: written.map { ($0.id, $0) }), unsure: Set(input.strings("unsure")))
         return .array(writes.map { ["id": .string($0.id), "trackType": .string($0.trackType), "name": .string($0.name), "description": .string($0.description)] })
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
