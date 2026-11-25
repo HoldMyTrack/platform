@@ -145,7 +145,10 @@ final class YouViewController: UITableViewController {
         if reads.account {
             accountReadAtMs = now.atMs
             // A failed read is made again on the next showing.
-            flow.refreshAccount { [weak self] read in if !read { self?.accountReadAtMs = nil } }
+            flow.refreshAccount { [weak self] read in
+                // Not a newer read's mark: only this one's failure is made again.
+                if !read, self?.accountReadAtMs == now.atMs { self?.accountReadAtMs = nil }
+            }
         }
         if reads.numbers {
             numbersRead = now
