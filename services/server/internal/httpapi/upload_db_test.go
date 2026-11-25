@@ -205,9 +205,11 @@ func TestSyncAnswers500WhenTheTracksCantBeQueued(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	exec(`CREATE FUNCTION refuse_jobs() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'refused'; END $$`)
-	t.Cleanup(func() { exec(`DROP FUNCTION IF EXISTS refuse_jobs() CASCADE`) })
-	exec(`CREATE TRIGGER refuse_jobs BEFORE INSERT ON jobs FOR EACH ROW WHEN (NEW.user_id = '` + me.id + `') EXECUTE FUNCTION refuse_jobs()`)
+	// Named for this run's account, so a killed run leaves nothing a later one trips on.
+	fn := "refuse_jobs_" + strings.ReplaceAll(me.id, "-", "")
+	exec(`CREATE FUNCTION ` + fn + `() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'refused'; END $$`)
+	t.Cleanup(func() { exec(`DROP FUNCTION IF EXISTS ` + fn + `() CASCADE`) })
+	exec(`CREATE TRIGGER ` + fn + ` BEFORE INSERT ON jobs FOR EACH ROW WHEN (NEW.user_id = '` + me.id + `') EXECUTE FUNCTION ` + fn + `()`)
 	body := map[string]any{"source": "recorded", "tracks": []map[string]any{{
 		"external_id": "r1", "track_type": "walk", "points": []map[string]any{
 			{"lat": 50.0, "lon": 10.0, "time": "2026-05-01T10:00:00Z"},
@@ -218,7 +220,7 @@ func TestSyncAnswers500WhenTheTracksCantBeQueued(t *testing.T) {
 	if rec.Code != http.StatusInternalServerError || strings.Contains(rec.Body.String(), "rejected") {
 		t.Fatalf("%d %s, want 500 with no result", rec.Code, rec.Body)
 	}
-	exec(`DROP FUNCTION refuse_jobs() CASCADE`)
+	exec(`DROP FUNCTION ` + fn + `() CASCADE`)
 	var resp syncTracksResponse
 	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", body), http.StatusOK, &resp)
 	if resp.Results[0].Status != "enqueued" {

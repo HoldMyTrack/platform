@@ -134,7 +134,11 @@ func (s *Server) handleSyncTracks(w http.ResponseWriter, r *http.Request) {
 	var items []ingest.RawItem
 	var slots []int // results index of each item
 	for i, act := range req.Tracks {
-		item, rejection := s.syncItem(l, req.Source, batch, act)
+		item, rejection, err := s.syncItem(l, req.Source, batch, act)
+		if err != nil {
+			httpErrorT(w, r, http.StatusInternalServerError, "error.internal")
+			return
+		}
 		if rejection != "" {
 			results[i] = syncTrackResult{ExternalID: act.ExternalID, Status: "rejected", Error: rejection}
 			continue
@@ -147,7 +151,7 @@ func (s *Server) handleSyncTracks(w http.ResponseWriter, r *http.Request) {
 	usage, err := readUsage(ctx, s.pool, userID)
 	if err != nil {
 		s.log.Error("sync: read usage failed", "err", err)
-		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		httpErrorT(w, r, http.StatusInternalServerError, "error.internal")
 		return
 	}
 	sizes := make([]int64, len(items))
@@ -225,7 +229,7 @@ func (s *Server) handleSyncKnown(w http.ResponseWriter, r *http.Request) {
 	known, processing, err := ingest.KnownExternalIDs(ctx, s.pool, userIDFromContext(ctx), req.Source, req.ExternalIDs)
 	if err != nil {
 		s.log.Error("sync known failed", "err", err)
-		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		httpErrorT(w, r, http.StatusInternalServerError, "error.internal")
 		return
 	}
 	if known == nil {
@@ -239,34 +243,35 @@ func (s *Server) handleSyncKnown(w http.ResponseWriter, r *http.Request) {
 }
 
 // syncItem validates one batch entry and turns it into the item EnqueueRaw takes, or returns
-// why it was rejected — one bad entry is that entry's result, never the whole batch's.
-func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrackRequest) (ingest.RawItem, string) {
+// why it was rejected — one bad entry is that entry's result, never the whole batch's. An error
+// is a fault of ours, and fails the request.
+func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrackRequest) (item ingest.RawItem, rejection string, err error) {
 	if act.ExternalID == "" {
-		return ingest.RawItem{}, l.T("error.sync_external_id_required")
+		return ingest.RawItem{}, l.T("error.sync_external_id_required"), nil
 	}
 	if !syncExternalIDPattern.MatchString(act.ExternalID) {
-		return ingest.RawItem{}, l.T("error.sync_external_id_invalid")
+		return ingest.RawItem{}, l.T("error.sync_external_id_invalid"), nil
 	}
 	if len(act.Points) > maxSyncPointsPerTrack {
-		return ingest.RawItem{}, l.T("error.sync_too_many_points", "n", len(act.Points), "max", maxSyncPointsPerTrack)
+		return ingest.RawItem{}, l.T("error.sync_too_many_points", "n", len(act.Points), "max", maxSyncPointsPerTrack), nil
 	}
 	// Everything ingest would fail on for the track's own sake, so a track taken always
 	// becomes one (ingest.Check). A client can send any custom track_type (GPS Logger's
 	// free-text field), which the check bounds by the column's width.
 	if err := ingest.Check(act.payload().Track()); err != nil {
-		return ingest.RawItem{}, refusalMessage(l, err, s.refused(err, source))
+		return ingest.RawItem{}, refusalMessage(l, err, s.refused(err, source)), nil
 	}
 	// Postgres's text can't hold a NUL, which JSON can carry; refused rather than stored by a
 	// job that would fail on it.
 	if strings.ContainsRune(act.TrackType+act.Name+act.Description, 0) {
-		return ingest.RawItem{}, l.T("error.sync_text_nul")
+		return ingest.RawItem{}, l.T("error.sync_text_nul"), nil
 	}
 	// The bounds handleUpdateTrack enforces.
 	if utf8.RuneCountInString(act.Name) > maxTrackNameLen {
-		return ingest.RawItem{}, l.T("error.track_name_too_long", "max", maxTrackNameLen)
+		return ingest.RawItem{}, l.T("error.track_name_too_long", "max", maxTrackNameLen), nil
 	}
 	if utf8.RuneCountInString(act.Description) > maxTrackDescriptionLen {
-		return ingest.RawItem{}, l.T("error.track_description_too_long", "max", maxTrackDescriptionLen)
+		return ingest.RawItem{}, l.T("error.track_description_too_long", "max", maxTrackDescriptionLen), nil
 	}
 
 	// The payload, not the whole syncTrackRequest: the raw payload stored for the job is
@@ -275,7 +280,7 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrack
 	data, err := json.Marshal(act.payload())
 	if err != nil {
 		s.log.Error("sync track marshal failed", "external_id", act.ExternalID, "err", err)
-		return ingest.RawItem{}, l.T("error.internal")
+		return ingest.RawItem{}, "", err
 	}
 	return ingest.RawItem{
 		Source:     source,
@@ -284,5 +289,5 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrack
 		Data:       data,
 		ExternalID: act.ExternalID,
 		Batch:      batch,
-	}, ""
+	}, "", nil
 }
