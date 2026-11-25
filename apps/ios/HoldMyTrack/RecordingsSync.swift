@@ -75,6 +75,13 @@ final class RecordingsSync {
         changed()
     }
 
+    /// The recorder wrote a recording to the phone itself (a Stop, or an unfinished one saved):
+    /// what lists or counts the recordings reads them again.
+    func recorded() {
+        guard !stopped else { return }
+        changed()
+    }
+
     /// Whether id is being sent now: Edit and Delete wait for the send.
     func isSending(_ id: String) -> Bool { inFlight.contains(id) }
 

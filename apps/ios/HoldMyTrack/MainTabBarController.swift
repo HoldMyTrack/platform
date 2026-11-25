@@ -4,7 +4,7 @@ import UIKit
 /// The signed-in app: Tracks, Trips, the record button, Sync and You
 /// (apps/android/docs/SPEC.md FR-2.9), each tab keeping its state across a switch. Tracks, Trips
 /// and Sync are one map screen with its sheet on that tab (MapHostViewController); Sync's sits in
-/// a navigation controller, whose bar shows only for Upload and Sync history over it. Trips counts
+/// a navigation controller whose bar stays hidden, and Upload opens as a sheet over it. Trips counts
 /// copies waiting to be answered. The record button sits
 /// over an empty middle item, with the recording's status above it (RecordingController). The
 /// tour runs over all of it (TourController).
@@ -164,6 +164,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             guard let self, self.recorder.isCurrent(left) else { return }
             // Saved, it opens for naming as a Stop's does.
             if let saved = self.recorder.save(left) {
+                self.recordings.recorded()
                 self.openRecording(saved)
             } else {
                 self.map.say(String(localized: "recording.tooShort", defaultValue: "Too short — not saved.", comment: "Recording: Stop on less than a minute or two points."))
@@ -219,8 +220,12 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         recorder.onMessage = { [weak self] text in self?.map.say(text) }
         recorder.onRefused = { [weak self] in self?.offerLocationSettings() }
         recorder.onLeftover = { [weak self] left in self?.askAboutLeftover(left) }
-        // Stop opens the new recording on the Save screen.
-        recorder.onSaved = { [weak self] track in self?.openRecording(track) }
+        // Stop opens the new recording on the Save screen; it counts as waiting at once, whether
+        // the Save screen saves it or is cancelled.
+        recorder.onSaved = { [weak self] track in
+            self?.recordings.recorded()
+            self?.openRecording(track)
+        }
         recordings.onLanded = { [weak self] in self?.map.recordingLanded() }
         recordings.onFailed = { [weak self] in
             guard let self else { return }
@@ -303,10 +308,15 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     /// controller over whatever is presented; when an alert is still closing, such as Stop's
     /// question, once it has gone, since iOS refuses a presentation during another's dismissal.
     private func presentWhenFree(_ controller: UIViewController) {
+        whenFree { top in top.present(controller, animated: true) }
+    }
+
+    /// action with the top-most presented controller, once nothing is being dismissed.
+    private func whenFree(_ action: @escaping (UIViewController) -> Void) {
         var top: UIViewController = self
         while let presented = top.presentedViewController {
             if presented.isBeingDismissed {
-                let again: () -> Void = { [weak self] in self?.presentWhenFree(controller) }
+                let again: () -> Void = { [weak self] in self?.whenFree(action) }
                 if presented.transitionCoordinator?.animate(alongsideTransition: nil, completion: { _ in again() }) != true {
                     DispatchQueue.main.async(execute: again)
                 }
@@ -314,11 +324,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             }
             top = presented
         }
-        top.present(controller, animated: true)
+        action(top)
     }
 
-    /// The Sync and You tabs' bars show only over the pages pushed from them, never over Sync's
-    /// map or the You page, which has its own title.
+    /// The You tab's bar shows only over the pages pushed from it, never over the You page, which
+    /// has its own title; Sync's map never shows it, and nothing is pushed over Sync.
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
         navigationController.setNavigationBarHidden(viewController is MapHostViewController || viewController is YouViewController, animated: animated)
     }
@@ -437,11 +447,18 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         presentUpload()
     }
 
-    /// Upload as a sheet over what shows, unless it's up already.
+    /// Upload as a sheet over what shows, unless it's up already anywhere in what's presented,
+    /// such as under its own file picker or an alert. Checked once nothing is closing, so a
+    /// second ask during a dismissal doesn't open a second sheet.
     private func presentUpload() {
-        var top: UIViewController = self
-        while let presented = top.presentedViewController, !presented.isBeingDismissed { top = presented }
-        if (top as? UINavigationController)?.viewControllers.first is UploadViewController { return }
-        top.present(UploadViewController.sheet(api: flow.api), animated: true)
+        whenFree { [weak self] top in
+            guard let self else { return }
+            var shown = self.presentedViewController
+            while let controller = shown {
+                if (controller as? UINavigationController)?.viewControllers.first is UploadViewController { return }
+                shown = controller.presentedViewController
+            }
+            top.present(UploadViewController.sheet(api: self.flow.api), animated: true)
+        }
     }
 }
