@@ -43,7 +43,7 @@ final class SimilarTracksViewController: UIViewController {
             views.append(heading(String(localized: "similar.onMap", defaultValue: "Already on your map", comment: "Similar tracks: the account's track.")))
             views.append(row(onMap))
         }
-        views.append(Controls.body(String(localized: "similar.note", defaultValue: "Sending more than one gives you two tracks of the same journey. Nothing is chosen for you — tick the one you want.",
+        views.append(Controls.body(String(localized: "similar.note", defaultValue: "Each one sent becomes a track of its own. Nothing is chosen for you — delete the one you don't want.",
                                           comment: "Similar tracks: what sending both does.")))
         let close = Controls.secondaryButton(String(localized: "Close"), id: "similarClose")
         close.addAction(UIAction { [weak self] _ in self?.dismiss(animated: true) }, for: .primaryActionTriggered)

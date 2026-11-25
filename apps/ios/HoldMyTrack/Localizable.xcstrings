@@ -11459,24 +11459,6 @@
         }
       }
     },
-    "recording.savedUntilSync" : {
-      "comment" : "Recording: saved from the Save screen.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recording saved. It will appear on the map after you sync."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Запись сохранена. Она появится на карте после синхронизации."
-          }
-        }
-      }
-    },
     "recording.stopButton" : {
       "comment" : "The recording's status over the map: stop, which asks first.",
       "localizations" : {
@@ -11682,13 +11664,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sending more than one gives you two tracks of the same journey. Nothing is chosen for you — tick the one you want."
+            "value" : "Each one sent becomes a track of its own. Nothing is chosen for you — delete the one you don't want."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Если отправить больше одного, у вас будут два трека одного и того же пути. Ничего не выбирается за вас — отметьте нужный."
+            "value" : "Каждая отправленная запись станет отдельным треком. Ничего не выбирается за вас — удалите лишнюю."
           }
         }
       }
@@ -11772,13 +11754,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "It hasn't been synced, so this is the only copy. This can't be undone."
+            "value" : "It hasn't reached your account, so this is the only copy. This can't be undone."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Она не синхронизирована, так что это единственная копия. Это нельзя отменить."
+            "value" : "Она ещё не попала в ваш аккаунт, так что это единственная копия. Это нельзя отменить."
           }
         }
       }
@@ -11934,31 +11916,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nothing waiting. Recordings from the record button show up here."
+            "value" : "Nothing waiting. Recordings show up here until they're on your map."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ничего не ждёт. Записи с кнопки записи появятся здесь."
-          }
-        }
-      }
-    },
-    "sync.now" : {
-      "comment" : "Sync: send, with nothing ticked.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sync"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отправить"
+            "value" : "Ничего не ждёт. Записи остаются здесь, пока не попадут на карту."
           }
         }
       }
@@ -11977,24 +11941,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавляется на карту…"
-          }
-        }
-      }
-    },
-    "sync.progress" : {
-      "comment" : "Sync: a send in progress, how many so far of how many.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sent %1$lld of %2$lld…"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отправлено %1$lld из %2$lld…"
           }
         }
       }
@@ -12024,31 +11970,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "not sent"
+            "value" : "the server gave no reason"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "не отправлено"
-          }
-        }
-      }
-    },
-    "sync.rejected" : {
-      "comment" : "Sync: a row the server refused, its start, type and why.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rejected: %1$@ %2$@ — %3$@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отклонено: %1$@ %2$@ — %3$@"
+            "value" : "сервер не назвал причину"
           }
         }
       }
@@ -12067,60 +11995,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось добавить %1$@ %2$@: что-то пошло не так на нашей стороне. Тренировка снова в списке, можно попробовать ещё раз."
-          }
-        }
-      }
-    },
-    "sync.selectAll" : {
-      "comment" : "Sync: tick every row shown.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select all"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Выбрать все"
-          }
-        }
-      }
-    },
-    "sync.selectNone" : {
-      "comment" : "Sync: untick every row shown.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select none"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Снять все"
-          }
-        }
-      }
-    },
-    "sync.send" : {
-      "comment" : "Sync: send the ticked rows, and how many.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sync %lld"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отправить %lld"
           }
         }
       }
@@ -12217,208 +12091,6 @@
         }
       }
     },
-    "sync.stopped" : {
-      "comment" : "Sync: a send cut short, and why.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stopped early. %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Остановлено досрочно. %@"
-          }
-        }
-      }
-    },
-    "sync.summary" : {
-      "comment" : "Sync: how many the last send took.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%#@summary@"
-          },
-          "substitutions" : {
-            "summary" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "Sent %arg track. It stays listed until it's on your map."
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "Sent %arg tracks. They stay listed until they're on your map."
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%#@summary@"
-          },
-          "substitutions" : {
-            "summary" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "Отправлено: %arg. Тренировки остаются в списке, пока не появятся на карте."
-                    }
-                  },
-                  "few" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "Отправлено: %arg. Тренировки остаются в списке, пока не появятся на карте."
-                    }
-                  },
-                  "many" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "Отправлено: %arg. Тренировки остаются в списке, пока не появятся на карте."
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "Отправлено: %arg. Тренировки остаются в списке, пока не появятся на карте."
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "sync.tickRow" : {
-      "comment" : "Sync: a row's tick, read out.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tick %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отметить: %@"
-          }
-        }
-      }
-    },
-    "sync.ticked" : {
-      "comment" : "Sync: how many rows are ticked, of how many can be, and their distance.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld of %2$lld ticked · %3$@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отмечено %1$lld из %2$lld · %3$@"
-          }
-        }
-      }
-    },
-    "sync.tickedSimilar" : {
-      "comment" : "Sync: how many rows are ticked, of how many can be, and how many of them cover the same time as another ticked one.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld of %2$lld ticked · %3$#@similar@"
-          },
-          "substitutions" : {
-            "similar" : {
-              "argNum" : 3,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg is similar"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg are similar"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отмечено %1$lld из %2$lld · %3$#@similar@"
-          },
-          "substitutions" : {
-            "similar" : {
-              "argNum" : 3,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "похожих: %arg"
-                    }
-                  },
-                  "few" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "похожих: %arg"
-                    }
-                  },
-                  "many" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "похожих: %arg"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "похожих: %arg"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "sync.tooManyPoints" : {
       "comment" : "Sync: why a recording wasn't sent: too long, and the limit.",
       "extractionState" : "manual",
@@ -12473,24 +12145,6 @@
         }
       }
     },
-    "sync.undoWhileSending" : {
-      "comment" : "Sync: Undo tapped during a send.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Can't undo while tracks are being sent."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нельзя отменить, пока треки отправляются."
-          }
-        }
-      }
-    },
     "sync.unhidden" : {
       "comment" : "Sync: a hidden row swiped back.",
       "extractionState" : "manual",
@@ -12523,24 +12177,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать"
-          }
-        }
-      }
-    },
-    "sync.untickRow" : {
-      "comment" : "Sync: a ticked row's tick, read out.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Untick %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Снять отметку: %@"
           }
         }
       }
@@ -13121,13 +12757,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from Sync."
+            "value" : "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. Saving a recording adds it to your map."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. Записи ждут на телефоне, пока вы не отправите их из Синхронизации."
+            "value" : "Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. Сохранённая запись сама добавляется на вашу карту."
           }
         }
       }
@@ -13157,13 +12793,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. In your own account, recordings are sent to your map from Sync."
+            "value" : "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. In your own account, saving a recording adds it to your map."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. В своём аккаунте записи отправляются на карту из Синхронизации."
+            "value" : "Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. В своём аккаунте сохранённая запись сама добавляется на вашу карту."
           }
         }
       }
@@ -13193,13 +12829,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bring in this phone's recordings. Nothing is ticked to start with: only what you tick is sent. You don't need to bring everything, only the journeys you want to keep."
+            "value" : "Upload files here. Recordings not on your map yet are listed until they land on it."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Записи с этого телефона. Сначала ничего не отмечено: отправляется только то, что вы отметите. Вы не обязаны добавлять всё подряд — только те треки, которые хотите сохранить."
+            "value" : "Здесь загружаются файлы. Записи, которых ещё нет на карте, остаются в списке, пока не попадут на неё."
           }
         }
       }
@@ -13229,13 +12865,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In your own account, your recordings are sent from here, and your files uploaded. The demo can't send: sign out and create an account to start yours."
+            "value" : "In your own account, your files and recordings come in here. The demo can't send: sign out and create an account to start yours."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В своём аккаунте отсюда отправляются ваши записи и загружаются файлы. Демо не может отправлять: выйдите и создайте аккаунт, чтобы начать свой."
+            "value" : "В своём аккаунте сюда приходят ваши файлы и записи. Демо не может отправлять: выйдите и создайте аккаунт, чтобы начать свой."
           }
         }
       }
@@ -14068,6 +13704,224 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "«%@»"
+          }
+        }
+      }
+    },
+    "sync.retry" : {
+      "comment" : "Sync: the button that sends the recordings not sent yet now.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send recordings again"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить записи снова"
+          }
+        }
+      }
+    },
+    "sync.sending" : {
+      "comment" : "Sync: recordings are being sent now.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sending recordings…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправляем записи…"
+          }
+        }
+      }
+    },
+    "sync.unsent" : {
+      "comment" : "Sync: how many recordings aren't sent yet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg recording not sent yet"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg recordings not sent yet"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg запись ещё не отправлена"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg записи ещё не отправлены"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg записей ещё не отправлено"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg записи ещё не отправлены"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sync.rowSending" : {
+      "comment" : "Sync: a recording being sent now.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sending…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправляется…"
+          }
+        }
+      }
+    },
+    "sync.rowWaiting" : {
+      "comment" : "Sync: a recording not sent yet, no connection most likely.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not sent yet. It goes the next time the app opens with a connection."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ещё не отправлена. Уйдёт, когда приложение откроется с интернетом."
+          }
+        }
+      }
+    },
+    "sync.rowRefused" : {
+      "comment" : "Sync: a recording the server refused, and why.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not sent: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не отправлена: %@"
+          }
+        }
+      }
+    },
+    "sync.ingestFailed" : {
+      "comment" : "Sync: why a recording is back on the list: its processing failed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the server couldn't add it"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "сервер не смог её добавить"
+          }
+        }
+      }
+    },
+    "recording.savedSending" : {
+      "comment" : "Recording: saved from the Save screen.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording saved. It's on its way to your map."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись сохранена и уже отправляется на вашу карту."
+          }
+        }
+      }
+    },
+    "recording.savedDemo" : {
+      "comment" : "Recording: saved from the Save screen by the demo account.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording saved on this phone. The demo account can't add it to the map."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись сохранена на телефоне. Демо-аккаунт не может добавить её на карту."
           }
         }
       }

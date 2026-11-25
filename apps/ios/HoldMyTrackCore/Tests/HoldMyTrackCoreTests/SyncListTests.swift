@@ -17,77 +17,45 @@ struct SyncListTests {
     }
 
     @Test func libraryCountsWhatsNotSentYetAndNothingForTheDemo() {
-        #expect(SyncList.waiting(walks, isDemo: false) == 3, "the one on its way isn't waiting")
-        #expect(SyncList.waiting(walks, isDemo: true) == 0)
-        #expect(SyncList.waiting([], isDemo: false) == 0)
+        #expect(SyncList.waiting(walks, hidden: [], isDemo: false) == 3, "the one on its way isn't waiting")
+        #expect(SyncList.waiting(walks, hidden: ["mid"], isDemo: false) == 2, "nor one swiped aside, which isn't sent")
+        #expect(SyncList.waiting(walks, hidden: [], isDemo: true) == 0)
+        #expect(SyncList.waiting([], hidden: [], isDemo: false) == 0)
     }
 
-    @Test func newestFirstWithWhatsOnItsWayListedButNeverTickable() {
-        let list = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: [])
+    @Test func newestFirstWithWhatsOnItsWayListed() {
+        let list = SyncList.of(walks, hidden: [], showHidden: false, types: [])
         #expect(list.shown.map(\.id) == ["away", "new", "mid", "old"])
-        #expect(list.tickable.map(\.id) == ["new", "mid", "old"])
     }
 
-    @Test func aHiddenRowShowsOnlyWithShowHiddenAndIsNeverTickable() {
-        let hidden = SyncList.of(walks, hidden: ["mid"], showHidden: false, types: [], ticked: ["mid"])
+    @Test func aHiddenRowShowsOnlyWithShowHidden() {
+        let hidden = SyncList.of(walks, hidden: ["mid"], showHidden: false, types: [])
         #expect(!hidden.shown.contains { $0.id == "mid" })
         #expect(hidden.hiddenCount == 1)
-        #expect(hidden.sendable.isEmpty, "a hidden row isn't sent even if it was ticked")
-        let shown = SyncList.of(walks, hidden: ["mid"], showHidden: true, types: [], ticked: [])
+        let shown = SyncList.of(walks, hidden: ["mid"], showHidden: true, types: [])
         #expect(shown.shown.contains { $0.id == "mid" })
-        #expect(!shown.tickable.contains { $0.id == "mid" })
     }
 
     @Test func chipsNarrowTheListAndAPickNoLongerListedCountsForNothing() {
-        let list = SyncList.of(walks, hidden: [], showHidden: false, types: ["ride"], ticked: [])
+        let list = SyncList.of(walks, hidden: [], showHidden: false, types: ["ride"])
         #expect(list.types == ["ride", "walk"])
         #expect(list.shown.map(\.id) == ["new"])
-        let gone = SyncList.of(walks, hidden: [], showHidden: false, types: ["swim"], ticked: [])
+        let gone = SyncList.of(walks, hidden: [], showHidden: false, types: ["swim"])
         #expect(gone.shown.count == 4, "a chip for no listed type filters nothing")
         #expect(gone.pickedTypes(["swim", "walk"]) == ["walk"])
     }
 
-    @Test func onlyWhatsTickedAndShownIsSent() {
-        let list = SyncList.of(walks, hidden: [], showHidden: false, types: ["walk"], ticked: ["new", "mid", "away"])
-        #expect(list.sendable.map(\.id) == ["mid"], "a ride filtered out and one on its way aren't sent")
-        #expect(list.sendableMeters == 1000)
-    }
-
-    @Test func selectAllTicksEveryTickableRowAndThenUnticksThem() {
-        let list = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: [])
-        #expect(!list.allTicked([]))
-        let all = list.toggleAll([])
-        #expect(all == ["new", "mid", "old"])
-        #expect(list.allTicked(all))
-        #expect(list.toggleAll(all).isEmpty)
-        #expect(!SyncList.of([], hidden: [], showHidden: false, types: [], ticked: []).allTicked([]), "nothing to tick reads Select all")
-    }
-
-    @Test func aRowBeingSentIsNeitherTickedEditedNorSwipedAndNoRowIsSwipedMeanwhile() {
-        let list = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: ["new", "mid"], inFlight: ["new", "mid"])
-        #expect(list.tickable.map(\.id) == ["old"], "Select all leaves the send alone")
-        #expect(list.sendable.isEmpty)
-        #expect(!list.canTick(walks[1]))
-        #expect(!list.canEdit(walks[1]))
-        #expect(list.canEdit(walks[0]), "a row outside the send is still edited")
-        #expect(!list.canSwipe(walks[0]))
-        let idle = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: [])
-        #expect(idle.canSwipe(walks[0]))
-        #expect(!idle.canSwipe(walks[3]), "not one on its way")
-        #expect(!idle.canEdit(walks[3]))
+    @Test func aRowBeingSentOrOnItsWayIsNeitherEditedNorSwiped() {
+        let list = SyncList.of(walks, hidden: [], showHidden: false, types: [], inFlight: ["new"])
+        #expect(!list.canEdit(walks[1]) && !list.canSwipe(walks[1]), "being sent")
+        #expect(!list.canEdit(walks[3]) && !list.canSwipe(walks[3]), "on its way")
+        #expect(list.canEdit(walks[0]) && list.canSwipe(walks[0]), "a row outside the send is still the user's")
     }
 
     @Test func onlyRowsTheListShowsAreComparedAndDrawn() {
-        let list = SyncList.of(walks, hidden: ["mid"], showHidden: true, types: ["walk"], ticked: [], inFlight: ["old"])
+        let list = SyncList.of(walks, hidden: ["mid"], showHidden: true, types: ["walk"], inFlight: ["old"])
         #expect(list.comparable.isEmpty, "a ride filtered out, a hidden row, one on its way and one being sent are no one's double")
         #expect(list.drawn.map(\.id) == ["mid", "old"], "what's on its way isn't drawn")
-    }
-
-    @Test func theDemoTicksNothing() {
-        let list = SyncList.of(walks, hidden: [], showHidden: false, types: [], ticked: [], isDemo: true)
-        #expect(list.tickable.isEmpty)
-        #expect(!list.canTick(walks[0]))
-        #expect(list.toggleAll([]).isEmpty)
     }
 
     @Test func aSwipeHidesAndASecondBringsItBack() {

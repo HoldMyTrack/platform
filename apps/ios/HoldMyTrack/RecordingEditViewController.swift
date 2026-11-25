@@ -1,16 +1,18 @@
 import HoldMyTrackCore
 import UIKit
 
-/// A recording's Edit (apps/android/docs/SPEC.md FR-5.2): its name, description and type, kept on the
-/// phone until it's sent, with its moving time and distance; the type set becomes the account's
+/// A recording's Edit (apps/android/docs/SPEC.md FR-5.2): its name, description and type, sent
+/// as the screen closes, with its moving time and distance; the type set becomes the account's
 /// for the next recording. The Type picker lists the account's types and this phone's waiting
 /// recordings', most used first, then the presets (TypeSearch.recordingKnown). Download GPX is
 /// here too. Opened the moment a recording stops, the same form is "Save recording", with Discard,
-/// asked first, in Download GPX's place; Cancel keeps the recording as it is.
+/// asked first, in Download GPX's place; Cancel keeps the recording as it is, and it goes too. No send
+/// takes it while this is open (RecordingsSync.Hold).
 final class RecordingEditViewController: UIViewController {
     private var track: RecordedTrack
     private let account: Account
     private let recordings: RecordingsSync
+    private let hold: RecordingsSync.Hold
     private let api: APIClient
     /// The account's tracks by type, empty until read or when they couldn't be.
     private var serverCounts: [(type: String, count: Int)] = []
@@ -19,8 +21,7 @@ final class RecordingEditViewController: UIViewController {
     /// The Save screen a Stop opens.
     private let justStopped: Bool
     var onGPX: ((RecordedTrack) -> Void)?
-    /// Saved from the Save screen: it waits on the phone until Sync sends it, which the map it
-    /// returns to doesn't show.
+    /// Saved from the Save screen.
     var onSaved: (() -> Void)?
 
     private let name = Controls.field(String(localized: "recording.name", defaultValue: "Name", comment: "A recording's Edit: its name, optional."), id: "recordingName")
@@ -34,6 +35,7 @@ final class RecordingEditViewController: UIViewController {
         self.recordings = recordings
         self.api = api
         self.justStopped = justStopped
+        hold = recordings.hold(track.id)
         super.init(nibName: nil, bundle: nil)
         title = justStopped
             ? String(localized: "recording.saveTitle", defaultValue: "Save recording", comment: "The screen a Stop opens: the title.")
@@ -94,6 +96,12 @@ final class RecordingEditViewController: UIViewController {
             stats(), error, last,
         ])
         Controls.host(column, in: self)
+    }
+
+    /// Closed, by Save, Cancel, Discard or a swipe down.
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isBeingDismissed || navigationController?.isBeingDismissed == true { hold.release() }
     }
 
     /// Time and Distance side by side: the moving time and the distance recorded.

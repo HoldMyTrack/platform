@@ -1,7 +1,7 @@
 import Foundation
 
-/// Sending recordings (apps/android/docs/SPEC.md FR-3.4, FR-5.2), as values: what's listed and
-/// tickable, what goes to `POST /v2/sync/tracks` under `recorded`, what `POST /v2/sync/known`'s
+/// Sending recordings (apps/android/docs/SPEC.md FR-3.4, FR-5.2), as values: what
+/// goes to `POST /v2/sync/tracks` under `recorded`, what `POST /v2/sync/known`'s
 /// answer means for one sent, and the GPX Download writes.
 public enum RecordingSync {
     public static let source = "recorded"
@@ -19,9 +19,11 @@ public enum RecordingSync {
         return known.contains(id) ? .landed : .failed
     }
 
-    /// Why one send was refused, said over the Sync list; nil for one the server took.
+    /// Why a recording wasn't taken, said on its Sync row.
     public enum Refusal: Equatable, Sendable {
         case tooManyPoints
+        /// Its ingest failed after the server took it.
+        case ingestFailed
         case server(String?)
     }
 

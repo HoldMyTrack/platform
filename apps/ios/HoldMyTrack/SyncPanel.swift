@@ -2,11 +2,10 @@ import HoldMyTrackCore
 import UIKit
 
 /// The sheet's Sync tab, opened from Library's head (apps/android/docs/SPEC.md FR-3.5): every
-/// recording on this phone not on the map yet, newest first, the user's to choose. Nothing starts
-/// ticked, and only what's ticked and shown is sent. Type chips narrow the list and Select all ticks
-/// what's shown; a row swiped aside is hidden, with Undo, and Show hidden brings it back. One sent
-/// stays listed, on its way, until it lands. Upload heads it, beside its title. Which
-/// rows are offered is SyncList's. The rows are drawn dashed on the map (SyncLines), the first
+/// recording on this phone not on the map yet, newest first. Recordings send themselves
+/// (RecordingsSync); each row says how far it got, with Retry over them. Type chips narrow the
+/// list; a row swiped aside is hidden, with Undo, and Show hidden brings it back. One sent stays
+/// listed, on its way, until it lands. Upload heads it, beside its title. What a row offers is SyncList's. The rows are drawn dashed on the map (SyncLines), the first
 /// showing framed; a tap on a row or its line picks it out, and ⓘ says what else covers its time
 /// (SyncSimilar, and the server for the account's tracks).
 @MainActor
@@ -24,8 +23,6 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         case frame([Double])
         /// The account's track a row overlaps, opened on the Tracks tab on its day.
         case openOnMap(TrackOverlap)
-        /// A message over the map.
-        case say(String)
     }
 
     var onEvent: ((Event) -> Void)?
@@ -37,18 +34,17 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private let account: Account
     private weak var host: UIViewController?
     private let table = UITableView(frame: .zero, style: .plain)
-    private let send = Controls.primaryButton("", id: "syncSend")
-    private let tickedLine = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
+    /// How many recordings aren't sent yet, or that they're going, with Retry.
+    private let unsentLine = Controls.label("", font: Typeface.sans(DesignTokens.Text.md, weight: DesignTokens.Weight.semibold, relativeTo: .body), color: UIColor(resource: .ink))
+    private let retry = Controls.iconButton(UIImage(resource: .refreshCw), label: String(localized: "sync.retry", defaultValue: "Send recordings again", comment: "Sync: the button that sends the recordings not sent yet now."), id: "syncRetry")
     private let bar: UIStackView
 
     private var showing = false
     private var types: Set<String> = []
     private var showHidden = false
-    /// How many the running send started with, for "Sent N of M…".
-    private var sendingTotal = 0
     /// Sent recordings whose ingest failed, said over the list until the tab next opens.
     private var failedLines: [String] = []
-    private var list = SyncList.of([], hidden: [], showHidden: false, types: [], ticked: [])
+    private var list = SyncList.of([], hidden: [], showHidden: false, types: [])
     /// The hidden rows as last read, so a render reads the phone's list once.
     private var hidden: Set<String> = []
     /// The types last asked about, so a render asks again only when the list's types change.
@@ -78,16 +74,19 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         self.api = api
         self.account = account
         self.host = host
-        tickedLine.textAlignment = .center
-        tickedLine.accessibilityIdentifier = "syncTicked"
-        bar = Controls.column([send, tickedLine], spacing: DesignTokens.Space.s4)
+        unsentLine.numberOfLines = 0
+        unsentLine.accessibilityIdentifier = "syncUnsent"
+        unsentLine.accessibilityTraits.insert(.updatesFrequently)
+        retry.setContentHuggingPriority(.required, for: .horizontal)
+        bar = UIStackView(arrangedSubviews: [unsentLine, retry])
+        bar.alignment = .center
         super.init()
         head.axis = .vertical
         head.spacing = DesignTokens.Space.s8
         // Sync opens from Library's head (apps/android/docs/SPEC.md FR-4.1); ‹ goes back to it.
         let back = Controls.iconButton(UIImage(resource: .chevronLeft), label: String(localized: "sync.back", defaultValue: "Back to Library", comment: "Sync: the ‹ that goes back to Library."), id: "syncBack")
         back.addAction(UIAction { [weak self] _ in self?.onEvent?(.library) }, for: .primaryActionTriggered)
-        // Upload heads the sheet, apart from Sync's own send (apps/android/docs/SPEC.md FR-3.5).
+        // Upload heads the sheet, apart from the recordings' Retry (apps/android/docs/SPEC.md FR-3.5).
         let upload = Controls.secondaryButton(String(localized: "Upload"), id: "syncUpload", icon: UIImage(resource: .upload))
         upload.addAction(UIAction { [weak self] _ in self?.onEvent?(.upload) }, for: .primaryActionTriggered)
         upload.isHidden = account.isDemo
@@ -95,8 +94,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         title.alignment = .center
         head.addArrangedSubview(title)
         head.addArrangedSubview(bar)
-        bar.isHidden = account.isDemo
-        send.addAction(UIAction { [weak self] _ in self?.sendTicked() }, for: .primaryActionTriggered)
+        retry.addAction(UIAction { [weak self] _ in self?.retryAll() }, for: .primaryActionTriggered)
 
         table.dataSource = self
         table.delegate = self
@@ -123,8 +121,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     // MARK: Showing
 
-    /// The tab showed, from another tab or a launch: nothing ticked, every type, hidden rows put
-    /// away. A send running keeps its rows (RecordingsSync.inFlight).
+    /// The tab showed, from another tab or a launch: every type, hidden rows put away.
     func start() {
         showing = true
         describedTypes = nil
@@ -133,7 +130,6 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         // The account's tracks may have changed since: an answer is asked for again, not kept.
         overlaps = [:]
         overlapsAsked = nil
-        recordings.ticked = []
         types = []
         showHidden = false
         failedLines = []
@@ -170,9 +166,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             TrackTypes.shared.refresh(Array(listedTypes), api: api)
         }
         hidden = recordings.hidden
-        recordings.ticked = Set(all.filter { !$0.sent }.map(\.id)).intersection(recordings.ticked)
-        list = SyncList.of(all, hidden: hidden, showHidden: showHidden, types: types, ticked: recordings.ticked,
-                           isDemo: account.isDemo, inFlight: recordings.inFlight)
+        list = SyncList.of(all, hidden: hidden, showHidden: showHidden, types: types, inFlight: recordings.inFlight)
         types = list.pickedTypes(types)
         similar = SyncSimilar.waiting(list.comparable)
         // An answer about a row no longer compared, hidden since or filtered out, goes.
@@ -184,13 +178,11 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         if account.isDemo {
             items.append(.notice(String(localized: "sync.demo", defaultValue: "The demo account is read-only — it can't add, edit, or delete tracks. Create an account to sync your own data.", comment: "Sync: the demo account can't send."), id: "syncDemo", failed: false))
         }
-        if let summary = summaryLine() { items.append(.notice(summary, id: "syncResults", failed: false)) }
-        let problems = problemLines()
-        if !problems.isEmpty { items.append(.notice(problems.joined(separator: "\n"), id: "syncProblems", failed: true)) }
-        if !list.everything.isEmpty { items.append(.filters) }
+        if !failedLines.isEmpty { items.append(.notice(failedLines.joined(separator: "\n"), id: "syncProblems", failed: true)) }
+        if list.types.count > 1 { items.append(.filters) }
         items += list.shown.map(Item.row)
         if list.everything.isEmpty {
-            items.append(.note(String(localized: "sync.listEmpty", defaultValue: "Nothing waiting. Recordings from the record button show up here.", comment: "Sync: nothing on the phone to send.")))
+            items.append(.note(String(localized: "sync.listEmpty", defaultValue: "Nothing waiting. Recordings show up here until they're on your map.", comment: "Sync: nothing on the phone to send.")))
         }
         if list.hiddenCount > 0 || showHidden { items.append(.showHidden) }
         self.items = items
@@ -226,53 +218,31 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
     }
 
+    /// The recordings not sent yet, sent by themselves, or now on Retry.
     private func renderBar() {
-        let sendable = list.sendable
-        // Two ticked copies of one walk: said in the bar, and still sent if the user goes on.
-        let doubled = SyncSimilar.doubled(sendable, waiting: similar)
-        if recordings.sending {
-            // Each row the run has done, taken or refused, so the count reaches the total.
-            let done = (recordings.report?.sent ?? 0) + (recordings.report?.refused.count ?? 0)
-            tickedLine.text = String(localized: "sync.progress", defaultValue: "Sent \(done) of \(sendingTotal)…", comment: "Sync: a send in progress, how many so far of how many.")
-        } else if doubled > 0 {
-            tickedLine.text = String(localized: "sync.tickedSimilar", defaultValue: "\(sendable.count) of \(list.tickable.count) ticked · \(doubled) are similar",
-                                     comment: "Sync: how many rows are ticked, of how many can be, and how many of them cover the same time as another ticked one.")
-        } else {
-            let format = PanelFormat(account: account)
-            tickedLine.text = String(localized: "sync.ticked", defaultValue: "\(sendable.count) of \(list.tickable.count) ticked · \(format.totalDistance(list.sendableMeters))",
-                                     comment: "Sync: how many rows are ticked, of how many can be, and their distance.")
+        let unsent = SyncList.waiting(list.everything, hidden: hidden, isDemo: account.isDemo)
+        bar.isHidden = !RecordingSends.retryShown(isDemo: account.isDemo, unsent: unsent)
+        unsentLine.text = recordings.sending
+            ? String(localized: "sync.sending", defaultValue: "Sending recordings…", comment: "Sync: recordings are being sent now.")
+            : String(localized: "sync.unsent", defaultValue: "\(unsent) recordings not sent yet", comment: "Sync: how many recordings aren't sent yet.")
+        retry.isEnabled = !recordings.sending
+    }
+
+    /// What a row's note says.
+    private static func words(_ note: RecordingSends.Note) -> String {
+        switch note {
+        case .processing: String(localized: "sync.processing", defaultValue: "Adding to your map…", comment: "Sync: a sent row on its way to the map.")
+        case .sending: String(localized: "sync.rowSending", defaultValue: "Sending…", comment: "Sync: a recording being sent now.")
+        case .waiting: String(localized: "sync.rowWaiting", defaultValue: "Not sent yet. It goes the next time the app opens with a connection.", comment: "Sync: a recording not sent yet, no connection most likely.")
+        case .refused(let refusal): String(localized: "sync.rowRefused", defaultValue: "Not sent: \(words(refusal))", comment: "Sync: a recording the server refused, and why.")
         }
-        send.configuration?.title = sendable.isEmpty
-            ? String(localized: "sync.now", defaultValue: "Sync", comment: "Sync: send, with nothing ticked.")
-            : String(localized: "sync.send", defaultValue: "Sync \(sendable.count)", comment: "Sync: send the ticked rows, and how many.")
-        send.isEnabled = !account.isDemo && !recordings.sending && !sendable.isEmpty
     }
 
-    /// What the last send took.
-    private func summaryLine() -> String? {
-        guard let report = recordings.report, report.sent > 0 else { return nil }
-        return String(localized: "sync.summary", defaultValue: "Sent \(report.sent) tracks. They stay listed until they're on your map.", comment: "Sync: how many the last send took.")
-    }
-
-    /// What the last send couldn't do, each refused row with its reason, and failed ingests.
-    private func problemLines() -> [String] {
-        var lines: [String] = []
-        if let report = recordings.report {
-            lines += report.refused.map { refused in
-                String(localized: "sync.rejected", defaultValue: "Rejected: \(Self.date(refused.track)) \(TrackTypes.shared.label(refused.track.type)) — \(Self.words(refused.refusal))",
-                       comment: "Sync: a row the server refused, its start, type and why.")
-            }
-            if let stopped = report.stopped {
-                lines.append(String(localized: "sync.stopped", defaultValue: "Stopped early. \(stopped.shownMessage)", comment: "Sync: a send cut short, and why."))
-            }
-        }
-        return lines + failedLines
-    }
-
-    static func words(_ refusal: RecordingSync.Refusal) -> String {
+    private static func words(_ refusal: RecordingSync.Refusal) -> String {
         switch refusal {
         case .tooManyPoints: String(localized: "sync.tooManyPoints", defaultValue: "over \(RecordingSync.maxPoints) points", comment: "Sync: why a recording wasn't sent: too long, and the limit.")
-        case .server(let message): message ?? String(localized: "sync.refused", defaultValue: "not sent", comment: "Sync: the server refused a recording, giving no reason.")
+        case .ingestFailed: String(localized: "sync.ingestFailed", defaultValue: "the server couldn't add it", comment: "Sync: why a recording is back on the list: its processing failed.")
+        case .server(let message): message ?? String(localized: "sync.refused", defaultValue: "the server gave no reason", comment: "Sync: the server refused a recording, giving no reason.")
         }
     }
 
@@ -293,9 +263,9 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let hidden = hidden.contains(track.id)
         return SyncRowCell.Row(
             id: track.id, title: Self.title(track), meta: meta,
-            note: track.sent ? String(localized: "sync.processing", defaultValue: "Adding to your map…", comment: "Sync: a sent row on its way to the map.") : nil,
-            processing: track.sent, kind: TrackTypes.shared.kind(track.type), ticked: recordings.ticked.contains(track.id),
-            hidden: hidden, tickable: list.canTick(track), editable: list.canEdit(track),
+            note: recordings.note(track).map(Self.words),
+            processing: track.sent || recordings.isSending(track.id), kind: TrackTypes.shared.kind(track.type),
+            hidden: hidden, editable: list.canEdit(track),
             similar: SyncSimilar.count(track, waiting: similar, onMap: overlaps[track.id] != nil),
             highlighted: track.id == highlight
         )
@@ -303,17 +273,9 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     // MARK: Actions
 
-    private func sendTicked() {
-        let sending = list.sendable
-        guard !sending.isEmpty else { return }
-        sendingTotal = sending.count
+    private func retryAll() {
         failedLines = []
-        Task { await recordings.send(sending) }
-    }
-
-    private func toggle(_ track: RecordedTrack) {
-        guard list.canTick(track) else { return }
-        if recordings.ticked.contains(track.id) { recordings.ticked.remove(track.id) } else { recordings.ticked.insert(track.id) }
+        recordings.send(retry: true)
         render()
     }
 
@@ -371,18 +333,13 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private func swiped(_ track: RecordedTrack) {
         let wasHidden = hidden.contains(track.id)
         recordings.hidden = SyncHidden.swiped(track.id, in: hidden)
-        recordings.ticked.remove(track.id)
         render()
         let text = wasHidden
             ? String(localized: "sync.unhidden", defaultValue: "Back on the list", comment: "Sync: a hidden row swiped back.")
             : String(localized: "sync.hidden", defaultValue: "Hidden — it won't be offered again", comment: "Sync: a row swiped aside.")
         onEvent?(.hid(text, undo: { [weak self] in
-            // A send started since: its rows stay as they are, as a swipe would leave them.
-            guard let self else { return }
-            guard !self.recordings.sending else {
-                self.onEvent?(.say(String(localized: "sync.undoWhileSending", defaultValue: "Can't undo while tracks are being sent.", comment: "Sync: Undo tapped during a send.")))
-                return
-            }
+            // One that landed or was deleted meanwhile isn't hidden again: nothing would prune it.
+            guard let self, self.recordings.all.contains(where: { $0.id == track.id }) else { return }
             self.recordings.hidden = SyncHidden.setting(track.id, hidden: wasHidden, in: self.recordings.hidden)
             self.render()
         }))
@@ -398,12 +355,15 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     /// Delete asks first: the phone's copy is the only one.
     private func confirmDelete(_ track: RecordedTrack) {
         guard let host else { return }
+        // Kept by the alert's actions, so it goes with the alert.
+        let hold = recordings.hold(track.id)
         let alert = UIAlertController(title: String(localized: "sync.deleteTitle", defaultValue: "Delete this recording?", comment: "Sync: deleting a recording, the question."),
-                                      message: String(localized: "sync.deleteMessage", defaultValue: "It hasn't been synced, so this is the only copy. This can't be undone.", comment: "Sync: deleting a recording, why it asks."),
+                                      message: String(localized: "sync.deleteMessage", defaultValue: "It hasn't reached your account, so this is the only copy. This can't be undone.", comment: "Sync: deleting a recording, why it asks."),
                                       preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { _ in hold.release() })
         alert.addAction(UIAlertAction(title: String(localized: "recording.delete", defaultValue: "Delete", comment: "A recording: delete it from the phone."), style: .destructive) { [weak self] _ in
             self?.recordings.delete(track.id)
+            hold.release()
         })
         (host.presentedViewController ?? host).present(alert, animated: true)
     }
@@ -430,7 +390,6 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         if case .row(let track) = item {
             let cell = tableView.dequeueReusableCell(withIdentifier: SyncRowCell.reuse, for: indexPath) as! SyncRowCell
             cell.configure(row(track))
-            cell.onTick = { [weak self] in self?.toggle(track) }
             cell.onEdit = { [weak self] in self?.edit(track) }
             cell.onDelete = { [weak self] in self?.confirmDelete(track) }
             cell.onSimilar = { [weak self] in self?.showSimilar(track) }
@@ -475,58 +434,41 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         return cell
     }
 
-    /// One chip per type listed when there's more than one, then Select all.
+    /// One chip per type listed; a list with one type has no filters.
     private func filters(in container: UIView) {
         let labels = list.types.sorted { TrackTypes.shared.label($0) < TrackTypes.shared.label($1) }
-        var views: [UIView] = []
-        if labels.count > 1 {
-            let chips = UIStackView(arrangedSubviews: labels.map { type in
-                var config = types.contains(type) ? UIButton.Configuration.filled() : UIButton.Configuration.tinted()
-                config.title = TrackTypes.shared.label(type)
-                config.cornerStyle = .capsule
-                config.baseBackgroundColor = UIColor(resource: .accent)
-                config.baseForegroundColor = types.contains(type) ? UIColor(resource: .onAccent) : UIColor(resource: .ink)
-                let chip = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in self?.toggleType(type) })
-                chip.accessibilityTraits = types.contains(type) ? [.button, .selected] : .button
-                chip.accessibilityIdentifier = "syncType"
-                return chip
-            })
-            chips.spacing = DesignTokens.Space.s8
-            let scroll = UIScrollView()
-            scroll.showsHorizontalScrollIndicator = false
-            scroll.accessibilityLabel = String(localized: "sync.types", defaultValue: "Track types", comment: "Sync: the type chips, read out.")
-            chips.translatesAutoresizingMaskIntoConstraints = false
-            scroll.addSubview(chips)
-            NSLayoutConstraint.activate([
-                chips.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
-                chips.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
-                chips.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
-                chips.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
-                chips.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor),
-            ])
-            scroll.heightAnchor.constraint(equalToConstant: 36).isActive = true
-            views.append(scroll)
-        }
-        if !list.tickable.isEmpty && !account.isDemo {
-            let all = Controls.textButton(list.allTicked(recordings.ticked)
-                ? String(localized: "sync.selectNone", defaultValue: "Select none", comment: "Sync: untick every row shown.")
-                : String(localized: "sync.selectAll", defaultValue: "Select all", comment: "Sync: tick every row shown."), id: "syncSelectAll")
-            all.addAction(UIAction { [weak self] _ in
-                guard let self else { return }
-                self.recordings.ticked = self.list.toggleAll(self.recordings.ticked)
-                self.render()
-            }, for: .primaryActionTriggered)
-            let row = UIStackView(arrangedSubviews: [UIView(), all])
-            views.append(row)
-        }
-        let column = Controls.column(views, spacing: DesignTokens.Space.s4)
-        column.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(column)
+        let chips = UIStackView(arrangedSubviews: labels.map { type in
+            var config = types.contains(type) ? UIButton.Configuration.filled() : UIButton.Configuration.tinted()
+            config.title = TrackTypes.shared.label(type)
+            config.cornerStyle = .capsule
+            config.baseBackgroundColor = UIColor(resource: .accent)
+            config.baseForegroundColor = types.contains(type) ? UIColor(resource: .onAccent) : UIColor(resource: .ink)
+            let chip = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in self?.toggleType(type) })
+            chip.accessibilityTraits = types.contains(type) ? [.button, .selected] : .button
+            chip.accessibilityIdentifier = "syncType"
+            return chip
+        })
+        chips.spacing = DesignTokens.Space.s8
+        let scroll = UIScrollView()
+        scroll.showsHorizontalScrollIndicator = false
+        scroll.accessibilityLabel = String(localized: "sync.types", defaultValue: "Track types", comment: "Sync: the type chips, read out.")
+        chips.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(chips)
         NSLayoutConstraint.activate([
-            column.topAnchor.constraint(equalTo: container.topAnchor, constant: DesignTokens.Space.s4),
-            column.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -DesignTokens.Space.s4),
-            column.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: DesignTokens.Space.s16),
-            column.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -DesignTokens.Space.s16),
+            chips.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            chips.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            chips.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            chips.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            chips.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor),
+        ])
+        scroll.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(scroll)
+        NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: container.topAnchor, constant: DesignTokens.Space.s4),
+            scroll.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -DesignTokens.Space.s4),
+            scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: DesignTokens.Space.s16),
+            scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -DesignTokens.Space.s16),
         ])
     }
 
@@ -541,8 +483,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
     }
 
-    /// A swipe either way hides the row, or brings a hidden one back; not while it's on its way
-    /// or a send runs.
+    /// A swipe either way hides the row, or brings a hidden one back; not while it's being sent or
+    /// on its way.
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         swipe(indexPath)
     }

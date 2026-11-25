@@ -214,7 +214,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [x] **7d.3 Recordings on the Sync tab**
   - Edit, Download GPX through the share sheet, Delete, and sending under `recorded` (`apps/android/docs/SPEC.md` FR-5.2).
   - Done when: a recording lands on the map and leaves the phone only then.
-- [ ] **7d.4 Save sends the recording**
+- [x] **7d.4 Save sends the recording**
   - Save sends it with no tick, then every return to the map retries it until the server takes it; on the Sync tab it is listed, never ticked, as sending, not sent yet or refused, with Retry (`apps/android/docs/SPEC.md` FR-5.2, ADR-0039).
   - Done when: a walk saved with no connection is on the map after the app next opens online, without a tick.
 

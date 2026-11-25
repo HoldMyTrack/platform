@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built: the Android app's list of Health Connect sessions to tick and send (`SPEC.md` FR-3.4), and its recordings sent on Save (FR-3.6); the iOS app still sends a recording only when ticked (`apps/ios/docs/ROADMAP.md` 7d.4), Google Maps Timeline import and `.zip` and Takeout import removed, the overlap hint in place of duplicate handling on ingest (FR-3.5), and `superseded_by` gone with the copies it hid.
+Accepted. Built: the Android app's list of Health Connect sessions to tick and send (`SPEC.md` FR-3.4), both apps' recordings sent on Save (FR-3.6), Google Maps Timeline import and `.zip` and Takeout import removed, the overlap hint in place of duplicate handling on ingest (FR-3.5), and `superseded_by` gone with the copies it hid.
 
 ## Context
 

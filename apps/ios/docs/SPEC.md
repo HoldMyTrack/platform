@@ -109,11 +109,12 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
 - Swiping HoldMyTrack away in the app switcher stops the recording, which the first recording on the phone says once. Crash recovery keeps it to the last fix as on Android, and a notification posted as the app closes resumes it with a tap, with no prompt.
 - A pause turns location off until Resume. Location or precise location taken away while recording pauses it.
 
-### FR-5.2 Recorded tracks — review, edit, tick, sync
+### FR-5.2 Recorded tracks — review, edit, send
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-5.2), except as below.
 
-- A recording waits on the Sync tab until ticked and sent; Save doesn't send it (`ROADMAP.md` 7d.4).
+- A recording swiped aside on the Sync tab isn't sent, nor counted as waiting, until it's brought back.
+- A recording the server can't take doesn't hold up the others.
 - Download GPX goes to the share sheet, which saves to Files among its choices.
 
 ## 8. Non-Functional Requirements (summary)
