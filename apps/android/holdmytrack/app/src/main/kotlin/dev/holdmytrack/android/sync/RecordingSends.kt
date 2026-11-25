@@ -42,6 +42,9 @@ object RecordingSends {
     /** Recording keys the server refused, with its reason. */
     private val refused = mutableMapOf<String, String>()
 
+    /** Recording keys whose last request got no answer, the latest last: last in the next send. */
+    private val unanswered = mutableListOf<String>()
+
     private val listeners = mutableSetOf<() -> Unit>()
 
     fun addListener(listener: () -> Unit) {
@@ -69,7 +72,8 @@ object RecordingSends {
         if (held.remove(key)) send(context)
     }
 
-    fun deletable(key: String): Boolean = RecordingSendRules.deletable(key in sending, SyncProgress.isProcessing(key))
+    /** What Delete does with the recording with this [key]; [stored], whether the phone has it. */
+    fun deletion(key: String, stored: Boolean) = RecordingSendRules.deletion(stored, going = key in sending || SyncProgress.isProcessing(key))
 
     /** Sends what's waiting; [retry] sends what the server refused too. One asked for during a
      *  send runs after it; an account that can't send does nothing. */
@@ -87,10 +91,10 @@ object RecordingSends {
                 val store = RecordedTrackStore(app)
                 val waiting = store.all().map { SyncCandidates.fromRecording(it) }
                 val onItsWay = SyncProgress.candidates.mapTo(HashSet()) { it.key }
-                val keys = RecordingSendRules.toSend(waiting.map { it.key }, onItsWay, HiddenCandidates(app, Session.email).all(), held, refused.keys, retry).toSet()
-                val batch = waiting.filter { it.key in keys }
+                val keys = RecordingSendRules.toSend(waiting.map { it.key }, onItsWay, HiddenCandidates(app, Session.email).all(), held, refused.keys, unanswered, retry)
+                val batch = keys.mapNotNull { key -> waiting.find { it.key == key } }
                 if (batch.isEmpty()) return@launch
-                sending = keys
+                sending = keys.toSet()
                 changed()
                 SyncRunner(store, app.resources, healthConnect = null).send(
                     batch,
@@ -100,6 +104,12 @@ object RecordingSends {
                         SyncProgress.add(app, landed)
                     },
                     onRejected = { refused[it.key] = it.reason },
+                    // Swiped aside since the batch was picked, by an Undo.
+                    skip = { it.key in HiddenCandidates(app, Session.email).all() },
+                    onAnswered = { candidate, answered ->
+                        unanswered -= candidate.key
+                        if (!answered) unanswered += candidate.key
+                    },
                 ) {}
             } catch (e: CancellationException) {
                 throw e
@@ -129,6 +139,7 @@ object RecordingSends {
         if (account == Session.email) return
         account = Session.email
         refused.clear()
+        unanswered.clear()
     }
 
     private fun changed() = listeners.toList().forEach { it() }

@@ -256,6 +256,7 @@
     <string name="recorded_delete_confirm_title">Delete this recording?</string>
     <string name="recorded_delete_confirm_message">It hasn\'t reached your account, so this is the only copy. This can\'t be undone.</string>
     <string name="recorded_delete_sending">It\'s already being sent. Once it\'s on your map, delete it there.</string>
+    <string name="recorded_delete_landed">It\'s already on your map. Delete it there.</string>
 
     <string name="sync_rationale">HoldMyTrack reads your recorded exercise sessions and their GPS routes from Health Connect, and adds the outdoor ones to your map. It reads nothing else — no heart rate, no weight, no sleep — and it never writes anything back. Sessions recorded indoors have no route, so they are skipped.</string>
     <string name="sync_source_health_connect">Health Connect</string>
