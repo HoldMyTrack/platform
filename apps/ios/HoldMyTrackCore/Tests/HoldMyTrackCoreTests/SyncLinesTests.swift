@@ -87,8 +87,6 @@ struct SyncLinesTests {
         var sent = a
         sent.sent = true
         #expect(SyncSimilar.count(sent, waiting: waiting, onMap: true) == 0, "none for one on its way")
-        #expect(SyncSimilar.doubled([a, b, c], waiting: waiting) == 2)
-        #expect(SyncSimilar.doubled([a, c], waiting: waiting) == 0, "a double left unticked isn't counted")
     }
 
     @Test func aShapeIsTheSimplifiedRouteAndItsBands() {

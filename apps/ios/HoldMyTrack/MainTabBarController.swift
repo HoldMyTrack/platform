@@ -33,7 +33,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         self.map = map
         self.account = account
         recorder = RecordingController(account: AccountKey.of(email: account.email, isDemo: account.isDemo))
-        recordings = RecordingsSync(api: flow.api, account: AccountKey.of(email: account.email, isDemo: account.isDemo), isDemo: account.isDemo)
+        recordings = RecordingsSync(api: flow.api, account: AccountKey.of(email: account.email, isDemo: account.isDemo), emailVerified: account.emailVerified, isDemo: account.isDemo)
         importFailures = ImportFailureAlert(api: flow.api, enabled: !account.isDemo)
         self.flow = flow
         super.init(nibName: nil, bundle: nil)
@@ -78,8 +78,6 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
                 guard let map, let mapHost = self.viewControllers?.first, let day = track.day(accountZone: self.account.timezone) else { return }
                 self.selectedViewController = mapHost
                 map.viewOnMap(track: track.trackID, day: day)
-            case .say(let text):
-                map?.say(text)
             case .hid(let text, let undo):
                 map?.say(text, action: (String(localized: "sync.undo", defaultValue: "Undo", comment: "Sync: put a hidden row back, or hide it again."), undo))
             }
@@ -120,6 +118,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             MainActor.assumeIsolated {
                 guard let self, self.viewIfLoaded?.window != nil else { return }
                 self.importFailures.check(over: self)
+                self.recordings.send()
             }
         }
     }
@@ -131,6 +130,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             checkLeftover()
         }
         importFailures.check(over: self)
+        recordings.send()
     }
 
     /// What a crash or a swipe left: resumed for the notification's tap, else asked about. A
@@ -300,7 +300,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private func openRecording(_ track: RecordedTrack) {
         let editor = RecordingEditViewController(track: track, account: account, recordings: recordings, api: flow.api, justStopped: true)
         editor.onSaved = { [weak self] in
-            self?.map.say(String(localized: "recording.savedUntilSync", defaultValue: "Recording saved. It will appear on the map after you sync.", comment: "Recording: saved from the Save screen."))
+            guard let self else { return }
+            self.map.say(self.account.isDemo
+                ? String(localized: "recording.savedDemo", defaultValue: "Recording saved on this phone. The demo account can't add it to the map.", comment: "Recording: saved from the Save screen by the demo account.")
+                : String(localized: "recording.savedSending", defaultValue: "Recording saved. It's on its way to your map.", comment: "Recording: saved from the Save screen."))
         }
         presentWhenFree(UINavigationController(rootViewController: editor))
     }
@@ -390,7 +393,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
 
     /// Library counts the recordings waiting to be sent, on its item and beside its +.
     private func countWaiting() {
-        let waiting = SyncList.waiting(recordings.all, isDemo: account.isDemo)
+        let waiting = SyncList.waiting(recordings.all, hidden: recordings.hidden, isDemo: account.isDemo)
         libraryNav?.tabBarItem.badgeValue = waiting > 0 ? "\(waiting)" : nil
         map.syncWaiting = waiting
     }

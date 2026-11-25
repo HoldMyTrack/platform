@@ -224,9 +224,9 @@ A candidate on the phone covering the same time as an account track, or another 
 - A track is compared by the time it was recorded over, even where Private locations hide its ends or all of it. A split part covers only its own stretch, so a whole copy of a split track overlaps no part and isn't marked.
 - `POST /v2/tracks/overlaps` takes up to 5,000 spans and answers each with the account's own track it overlaps most.
 
-### FR-3.6 In-app GPS recording (Android)
+### FR-3.6 In-app GPS recording
 
-The Android app records GPS-only tracks on the phone and sends each one the user saves; a discarded one never reaches the server (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
+The apps record tracks on the phone and send each one the user saves; a discarded one never reaches the server (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5 and `apps/ios/docs/SPEC.md` FR-5).
 
 - Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. It is refused or taken by the rules of FR-3.4.
 - It is the only path that sets a name and description at ingest.

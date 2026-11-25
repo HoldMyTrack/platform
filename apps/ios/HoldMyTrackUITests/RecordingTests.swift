@@ -31,14 +31,15 @@ final class RecordingTests: XCTestCase {
 
     /// A tap starts, the status counts time and distance, a tap pauses and resumes, a short hold
     /// stops nothing, a stop under a minute keeps nothing, and one past a minute, stopped from the
-    /// You tab, opens for naming, is listed on the Sync tab, and once sent lands on the account.
+    /// You tab, opens for naming. Saved with no connection, it's listed as not sent yet; the app's
+    /// next opening sends it, without a tick, and it lands on the account.
     @MainActor
     func testATapRecordsAndAHoldStopsAndSaves() throws {
         let base = try LaunchTests.requireDevStack(self)
         let account = try TestAccount(base: base, samples: [])
         defer { account.delete() }
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen", "-hmtSendsFail"]
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
@@ -73,7 +74,7 @@ final class RecordingTests: XCTestCase {
         record.tap()
         XCTAssertTrue(record.waitForLabel("Pause recording", timeout: 10))
         // Stopped from another tab, it opens on the Save screen over the map, with its time and
-        // distance; saved, it waits on the Sync tab.
+        // distance; saved, it's listed on the Sync tab until it's sent.
         app.tabBars.buttons["tabYou"].tap()
         walk(for: 62)
         record.press(forDuration: 2.6)
@@ -87,15 +88,18 @@ final class RecordingTests: XCTestCase {
         name.tap()
         name.typeText("Test walk")
         app.buttons["recordingSave"].tap()
-        XCTAssertTrue(app.staticTexts["Recording saved. It will appear on the map after you sync."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Recording saved. It's on its way to your map."].waitForExistence(timeout: 5))
         app.openSync()
         let row = app.cells.matching(identifier: "recordingRow").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         XCTAssertTrue(row.staticTexts["Test walk"].exists, "listed by its name")
-        // A tap picks it out on the list and the map, ticking nothing.
+        XCTAssertTrue(row.staticTexts["Not sent yet. It goes the next time the app opens with a connection."].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["syncUnsent"].label, "1 recording not sent yet")
+        app.buttons["syncRetry"].tap()
+        XCTAssertTrue(app.staticTexts["syncUnsent"].waitForLabel("1 recording not sent yet", timeout: 5), "Retry with no connection keeps it")
+        // A tap picks it out on the list and the map.
         row.staticTexts["Test walk"].tap()
         XCTAssertTrue(row.wait(for: NSPredicate(format: "isSelected == true"), timeout: 5), "picked out")
-        XCTAssertEqual(app.buttons["syncSend"].label, "Sync")
         attach("Sync")
 
         // A swipe hides it, with Undo, which puts it back.
@@ -106,32 +110,26 @@ final class RecordingTests: XCTestCase {
         app.buttons["Undo"].tap()
         XCTAssertTrue(row.waitForExistence(timeout: 5), "back on the list")
 
-        // Ticks don't outlast the tab: back from You, nothing is ticked.
-        app.buttons["syncSelectAll"].tap()
-        XCTAssertEqual(app.buttons["syncSend"].label, "Sync 1")
-        app.tabBars.buttons["tabYou"].tap()
+        // The next opening, with a connection, sends it: on the map and off the phone.
+        app.terminate()
+        app.launchArguments = ["-hmtTourSeen"]
+        app.launch()
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        XCTAssertTrue(account.waitForTracks(1, timeout: 90), "the account has it")
         app.openSync()
-        XCTAssertEqual(app.buttons["syncSend"].label, "Sync", "a fresh tab ticks nothing")
-
-        // Select all ticks it; sent, it's on its way, then on the map and off the phone.
-        app.buttons["syncSelectAll"].tap()
-        XCTAssertEqual(app.buttons["syncSend"].label, "Sync 1")
-        app.buttons["syncSend"].tap()
-        XCTAssertTrue(app.staticTexts["syncRowNote"].waitForExistence(timeout: 15), "being added")
-        XCTAssertTrue(app.cells["syncEmpty"].waitForExistence(timeout: 90), "landed: it leaves the phone")
-        XCTAssertTrue(account.waitForTracks(1, timeout: 10), "the account has it")
+        XCTAssertTrue(app.cells["syncEmpty"].waitForExistence(timeout: 30), "landed: it leaves the phone")
     }
 
     /// A recording the app is killed in comes back on the next launch: Discard, asked twice,
     /// drops it; Resume goes on with its moving time, and Stop saves it, listed on the Sync tab
-    /// until its Delete deletes it.
+    /// while it can't be sent, until its Delete deletes it.
     @MainActor
     func testARecordingTheAppDiesInIsOfferedBack() throws {
         let base = try LaunchTests.requireDevStack(self)
         let account = try TestAccount(base: base, samples: [])
         defer { account.delete() }
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen", "-hmtSendsFail"]
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
@@ -150,7 +148,7 @@ final class RecordingTests: XCTestCase {
         }
         func relaunch() -> XCUIElement {
             app.terminate()
-            app.launchArguments = ["-hmtTourSeen"]
+            app.launchArguments = ["-hmtTourSeen", "-hmtSendsFail"]
             app.launch()
             let prompt = app.alerts["Unfinished recording"]
             XCTAssertTrue(prompt.waitForExistence(timeout: 20), "the leftover is asked about")

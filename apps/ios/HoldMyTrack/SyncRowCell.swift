@@ -2,9 +2,9 @@ import HoldMyTrackCore
 import UIKit
 
 /// One Sync row (apps/android/docs/SPEC.md FR-3.2), as Android draws it: the type's tile, a
-/// check while ticked and a spinner while on its way; the title, the meta line and a note; Edit
+/// spinner while being sent or on its way; the title, the meta line and a note; Edit
 /// and Delete for a recording still on the phone; ⓘ while other tracks cover the same time;
-/// dimmed with an eye while hidden. A long press ticks it.
+/// dimmed with an eye while hidden.
 final class SyncRowCell: UITableViewCell {
     static let reuse = "syncRow"
 
@@ -12,13 +12,11 @@ final class SyncRowCell: UITableViewCell {
         let id: String
         let title: String
         let meta: String
-        /// "Adding to your map…" while it's on its way.
+        /// How far its send got.
         let note: String?
         let processing: Bool
         let kind: TrackKind
-        let ticked: Bool
         let hidden: Bool
-        let tickable: Bool
         /// Edit and Delete: on the phone and not being sent (SyncList.canEdit).
         let editable: Bool
         /// How many tracks cover the same time: other rows, and the account's track it overlaps.
@@ -27,12 +25,11 @@ final class SyncRowCell: UITableViewCell {
         let highlighted: Bool
     }
 
-    var onTick: (() -> Void)?
     var onEdit: (() -> Void)?
     var onDelete: (() -> Void)?
     var onSimilar: (() -> Void)?
 
-    private let tile = UIButton(type: .system)
+    private let tile = UIImageView()
     private let spinner = UIActivityIndicatorView(style: .medium)
     private let title = Controls.label("", font: Typeface.sans(DesignTokens.Text.lg, relativeTo: .body), color: UIColor(resource: .ink))
     private let meta = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
@@ -51,8 +48,7 @@ final class SyncRowCell: UITableViewCell {
         selectionStyle = .none
         accessibilityIdentifier = "recordingRow"
         tile.layer.cornerRadius = Self.tileSide / 2
-        tile.accessibilityIdentifier = "recordingTick"
-        tile.addAction(UIAction { [weak self] _ in self?.onTick?() }, for: .primaryActionTriggered)
+        tile.contentMode = .center
         spinner.hidesWhenStopped = true
         spinner.translatesAutoresizingMaskIntoConstraints = false
         tile.addSubview(spinner)
@@ -66,9 +62,6 @@ final class SyncRowCell: UITableViewCell {
         delete.addAction(UIAction { [weak self] _ in self?.onDelete?() }, for: .primaryActionTriggered)
         similar.tintColor = UIColor(resource: .accent)
         similar.addAction(UIAction { [weak self] _ in self?.onSimilar?() }, for: .primaryActionTriggered)
-        let hold = UILongPressGestureRecognizer(target: self, action: #selector(held(_:)))
-        hold.delegate = holdFilter
-        contentView.addGestureRecognizer(hold)
 
         let text = Controls.column([title, meta, note], spacing: 2)
         let row = UIStackView(arrangedSubviews: [tile, text, hiddenMark, similar, edit, delete])
@@ -91,24 +84,6 @@ final class SyncRowCell: UITableViewCell {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    private let holdFilter = HoldFilter()
-
-    /// A hold that starts on ⓘ, Edit or Delete is the button's.
-    private final class HoldFilter: NSObject, UIGestureRecognizerDelegate {
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-            var view = touch.view
-            while let v = view, v !== gestureRecognizer.view {
-                if v is UIControl { return false }
-                view = v.superview
-            }
-            return true
-        }
-    }
-
-    @objc private func held(_ hold: UILongPressGestureRecognizer) {
-        if hold.state == .began, tile.isEnabled { onTick?() }
-    }
-
     func configure(_ row: Row) {
         contentView.backgroundColor = row.highlighted ? UIColor(resource: .surfaceTint) : .clear
         if row.highlighted { accessibilityTraits.insert(.selected) } else { accessibilityTraits.remove(.selected) }
@@ -120,17 +95,11 @@ final class SyncRowCell: UITableViewCell {
         for label in [title, meta, note] { label.alpha = alpha }
         hiddenMark.isHidden = !row.hidden
 
-        tile.setImage(row.processing ? nil : Controls.icon(row.ticked ? UIImage(resource: .check) : TrackTypes.icon(row.kind), size: 18), for: .normal)
+        tile.image = row.processing ? nil : Controls.icon(TrackTypes.icon(row.kind), size: 18)
         // On a picked row's tinted background, the tile takes the plain surface so it still shows.
-        tile.backgroundColor = row.ticked ? UIColor(resource: .accent) : UIColor(resource: row.highlighted ? .surface : .surfaceTint)
-        tile.tintColor = row.ticked ? UIColor(resource: .onAccent) : UIColor(resource: .inkSecondary)
-        tile.isEnabled = row.tickable
+        tile.backgroundColor = UIColor(resource: row.highlighted ? .surface : .surfaceTint)
+        tile.tintColor = UIColor(resource: .inkSecondary)
         if row.processing { spinner.startAnimating() } else { spinner.stopAnimating() }
-        tile.accessibilityLabel = row.processing ? row.note
-            : row.ticked ? String(localized: "sync.untickRow", defaultValue: "Untick \(row.title)", comment: "Sync: a ticked row's tick, read out.")
-            : String(localized: "sync.tickRow", defaultValue: "Tick \(row.title)", comment: "Sync: a row's tick, read out.")
-        tile.accessibilityTraits = row.ticked ? [.button, .selected] : .button
-
         similar.isHidden = row.similar == 0
         similar.accessibilityLabel = String(localized: "sync.similarRow", defaultValue: "\(row.title): \(row.similar) similar tracks", comment: "Sync: a row's ⓘ, read out with its title and how many tracks cover the same time.")
         // Named per row, since VoiceOver reads each control on its own.

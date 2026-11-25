@@ -194,7 +194,7 @@ public struct RecordedTrack: Codable, Equatable, Sendable {
     /// Set only by someone typing one.
     public var name: String?
     public var description: String?
-    /// The server took it and its ingest hasn't ended: it isn't listed or tickable meanwhile.
+    /// The server took it and its ingest hasn't ended: it's listed as on its way meanwhile.
     public var sent: Bool
 
     public init(id: String, startedAt: Date, endedAt: Date, movingSeconds: TimeInterval, meters: Double, type: String, points: [RecordedPoint],

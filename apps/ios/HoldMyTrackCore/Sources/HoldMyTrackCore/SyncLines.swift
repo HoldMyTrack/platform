@@ -139,12 +139,6 @@ public enum SyncSimilar {
     public static func count(_ track: RecordedTrack, waiting: [String: [RecordedTrack]], onMap: Bool) -> Int {
         track.sent ? 0 : waiting[track.id, default: []].count + (onMap ? 1 : 0)
     }
-
-    /// How many of the rows Sync would send cover the same time as another of them.
-    public static func doubled(_ sendable: [RecordedTrack], waiting: [String: [RecordedTrack]]) -> Int {
-        let ids = Set(sendable.map(\.id))
-        return sendable.filter { track in waiting[track.id, default: []].contains { ids.contains($0.id) } }.count
-    }
 }
 
 

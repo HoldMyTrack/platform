@@ -64,7 +64,7 @@ extension MapViewController {
 
     /// The tab bar's Tracks, Trips or Library brought the map forward, or Library's head opened
     /// Sync. fresh is false for a return from a screen pushed over the map, such as Upload, which
-    /// keeps the Sync tab's ticks and Library's page.
+    /// keeps Library's page.
     func show(_ next: PanelTab, trip: String? = nil, fresh: Bool = true) {
         loadViewIfNeeded()
         if next == panelTab {
@@ -201,7 +201,7 @@ extension MapViewController {
         watchPending()
     }
 
-    /// A recording sent from the Sync tab is on the map: its tiles, Dates' bounds and the list.
+    /// A sent recording is on the map: its tiles, Dates' bounds and the list.
     func recordingLanded() {
         tracksVersion += 1
         updateTracksQuery()

@@ -45,16 +45,16 @@ enum TourText {
             String(localized: "tour.fog_countries.body", defaultValue: "And a whole country. Auto follows the zoom, as you just saw. Pick a level to keep it at every zoom, or Exact to clear the fog only along your routes.", comment: "The demo's tour: Fog's country level."))
         case "record": (
             String(localized: "tour.record.title", defaultValue: "Record", comment: "The tour: the record button."),
-            String(localized: "tour.record.body", defaultValue: "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from Sync.", comment: "The tour: the record button."))
+            String(localized: "tour.record.body", defaultValue: "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. Saving a recording adds it to your map.", comment: "The tour: the record button."))
         case "record_demo": (
             String(localized: "tour.record.title", defaultValue: "Record", comment: "The tour: the record button."),
-            String(localized: "tour.record_demo.body", defaultValue: "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. In your own account, recordings are sent to your map from Sync.", comment: "The demo's tour: the record button; the demo can't send."))
+            String(localized: "tour.record_demo.body", defaultValue: "Tap to record a walk or a ride with the phone's GPS, tap again to pause, and hold to stop. In your own account, saving a recording adds it to your map.", comment: "The demo's tour: the record button; the demo can't send."))
         case "sync": (
             String(localized: "tour.sync.title", defaultValue: "Sync", comment: "The tour: the Sync tab."),
-            String(localized: "tour.sync.body", defaultValue: "Bring in this phone's recordings. Nothing is ticked to start with: only what you tick is sent. You don't need to bring everything, only the journeys you want to keep.", comment: "The tour: the Sync tab, which lists the phone's recordings, with Upload at its head."))
+            String(localized: "tour.sync.body", defaultValue: "Upload files here. Recordings not on your map yet are listed until they land on it.", comment: "The tour: the Sync tab, which lists the phone's recordings, with Upload at its head."))
         case "sync_demo": (
             String(localized: "tour.sync.title", defaultValue: "Sync", comment: "The tour: the Sync tab."),
-            String(localized: "tour.sync_demo.body", defaultValue: "In your own account, your recordings are sent from here, and your files uploaded. The demo can't send: sign out and create an account to start yours.", comment: "The demo's tour: the Sync tab."))
+            String(localized: "tour.sync_demo.body", defaultValue: "In your own account, your files and recordings come in here. The demo can't send: sign out and create an account to start yours.", comment: "The demo's tour: the Sync tab."))
         default: (
             String(localized: "tour.done.title", defaultValue: "That's the tour", comment: "The tour's last step."),
             String(localized: "tour.done.body", defaultValue: "Take it again any time from Take a tour, here on the You tab.", comment: "The tour's last step, on the You tab's Take a tour."))

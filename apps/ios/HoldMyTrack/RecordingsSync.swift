@@ -2,14 +2,16 @@ import Foundation
 import HoldMyTrackCore
 
 /// The account's recordings on the phone and their sending (apps/ios/docs/SPEC.md FR-5.2): what the
-/// Sync tab lists, the ticked ones sent one at a time under `recorded`, and each one the server
-/// took asked about every 2 seconds, on any tab, until it lands, when it leaves the phone, or its
-/// ingest fails, when it's listed again. The tab bar owns it, so the follow-up outlives the tab.
-/// The rows swiped aside are kept beside the recordings (RecordingStore.hidden).
+/// Sync tab lists, each sent on its own under `recorded` without a tick (RecordingSends), on Save,
+/// on every return to the app and on Retry. Each one the server took is asked about every 2
+/// seconds, on any tab, until it lands, when it leaves the phone, or its ingest fails, when it's
+/// listed again. The tab bar owns it, so the follow-up outlives the tab. The rows swiped aside are
+/// kept beside the recordings (RecordingStore.hidden).
 @MainActor
 final class RecordingsSync {
     private let api: APIClient
     private let account: String
+    private let emailVerified: Bool
     let isDemo: Bool
     private let store: RecordingStore
     private var polling: Task<Void, Never>?
@@ -17,23 +19,17 @@ final class RecordingsSync {
     private var pollGeneration = 0
     /// The signed-in screen went: nothing more is sent, written or asked.
     private var stopped = false
-    /// The recordings the running send is sending, which the ticks don't change; empty between sends.
+    /// The recordings the running send is sending; empty between sends.
     private(set) var inFlight: Set<String> = []
-    var sending: Bool { !inFlight.isEmpty }
-    /// The rows ticked to send; nothing starts ticked.
-    var ticked: Set<String> = []
-    /// What the last send did, said over the list until the next one.
-    private(set) var report: Report?
+    private(set) var sending = false
+    /// A send asked for while one ran, which picked its recordings already: it runs after.
+    private var sendAgain = false
+    /// The recordings a screen is open about (Hold), by hold.
+    private var holds: [UUID: String] = [:]
+    /// What the server refused, or failed to add, since launch: sent again only on Retry.
+    private var refused: [String: RecordingSync.Refusal] = [:]
     /// Sent recordings whose ingest failed since the tab last asked (takeFailed).
     private var failed: [RecordedTrack] = []
-
-    /// What a send did: how many the server took, each refused with why (they stay ticked), and
-    /// why it stopped early, if it did.
-    struct Report {
-        var sent = 0
-        var refused: [(track: RecordedTrack, refusal: RecordingSync.Refusal)] = []
-        var stopped: APIError?
-    }
 
     static let changed = Notification.Name("RecordingsSync.changed")
     /// A recording landed: the map reads its list and tiles again.
@@ -41,21 +37,55 @@ final class RecordingsSync {
     /// A recording's ingest failed and it's listed again.
     var onFailed: (() -> Void)?
 
-    init(api: APIClient, account: String, isDemo: Bool, store: RecordingStore = RecordingController.defaultStore) {
+    init(api: APIClient, account: String, emailVerified: Bool, isDemo: Bool, store: RecordingStore = RecordingController.defaultStore) {
         self.api = api
         self.account = account
+        self.emailVerified = emailVerified
         self.isDemo = isDemo
         self.store = store
         follow()
     }
 
     var all: [RecordedTrack] { store.list(account: account) }
-    var awaited: Int { all.filter(\.sent).count }
+    private var awaited: Int { all.filter(\.sent).count }
+
+    /// What track's row says.
+    func note(_ track: RecordedTrack) -> RecordingSends.Note? {
+        RecordingSends.note(sent: track.sent, sending: isSending(track.id), hidden: hidden.contains(track.id), refusal: refused[track.id], isDemo: isDemo)
+    }
+
+    /// Keeps a recording out of any send while a screen about it is open, so it isn't sent before
+    /// it's named, discarded or deleted. Released when the screen closes, or with whatever holds it.
+    final class Hold {
+        private let onRelease: @MainActor @Sendable () -> Void
+
+        fileprivate init(onRelease: @escaping @MainActor @Sendable () -> Void) { self.onRelease = onRelease }
+
+        @MainActor func release() { onRelease() }
+
+        deinit {
+            let onRelease = onRelease
+            Task { @MainActor in onRelease() }
+        }
+    }
+
+    func hold(_ id: String) -> Hold {
+        let key = UUID()
+        holds[key] = id
+        return Hold { [weak self] in
+            guard let self, self.holds.removeValue(forKey: key) != nil else { return }
+            // What's kept goes now.
+            self.send()
+        }
+    }
 
     /// The rows swiped aside, kept in the account's recordings folder (RecordingStore.hidden).
     var hidden: Set<String> {
         get { store.hidden(account: account) }
-        set { store.setHidden(newValue, account: account) }
+        set {
+            store.setHidden(newValue, account: account)
+            changed()
+        }
     }
 
     /// The sent recordings whose ingest failed since last asked.
@@ -86,51 +116,71 @@ final class RecordingsSync {
     func isSending(_ id: String) -> Bool { inFlight.contains(id) }
 
     func delete(_ id: String) {
-        guard !isSending(id) else { return }
+        // Sent, it lands whatever the phone keeps.
+        guard !isSending(id), !all.contains(where: { $0.id == id && $0.sent }) else { return }
         store.delete(id: id, account: account)
-        ticked.remove(id)
+        refused[id] = nil
         changed()
     }
 
-    /// tracks, the rows ticked and shown, one recording at a time; a run cut short leaves the rest
-    /// ticked.
-    func send(_ tracks: [RecordedTrack]) async {
-        guard !sending, !stopped, !isDemo, !tracks.isEmpty else { return }
-        inFlight = Set(tracks.map(\.id))
-        report = Report()
+    /// Sends what's waiting, one recording at a time; retry sends what the server refused too. A
+    /// request that fails decides nothing unless the server refused its recording with it.
+    func send(retry: Bool = false) {
+        guard !stopped, RecordingSends.sends(emailVerified: emailVerified, isDemo: isDemo) else { return }
+        guard !sending else {
+            sendAgain = true
+            return
+        }
+        let batch = RecordingSends.toSend(all, hidden: hidden, held: Set(holds.values), refused: Set(refused.keys), retry: retry)
+        guard !batch.isEmpty else { return }
+        sending = true
+        inFlight = Set(batch.map(\.id))
         changed()
-        for track in tracks {
-            if stopped { break }
-            if let refusal = RecordingSync.refusal(track) {
-                report?.refused.append((track, refusal))
-                changed()
-                continue
+        Task {
+            await run(batch)
+            inFlight = []
+            sending = false
+            guard !stopped else { return }
+            changed()
+            follow()
+            if sendAgain {
+                sendAgain = false
+                send()
             }
+        }
+    }
+
+    private func run(_ batch: [RecordedTrack]) async {
+        for track in batch {
             do {
-                let refusal = try await api.sendRecording(track)
+                let refusal: RecordingSync.Refusal?
+                if let known = RecordingSync.refusal(track) { refusal = known } else { refusal = try await ask(track) }
                 // Signed out meanwhile: the account's folder may be gone, and stays gone.
-                if stopped { break }
-                if let refusal {
-                    report?.refused.append((track, refusal))
-                } else {
-                    // The stored copy as it is now, so nothing written meanwhile is lost.
-                    if var sent = all.first(where: { $0.id == track.id }) {
-                        sent.sent = true
-                        try? store.save(sent, account: account)
-                    }
-                    ticked.remove(track.id)
-                    report?.sent += 1
+                if stopped { return }
+                refused[track.id] = refusal
+                // The stored copy as it is now, so nothing written meanwhile is lost.
+                if refusal == nil, var sent = all.first(where: { $0.id == track.id }) {
+                    sent.sent = true
+                    try? store.save(sent, account: account)
                 }
             } catch {
-                // Unreachable or refused as a whole: what wasn't confirmed stays ticked.
-                report?.stopped = (error as? APIError) ?? .unreachable
-                break
+                if stopped { return }
+                switch RecordingSends.failure((error as? APIError) ?? .unreachable) {
+                case .stop: return
+                case .next: break
+                case .refuse(let refusal): refused[track.id] = refusal
+                }
             }
+            inFlight.remove(track.id)
             changed()
+            follow()
         }
-        inFlight = []
-        changed()
-        follow()
+    }
+
+    /// The UI tests' -hmtSendsFail fails every send, as with no connection.
+    private func ask(_ track: RecordedTrack) async throws -> RecordingSync.Refusal? {
+        if ProcessInfo.processInfo.arguments.contains("-hmtSendsFail") { throw APIError.unreachable }
+        return try await api.sendRecording(track)
     }
 
     /// Asks after every recording sent and awaited until none is left.
@@ -164,6 +214,8 @@ final class RecordingsSync {
                 var back = track
                 back.sent = false
                 try? store.save(back, account: account)
+                // Not sent again by itself: the same recording would likely fail the same way.
+                refused[track.id] = .ingestFailed
                 self.failed.append(back)
                 failed = true
             }
