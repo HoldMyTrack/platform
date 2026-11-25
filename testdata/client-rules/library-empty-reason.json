@@ -1,6 +1,5 @@
 {
   "rule": "libraryEmptyReason",
-  "clients": ["web", "android"],
   "description": "Why a Library page (docs/SPEC.md FR-17.1) has no row: the account has no track; the page is past the last, whatever the filters; the search matches nothing, with or without other filters to clear; or only the filters match nothing.",
   "cases": [
     { "name": "no track at all", "input": { "state": { "q": "lake", "exclude": [], "distance": null, "after": null, "before": null, "trip": null }, "total": 0, "anyTrack": false }, "expected": "no_tracks" },

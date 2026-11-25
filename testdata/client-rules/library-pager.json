@@ -1,6 +1,5 @@
 {
   "rule": "libraryPager",
-  "clients": ["web", "android"],
   "description": "Library's pager (docs/SPEC.md FR-17.1): the rows a page shows, 1-based, and whether there is a page before and after. Null when the page shows no row.",
   "cases": [
     { "name": "the first of three pages", "input": { "page": 1, "total": 250, "pageSize": 100 }, "expected": { "from": 1, "to": 100, "prev": false, "next": true } },

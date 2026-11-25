@@ -1,6 +1,5 @@
 {
   "rule": "attachmentName",
-  "clients": ["web", "android"],
   "description": "The file name a download is saved under, from its Content-Disposition header: filename* (RFC 5987: charset'language'value, percent-encoded) before filename, quoted or not. A filename* in a charset other than UTF-8, or malformed, falls back to filename; one with no charset part reads as UTF-8. With neither, or no header, tracks.gpx.",
   "cases": [
     { "name": "a plain quoted name", "input": { "header": "attachment; filename=\"2026-05-01 0800 Ride.gpx\"" }, "expected": "2026-05-01 0800 Ride.gpx" },
