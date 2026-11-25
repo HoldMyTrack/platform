@@ -18,7 +18,20 @@ extension MapViewController {
             if let known = hasTracks { onHistoryKnown?(known) }
             return
         }
+        // One read at a time, or a later answer would pull the camera back from the user.
+        guard !opening else {
+            openAgain = true
+            return
+        }
+        opening = true
         Task {
+            defer {
+                opening = false
+                // Asked while this one read an empty account: something may have come since.
+                let again = openAgain && noticeShown(.empty)
+                openAgain = false
+                if again { openOnce() }
+            }
             guard let newest = try? await flow.api.areaList(box: nil, dates: .allTime, limit: OpeningView.tracks) else {
                 followArea()
                 return

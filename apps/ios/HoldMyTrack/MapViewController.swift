@@ -168,6 +168,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     /// The first framing happens once per sign-in, not on every return to the map.
     var framed = false
+    /// The opening view's read is out, and was asked for again meanwhile.
+    var opening = false
+    var openAgain = false
 
     var format: PanelFormat { PanelFormat(account: account) }
 
@@ -489,14 +492,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Coverage still updating
 
-    /// Fog says when coverage is still being redrawn, checked on every opening of the map, and
-    /// refreshes when the server is done (root docs/SPEC.md FR-4.2).
+    /// Whether the account's tiles moved, checked on every return in every mode: the layers and the
+    /// tracks are fetched again if so, or once the server is done redrawing. Fog says while it is
+    /// (root docs/SPEC.md FR-4.2).
     func checkCoverage() {
         coverageTask?.cancel()
-        guard state.mode != .normal else {
-            hideNotice(.coverage)
-            return
-        }
+        if state.mode == .normal { hideNotice(.coverage) }
         coverageTask = Task {
             var wasRendering = false
             while !Task.isCancelled {
@@ -504,12 +505,16 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                 if let explored = status.explored { fogViews.explored = explored }
                 if status.rendering {
                     wasRendering = true
-                    notice(.coverage, String(localized: "Your map is still being updated, so Fog may be incomplete for now. It'll refresh on its own."))
+                    if state.mode != .normal { notice(.coverage, String(localized: "Your map is still being updated, so Fog may be incomplete for now. It'll refresh on its own.")) }
                     try? await Task.sleep(for: .seconds(5))
                     continue
                 }
                 hideNotice(.coverage)
-                if wasRendering || status.tileVersion != pair?.layers.tileVersion { load() }
+                // With no document yet, the one on its way is the latest.
+                guard let shown = pair?.layers.tileVersion, wasRendering || status.tileVersion != shown else { return }
+                tracksVersion += 1
+                updateTracksQuery()
+                load()
                 return
             }
         }

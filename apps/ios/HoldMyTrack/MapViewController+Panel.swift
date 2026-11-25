@@ -388,7 +388,7 @@ extension MapViewController {
             updateTracksQuery()
             loadList()
         case .copyArrived:
-            // The map has history now.
+            // The copy gives the map history, so the pointer goes.
             hideNotice(.empty)
             tracksVersion += 1
             updateTracksQuery()
