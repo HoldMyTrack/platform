@@ -139,6 +139,23 @@ enum Controls {
         return button
     }
 
+    /// A filter's capsule with a ▾ after its title, as the Tracks tab's and Library's filters are:
+    /// one line, cut short with an ellipsis, as on Android and the web.
+    static func styleFilter(_ button: UIButton, id: String) {
+        var config = UIButton.Configuration.bordered()
+        config.cornerStyle = .capsule
+        config.baseForegroundColor = UIColor(resource: .ink)
+        config.baseBackgroundColor = UIColor(resource: .surface)
+        config.background.strokeColor = UIColor(resource: .border)
+        config.image = Controls.icon(UIImage(resource: .chevronDown), size: 12)
+        config.imagePlacement = .trailing
+        config.imagePadding = 4
+        config.titleLineBreakMode = .byTruncatingTail
+        config.titleTextAttributesTransformer = font(Typeface.sans(DesignTokens.Text.md, relativeTo: .subheadline))
+        button.configuration = config
+        button.accessibilityIdentifier = id
+    }
+
     private static func font(_ font: UIFont) -> UIConfigurationTextAttributesTransformer {
         UIConfigurationTextAttributesTransformer { attributes in
             var attributes = attributes

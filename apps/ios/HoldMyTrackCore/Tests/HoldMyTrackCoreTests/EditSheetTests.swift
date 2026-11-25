@@ -35,13 +35,13 @@ struct EditSheetTests {
     }
 
     @Test func theTracksSheetHidesWhileAnEditorIsOpen() {
-        #expect(MapChrome.sheetShown(normal: true, recording: false, onSync: false, editing: false))
-        #expect(!MapChrome.sheetShown(normal: true, recording: false, onSync: false, editing: true))
-        #expect(!MapChrome.sheetShown(normal: false, recording: false, onSync: false, editing: false))
+        #expect(MapChrome.sheetShown(normal: true, recording: false, onLibrary: false, editing: false))
+        #expect(!MapChrome.sheetShown(normal: true, recording: false, onLibrary: false, editing: true))
+        #expect(!MapChrome.sheetShown(normal: false, recording: false, onLibrary: false, editing: false))
     }
 
-    @Test func whileRecordingOnlyTheSyncTabKeepsTheSheet() {
-        #expect(!MapChrome.sheetShown(normal: true, recording: true, onSync: false, editing: false))
-        #expect(MapChrome.sheetShown(normal: true, recording: true, onSync: true, editing: false))
+    @Test func whileRecordingOnlyLibraryAndSyncKeepTheSheet() {
+        #expect(!MapChrome.sheetShown(normal: true, recording: true, onLibrary: false, editing: false))
+        #expect(MapChrome.sheetShown(normal: true, recording: true, onLibrary: true, editing: false))
     }
 }

@@ -209,9 +209,9 @@ struct MapStyleTests {
     }
 
     @Test func theAreasNoticesStepAsideWhileRecordingAndOnTheSyncTab() {
-        #expect(MapChrome.areaNoticesShown(recording: false, onSync: false))
-        #expect(!MapChrome.areaNoticesShown(recording: true, onSync: false))
-        #expect(!MapChrome.areaNoticesShown(recording: false, onSync: true))
+        #expect(MapChrome.areaNoticesShown(recording: false, onLibrary: false))
+        #expect(!MapChrome.areaNoticesShown(recording: true, onLibrary: false))
+        #expect(!MapChrome.areaNoticesShown(recording: false, onLibrary: true))
     }
 
     @Test func aLockedLevelDrawsAtEveryZoomAndTheOthersAtNone() throws {

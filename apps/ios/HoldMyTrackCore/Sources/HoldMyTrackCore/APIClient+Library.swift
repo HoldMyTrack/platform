@@ -63,6 +63,12 @@ public struct TrackPage: Equatable, Sendable {
         public let type: String
         public let count: Int
     }
+
+    /// This page with no row, its bounds kept: what a filter that matches nothing shows without
+    /// asking (LibraryRules.pageQuery's nil).
+    public var withNoRows: TrackPage {
+        TrackPage(tracks: [], total: 0, pageSize: pageSize, distance: distance, firstDate: firstDate, lastDate: lastDate, typeCounts: typeCounts, types: types)
+    }
 }
 
 /// Library's calls (root docs/SPEC.md FR-17): a page of the whole collection, and Download.
