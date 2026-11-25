@@ -55,7 +55,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 ### FR-2.7 Tracks panel
 
 - Leaving the Tracks tab drops the Private location editor's draft: iOS has no Back.
-- Download hands the file to the share sheet, whose Save to Files keeps it. A blocked Download says why under its name in the ⋯ menu.
+- Download hands the file to the share sheet, whose Save to Files keeps it.
 
 ### FR-2.8 Spots
 

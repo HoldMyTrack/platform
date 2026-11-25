@@ -88,7 +88,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var pendingIDs: Set<String> = []
     var awaiting: Set<String> = []
     var pendingTask: Task<Void, Never>?
-    /// Download, the selection bar's and Library's (TrackDownload).
+    /// Download, the selection bar's (TrackDownload).
     lazy var downloads = TrackDownload(api: flow.api)
     /// Bumped whenever tracks change under the same query, so their tiles are fetched again.
     var tracksVersion = 0

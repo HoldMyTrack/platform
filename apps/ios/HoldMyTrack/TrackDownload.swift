@@ -1,10 +1,10 @@
 import HoldMyTrackCore
 import UIKit
 
-/// Download (root docs/SPEC.md FR-17.2), the Tracks panel's and Library's: the tracks as one GPX,
-/// or a zip of them, fetched into a temporary file and handed to the share sheet, whose Save to
-/// Files keeps it. The file's directory goes once the sheet closes. One download at a time: a
-/// second waits for the first, so both screens share one.
+/// Download (root docs/SPEC.md FR-17.2), the Tracks panel's: the tracks as one GPX, or a zip of
+/// them, fetched into a temporary file and handed to the share sheet, whose Save to Files keeps
+/// it. The file's directory goes once the sheet closes. One download at a time: a second tapped
+/// while the first is fetched is refused with a word.
 @MainActor
 final class TrackDownload {
     private let api: APIClient
@@ -37,7 +37,12 @@ final class TrackDownload {
                 let share = UIActivityViewController(activityItems: [file], applicationActivities: nil)
                 share.popoverPresentationController?.sourceView = top.view
                 share.completionWithItemsHandler = { _, _, _, _ in try? FileManager.default.removeItem(at: dir) }
-                top.present(share, animated: true)
+                // A screen still closing over top refuses a presentation until it has gone.
+                if let closing = top.presentedViewController?.transitionCoordinator {
+                    closing.animate(alongsideTransition: nil) { _ in top.present(share, animated: true) }
+                } else {
+                    top.present(share, animated: true)
+                }
             } catch is CancellationError {
             } catch {
                 say((error as? APIError)?.serverMessage ?? String(localized: "download.failed", defaultValue: "The tracks couldn't be downloaded. Check your connection and try again.",
