@@ -3,7 +3,7 @@
 | | |
 | :-- | :-- |
 | **Status** | Current: the app as built |
-| **Last updated** | 2026-11-21 |
+| **Last updated** | 2026-11-25 |
 | **Related documents** | `docs/SPEC.md` (the server and web behavior this app shares), `apps/ios/docs/ARCHITECTURE.md` (the app's shape and stack), `apps/ios/docs/IMPLEMENTATION.md` (how it's built), `apps/ios/docs/ROADMAP.md` (the plan) |
 
 ## 1. Introduction
@@ -55,6 +55,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 ### FR-2.7 Tracks panel
 
 - Leaving the Tracks tab drops the Private location editor's draft: iOS has no Back.
+- Download hands the file to the share sheet, whose Save to Files keeps it. A blocked Download says why under its name in the ⋯ menu.
 
 ### FR-2.8 Spots
 

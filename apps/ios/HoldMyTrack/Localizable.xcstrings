@@ -364,6 +364,235 @@
         }
       }
     },
+    "download.busy" : {
+      "comment" : "Download: a second one tapped while the first is still being fetched.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Another download is still being prepared"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другой файл для скачивания ещё готовится"
+          }
+        }
+      }
+    },
+    "download.failed" : {
+      "comment" : "Download: the request failed with no word from the server.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tracks couldn't be downloaded. Check your connection and try again."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось скачать треки. Проверьте подключение и попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "download.started" : {
+      "comment" : "Download: the tracks are being fetched.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloading…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузка…"
+          }
+        }
+      }
+    },
+    "More" : {
+      "comment" : "Tracks tab: the selection bar's ⋯, before it names a target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ещё"
+          }
+        }
+      }
+    },
+    "panel.downloadPending" : {
+      "comment" : "Tracks tab: why Download can't go; the placeholder names the track.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can't download: “%@” is still being processed"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нельзя скачать: «%@» ещё обрабатывается"
+          }
+        }
+      }
+    },
+    "panel.downloadPrivate" : {
+      "comment" : "Tracks tab: why Download can't go; the placeholder names the track.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can't download: “%@” lies entirely inside your private locations"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нельзя скачать: «%@» целиком внутри ваших приватных мест"
+          }
+        }
+      }
+    },
+    "panel.downloadTooMany" : {
+      "comment" : "Tracks tab: why Download can't take the checked tracks; the first number is the limit, the second how many are checked.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download takes at most %1$lld tracks at a time; %#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg is checked"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg are checked"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "За раз можно скачать не больше %1$lld треков, а %#@n@"
+          },
+          "substitutions" : {
+            "n" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "отмечен %arg"
+                    }
+                  },
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "отмечено %arg"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "отмечено %arg"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "отмечено %arg"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "panel.moreDelete" : {
+      "comment" : "Tracks tab: the ⋯ menu's Delete, which asks first.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить…"
+          }
+        }
+      }
+    },
+    "panel.moreDownload" : {
+      "comment" : "Tracks tab: the ⋯ menu's Download.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download as GPX"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скачать в GPX"
+          }
+        }
+      }
+    },
+    "panel.moreTarget" : {
+      "comment" : "Tracks tab: the selection bar's ⋯, which holds Download and Delete for the target.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More for %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ещё для: %@"
+          }
+        }
+      }
+    },
     "Send a copy of “%@”" : {
       "comment" : "Send a copy's sheet: its title, with the Trip's name.",
       "localizations" : {
