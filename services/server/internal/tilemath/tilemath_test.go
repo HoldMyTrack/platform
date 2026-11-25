@@ -78,8 +78,8 @@ func TestSegmentTilesBufferedNearCornerAddsDiagonal(t *testing.T) {
 	}
 }
 
-// TestSegmentTilesBufferedHuggingBoundary reproduces docs/KNOWN_ISSUES.md's reported defect:
-// a segment that runs the length of a tile boundary, both endpoints inside the same tile but
+// TestSegmentTilesBufferedHuggingBoundary reproduces a fixed defect: a
+// segment that runs the length of a tile boundary, both endpoints inside the same tile but
 // close enough to its edge that the drawn stroke spills into the neighbor — unbuffered
 // an unbuffered walk never marks that neighbor touched at all.
 func TestSegmentTilesBufferedHuggingBoundary(t *testing.T) {

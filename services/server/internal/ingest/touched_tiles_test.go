@@ -18,8 +18,8 @@ func touchedTileSet(tiles [][2]int) map[[2]int]bool {
 	return out
 }
 
-// TestComputeTouchedTilesBuffersStrokeWidth reproduces docs/KNOWN_ISSUES.md's reported
-// defect: a trajectory that stays within one z14 tile but hugs its boundary closely enough
+// TestComputeTouchedTilesBuffersStrokeWidth reproduces a fixed defect:
+// a trajectory that stays within one z14 tile but hugs its boundary closely enough
 // that the rendered stroke (fog.TileMarginPx wide) spills into the neighboring tile.
 // computeTouchedTiles has to mark that neighbor touched too, or RenderTrackMasks never
 // renders a mask there and the overflow is silently clipped at the canvas edge instead.
