@@ -55,6 +55,9 @@ class RecordingActivity : AppCompatActivity() {
      *  empty until that answers, or if it can't (offline), which still leaves a usable list. */
     private var serverTypeCounts: Map<String, Int> = emptyMap()
 
+    /** The Type picker last opened, which the account's types reach if they arrive after it. */
+    private var typePicker: TrackTypePicker.Handle? = null
+
     private val editingId: String get() = intent.getStringExtra(EXTRA_RECORDING_ID)!!
 
     private val isSaveScreen: Boolean get() = intent.getBooleanExtra(EXTRA_JUST_STOPPED, false)
@@ -91,7 +94,13 @@ class RecordingActivity : AppCompatActivity() {
                 setOnClickListener { confirmDiscard() }
             }
         }
-        HoldMyTrackApi.trackTypeCounts { result -> result.onSuccess { serverTypeCounts = it } }
+        HoldMyTrackApi.accountTypeCounts { result ->
+            result.onSuccess { counts ->
+                serverTypeCounts = counts
+                val picker = typePicker ?: return@onSuccess
+                lifecycleScope.launch { picker.update(RecordingTypes.known(counts, store.waitingTypes())) }
+            }
+        }
 
         lifecycleScope.launch {
             val record = store.header(editingId) ?: run { finish(); return@launch }
@@ -111,7 +120,7 @@ class RecordingActivity : AppCompatActivity() {
     private fun openTypePicker() {
         lifecycleScope.launch {
             val known = RecordingTypes.known(serverTypeCounts, store.waitingTypes())
-            TrackTypePicker.show(this@RecordingActivity, selectedType, known, ::setType)
+            typePicker = TrackTypePicker.show(this@RecordingActivity, selectedType, known, ::setType)
         }
     }
 

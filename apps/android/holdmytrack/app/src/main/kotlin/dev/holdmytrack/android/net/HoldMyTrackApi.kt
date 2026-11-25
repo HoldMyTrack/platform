@@ -1342,21 +1342,16 @@ object HoldMyTrackApi {
     }
 
     /**
-     * How many of the account's tracks use each `track_type` — what the recording Edit screen's
-     * Type picker lists, the same per-type counts the web client's Type facet is built from.
-     * Read from the same unpaginated `GET /v2/tracks` as [tracks], since there is
-     * no dedicated facets endpoint and this list already carries every live row.
+     * `GET /v2/track-types` (`docs/SPEC.md` FR-5.5): every type the account's tracks use with how
+     * many do, most first, whatever the map's area or filters, in that order: what both Type
+     * pickers list, Edit's and a recording's.
      */
-    fun trackTypeCounts(onResult: (Result<Map<String, Int>>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks").build()
+    fun accountTypeCounts(onResult: (Result<Map<String, Int>>) -> Unit) {
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/track-types").build()
         call(request, { body ->
-            val decoded = decode<TracksJson>(body)
+            val decoded = decode<TrackTypesJson>(body)
             heard(decoded.types.described())
-            buildMap {
-                for (row in decoded.tracks) {
-                    if (row.trackType.isNotEmpty()) merge(row.trackType, 1, Int::plus)
-                }
-            }
+            decoded.used.associate { it.type to it.count }
         }, onResult)
     }
 

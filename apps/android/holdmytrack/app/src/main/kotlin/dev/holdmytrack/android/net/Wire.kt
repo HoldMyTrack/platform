@@ -199,7 +199,7 @@ internal data class PendingJson(val pending: List<String>)
 internal data class TrackTypeJson(val kind: String, val label: String)
 
 @Serializable
-internal data class TrackTypesJson(val types: Map<String, TrackTypeJson>)
+internal data class TrackTypesJson(val used: List<TypeCountJson>, val types: Map<String, TrackTypeJson>)
 
 @Serializable
 internal data class TrackPatchJson(

@@ -497,9 +497,8 @@ extension MapViewController {
     private func openEditor(_ group: [Track]) {
         photos.editIDs = group.map(\.id)
         refreshPhotos(force: false)
-        let facets = TrackFacets.typeFacets(session.panel.tracks, distanceFilter: nil)
         let editor = EditTrackViewController(
-            api: flow.api, group: group, facets: facets, format: format, images: photoViews.images,
+            api: flow.api, group: group, format: format, images: photoViews.images,
             onOverlay: { [weak self] in self?.setPhotoOverlay($0) },
             onRouteDraw: { [weak self] in self?.setRouteEdit($0) },
             onRouteOpened: { [weak self] covered in self?.frameEditedTrack(group[0], covered: covered) }

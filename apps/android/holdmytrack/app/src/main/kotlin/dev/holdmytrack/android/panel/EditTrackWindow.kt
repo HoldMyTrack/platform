@@ -108,6 +108,9 @@ class EditTrackWindow(
     private var tracks: List<Track> = emptyList()
     private var known: List<TypeCount> = emptyList()
 
+    /** The Type picker last opened, which the account's types reach if they arrive after it. */
+    private var picker: TrackTypePicker.Handle? = null
+
     /** The raw `track_type` the Type field holds — the field itself shows its label. Empty
      *  for a group of mixed types until one is picked: empty keeps each track's own. */
     private var trackType = ""
@@ -207,13 +210,22 @@ class EditTrackWindow(
     }
 
     /**
-     * Opens over [group] — at least one. [knownTypes] is what the Type picker lists: the
-     * range's types with how many of its tracks use each, the same facets the Type filter
-     * is built from, as on the web.
+     * Opens over [group] — at least one. The Type picker lists every type the account uses
+     * (`docs/SPEC.md` FR-5.5), read as it opens; until they arrive, or when the read fails, it
+     * lists the current type and still takes a new one.
      */
-    fun open(group: List<Track>, knownTypes: List<TypeFacet>) {
+    fun open(group: List<Track>) {
         tracks = group
-        known = knownTypes.map { TypeCount(it.type, it.count) }
+        known = emptyList()
+        HoldMyTrackApi.accountTypeCounts { result ->
+            // A later opening asked again.
+            if (tracks !== group) return@accountTypeCounts
+            result.onSuccess { counts ->
+                known = counts.map { (type, count) -> TypeCount(type, count) }
+                // A picker opened before they arrived lists them now.
+                picker?.update(known)
+            }
+        }
         val single = group.singleOrNull()
         fieldsSaved = false
         saving = false
@@ -286,7 +298,7 @@ class EditTrackWindow(
 
     private fun openTypePicker() {
         if (saving) return
-        TrackTypePicker.show(context, trackType, known) { picked ->
+        picker = TrackTypePicker.show(context, trackType, known) { picked ->
             trackType = picked
             typeField.setText(TrackTypes.label(picked))
             showError(null)

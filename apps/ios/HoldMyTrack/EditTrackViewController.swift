@@ -20,8 +20,12 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
 
     private let api: APIClient
     private let group: [Track]
-    /// The range's types with their counts, the Type picker's list.
-    private let facets: [TypeFacet]
+    /// Every type the account uses with its count, the Type picker's list (root docs/SPEC.md
+    /// FR-5.5), read as the sheet opens; until then, or when the read fails, the picker lists the
+    /// current type and still takes a new one.
+    private var known: [(type: String, count: Int)] = []
+    /// The Type picker while open, which the account's types reach if they arrive after it.
+    private weak var typePicker: TypePickerViewController?
     private let format: PanelFormat
     /// The ids written, and whether any photo was, once Save is done or Cancel follows a partial save.
     private let onDone: ([String], Bool) -> Void
@@ -52,12 +56,11 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
     private let about = UITextView()
     private let error = Controls.error(id: "editError")
 
-    init(api: APIClient, group: [Track], facets: [TypeFacet], format: PanelFormat, images: PhotoImages,
+    init(api: APIClient, group: [Track], format: PanelFormat, images: PhotoImages,
          onOverlay: @escaping (PhotoMarkerOverlay?) -> Void, onRouteDraw: @escaping (RouteEditDrawing.Shape?) -> Void,
          onRouteOpened: @escaping (CGFloat) -> Void, onDone: @escaping ([String], Bool) -> Void) {
         self.api = api
         self.group = group
-        self.facets = facets
         self.format = format
         self.onDone = onDone
         self.onRouteOpened = onRouteOpened
@@ -167,6 +170,13 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         showTab()
         renderType()
         renderTabs()
+        Task { [weak self, api] in
+            guard let read = try? await api.typeCounts() else { return }
+            TrackTypes.shared.merge(read.types)
+            guard let self else { return }
+            self.known = read.counts
+            self.typePicker?.replace(options: self.typeOptions())
+        }
     }
 
     /// The tab picked: the Route tab draws its edit on the map and the Photos tab its draft while
@@ -320,16 +330,18 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         typeButton.configuration = config
     }
 
-    /// The range's types with how many use each, and the current type when none of them is it.
+    /// The account's types with how many use each, and the current type when none of them is it.
     private func openTypePicker() {
         guard !saving else { return }
-        let types = TrackTypes.shared
-        let options = TypeSearch.options(current: type, known: facets.map { (type: $0.type, count: $0.count) }, label: types.label)
-        TypePickerViewController.present(over: self, options: options, current: type, format: format.count) { [weak self] value in
+        typePicker = TypePickerViewController.present(over: self, options: typeOptions(), current: type, format: format.count) { [weak self] value in
             self?.type = value
             self?.error.isHidden = true
             self?.renderType()
         }
+    }
+
+    private func typeOptions() -> [TypeSearch.Option] {
+        TypeSearch.options(current: type, known: known, label: TrackTypes.shared.label)
     }
 
     private func save() {

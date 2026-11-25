@@ -14,6 +14,8 @@ final class RecordingEditViewController: UIViewController {
     private let api: APIClient
     /// The account's tracks by type, empty until read or when they couldn't be.
     private var serverCounts: [(type: String, count: Int)] = []
+    /// The Type picker while open, which the account's types reach if they arrive after it.
+    private weak var typePicker: TypePickerViewController?
     /// The Save screen a Stop opens.
     private let justStopped: Bool
     var onGPX: ((RecordedTrack) -> Void)?
@@ -68,8 +70,10 @@ final class RecordingEditViewController: UIViewController {
         Task { [weak self, api] in
             guard let read = try? await api.typeCounts() else { return }
             TrackTypes.shared.merge(read.types)
-            self?.serverCounts = read.counts
-            self?.renderType()
+            guard let self else { return }
+            self.serverCounts = read.counts
+            self.renderType()
+            self.typePicker?.replace(options: self.typeOptions())
         }
         let last: UIButton
         if justStopped {
@@ -138,12 +142,14 @@ final class RecordingEditViewController: UIViewController {
         typeButton.configuration?.title = TrackTypes.shared.label(track.type)
     }
 
-    private func openTypePicker() {
-        let types = TrackTypes.shared
+    private func typeOptions() -> [TypeSearch.Option] {
         let known = TypeSearch.recordingKnown(server: serverCounts, local: recordings.all.filter { !$0.sent }.map(\.type))
-        let options = TypeSearch.options(current: track.type, known: known, label: types.label)
+        return TypeSearch.options(current: track.type, known: known, label: TrackTypes.shared.label)
+    }
+
+    private func openTypePicker() {
         let format = { (n: Int) in NumberFormatter.localizedString(from: NSNumber(value: n), number: .decimal) }
-        TypePickerViewController.present(over: self, options: options, current: track.type, format: format) { [weak self] value in
+        typePicker = TypePickerViewController.present(over: self, options: typeOptions(), current: track.type, format: format) { [weak self] value in
             self?.track.type = value
             self?.error.isHidden = true
             self?.renderType()
