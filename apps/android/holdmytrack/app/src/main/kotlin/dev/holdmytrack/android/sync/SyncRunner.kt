@@ -99,13 +99,13 @@ class SyncRunner internal constructor(
     private var onLanded: (List<Candidate>) -> Unit = {}
     private var onRejected: (Rejection) -> Unit = {}
     private var skip: (Candidate) -> Boolean = { false }
-    private var onAnswered: (Candidate, Boolean) -> Unit = { _, _ -> }
+    private var onAsked: (Candidate, Boolean) -> Unit = { _, _ -> }
 
     /**
      * Sends [ticked]. [onLanded] hears each batch the account has now as it lands — a recording
      * once marked sent — so a run cancelled or failing part-way (the tab leaving, a bad answer)
      * keeps what landed before it; [onRejected] likewise hears each refusal,
-     * and [onAnswered] whether each recording's request got an answer. A recording [skip] names as
+     * and [onAsked] whether each recording's request failed with nothing decided. A recording [skip] names as
      * its turn comes isn't sent.
      */
     suspend fun send(
@@ -113,13 +113,13 @@ class SyncRunner internal constructor(
         onLanded: (List<Candidate>) -> Unit,
         onRejected: (Rejection) -> Unit = {},
         skip: (Candidate) -> Boolean = { false },
-        onAnswered: (Candidate, Boolean) -> Unit = { _, _ -> },
+        onAsked: (Candidate, Boolean) -> Unit = { _, _ -> },
         onProgress: (sent: Int) -> Unit,
     ): SyncReport {
         this.onLanded = onLanded
         this.onRejected = onRejected
         this.skip = skip
-        this.onAnswered = onAnswered
+        this.onAsked = onAsked
         val stopped = sendSessions(ticked.filter { it.source == HoldMyTrackApi.SOURCE_HEALTH_CONNECT }, onProgress)
             ?: sendRecordings(ticked.filter { it.origin is Recording }, onProgress)
         return SyncReport(landed.toSet(), synced, alreadyPresent, rejected.toList(), stopped)
@@ -167,14 +167,14 @@ class SyncRunner internal constructor(
             try {
                 sort(batch, post(batch.map { prepare(it) }, HoldMyTrackApi.SOURCE_RECORDED))
                 afterUnanswered = false
-                onAnswered(candidate, true)
+                onAsked(candidate, false)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 val reason = FailureText.of(e, text.requestFailed())
                 val failure = RecordingSendRules.failure(e, afterUnanswered)
                 afterUnanswered = RecordingSendRules.unanswered(e)
-                onAnswered(candidate, !afterUnanswered)
+                onAsked(candidate, failure != RecordingSendRules.Failure.REFUSE)
                 when (failure) {
                     RecordingSendRules.Failure.STOP -> return reason
                     RecordingSendRules.Failure.NEXT -> Unit

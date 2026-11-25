@@ -21,27 +21,28 @@ class RecordingSendRulesTest {
     @Test
     fun `what's on its way is never sent twice, and a refusal only on Retry`() {
         val keys = listOf("a", "b", "c")
-        assertEquals(listOf("c"), RecordingSendRules.toSend(keys, onItsWay = setOf("a"), hidden = emptySet(), held = emptySet(), refused = setOf("b"), unanswered = emptyList(), retry = false))
-        assertEquals(listOf("b", "c"), RecordingSendRules.toSend(keys, onItsWay = setOf("a"), hidden = emptySet(), held = emptySet(), refused = setOf("b"), unanswered = emptyList(), retry = true))
+        assertEquals(listOf("c"), RecordingSendRules.toSend(keys, onItsWay = setOf("a"), hidden = emptySet(), held = emptySet(), refused = setOf("b"), setBack = emptyList(), retry = false))
+        assertEquals(listOf("b", "c"), RecordingSendRules.toSend(keys, onItsWay = setOf("a"), hidden = emptySet(), held = emptySet(), refused = setOf("b"), setBack = emptyList(), retry = true))
     }
 
     @Test
     fun `one whose Delete is being asked about is never sent from under it`() {
-        val sent = RecordingSendRules.toSend(listOf("a", "b"), onItsWay = emptySet(), hidden = emptySet(), held = setOf("a"), refused = emptySet(), unanswered = emptyList(), retry = true)
+        val sent = RecordingSendRules.toSend(listOf("a", "b"), onItsWay = emptySet(), hidden = emptySet(), held = setOf("a"), refused = emptySet(), setBack = emptyList(), retry = true)
         assertEquals(listOf("b"), sent)
     }
 
     @Test
     fun `Delete leaves one being sent or on its way, and says one landed`() {
-        assertEquals(RecordingSendRules.Deletion.DELETED, RecordingSendRules.deletion(stored = true, going = false))
-        assertEquals(RecordingSendRules.Deletion.SENDING, RecordingSendRules.deletion(stored = true, going = true))
-        assertEquals(RecordingSendRules.Deletion.LANDED, RecordingSendRules.deletion(stored = false, going = false))
+        assertEquals(RecordingSendRules.Deletion.DELETED, RecordingSendRules.deletion(stored = true, going = false, landed = false))
+        assertEquals(RecordingSendRules.Deletion.SENDING, RecordingSendRules.deletion(stored = true, going = true, landed = false))
+        assertEquals(RecordingSendRules.Deletion.LANDED, RecordingSendRules.deletion(stored = false, going = false, landed = true))
+        assertEquals(RecordingSendRules.Deletion.DELETED, RecordingSendRules.deletion(stored = false, going = false, landed = false))
     }
 
     @Test
     fun `one swiped aside is never sent or counted, and says nothing`() {
         val keys = listOf("a", "b")
-        assertEquals(listOf("b"), RecordingSendRules.toSend(keys, onItsWay = emptySet(), hidden = setOf("a"), held = emptySet(), refused = emptySet(), unanswered = emptyList(), retry = true))
+        assertEquals(listOf("b"), RecordingSendRules.toSend(keys, onItsWay = emptySet(), hidden = setOf("a"), held = emptySet(), refused = emptySet(), setBack = emptyList(), retry = true))
         assertEquals(1, RecordingSendRules.unsent(keys, hidden = setOf("a")))
         assertNull(RecordingSendRules.note(sending = false, hidden = true, refusedReason = "too short"))
     }
@@ -67,9 +68,9 @@ class RecordingSendRulesTest {
     }
 
     @Test
-    fun `what got no answer goes last, the latest last`() {
-        fun order(unanswered: List<String>) = RecordingSendRules.toSend(
-            listOf("a", "b", "c"), onItsWay = emptySet(), hidden = emptySet(), held = emptySet(), refused = emptySet(), unanswered = unanswered, retry = false,
+    fun `what failed goes last, the latest last`() {
+        fun order(setBack: List<String>) = RecordingSendRules.toSend(
+            listOf("a", "b", "c"), onItsWay = emptySet(), hidden = emptySet(), held = emptySet(), refused = emptySet(), setBack = setBack, retry = false,
         )
         assertEquals(listOf("b", "c", "a"), order(listOf("a")))
         assertEquals(listOf("b", "c", "a"), order(listOf("c", "a")))

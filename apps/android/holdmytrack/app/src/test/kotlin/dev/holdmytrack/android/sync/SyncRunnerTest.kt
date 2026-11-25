@@ -271,17 +271,17 @@ class SyncRunnerTest {
             },
             markSent = { marked += it }, text = Words, reread = { null },
         )
-        val answers = mutableListOf<Pair<String, Boolean>>()
+        val asked = mutableListOf<Pair<String, Boolean>>()
 
         val report = runBlocking {
             runner.send(
                 listOf("r1", "r2", "hidden", "r3", "r4").map { recording(it) }, onLanded = {},
-                skip = { it.externalId == "hidden" }, onAnswered = { c, answered -> answers += c.externalId to answered },
+                skip = { it.externalId == "hidden" }, onAsked = { c, failed -> asked += c.externalId to failed },
             ) {}
         }
 
         assertEquals(listOf("r2", "r4"), marked)
-        assertEquals(listOf("r1" to false, "r2" to true, "r3" to false, "r4" to true), answers)
+        assertEquals(listOf("r1" to true, "r2" to false, "r3" to true, "r4" to false), asked)
         assertNull(report.stoppedBecause)
     }
 

@@ -15,19 +15,19 @@ object RecordingSendRules {
     /** Of the unsent recordings' [keys], those to send now: none on their way already, none swiped
      *  aside ([hidden]), none whose Delete is being asked about ([held]), and none the server
      *  refused this session unless the user asked again ([retry]), so a refusal isn't sent on every
-     *  return to the app. Those that got no answer ([unanswered], the latest last) go last in that
-     *  order, or two of them would stop every send before the rest. */
+     *  return to the app. Those whose last request failed ([setBack], the latest last) go last
+     *  in that order, or one that stops every send would keep the rest on the phone. */
     fun toSend(
         keys: List<String>,
         onItsWay: Set<String>,
         hidden: Set<String>,
         held: Set<String>,
         refused: Set<String>,
-        unanswered: List<String>,
+        setBack: List<String>,
         retry: Boolean,
     ): List<String> {
         val going = keys.filter { it !in onItsWay && it !in hidden && it !in held && (retry || it !in refused) }
-        return going.filter { it !in unanswered } + unanswered.filter { it in going }
+        return going.filter { it !in setBack } + setBack.filter { it in going }
     }
 
     /** What Delete does with a recording, as the phone has it when the question is answered. */
@@ -37,14 +37,15 @@ object RecordingSendRules {
         /** Being sent or on its way: it lands whatever the phone keeps. */
         SENDING,
 
-        /** Off the phone already: it landed. */
+        /** Off the phone already, on the map. */
         LANDED,
     }
 
-    fun deletion(stored: Boolean, going: Boolean): Deletion = when {
+    /** [landed], whether the app saw it land: a missing copy may be one deleted already. */
+    fun deletion(stored: Boolean, going: Boolean, landed: Boolean): Deletion = when {
         going -> Deletion.SENDING
-        stored -> Deletion.DELETED
-        else -> Deletion.LANDED
+        !stored && landed -> Deletion.LANDED
+        else -> Deletion.DELETED
     }
 
     /** Of the unsent recordings' [keys], how many wait to be sent: none swiped aside. */

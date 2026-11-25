@@ -21,6 +21,7 @@ import dev.holdmytrack.android.panel.TrackTypes
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import dev.holdmytrack.android.recording.db.toGpx
 import dev.holdmytrack.android.sync.RecordingSends
+import dev.holdmytrack.android.sync.SyncCandidates
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,6 +61,8 @@ class RecordingActivity : AppCompatActivity() {
 
     private val editingId: String get() = intent.getStringExtra(EXTRA_RECORDING_ID)!!
 
+    private val key: String get() = SyncCandidates.key(HoldMyTrackApi.SOURCE_RECORDED, editingId)
+
     private val isSaveScreen: Boolean get() = intent.getBooleanExtra(EXTRA_JUST_STOPPED, false)
 
     /** The system's own "save as" screen, so the user picks where the GPX lands (Downloads, a
@@ -72,6 +75,7 @@ class RecordingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recording)
         store = RecordedTrackStore(this)
+        RecordingSends.hold(key)
 
         nameField = findViewById(R.id.recording_name)
         typeField = findViewById(R.id.recording_type)
@@ -112,6 +116,12 @@ class RecordingActivity : AppCompatActivity() {
         }
     }
 
+    /** Left, by Save, Discard or Back; a rotation keeps it open. */
+    override fun onDestroy() {
+        super.onDestroy()
+        if (!isChangingConfigurations) RecordingSends.release(applicationContext, key)
+    }
+
     private fun setType(type: String) {
         selectedType = type
         typeField.text = TrackTypes.label(type).ifEmpty { type }
@@ -139,7 +149,7 @@ class RecordingActivity : AppCompatActivity() {
             // Save was the choice: it goes now (ADR-0039), and leaves the phone once the account
             // has it. The demo's stay on the phone, which the map it returns to doesn't show. On
             // the app's context, since this screen is finishing.
-            RecordingSends.send(applicationContext)
+            RecordingSends.release(applicationContext, key)
             if (isSaveScreen) {
                 val saved = if (Session.isDemo) R.string.recording_saved_demo else R.string.recording_saved_sending
                 Toast.makeText(applicationContext, saved, Toast.LENGTH_LONG).show()
@@ -154,7 +164,9 @@ class RecordingActivity : AppCompatActivity() {
             .setMessage(R.string.recording_discard_confirm_message)
             .setPositiveButton(R.string.recording_discard) { _, _ ->
                 lifecycleScope.launch {
-                    store.delete(editingId)
+                    val stored = store.header(editingId) != null
+                    val refusal = RecordingSends.refusal(RecordingSends.deletion(key, stored))
+                    if (refusal == null) store.delete(editingId) else Toast.makeText(applicationContext, refusal, Toast.LENGTH_LONG).show()
                     finish()
                 }
             }

@@ -2,6 +2,7 @@ package dev.holdmytrack.android.sync
 
 import android.content.Context
 import android.util.Log
+import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import kotlinx.coroutines.CancellationException
@@ -36,14 +37,17 @@ object RecordingSends {
     /** Recording keys going now. */
     private var sending: Set<String> = emptySet()
 
-    /** Recording keys whose Delete is being asked about, which no send takes meanwhile. */
+    /** The recording key whose request is out now, or went last. */
+    private var asking: String? = null
+
+    /** Recording keys open in Save or Edit, or whose Delete is being asked about, which no send takes meanwhile. */
     private val held = mutableSetOf<String>()
 
     /** Recording keys the server refused, with its reason. */
     private val refused = mutableMapOf<String, String>()
 
-    /** Recording keys whose last request got no answer, the latest last: last in the next send. */
-    private val unanswered = mutableListOf<String>()
+    /** Recording keys whose last request failed, the latest last: last in the next send. */
+    private val setBack = mutableListOf<String>()
 
     private val listeners = mutableSetOf<() -> Unit>()
 
@@ -61,19 +65,30 @@ object RecordingSends {
         return RecordingSendRules.note(key in sending, hidden, refused[key])
     }
 
-    /** Keeps the recording with this [key] out of any send while its Delete is asked about, or a
-     *  return to the app would send it from under the question. */
+    /** Keeps the recording with this [key] out of any send while a screen or question about it is
+     *  open, a running send that hasn't reached it included. */
     fun hold(key: String) {
         held += key
+        if (key != asking && key in sending) {
+            sending -= key
+            changed()
+        }
     }
 
-    /** The question closed: what's kept goes now. */
+    /** It closed: what's kept goes now. */
     fun release(context: Context, key: String) {
         if (held.remove(key)) send(context)
     }
 
     /** What Delete does with the recording with this [key]; [stored], whether the phone has it. */
-    fun deletion(key: String, stored: Boolean) = RecordingSendRules.deletion(stored, going = key in sending || SyncProgress.isProcessing(key))
+    fun deletion(key: String, stored: Boolean) = RecordingSendRules.deletion(stored, going = key in sending || SyncProgress.isProcessing(key), landed = SyncProgress.hasLanded(key))
+
+    /** Why Delete or Discard left a recording; null for one it deleted. */
+    fun refusal(deletion: RecordingSendRules.Deletion): Int? = when (deletion) {
+        RecordingSendRules.Deletion.DELETED -> null
+        RecordingSendRules.Deletion.SENDING -> R.string.recorded_delete_sending
+        RecordingSendRules.Deletion.LANDED -> R.string.recorded_delete_landed
+    }
 
     /** Sends what's waiting; [retry] sends what the server refused too. One asked for during a
      *  send runs after it; an account that can't send does nothing. */
@@ -91,7 +106,7 @@ object RecordingSends {
                 val store = RecordedTrackStore(app)
                 val waiting = store.all().map { SyncCandidates.fromRecording(it) }
                 val onItsWay = SyncProgress.candidates.mapTo(HashSet()) { it.key }
-                val keys = RecordingSendRules.toSend(waiting.map { it.key }, onItsWay, HiddenCandidates(app, Session.email).all(), held, refused.keys, unanswered, retry)
+                val keys = RecordingSendRules.toSend(waiting.map { it.key }, onItsWay, HiddenCandidates(app, Session.email).all(), held, refused.keys, setBack, retry)
                 val batch = keys.mapNotNull { key -> waiting.find { it.key == key } }
                 if (batch.isEmpty()) return@launch
                 sending = keys.toSet()
@@ -104,11 +119,15 @@ object RecordingSends {
                         SyncProgress.add(app, landed)
                     },
                     onRejected = { refused[it.key] = it.reason },
-                    // Swiped aside since the batch was picked, by an Undo.
-                    skip = { it.key in HiddenCandidates(app, Session.email).all() },
-                    onAnswered = { candidate, answered ->
-                        unanswered -= candidate.key
-                        if (!answered) unanswered += candidate.key
+                    // Left out since the batch was picked, by a hold or an Undo that hid it again.
+                    skip = {
+                        val leftOut = it.key !in sending || it.key in HiddenCandidates(app, Session.email).all()
+                        if (leftOut) sending -= it.key else asking = it.key
+                        leftOut
+                    },
+                    onAsked = { candidate, failed ->
+                        setBack -= candidate.key
+                        if (failed) setBack += candidate.key
                     },
                 ) {}
             } catch (e: CancellationException) {
@@ -118,6 +137,7 @@ object RecordingSends {
                 Log.w(TAG, "could not send recordings", e)
             } finally {
                 running = false
+                asking = null
                 sending = emptySet()
                 changed()
                 if (again) {
@@ -139,7 +159,7 @@ object RecordingSends {
         if (account == Session.email) return
         account = Session.email
         refused.clear()
-        unanswered.clear()
+        setBack.clear()
     }
 
     private fun changed() = listeners.toList().forEach { it() }

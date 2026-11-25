@@ -587,11 +587,7 @@ class SyncTab(
             .setPositiveButton(R.string.recording_delete) { _, _ ->
                 deleting = scope().launch {
                     val stored = store.header(candidate.externalId) != null
-                    val refusal = when (RecordingSends.deletion(candidate.key, stored)) {
-                        RecordingSendRules.Deletion.DELETED -> null
-                        RecordingSendRules.Deletion.SENDING -> R.string.recorded_delete_sending
-                        RecordingSendRules.Deletion.LANDED -> R.string.recorded_delete_landed
-                    }
+                    val refusal = RecordingSends.refusal(RecordingSends.deletion(candidate.key, stored))
                     if (refusal != null) {
                         render()
                         Snackbar.make(list, refusal, Snackbar.LENGTH_LONG)
