@@ -12,6 +12,8 @@ import UIKit
 @MainActor
 final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
+        /// ‹: Library again, in Sync's place.
+        case library
         case upload
         case history
         /// A row hidden or back: said over the map, with Undo.
@@ -84,7 +86,12 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         super.init()
         head.axis = .vertical
         head.spacing = DesignTokens.Space.s8
-        head.addArrangedSubview(Controls.label(String(localized: "Sync"), font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink)))
+        // Sync opens from Library's head (apps/android/docs/SPEC.md FR-4.1); ‹ goes back to it.
+        let back = Controls.iconButton(UIImage(resource: .chevronLeft), label: String(localized: "sync.back", defaultValue: "Back to Library", comment: "Sync: the ‹ that goes back to Library."), id: "syncBack")
+        back.addAction(UIAction { [weak self] _ in self?.onEvent?(.library) }, for: .primaryActionTriggered)
+        let title = UIStackView(arrangedSubviews: [back, Controls.label(String(localized: "Sync"), font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))])
+        title.alignment = .center
+        head.addArrangedSubview(title)
         head.addArrangedSubview(bar)
         bar.isHidden = account.isDemo
         send.addAction(UIAction { [weak self] _ in self?.sendTicked() }, for: .primaryActionTriggered)

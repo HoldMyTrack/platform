@@ -4,7 +4,8 @@ import UIKit
 
 /// The sheet's tabs: the tab bar's Tracks shows Tracks, its Trips the Trips tab, its Sync the
 /// Sync tab.
-enum PanelTab { case tracks, trips, sync }
+/// The sheet's tabs. Library and Sync share the tab bar's Library: Sync opens from Library's head.
+enum PanelTab { case tracks, trips, library, sync }
 
 /// The sheet over the map (apps/android/docs/SPEC.md FR-2.7): the list for the range or the open
 /// Trip, the selection bound into the map's `focused` and `hidden` vars, Pending watched, and the
@@ -23,10 +24,13 @@ extension MapViewController {
             }, added: { [weak self] trip, created in self?.addedToTrip(trip, created: created) })
         }
 
-        for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head, syncPanel?.head].compactMap({ $0 }) as [UIView] { sheet.head.addArrangedSubview(v) }
+        libraryPanel = LibraryPanel(api: flow.api, account: { [unowned self] in self.account }, downloads: downloads)
+        libraryPanel.onEvent = { [weak self] in self?.handle($0) }
+
+        for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head, libraryPanel.head, syncPanel?.head].compactMap({ $0 }) as [UIView] { sheet.head.addArrangedSubview(v) }
         // In the mode toggle's place while rows are checked (MapViewController+TopRow).
         modesRow.insertArrangedSubview(tracksPanel.selectionBar, at: 1)
-        for v in [tracksPanel.content, tripsPanel.content, syncPanel?.content].compactMap({ $0 }) {
+        for v in [tracksPanel.content, tripsPanel.content, libraryPanel.content, syncPanel?.content].compactMap({ $0 }) {
             v.translatesAutoresizingMaskIntoConstraints = false
             sheet.content.addSubview(v)
             NSLayoutConstraint.activate([
@@ -57,8 +61,9 @@ extension MapViewController {
 
     // MARK: Tabs
 
-    /// The tab bar's Tracks, Trips or Sync brought the map forward. fresh is false for a return
-    /// from a screen pushed over the map, such as Upload, which keeps the Sync tab's ticks.
+    /// The tab bar's Tracks, Trips or Library brought the map forward, or Library's head opened
+    /// Sync. fresh is false for a return from a screen pushed over the map, such as Upload, which
+    /// keeps the Sync tab's ticks and Library's page.
     func show(_ next: PanelTab, trip: String? = nil, fresh: Bool = true) {
         loadViewIfNeeded()
         if next == panelTab {
@@ -66,17 +71,19 @@ extension MapViewController {
             if next == .sync {
                 if fresh { syncPanel?.start() } else { syncPanel?.render() }
             }
+            if next == .library, fresh { libraryPanel.start() }
             return
         }
         let left = panelTab
         panelTab = next
         if left == .sync { syncPanel?.stop() }
+        if left == .library { libraryPanel.stop() }
         switch next {
         case .trips:
             tripsPanel.start()
             sheet.setDetent(.half, animated: false)
             if let trip { open(trip) }
-        case .tracks, .sync:
+        case .tracks, .library, .sync:
             tripsPanel.stop()
             if session.tripID != nil {
                 session.exitTrip()
@@ -84,12 +91,13 @@ extension MapViewController {
                 updateTracksQuery()
                 followArea(always: true)
             }
-            sheet.setDetent(next == .sync ? .half : .collapsed, animated: false)
+            sheet.setDetent(next == .tracks ? .collapsed : .half, animated: false)
         }
         applyTabMode()
         panelChanged()
         // Once the sheet is up at half height, so the first framing clears it.
         if next == .sync { syncPanel?.start() }
+        if next == .library { libraryPanel.start() }
     }
 
     private func open(_ trip: String) {
@@ -277,11 +285,14 @@ extension MapViewController {
         tripsPanel.head.isHidden = panelTab != .trips
         tracksPanel.content.isHidden = !tracksTab
         tripsPanel.content.isHidden = panelTab != .trips
+        libraryPanel.head.isHidden = panelTab != .library
+        libraryPanel.content.isHidden = panelTab != .library
         syncPanel?.head.isHidden = panelTab != .sync
         syncPanel?.content.isHidden = panelTab != .sync
-        notices.aside = MapChrome.areaNoticesShown(recording: recordingLive, onSync: panelTab == .sync) ? [] : [Notice.empty.rawValue, Notice.capped.rawValue]
+        let onLibrary = panelTab == .library || panelTab == .sync
+        notices.aside = MapChrome.areaNoticesShown(recording: recordingLive, onLibrary: onLibrary) ? [] : [Notice.empty.rawValue, Notice.capped.rawValue]
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
-        sheet.isHidden = !MapChrome.sheetShown(normal: state.mode == .normal, recording: recordingLive, onSync: panelTab == .sync,
+        sheet.isHidden = !MapChrome.sheetShown(normal: state.mode == .normal, recording: recordingLive, onLibrary: onLibrary,
                                                editing: editWindow != nil || privateLocations.open)
         sheet.setNeedsLayout()
         // The map's credit sits above the sheet (placeAttribution), and the row's controls follow it.
@@ -318,6 +329,16 @@ extension MapViewController {
             return
         }
         panelChanged()
+    }
+
+    private func handle(_ event: LibraryPanel.Event) {
+        switch event {
+        case .open(let track, let day): onOpenTrack?(track, day)
+        case .deleted(let ids): deleted(ids)
+        case .sync: onWantsSync?()
+        case .say(let text): say(text)
+        case .searching: sheet.setDetent(.expanded, animated: true)
+        }
     }
 
     /// The tour runs with no rows checked, since checked rows put the rail its steps point at
@@ -569,11 +590,13 @@ extension MapViewController {
     }
 }
 
-/// The tab bar's Tracks, Trips or Sync: all are the one map screen, moved into whichever shows,
+/// The tab bar's Tracks, Trips or Library: all are the one map screen, moved into whichever shows,
 /// so the camera, range and selection are as they were (apps/android/docs/SPEC.md FR-2.9).
+/// Library's host shows Library or, opened from its head, Sync, and keeps which across a screen
+/// pushed over it.
 final class MapHostViewController: UIViewController {
     private let map: MapViewController
-    private let panelTab: PanelTab
+    private(set) var panelTab: PanelTab
     /// A Trip to open when this host next shows.
     var pendingTrip: String?
     /// A screen was pushed over this one: its return isn't a fresh showing of the tab.
@@ -613,5 +636,11 @@ final class MapHostViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         covered = navigationController.map { $0.topViewController !== self } ?? false
+    }
+
+    /// Library's host: Library or Sync in the sheet, now if this host shows, else when it next does.
+    func switchTo(_ tab: PanelTab) {
+        panelTab = tab
+        if viewIfLoaded?.window != nil, map.parent === self { map.show(tab) }
     }
 }

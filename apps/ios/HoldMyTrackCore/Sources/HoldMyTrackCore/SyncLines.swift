@@ -168,14 +168,7 @@ public struct TrackOverlap: Equatable, Sendable {
     /// The day it started, "2026-11-21", in its own zone, else accountZone, else the phone's: the
     /// day the Tracks tab opens it on.
     public func day(accountZone: String?) -> String? {
-        let plain = ISO8601DateFormatter()
-        let fractional = ISO8601DateFormatter()
-        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = plain.date(from: startedAt) ?? fractional.date(from: startedAt) else { return nil }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TrackZone.of(own: timezone, account: accountZone).flatMap(TimeZone.init(identifier:)) ?? .current
-        let parts = calendar.dateComponents([.year, .month, .day], from: date)
-        return String(format: "%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)
+        TrackZone.day(startedAt: startedAt, own: timezone, account: accountZone)
     }
 
     init(_ json: OverlapJSON) {

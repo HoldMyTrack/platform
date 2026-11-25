@@ -56,7 +56,8 @@ final class YouTests: XCTestCase {
         app.cells["youSync"].tap()
         XCTAssertTrue(app.staticTexts["recordedStatus"].waitForExistence(timeout: 5))
         app.buttons["syncOpenList"].tap()
-        XCTAssertTrue(app.tabBars.buttons["tabSync"].isSelected, "Choose what to sync opens the Sync tab")
+        XCTAssertTrue(app.tabBars.buttons["tabLibrary"].isSelected, "Choose what to sync opens the Library tab")
+        XCTAssertTrue(app.tables["sync"].waitForExistence(timeout: 5), "with Sync in Library's place")
         app.tabBars.buttons["tabYou"].tap()
         XCTAssertTrue(app.cells["youSync"].waitForExistence(timeout: 5), "back on the You page itself")
         for id in ["youPrivacy", "youTheme", "youLanguage", "youTour"] {

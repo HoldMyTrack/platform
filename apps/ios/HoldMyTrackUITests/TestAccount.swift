@@ -183,3 +183,16 @@ final class TestAccount {
         return result.0 ?? Data()
     }
 }
+
+extension XCUIApplication {
+    /// Sync, in Library's place: the Library tab, then its +, unless Library shows Sync already.
+    @MainActor
+    func openSync() {
+        tabBars.buttons["tabLibrary"].tap()
+        if tables["sync"].waitForExistence(timeout: 1) { return }
+        let add = buttons["librarySync"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "Library's + opens Sync")
+        add.tap()
+        XCTAssertTrue(tables["sync"].waitForExistence(timeout: 5), "Sync in Library's place")
+    }
+}

@@ -21,7 +21,7 @@ final class TourTests: XCTestCase {
             XCTAssertTrue(app.staticTexts["\(step) of 15"].waitForExistence(timeout: 10), "step \(step)")
             if step == 6 || step == 14 || step == 15 { attach("Tour step \(step)") }
             if step == 14 {
-                XCTAssertTrue(app.tabBars.buttons["tabSync"].isSelected, "Sync's step is on the Sync tab")
+                XCTAssertTrue(app.tabBars.buttons["tabLibrary"].isSelected, "Sync's step is on the Library tab")
                 XCTAssertTrue(app.tables["sync"].exists, "with its sheet open")
             }
         }
@@ -32,7 +32,7 @@ final class TourTests: XCTestCase {
         XCTAssertTrue(app.buttons["modeNormal"].isSelected, "Normal comes back")
 
         // A page over Sync's map, Sync history here, gives way for the Sync step's sheet.
-        app.tabBars.buttons["tabSync"].tap()
+        app.openSync()
         app.cells["syncHistory"].tap()
         XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 10))
         app.tabBars.buttons["tabYou"].tap()

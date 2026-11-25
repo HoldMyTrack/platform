@@ -90,10 +90,11 @@ final class MapTests: XCTestCase {
         let sync = app.buttons["noticeAction"]
         XCTAssertTrue(sync.waitForExistence(timeout: 15), "the empty map's notice offers Sync")
         sync.tap()
-        let tab = app.tabBars.buttons["tabSync"]
+        let tab = app.tabBars.buttons["tabLibrary"]
         XCTAssertTrue(tab.waitForExistence(timeout: 5))
         let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: tab)
-        XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: 5), .completed, "Sync opens the Sync tab")
+        XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: 5), .completed, "Sync opens the Library tab")
+        XCTAssertTrue(app.tables["sync"].waitForExistence(timeout: 5), "with Sync in Library's place")
     }
 
     /// Fog's level control over the sample tracks: its segment names the level, the menu offers Auto and

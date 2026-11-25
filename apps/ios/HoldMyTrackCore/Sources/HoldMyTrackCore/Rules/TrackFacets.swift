@@ -98,6 +98,19 @@ public enum TrackZone {
     public static func of(own: String?, account: String?) -> String? {
         [own, account].lazy.compactMap { $0 }.first { !$0.isEmpty && TimeZone(identifier: $0) != nil }
     }
+
+    /// The day startedAt (RFC 3339) falls on, "2026-11-21", in the zone of(own:account:) picks:
+    /// the day the Tracks tab opens a track on. Nil when startedAt doesn't read.
+    public static func day(startedAt: String, own: String?, account: String?) -> String? {
+        let plain = ISO8601DateFormatter()
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = plain.date(from: startedAt) ?? fractional.date(from: startedAt) else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = of(own: own, account: account).flatMap(TimeZone.init(identifier:)) ?? .current
+        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)
+    }
 }
 
 /// The Distance slider's whole steps between the list's shortest and longest track. An end step

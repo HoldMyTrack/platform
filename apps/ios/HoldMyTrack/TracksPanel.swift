@@ -131,23 +131,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     private func buildContent() {
         for (button, id) in [(typeButton, "typeFilter"), (datesButton, "datesFilter"), (distanceButton, "distanceFilter")] {
-            var config = UIButton.Configuration.bordered()
-            config.cornerStyle = .capsule
-            config.baseForegroundColor = UIColor(resource: .ink)
-            config.baseBackgroundColor = UIColor(resource: .surface)
-            config.background.strokeColor = UIColor(resource: .border)
-            config.image = Controls.icon(UIImage(resource: .chevronDown), size: 12)
-            config.imagePlacement = .trailing
-            config.imagePadding = 4
-            // One line, cut short with an ellipsis, as on Android and the web.
-            config.titleLineBreakMode = .byTruncatingTail
-            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
-                var a = a
-                a.font = Typeface.sans(DesignTokens.Text.md, relativeTo: .subheadline)
-                return a
-            }
-            button.configuration = config
-            button.accessibilityIdentifier = id
+            Controls.styleFilter(button, id: id)
         }
         typeButton.showsMenuAsPrimaryAction = true
         distanceButton.addAction(UIAction { [weak self] _ in self?.showDistance() }, for: .primaryActionTriggered)
