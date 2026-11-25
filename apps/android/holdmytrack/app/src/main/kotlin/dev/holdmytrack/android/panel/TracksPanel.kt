@@ -229,8 +229,14 @@ class TracksPanel(
             }
         }
         behavior.isHideable = false
+        // A swipe on a list scrolls it at any height; the head and its handle move the sheet.
+        // Material's default lets the list's swipe grow the sheet first, so short of full screen
+        // its rows never scrolled.
+        behavior.isDraggableOnNestedScroll = false
+        sheet.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> fitContent() }
         behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
+                fitContent()
                 if (newState !in RESTING_STATES) return
                 resting = newState
                 // Dragged by hand: that's the sheet's height now. Held down, the drag is off and
@@ -240,7 +246,7 @@ class TracksPanel(
                 onSheetChanged()
             }
 
-            override fun onSlide(bottomSheet: View, slideOffset: Float) = Unit
+            override fun onSlide(bottomSheet: View, slideOffset: Float) = fitContent()
         })
 
         datesChip.setOnClickListener { onDatesTap() }
@@ -405,6 +411,14 @@ class TracksPanel(
         BottomSheetBehavior.STATE_EXPANDED -> behavior.expandedOffset
         BottomSheetBehavior.STATE_HALF_EXPANDED -> (parentHeight * (1 - behavior.halfExpandedRatio)).toInt()
         else -> parentHeight - behavior.peekHeight
+    }
+
+    /** Ends the content at the screen's bottom wherever the sheet's top is ([SheetFit]). */
+    private fun fitContent() {
+        val parentHeight = (sheet.parent as? View)?.height?.takeIf { it > 0 } ?: return
+        val halfTop = (parentHeight * (1 - behavior.halfExpandedRatio)).toInt()
+        val padding = SheetFit.bottomPadding(sheet.top, behavior.expandedOffset, halfTop)
+        if (sheet.paddingBottom != padding) sheet.setPadding(sheet.paddingLeft, sheet.paddingTop, sheet.paddingRight, padding)
     }
 
     /** The offset last asked for, before [setExpandedOffset] clamps it. */
