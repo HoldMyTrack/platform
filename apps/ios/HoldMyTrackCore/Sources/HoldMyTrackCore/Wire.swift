@@ -183,6 +183,37 @@ struct TracksJSON: Codable, Sendable, Equatable {
     let types: [String: TrackTypeJSON]
 }
 
+/// `GET /v2/tracks` with `page`: one page of Library (root docs/SPEC.md FR-17.1).
+struct TrackPageJSON: Codable, Sendable, Equatable {
+    let tracks: [TrackRowJSON]
+    let types: [String: TrackTypeJSON]
+    let pageSize: Int?
+    let total: Int?
+    let bounds: TrackPageBoundsJSON?
+
+    enum CodingKeys: String, CodingKey {
+        case tracks, types, total, bounds
+        case pageSize = "page_size"
+    }
+}
+
+/// The filters' bounds over every track of the account; nil where no track sets one.
+struct TrackPageBoundsJSON: Codable, Sendable, Equatable {
+    let minDistanceMeters: Double?
+    let maxDistanceMeters: Double?
+    let firstDate: String?
+    let lastDate: String?
+    let types: [TypeCountJSON]
+
+    enum CodingKeys: String, CodingKey {
+        case types
+        case minDistanceMeters = "min_distance_meters"
+        case maxDistanceMeters = "max_distance_meters"
+        case firstDate = "first_date"
+        case lastDate = "last_date"
+    }
+}
+
 /// A track as the area list's row shows it; `GET /v2/tracks/{id}` has the rest.
 struct AreaTrackRowJSON: Codable, Sendable, Equatable {
     let id: String

@@ -21,12 +21,12 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `pendingChange` | `previous`, `now`, `awaiting`, `listed` (id sets) | `{ started, finished, left, landed, awaiting, pending }` |
 | `pendingCheck` | `pending`, `awaiting`, `listed`, `stillPending` (ids) | `{ watched, moved, finished }` |
 | `pendingBatches` | `ids`, `size` | the ids in consecutive batches of at most `size` |
-| `attachmentName` (web and Android) | `header` (a Content-Disposition value, or null) | string |
+| `attachmentName` | `header` (a Content-Disposition value, or null) | string |
 | `deleteDone` | `status` (a DELETE's HTTP status) | boolean |
-| `libraryEmptyReason` (web and Android) | `state` (`q`, `exclude`, `distance`, `after`, `before`, `trip`), `total`, `anyTrack` | `"no_tracks"`, `"past_last"`, `"search"`, `"search_and_filters"` or `"filters"` |
-| `libraryPageQuery` (web and Android) | `state` (`sort`, `desc`, `page`, `q`, `exclude`, `distance` with `min` and `max`, null for unbounded; `after`, `before`, `trip`), `allTypes` | the query (`page`, `sort`, and `q`, `types`, `minDistance`, `maxDistance`, `from`, `to`, `trip` when set), or null |
-| `libraryPager` (web and Android) | `page`, `total`, `pageSize` | `{ from, to, prev, next }` or null |
-| `downloadBlock` (web and Android) | `tracks` (`{ id, pending, private }`) or `plainTracks` (a count of ordinary ones), `max` (the client's own, 100, when missing) | `{ kind: "too_many", count }`, `{ kind: "pending" \| "private", track }` (an id) or null |
+| `libraryEmptyReason` | `state` (`q`, `exclude`, `distance`, `after`, `before`, `trip`), `total`, `anyTrack` | `"no_tracks"`, `"past_last"`, `"search"`, `"search_and_filters"` or `"filters"` |
+| `libraryPageQuery` | `state` (`sort`, `desc`, `page`, `q`, `exclude`, `distance` with `min` and `max`, null for unbounded; `after`, `before`, `trip`), `allTypes` | the query (`page`, `sort`, and `q`, `types`, `minDistance`, `maxDistance`, `from`, `to`, `trip` when set), or null |
+| `libraryPager` | `page`, `total`, `pageSize` | `{ from, to, prev, next }` or null |
+| `downloadBlock` | `tracks` (`{ id, pending, private }`) or `plainTracks` (a count of ordinary ones), `max` (the client's own, 100, when missing) | `{ kind: "too_many", count }`, `{ kind: "pending" \| "private", track }` (an id) or null |
 | `tripFormAction` (Android and iOS) | `text` (a field as typed), `busy` | boolean |
 | `tripFold` | `foldedId`, `openId`, `clicked` (Trip ids, or null) | `{ foldedId, open, folded }` |
 | `verifyAction` | `typed` (the code field's text) | `"check"` or `{ submit }` |

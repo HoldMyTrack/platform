@@ -81,6 +81,32 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting), "pending": .ids(change.pending)]
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
+    "attachmentName": { input in .string(AttachmentName.of(input["header"].string)) },
+    "libraryPageQuery": { input in
+        guard let query = LibraryRules.pageQuery(libraryState(input["state"]), allTypes: input.strings("allTypes")) else { return .null }
+        return ["page": .num(query.page), "sort": .string(query.sort), "q": .opt(query.q), "types": query.types.map { .list($0) } ?? .null,
+                "minDistance": query.minDistance.map { .num($0) } ?? .null, "maxDistance": query.maxDistance.map { .num($0) } ?? .null,
+                "from": .opt(query.from), "to": .opt(query.to), "trip": .opt(query.trip)]
+    },
+    "libraryPager": { input in
+        guard let pager = LibraryRules.pager(page: input.int("page"), total: input.int("total"), pageSize: input.int("pageSize")) else { return .null }
+        return ["from": .num(pager.from), "to": .num(pager.to), "prev": .bool(pager.prev), "next": .bool(pager.next)]
+    },
+    "libraryEmptyReason": { input in
+        .string(LibraryRules.emptyReason(libraryState(input["state"]), total: input.int("total"), anyTrack: input["anyTrack"].bool!).rawValue)
+    },
+    "downloadBlock": { input in
+        let targets = input["tracks"].list.map { list in
+            list.map { DownloadRules.Target(id: $0["id"].string!, pending: $0["pending"].bool!, isPrivate: $0["private"].bool!) }
+        } ?? (0..<(input["plainTracks"].double.map { Int($0) } ?? 0)).map { DownloadRules.Target(id: "t\($0)", pending: false, isPrivate: false) }
+        let block = input["max"].double.map { DownloadRules.block(targets, max: Int($0)) } ?? DownloadRules.block(targets)
+        switch block {
+        case nil: return .null
+        case .tooMany(let count): return ["kind": "too_many", "count": .num(count)]
+        case .pending(let id): return ["kind": "pending", "track": .string(id)]
+        case .private(let id): return ["kind": "private", "track": .string(id)]
+        }
+    },
     "tripFormAction": { input in .bool(TripForms.actionEnabled(text: input["text"].string!, busy: input["busy"].bool!)) },
     "tripFold": { input in
         let folded = input["foldedId"].string, open = input["openId"].string, clicked = input["clicked"].string
@@ -543,6 +569,16 @@ func tracks(_ json: RuleJSON) -> [TrackSummary] { (json.list ?? []).map { track(
 
 func partsJSON(_ parts: DistanceParts) -> RuleJSON {
     ["value": .num(parts.value), "minDecimals": .num(parts.minDecimals), "maxDecimals": .num(parts.maxDecimals), "grouping": .bool(parts.grouping), "unit": .string(parts.unit.rawValue)]
+}
+
+/// A case's Library state; a field it leaves out is at its default.
+private func libraryState(_ json: RuleJSON) -> LibraryRules.State {
+    let distance = json["distance"].object.map { _ in LibraryRules.Distance(min: json["distance"].number("min"), max: json["distance"]["max"].double) }
+    return LibraryRules.State(
+        sort: json["sort"].string.flatMap(LibraryRules.Sort.init(rawValue:)) ?? .started, desc: json["desc"].bool ?? true,
+        page: json["page"].double.map { Int($0) } ?? 1, q: json["q"].string ?? "", exclude: Set(json.strings("exclude")),
+        distance: distance, after: json["after"].string, before: json["before"].string, trip: json["trip"].string
+    )
 }
 
 private func dates(_ json: RuleJSON) -> DateFilter { DateFilter(after: json["after"].string, before: json["before"].string) }

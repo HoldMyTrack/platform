@@ -9,6 +9,7 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
     struct Answer {
         var status = 200
         var body = Data()
+        var headers: [String: String] = [:]
     }
 
     nonisolated(unsafe) static var answer: (URLRequest) -> Answer? = { _ in Answer() }
@@ -36,7 +37,7 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
             client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
             return
         }
-        let response = HTTPURLResponse(url: request.url!, statusCode: answer.status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!
+        let response = HTTPURLResponse(url: request.url!, statusCode: answer.status, httpVersion: nil, headerFields: ["Content-Type": "application/json"].merging(answer.headers) { $1 })!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: answer.body)
         client?.urlProtocolDidFinishLoading(self)
@@ -353,6 +354,51 @@ struct APIClientTests {
         #expect(read.tracks.map(\.id) == ["a1"])
         #expect(read.tracks.first?.description == nil)
         #expect(read.total == 1500)
+    }
+
+    @Test func aLibraryPageSendsItsQueryAndReadsTheBounds() async throws {
+        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "track_type": "walking", "name": NSNull(),
+                                  "distance_meters": 1200.5, "moving_seconds": 600, "description": NSNull(), "bbox": NSNull(), "pending": false,
+                                  "edited": false, "private": false, "route_edit": NSNull(), "photos": NSNull(), "trips": []]
+        let bounds: [String: Any] = ["min_distance_meters": 800, "max_distance_meters": 42000, "first_date": "2024-03-01", "last_date": "2026-11-03",
+                                     "types": [["type": "walking", "count": 7], ["type": "cycling", "count": 2]]]
+        StubProtocol.answer = { request in
+            let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            #expect(request.url?.path == "/v2/tracks")
+            #expect(items.map(\.name) == ["page", "sort", "q", "types", "min_distance", "from", "trip"])
+            #expect(items.first { $0.name == "types" }?.value == "cycling,running")
+            #expect(items.first { $0.name == "min_distance" }?.value == "5000.0")
+            return .init(body: self.json(["tracks": [row], "types": ["walking": ["kind": "foot", "label": "Walk"]], "page": 2, "page_size": 100, "total": 150, "bounds": bounds]))
+        }
+        let query = TrackPageQuery(page: 2, sort: "distance_asc", q: "lake", types: ["cycling", "running"], minDistance: 5000, from: "2026-01-01", trip: "t1")
+        let page = try await client().trackPage(query)
+        #expect(page.tracks.map(\.id) == ["a1"])
+        #expect(page.total == 150)
+        #expect(page.pageSize == 100)
+        #expect(page.distance == 800...42000)
+        #expect(page.firstDate == "2024-03-01")
+        #expect(page.typeCounts.map(\.type) == ["walking", "cycling"])
+        #expect(page.types["walking"] == TrackTypeInfo(kind: .foot, label: "Walk"))
+        StubProtocol.answer = { _ in .init(body: self.json(["tracks": [], "types": [:]])) }
+        await #expect(throws: APIError.unreadable) { try await self.client().trackPage(query) }
+    }
+
+    @Test func aGPXDownloadIsSavedUnderTheServersName() async throws {
+        StubProtocol.answer = { request in
+            let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            #expect(request.url?.path == "/v2/tracks/gpx")
+            #expect(items.first { $0.name == "ids" }?.value == "a1,a2")
+            return .init(body: Data("PK".utf8), headers: ["Content-Disposition": "attachment; filename*=UTF-8''%D0%9F%D1%80%D0%BE%D0%B1%D0%B5%D0%B6%D0%BA%D0%B8.zip"])
+        }
+        let file = try await client().downloadTracksGPX(["a1", "a2"])
+        #expect(file.lastPathComponent == "Пробежки.zip")
+        #expect(try Data(contentsOf: file) == Data("PK".utf8))
+        StubProtocol.answer = { _ in .init(body: Data("<gpx/>".utf8), headers: ["Content-Disposition": "attachment; filename=\"../../evil.gpx\""]) }
+        #expect(try await client().downloadTracksGPX(["a1"]).lastPathComponent == "evil.gpx")
+        StubProtocol.answer = { _ in .init(status: 409, body: self.json(["error": "gpx_pending", "message": "Morning walk is still being processed."])) }
+        await #expect(throws: APIError.http(status: 409, code: "gpx_pending", message: "Morning walk is still being processed.")) {
+            try await self.client().downloadTracksGPX(["a1"])
+        }
     }
 
     @Test func oneTrackIsReadInFull() async throws {
