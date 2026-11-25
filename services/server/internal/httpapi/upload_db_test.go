@@ -193,6 +193,41 @@ func TestSyncRejectsAnUnsafeExternalID(t *testing.T) {
 	}
 }
 
+// A fault in queuing is the request's failure, never a verdict on its tracks: a rejected one
+// waits on the phone until the user sends it again.
+func TestSyncAnswers500WhenTheTracksCantBeQueued(t *testing.T) {
+	d := newDBTestWithS3(t, newMemS3())
+	me := d.newAccount(false)
+	ctx := context.Background()
+	exec := func(sql string) {
+		t.Helper()
+		if _, err := d.pool.Exec(ctx, sql); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Named for this run's account, so a killed run leaves nothing a later one trips on.
+	fn := "refuse_jobs_" + strings.ReplaceAll(me.id, "-", "")
+	exec(`CREATE FUNCTION ` + fn + `() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'refused'; END $$`)
+	t.Cleanup(func() { exec(`DROP FUNCTION IF EXISTS ` + fn + `() CASCADE`) })
+	exec(`CREATE TRIGGER ` + fn + ` BEFORE INSERT ON jobs FOR EACH ROW WHEN (NEW.user_id = '` + me.id + `') EXECUTE FUNCTION ` + fn + `()`)
+	body := map[string]any{"source": "recorded", "tracks": []map[string]any{{
+		"external_id": "r1", "track_type": "walk", "points": []map[string]any{
+			{"lat": 50.0, "lon": 10.0, "time": "2026-05-01T10:00:00Z"},
+			{"lat": 50.001, "lon": 10.001, "time": "2026-05-01T10:01:00Z"},
+		},
+	}}}
+	rec := d.do(me, http.MethodPost, "/v2/sync/tracks", body)
+	if rec.Code != http.StatusInternalServerError || strings.Contains(rec.Body.String(), "rejected") {
+		t.Fatalf("%d %s, want 500 with no result", rec.Code, rec.Body)
+	}
+	exec(`DROP FUNCTION ` + fn + `() CASCADE`)
+	var resp syncTracksResponse
+	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", body), http.StatusOK, &resp)
+	if resp.Results[0].Status != "enqueued" {
+		t.Errorf("sent again: %+v, want enqueued", resp.Results[0])
+	}
+}
+
 // A track route given an id that isn't a UUID answers 404, not the 500 Postgres's refusal
 // to parse it used to become.
 func TestTrackRoutesRefuseMalformedIDs(t *testing.T) {
