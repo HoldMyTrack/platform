@@ -45,6 +45,25 @@ public struct ActiveImport: Equatable, Sendable {
     public let total: Int
 }
 
+/// An import that failed on the server's side, not yet seen (root docs/SPEC.md FR-3.2): a file
+/// uploaded or a track synced, with the server's reason in the app's language.
+public struct ImportFailure: Equatable, Sendable {
+    public let id: Int
+    public let title: String
+    public let reason: String
+
+    public init(id: Int, title: String, reason: String) {
+        self.id = id
+        self.title = title
+        self.reason = reason
+    }
+
+    /// The alert's text: one paragraph per failure, its title and reason.
+    public static func message(_ failures: [ImportFailure]) -> String {
+        failures.map { "\($0.title): \($0.reason)" }.joined(separator: "\n\n")
+    }
+}
+
 /// The You tab's calls: the avatar, Private locations, the data export, deleting the account,
 /// and the imports still running.
 extension APIClient {
@@ -113,6 +132,17 @@ extension APIClient {
     public func activeImports() async throws -> [ActiveImport] {
         let json: UploadsActiveJSON = try decode(try await send("GET", "v2/uploads/active"))
         return json.imports.map { ActiveImport(title: $0.title, done: $0.done, total: $0.total) }
+    }
+
+    /// `GET /v2/uploads/active`'s unseen failures, newest first, at most 20.
+    public func importFailures() async throws -> [ImportFailure] {
+        let json: UploadsActiveJSON = try decode(try await send("GET", "v2/uploads/active"))
+        return json.failures.map { ImportFailure(id: $0.id, title: $0.title, reason: $0.reason) }
+    }
+
+    /// `POST /v2/uploads/seen`: the failure id is dismissed, so no later check shows it again.
+    public func dismissImportFailure(_ id: Int) async throws {
+        _ = try await send("POST", "v2/uploads/seen", body: UploadSeenJSON(id: id))
     }
 
     /// `POST /v2/tracks/upload` for one file whose multipart body is at body (UploadBody),

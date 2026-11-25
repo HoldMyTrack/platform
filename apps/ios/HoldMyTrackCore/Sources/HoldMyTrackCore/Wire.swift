@@ -430,11 +430,30 @@ struct ActiveImportJSON: Codable, Sendable, Equatable {
 struct UploadsActiveJSON: Codable, Sendable, Equatable {
     let imports: [ActiveImportJSON]
     let unseenFailures: Int
+    let failures: [ImportFailureJSON]
 
     enum CodingKeys: String, CodingKey {
-        case imports
+        case imports, failures
         case unseenFailures = "unseen_failures"
     }
+}
+
+/// An import that failed on the server's side and the account hasn't seen.
+struct ImportFailureJSON: Codable, Sendable, Equatable {
+    let id: Int
+    let title: String
+    let reason: String
+    let finishedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, reason
+        case finishedAt = "finished_at"
+    }
+}
+
+/// `POST /v2/uploads/seen`.
+struct UploadSeenJSON: Codable, Sendable, Equatable {
+    let id: Int
 }
 
 // Sync
