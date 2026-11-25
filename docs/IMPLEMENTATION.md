@@ -200,9 +200,9 @@ Path 2's endpoint (`sync_tracks.go`); each track gets its own result. It is idem
 
 `POST /v2/sync/known` makes the server the one record of what was sent: an id is known if a `tracks` row or a `pending` job carries it, so a reinstall or a second phone agrees, and a deleted track is offered again.
 
-#### 4.0.4 In-app GPS recording (Android)
+#### 4.0.4 In-app GPS recording
 
-A stopped recording posts to §4.0.3 with `source = "recorded"` and a UUID minted at recording start, so a retried submit is recognized. It goes there directly, not into Health Connect or HealthKit for Path 2 to read back: writing would need a route-write permission, and reading back would bring Health Connect's foreground-only route reads to points the app already holds. The cost is that other apps on the phone never see a recording. It is the one path that sets `name` and `description` at ingest. Its `track_type` is free text, which is why §4.0.3 bounds it. The app side is `apps/android/docs/IMPLEMENTATION.md` §5.
+A stopped recording posts to §4.0.3 with `source = "recorded"` and a UUID minted at recording start, so a retried submit is recognized. It goes there directly, not into Health Connect or HealthKit for Path 2 to read back: writing would need a route-write permission, and reading back would bring Health Connect's foreground-only route reads to points the app already holds. The cost is that other apps on the phone never see a recording. It is the one path that sets `name` and `description` at ingest. Its `track_type` is free text, which is why §4.0.3 bounds it. The app side is `apps/android/docs/IMPLEMENTATION.md` §5 and `apps/ios/docs/IMPLEMENTATION.md` §5.
 
 ### 4.1 Ingestion pipeline
 
