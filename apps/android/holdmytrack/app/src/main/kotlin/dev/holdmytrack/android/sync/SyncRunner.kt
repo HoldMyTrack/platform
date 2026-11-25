@@ -14,6 +14,7 @@ import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import dev.holdmytrack.android.recording.db.toSyncTrack
 import java.io.IOException
 import java.time.Instant
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -141,10 +142,23 @@ class SyncRunner internal constructor(
     }
 
     /** Each ticked recording on its own; one the server takes is marked sent, and stays on the
-     *  phone until its ingest lands (`SyncProgress`). */
+     *  phone until its ingest lands (`SyncProgress`). One whose request failed doesn't hold up the
+     *  rest unless they'd fail too ([RecordingSendRules.failure]). */
     private suspend fun sendRecordings(recordings: List<Candidate>, onProgress: (Int) -> Unit): String? {
         for (candidate in recordings) {
-            flush(listOf(candidate), HoldMyTrackApi.SOURCE_RECORDED, report = false)?.let { return it }
+            val batch = listOf(candidate)
+            try {
+                sort(batch, post(batch.map { prepare(it) }, HoldMyTrackApi.SOURCE_RECORDED))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val reason = FailureText.of(e, text.requestFailed())
+                when (RecordingSendRules.failure(e)) {
+                    RecordingSendRules.Failure.STOP -> return reason
+                    RecordingSendRules.Failure.NEXT -> Unit
+                    RecordingSendRules.Failure.REFUSE -> rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, reason)
+                }
+            }
             if (candidate.key in landed) {
                 markSent(candidate.externalId)
                 onLanded(listOf(candidate))
@@ -155,17 +169,24 @@ class SyncRunner internal constructor(
     }
 
     /**
-     * Sends [batch] and sorts the server's verdicts ([SyncVerdicts]), telling [onLanded] what
-     * landed unless the caller does ([report] false). Returns null when the run may go on, or the
+     * Sends a [batch] of sessions and sorts the server's verdicts, telling [onLanded] what
+     * landed. Returns null when the run may go on, or the
      * reason to stop: a failed request decided nothing, so the batch stays ticked on the list.
      */
-    private suspend fun flush(batch: List<Candidate>, source: String, report: Boolean = true): String? {
+    private suspend fun flush(batch: List<Candidate>, source: String): String? {
         if (batch.isEmpty()) return null
         val results = try {
             post(batch.map { prepare(it) }, source)
         } catch (e: IOException) {
             return FailureText.of(e, text.requestFailed())
         }
+        val now = sort(batch, results)
+        if (now.isNotEmpty()) onLanded(now)
+        return null
+    }
+
+    /** Counts the server's verdicts on [batch] ([SyncVerdicts]); what the account has now. */
+    private fun sort(batch: List<Candidate>, results: List<SyncResult>): List<Candidate> {
         val verdicts = SyncVerdicts.of(batch, results)
         synced += verdicts.enqueued.size
         alreadyPresent += verdicts.alreadyPresent.size
@@ -175,8 +196,7 @@ class SyncRunner internal constructor(
             val reason = result?.error?.ifBlank { null } ?: text.noReport(result?.status ?: "missing")
             rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, reason)
         }
-        if (report && now.isNotEmpty()) onLanded(now)
-        return null
+        return now
     }
 
     /**

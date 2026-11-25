@@ -354,6 +354,8 @@ The record button, on every tab, records a casual GPS-only track in one tap and 
 A saved recording is sent on its own under `recorded`: on Save, then whenever the map comes to the front, until the server takes it. Until then it is listed on the Sync tab (FR-3.2), never ticked, as sending, not sent yet, or refused with the server's reason.
 
 - They never age out of the list: the phone holds the only copy.
+- A recording swiped aside on the Sync tab isn't sent, nor counted as waiting, until it's brought back.
+- A recording the server can't take doesn't hold up the others.
 - Any type syncs, `unknown` included; the overlap hint compares time, not type.
 - Edit sets name, description and type. The type picker lists the account's types, most used first, server's and phone's together, then the common ones not yet used; a new type is kept as typed, up to 50 characters. The type set becomes the account's default for the next recording.
 - Download GPX saves the route as GPX 1.1, with no storage permission.

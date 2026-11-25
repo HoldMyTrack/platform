@@ -3,6 +3,7 @@ package dev.holdmytrack.android.sync
 import androidx.health.connect.client.records.ExerciseRoute
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.metadata.Metadata
+import dev.holdmytrack.android.net.ApiException
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.SyncResult
 import dev.holdmytrack.android.net.SyncTrackJson
@@ -225,6 +226,23 @@ class SyncRunnerTest {
         assertEquals(listOf("r1", "r3"), marked)
         assertEquals(listOf(listOf("r1"), listOf("r3")), heard)
         assertEquals(listOf("refused: r2"), report.rejected.map { it.reason })
+    }
+
+    @Test
+    fun `a recording the server won't take is refused with its reason, and the rest go`() {
+        val server = object {
+            fun answer(tracks: List<SyncTrackJson>): List<SyncResult> {
+                if (tracks.single().externalId == "r1") throw ApiException(413, "too big", "too_large")
+                return tracks.map { SyncResult(it.externalId, "enqueued", "") }
+            }
+        }
+        val runner = SyncRunner(post = { tracks, _ -> server.answer(tracks) }, markSent = { marked += it }, text = Words, reread = { null })
+
+        val report = send(runner, listOf(recording("r1"), recording("r2")))
+
+        assertEquals(listOf("r2"), marked)
+        assertEquals(listOf("too big"), report.rejected.map { it.reason })
+        assertNull(report.stoppedBecause)
     }
 
     @Test
