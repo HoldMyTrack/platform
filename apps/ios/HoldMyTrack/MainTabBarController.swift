@@ -364,10 +364,20 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     func showTourTab(_ tab: TourTab, root: Bool) {
         guard let index = Self.tourTabs.firstIndex(of: tab), let next = viewControllers?[index] else { return }
         if root { (next as? UINavigationController)?.popToRootViewController(animated: false) }
-        // The tour's Sync step is Library's Sync.
-        if tab == .sync { libraryHost?.switchTo(.sync) }
+        // The tour's Sync step, its only root Sync, is Library's Sync; once the tour moves on,
+        // Library is Library again, so its end or the user's next visit doesn't find Sync.
+        if tab == .sync && root {
+            libraryHost?.switchTo(.sync)
+            tourOpenedSync = true
+        } else if tourOpenedSync {
+            libraryHost?.switchTo(.library)
+            tourOpenedSync = false
+        }
         selectedViewController = next
     }
+
+    /// The tour's Sync step put Sync in Library's place.
+    private var tourOpenedSync = false
 
     /// The fourth item: Library's navigation, its map host at the root.
     private var libraryNav: UINavigationController? { viewControllers?[3] as? UINavigationController }

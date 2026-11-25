@@ -63,8 +63,9 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var trips: [Trip] = []
     private var failed: String?
     private var reading: Task<Void, Never>?
-    private var soon: Task<Void, Never>?
-    private var showing = false
+    /// The search's and the Distance slider's waits, apart, so one never drops the other's change.
+    private var searchSoon: Task<Void, Never>?
+    private var distanceSoon: Task<Void, Never>?
 
     init(api: APIClient, account: @escaping () -> Account, downloads: TrackDownload) {
         self.api = api
@@ -78,8 +79,10 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     // MARK: Showing
 
     /// The tab came to the front: the page is read again, since tracks may have come or gone.
+    /// A search typed but not yet asked for when the tab left is asked for now.
     func start() {
-        showing = true
+        let q = (search.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if q != state.q { state = state.withFilter { $0.q = q } }
         read()
         Task {
             guard let read = try? await api.trips() else { return }
@@ -89,8 +92,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     func stop() {
-        showing = false
-        soon?.cancel()
+        searchSoon?.cancel()
+        search.resignFirstResponder()
         datesSheet?.dismiss(animated: true)
     }
 
@@ -221,12 +224,13 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     private func goTo(_ page: Int) {
         state.page = page
+        table.setContentOffset(.zero, animated: false)
         read()
     }
 
     private func searchChanged() {
-        soon?.cancel()
-        soon = Task { [weak self] in
+        searchSoon?.cancel()
+        searchSoon = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard let self, !Task.isCancelled else { return }
             let q = (self.search.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -236,7 +240,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     private func reset() {
         search.text = ""
-        soon?.cancel()
+        searchSoon?.cancel()
+        distanceSoon?.cancel()
         let kept = state
         change { $0 = LibraryRules.State(sort: kept.sort, desc: kept.desc) }
     }
@@ -330,8 +335,10 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 : String(localized: "library.count", defaultValue: "\(page.total) tracks", comment: "Library: how many tracks the account keeps.")
         }
 
+        // A failed read keeps the last page's rows, which aren't state.page's: the note shows alone.
+        table.isHidden = failed != nil
         let pager = page.flatMap { LibraryRules.pager(page: state.page, total: $0.total, pageSize: $0.pageSize) }
-        pagerRow.isHidden = !(pager.map { $0.prev || $0.next } ?? false)
+        pagerRow.isHidden = failed != nil || !(pager.map { $0.prev || $0.next } ?? false)
         if let pager, let page {
             range.text = String(localized: "library.range", defaultValue: "\(pager.from)–\(pager.to) of \(page.total)", comment: "Library: the rows this page shows, of how many.")
             prevButton.isEnabled = pager.prev
@@ -409,8 +416,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let picker = DistanceFilterViewController(bounds: bounds, current: current, format: format) { [weak self] next in
             guard let self else { return }
             // The slider moves in steps: read once it rests, not at every step.
-            self.soon?.cancel()
-            self.soon = Task { [weak self] in
+            self.distanceSoon?.cancel()
+            self.distanceSoon = Task { [weak self] in
                 try? await Task.sleep(for: .milliseconds(300))
                 guard let self, !Task.isCancelled else { return }
                 self.change { $0.distance = next.map { LibraryRules.Distance(min: $0.min, max: $0.max) } }

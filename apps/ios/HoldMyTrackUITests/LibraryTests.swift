@@ -18,7 +18,8 @@ final class LibraryTests: XCTestCase {
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
         let count = app.staticTexts["libraryCount"]
         XCTAssertTrue(count.label.hasSuffix("tracks"), "the count: \(count.label)")
-        XCTAssertFalse(app.buttons["libraryReset"].isHittable, "no filter, no Reset")
+        let reset = app.buttons["libraryReset"]
+        XCTAssertFalse(reset.exists && reset.isHittable, "no filter, no Reset")
 
         // A search that matches nothing says so; Reset brings every track back.
         let search = app.textFields["librarySearch"]
@@ -26,8 +27,8 @@ final class LibraryTests: XCTestCase {
         search.typeText("zzzz-no-such-track")
         XCTAssertTrue(app.staticTexts["libraryEmpty"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["libraryEmpty"].label.contains("zzzz-no-such-track"))
-        XCTAssertTrue(app.buttons["libraryReset"].isHittable, "the sheet rose above the keyboard")
-        app.buttons["libraryReset"].tap()
+        XCTAssertTrue(reset.isHittable, "the sheet rose above the keyboard")
+        reset.tap()
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
 
         // Checking a row offers Download; the demo has no Delete.

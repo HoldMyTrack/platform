@@ -436,7 +436,8 @@ extension MapViewController {
             tapSyncLine(at: tap.location(in: mapView))
             return
         }
-        guard state.mode == .normal, !sheet.isHidden || panelTab == .trips else { return }
+        // Library's rows aren't the map's: a line tapped there would focus a row on the Tracks tab.
+        guard state.mode == .normal, panelTab != .library, !sheet.isHidden || panelTab == .trips else { return }
         let point = tap.location(in: mapView)
         let r = TrackTap.radius
         let rect = CGRect(x: point.x - r, y: point.y - r, width: 2 * r, height: 2 * r)
