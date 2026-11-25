@@ -403,6 +403,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onOpen = { track -> host?.let { MainActivity.viewOnMap(it, track.id, LibraryTab.day(track)) } },
             onDeleted = { views?.refresh?.afterDelete(it) },
             onSync = { host?.showTab(MainActivity.Tab.SYNC) },
+            onShown = { host?.refreshSyncBadge() },
         )
         val panel = TracksPanel(
             sheet,

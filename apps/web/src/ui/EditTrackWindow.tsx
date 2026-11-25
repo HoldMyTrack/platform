@@ -161,7 +161,7 @@ export function EditTrackWindow({
   const unsaved =
     !draftIsEmpty(photoDraft) ||
     routePending !== null ||
-    fieldWrites(tracks, single !== null, trackType.trim(), name.trim(), description, written.current).length > 0;
+    fieldWrites(tracks, single !== null, trackType, name, description, written.current).length > 0;
   const unsavedRef = useRef(unsaved);
   unsavedRef.current = unsaved;
 
@@ -215,15 +215,13 @@ export function EditTrackWindow({
       openTab(problem.tab);
       return;
     }
-    const trimmedType = trackType.trim();
-    const trimmedName = name.trim();
     setSaving(true);
     setError(null);
     try {
       // Sequential, not Promise.all, matching TracksPanel.tsx's own group delete: a
       // hand-checked group is a handful of rows, not bulk-import scale. Each write is recorded
       // as it lands, so a failure partway leaves the rest for a retry.
-      for (const { id, fields } of fieldWrites(tracks, single !== null, trimmedType, trimmedName, description, written.current)) {
+      for (const { id, fields } of fieldWrites(tracks, single !== null, trackType, name, description, written.current)) {
         await updateTrack(id, fields);
         written.current.set(id, fields);
       }

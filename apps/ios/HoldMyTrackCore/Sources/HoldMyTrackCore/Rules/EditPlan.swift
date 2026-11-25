@@ -37,19 +37,19 @@ public enum EditPlan {
         return nil
     }
 
-    /// The writes Save sends, one track at a time, for only what changed. One track takes
-    /// all three fields; a group only a picked type, each keeping its own name and description,
-    /// and only the ones not of that type already.
-    public static func writes(group: [Track], type: String, name: String, description: String) -> [Write] {
+    /// The writes Save sends, one track at a time, for each whose fields differ from what the
+    /// server holds: what an earlier Save in this window wrote (written, by id), else what it opened
+    /// with. One track takes all three fields; a group only a picked type, each keeping its own
+    /// name and description. The cases are testdata/client-rules/edit-writes.json.
+    public static func writes(group: [Track], type: String, name: String, description: String, written: [String: Write] = [:]) -> [Write] {
         let type = type.trimmingCharacters(in: .whitespacesAndNewlines)
-        if group.count == 1, let one = group.first {
-            let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            let changed = type != one.trackType || name != (one.name ?? "") || description != (one.description ?? "")
-            return changed ? [Write(id: one.id, trackType: type, name: name, description: description)] : []
-        }
-        guard !type.isEmpty else { return [] }
-        return group.filter { $0.trackType != type }.map {
-            Write(id: $0.id, trackType: type, name: $0.name ?? "", description: $0.description ?? "")
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return group.compactMap { track in
+            let held = written[track.id] ?? Write(id: track.id, trackType: track.trackType, name: track.name ?? "", description: track.description ?? "")
+            let next = group.count == 1
+                ? Write(id: track.id, trackType: type, name: name, description: description)
+                : Write(id: track.id, trackType: type.isEmpty ? held.trackType : type, name: held.name, description: held.description)
+            return next == held ? nil : next
         }
     }
 }

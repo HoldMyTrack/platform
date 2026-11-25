@@ -2,7 +2,7 @@
 // which tracks' fields it writes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fieldWrites, saveProblem } from '../src/ui/editSave.ts';
+import { saveProblem } from '../src/ui/editSave.ts';
 import { EMPTY_DRAFT } from '../src/ui/photoDraft.ts';
 
 const form = (over = {}) => ({ trackType: 'hiking', name: 'Ridge', description: '', mixedTypes: false, photoDraft: EMPTY_DRAFT, ...over });
@@ -31,27 +31,4 @@ test('then the Photos tab: every new photo placed, every caption within its limi
   assert.equal(saveProblem(form({ photoDraft: { ...EMPTY_DRAFT, changed: { p1: { routeAt: 5 } } } })), null);
   // A Track-tab problem is reported first.
   assert.equal(saveProblem(form({ trackType: '', photoDraft: { ...EMPTY_DRAFT, added: [photo(null)] } })).tab, 'track');
-});
-
-const walk = { id: 'a', trackType: 'walking', name: 'Walk', description: null };
-const ride = { id: 'b', trackType: 'cycling', name: null, description: 'Fast' };
-
-test('one track writes all three fields, only when something changed', () => {
-  assert.deepEqual(fieldWrites([walk], true, 'walking', 'Walk', '', new Map()), []);
-  assert.deepEqual(fieldWrites([walk], true, 'hiking', 'Walk', 'Steep', new Map()), [
-    { id: 'a', fields: { trackType: 'hiking', name: 'Walk', description: 'Steep' } },
-  ]);
-});
-
-test('a group writes only the type, keeping each name and description, and an empty type keeps each', () => {
-  assert.deepEqual(fieldWrites([walk, ride], false, 'running', '', '', new Map()), [
-    { id: 'a', fields: { trackType: 'running', name: 'Walk', description: '' } },
-    { id: 'b', fields: { trackType: 'running', name: '', description: 'Fast' } },
-  ]);
-  assert.deepEqual(fieldWrites([walk, ride], false, '', '', '', new Map()), []);
-});
-
-test('a retry after a partial Save writes only what the first one did not', () => {
-  const written = new Map([['a', { trackType: 'running', name: 'Walk', description: '' }]]);
-  assert.deepEqual(fieldWrites([walk, ride], false, 'running', '', '', written).map((w) => w.id), ['b']);
 });

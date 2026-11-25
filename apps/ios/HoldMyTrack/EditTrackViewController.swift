@@ -49,7 +49,10 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
     private let status = Controls.body()
 
     private var type: String
-    private var written: [String] = []
+    /// What Save has written, by id, so one retried after a failure writes the rest.
+    private var written: [String: EditPlan.Write] = [:]
+    /// The track whose route edit was written.
+    private var routeWritten: String?
     private var saving = false
     private let typeButton = UIButton(type: .system)
     private let name = Controls.field(String(localized: "Name"), id: "editName")
@@ -361,7 +364,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
             show(message)
             return
         }
-        let writes = EditPlan.writes(group: group, type: type, name: nameText, description: aboutText).filter { !written.contains($0.id) }
+        let writes = EditPlan.writes(group: group, type: type, name: nameText, description: aboutText, written: written)
         let routeChanged = routeEditor?.session?.changed == true
         guard !writes.isEmpty || photos?.draft.isEmpty == false || routeChanged else { return finish() }
         saving = true
@@ -381,7 +384,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
             for write in writes {
                 do {
                     _ = try await api.updateTrack(write)
-                    written.append(write.id)
+                    written[write.id] = write
                 } catch {
                     show((error as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved."))
                     return
@@ -409,7 +412,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         do {
             switch try await api.saveRouteEdit(id, edit: session.pending, splitAt: session.splitAt, allowHidden: allowHidden) {
             case .queued:
-                written.append(id)
+                routeWritten = id
                 return true
             case .splitHidesPart(let message):
                 confirmHiddenSplit(message)
@@ -450,7 +453,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
     }
 
     private func finish() {
-        let done = written, photosSaved = photos?.photosSaved ?? false
+        let done = Array(Set(written.keys).union([routeWritten].compactMap { $0 })), photosSaved = photos?.photosSaved ?? false
         photos?.active = false
         routeEditor?.hide()
         dismiss(animated: true) { self.onDone(done, photosSaved) }

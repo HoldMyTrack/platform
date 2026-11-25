@@ -122,9 +122,9 @@ class EditTrackWindow(
     /** "Saving photos n of m…" while the photos are written. */
     private var photoProgress: Pair<Int, Int>? = null
 
-    /** Set once the fields are written, so a Save retried after a failure doesn't write them
-     *  twice, and a Cancel after one still reports that something changed. */
-    private var fieldsSaved = false
+    /** What Save has written, by id, so one retried after a failure writes the rest
+     *  ([EditPlan.writes]), and a Cancel after one still reports that something changed. */
+    private val written = mutableMapOf<String, EditPlan.Write>()
 
     val isOpen: Boolean
         get() = card.visibility == View.VISIBLE
@@ -227,7 +227,7 @@ class EditTrackWindow(
             }
         }
         val single = group.singleOrNull()
-        fieldsSaved = false
+        written.clear()
         saving = false
         photoProgress = null
         mixedTypes = group.any { it.trackType != group.first().trackType }
@@ -306,7 +306,6 @@ class EditTrackWindow(
     }
 
     private fun save() {
-        val single = tracks.singleOrNull()
         val type = trackType.trim()
         val name = nameField.text?.toString().orEmpty().trim()
         val description = descriptionField.text?.toString().orEmpty()
@@ -328,12 +327,8 @@ class EditTrackWindow(
             showTab(EditTab.PHOTOS)
             return
         }
-        val changed = if (single != null) {
-            type != single.trackType || name != single.name.orEmpty() || description != single.description.orEmpty()
-        } else {
-            type.isNotEmpty() && tracks.any { it.trackType != type }
-        }
-        if (!changed || fieldsSaved) {
+        val writes = EditPlan.writes(tracks, type, name, description, written.values)
+        if (writes.isEmpty()) {
             savePhotos()
             return
         }
@@ -341,34 +336,25 @@ class EditTrackWindow(
         showError(null)
         renderBusy()
         hideKeyboard()
-        // One at a time, as the web does: a group is a handful of rows picked by hand.
-        val writes = tracks.map { track ->
-            if (single != null) {
-                Triple(track.id, name, description)
-            } else {
-                Triple(track.id, track.name.orEmpty(), track.description.orEmpty())
-            }
-        }
-        writeNext(writes, 0, type)
+        writeNext(writes, 0)
     }
 
-    private fun writeNext(writes: List<Triple<String, String, String>>, index: Int, type: String) {
+    /** One at a time, as the web does: a group is a handful of rows picked by hand. */
+    private fun writeNext(writes: List<EditPlan.Write>, index: Int) {
         if (index == writes.size) {
-            fieldsSaved = true
             savePhotos()
             return
         }
-        val (id, name, description) = writes[index]
-        HoldMyTrackApi.updateTrack(id, type, name, description) { result ->
-            result.onSuccess { writeNext(writes, index + 1, type) }
-                .onFailure { failure ->
-                    saving = false
-                    // A group that failed partway has written some rows; the list reload on
-                    // close shows which.
-                    if (index > 0) fieldsSaved = true
-                    renderBusy()
-                    showError(FailureText.of(failure, res.getString(R.string.edit_save_failed)))
-                }
+        val write = writes[index]
+        HoldMyTrackApi.updateTrack(write.id, write.trackType, write.name, write.description) { result ->
+            result.onSuccess {
+                written[write.id] = write
+                writeNext(writes, index + 1)
+            }.onFailure { failure ->
+                saving = false
+                renderBusy()
+                showError(FailureText.of(failure, res.getString(R.string.edit_save_failed)))
+            }
         }
     }
 
@@ -446,7 +432,7 @@ class EditTrackWindow(
         val photosSaved = photosTab.photosSaved
         photosTab.close()
         card.visibility = View.GONE
-        onClose(fieldsSaved || trackApplied, trackApplied, photosSaved)
+        onClose(written.isNotEmpty() || trackApplied, trackApplied, photosSaved)
     }
 
     private fun renderBusy() {

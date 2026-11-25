@@ -77,21 +77,9 @@ struct PanelTests {
 
     // MARK: Edit
 
-    @Test func oneTrackWritesAllThreeFieldsOnlyWhenOneChanged() {
-        let one = [track("a", name: "Morning", description: "")]
-        #expect(EditPlan.writes(group: one, type: "running", name: " Morning ", description: "").isEmpty)
-        #expect(EditPlan.writes(group: one, type: "running", name: "", description: "") == [
-            EditPlan.Write(id: "a", trackType: "running", name: "", description: ""),
-        ])
-    }
-
-    @Test func aGroupWritesAPickedTypeToTheOnesNotOfItAlready() {
-        let group = [track("a", "running", name: "A"), track("b", "cycling", description: "d")]
-        #expect(EditPlan.initialType(group) == "")
-        #expect(EditPlan.writes(group: group, type: "", name: "", description: "").isEmpty)
-        #expect(EditPlan.writes(group: group, type: "running", name: "ignored", description: "ignored") == [
-            EditPlan.Write(id: "b", trackType: "running", name: "", description: "d"),
-        ])
+    @Test func aGroupOfMixedTypesOpensWithNone() {
+        #expect(EditPlan.initialType([track("a"), track("b")]) == "running")
+        #expect(EditPlan.initialType([track("a"), track("b", "cycling")]) == "")
     }
 
     @Test func editRefusesWhatTheServerWould() {

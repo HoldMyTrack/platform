@@ -258,7 +258,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Library's badge, and the count on its +: the recordings on this phone waiting to be sent
      *  from Library › Sync, none swiped aside. Read on every return to the map, a recording's Save screen included,
-     *  and after a send. */
+     *  as Library opens and after a send. */
     fun refreshSyncBadge() {
         lifecycleScope.launch {
             val keys = RecordedTrackStore(this@MainActivity).all().map { SyncCandidates.key(HoldMyTrackApi.SOURCE_RECORDED, it.id) }
