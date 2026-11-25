@@ -4,18 +4,21 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class SheetFitTest {
-    @Test
-    fun openTheContentReachesTheSheetsBottom() = assertEquals(0, SheetFit.bottomPadding(top = 136, expandedTop = 136, halfTop = 1000))
+    private fun resting(top: Int) = SheetFit.bottomPadding(top = top, expandedTop = 136, halfTop = 1000, current = 42, moving = false)
 
     @Test
-    fun halfwayTheContentEndsAtTheScreensBottom() = assertEquals(864, SheetFit.bottomPadding(top = 1000, expandedTop = 136, halfTop = 1000))
+    fun openTheContentReachesTheSheetsBottom() = assertEquals(0, resting(top = 136))
 
     @Test
-    fun midDragItFollowsTheTop() = assertEquals(464, SheetFit.bottomPadding(top = 600, expandedTop = 136, halfTop = 1000))
+    fun halfwayTheContentEndsAtTheScreensBottom() = assertEquals(864, resting(top = 1000))
 
     @Test
-    fun belowHalfwayItKeepsTheHalfsPadding() = assertEquals(864, SheetFit.bottomPadding(top = 1700, expandedTop = 136, halfTop = 1000))
+    fun belowHalfwayItKeepsTheHalfsPadding() = assertEquals(864, resting(top = 1700))
 
     @Test
-    fun neverNegative() = assertEquals(0, SheetFit.bottomPadding(top = 100, expandedTop = 136, halfTop = 1000))
+    fun neverNegative() = assertEquals(0, resting(top = 100))
+
+    @Test
+    fun movingItKeepsThePaddingItHas() =
+        assertEquals(864, SheetFit.bottomPadding(top = 600, expandedTop = 136, halfTop = 1000, current = 864, moving = true))
 }

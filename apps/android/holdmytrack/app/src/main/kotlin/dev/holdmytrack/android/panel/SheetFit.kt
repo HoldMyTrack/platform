@@ -8,7 +8,9 @@ package dev.holdmytrack.android.panel
 object SheetFit {
     /** The bottom padding for a sheet whose top is at [top], open at [expandedTop] and halfway at
      *  [halfTop]. Below halfway it stays the half's, so a collapsed sheet's lists keep their size
-     *  and scroll position, covered rather than squeezed. */
-    fun bottomPadding(top: Int, expandedTop: Int, halfTop: Int): Int =
-        (minOf(top, halfTop) - expandedTop).coerceAtLeast(0)
+     *  and scroll position, covered rather than squeezed. While the sheet is [moving] it keeps
+     *  [current]: a padding that changes lays the whole sheet out again, which no frame of a slide
+     *  has time for. */
+    fun bottomPadding(top: Int, expandedTop: Int, halfTop: Int, current: Int, moving: Boolean): Int =
+        if (moving) current else (minOf(top, halfTop) - expandedTop).coerceAtLeast(0)
 }
