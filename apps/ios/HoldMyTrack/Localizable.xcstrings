@@ -4152,7 +4152,7 @@
       }
     },
     "Resend verification email" : {
-      "comment" : "Verify email screen: sends the confirmation link again.",
+      "comment" : "Verify email screen: sends a new code.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {

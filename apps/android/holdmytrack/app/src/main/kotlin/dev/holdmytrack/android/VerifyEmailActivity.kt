@@ -26,8 +26,8 @@ import dev.holdmytrack.android.net.Session
  * nothing on screen saying why.
  *
  * The email's 6-digit code is typed here and confirms the address in this session, which stays
- * signed in. Its link, opened in a browser, signs the app out instead, and the app never hears
- * about it, so this screen asks `GET /v2/auth/me` again on every resume and on Confirm with the
+ * signed in. The same code typed on the web signs the app out instead, since a first verification
+ * keeps only the session that typed it, and the app never hears about it, so this screen asks `GET /v2/auth/me` again on every resume and on Confirm with the
  * field empty ([VerifyAction]). Resend and Sign out are the web page's other ways forward;
  * changing a mistyped address stays on the web, since the app's local recordings and hidden Sync
  * rows are keyed by the email and would be orphaned.

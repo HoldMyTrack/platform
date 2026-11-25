@@ -209,3 +209,12 @@ func TestForgotPasswordAnswersBeforeMailing(t *testing.T) {
 		t.Fatal("no reset mail went out after the answer")
 	}
 }
+
+// A link in an email sent before the email carried only its code goes where a new code is sent.
+func TestOldVerificationLinkGoesToVerifyPending(t *testing.T) {
+	d := newDBTest(t)
+	rec := d.do(account{}, http.MethodGet, "/verify?token=sent-before-the-deploy", nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/verify-pending" {
+		t.Fatalf("old link: %d to %q, want a redirect to /verify-pending", rec.Code, rec.Header().Get("Location"))
+	}
+}

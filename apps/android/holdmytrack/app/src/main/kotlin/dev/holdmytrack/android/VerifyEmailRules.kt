@@ -5,7 +5,7 @@ sealed interface VerifyAction {
     /** Send the code; the server judges it, as it judges sign-in's fields. */
     data class Submit(val code: String) : VerifyAction
 
-    /** Nothing typed: ask whether the address was confirmed some other way, by the email's link. */
+    /** Nothing typed: ask whether the address was confirmed some other way, by the code on the web. */
     data object Check : VerifyAction
 
     companion object {

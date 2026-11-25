@@ -261,7 +261,7 @@
     <string name="sync_health_connect_info">About Health Connect sync</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="sync_needs_account">Sign in to HoldMyTrack first — there is nowhere to sync to until then.</string>
-    <string name="sync_needs_verified_email">Confirm your email address first — open HoldMyTrack if you need a new confirmation link.</string>
+    <string name="sync_needs_verified_email">Confirm your email address first — open HoldMyTrack if you need a new code.</string>
     <string name="sync_demo_read_only">The demo account is read-only — it can\'t add, edit, or delete tracks. Create an account to sync your own data.</string>
     <string name="sync_unavailable">Health Connect isn\'t available on this device, so there is nothing to sync from.</string>
     <string name="sync_update_required">Health Connect needs updating before it can share anything.</string>

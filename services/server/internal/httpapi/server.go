@@ -282,6 +282,11 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("POST /forgot", s.sameOrigin(s.handleForgotForm))
 	s.mux.HandleFunc("GET /reset", s.handleResetPage)
 	s.mux.HandleFunc("POST /reset", s.sameOrigin(s.handleResetForm))
+	// A link in a verification email sent before the email carried only its code: to where a
+	// new code is sent. Remove a day after that deploy, when every such row has expired.
+	s.mux.HandleFunc("GET /verify", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/verify-pending", http.StatusSeeOther)
+	})
 	s.mux.HandleFunc("GET /verify-pending", s.handleVerifyPendingPage)
 	s.mux.HandleFunc("POST /verify-pending/resend", s.sameOrigin(s.handleVerifyResendForm))
 	s.mux.HandleFunc("POST /verify-pending/email", s.sameOrigin(s.handleVerifyChangeEmailForm))

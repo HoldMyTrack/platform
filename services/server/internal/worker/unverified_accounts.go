@@ -23,8 +23,8 @@ const demoUserID = "22222222-2222-2222-2222-222222222222"
 
 // closeUnverifiedAccounts closes (db.CloseAccounts) every account never verified within
 // unverifiedAccountTTL of its signup, for purgeDeletedAccounts to remove. An account with a
-// link still valid waits for it, so a resend or a corrected address late in the week still
-// works. email_verified only ever turns true, so a verified account changing its address is
+// verification row still live waits for it, so a resend or a corrected address late in the week
+// still works. email_verified only ever turns true, so a verified account changing its address is
 // never taken. SKIP LOCKED leaves an account a verification holds for the next day.
 func closeUnverifiedAccounts(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger) error {
 	tx, err := pool.Begin(ctx)
