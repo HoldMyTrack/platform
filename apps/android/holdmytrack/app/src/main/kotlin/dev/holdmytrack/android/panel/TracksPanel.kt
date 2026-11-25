@@ -233,7 +233,10 @@ class TracksPanel(
         // Material's default lets the list's swipe grow the sheet first, so short of full screen
         // its rows never scrolled.
         behavior.isDraggableOnNestedScroll = false
-        sheet.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> fitContent() }
+        // After the sheet is laid out, once BottomSheetBehavior has moved it to its state's top:
+        // a rotation or a new window size lays it out at the old top first, and the padding
+        // computed then left the content's bottom off screen.
+        sheet.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> sheet.post { fitContent() } }
         behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 fitContent()
