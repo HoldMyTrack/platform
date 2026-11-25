@@ -54,21 +54,17 @@ const SHOTS = {
     await layers({ satellite: true, roads: true });
     await mode(FOG[locale].city);
     await pinch(...MAP, -3.0);
-    await drag(800, 1000, -610, -50);
+    await drag(800, 1000, 33, 113);
     await sleep(1500);
     await tap(770, 1160); // Kent
     await sleep(1500);
   },
   "03-fog-exact": async (locale) => {
-    // Satellite along every cleared street, Cleveland down to Brecksville: 41 km east of the
-    // opening view, in drags short enough not to fling.
+    // Satellite along every cleared street, Cleveland down to Brecksville.
     await layers({ satellite: true, roads: true });
     await mode(FOG[locale].exact);
     await pinch(...MAP, -1.34);
-    for (let i = 0; i < 4; i++) {
-      await drag(800, 1000, -576, 22);
-      await sleep(600);
-    }
+    await drag(300, 600, 420, 871);
   },
   "04-trip": async () => {
     await layers({ satellite: true, roads: true });
