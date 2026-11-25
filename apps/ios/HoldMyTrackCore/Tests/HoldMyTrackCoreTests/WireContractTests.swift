@@ -40,6 +40,7 @@ struct WireContractTests {
         try request(EmailJSON.self, "/trips/{id}/send", "post")
 
         try response(TracksJSON.self, "/tracks", "get")
+        try response(TrackPageJSON.self, "/tracks", "get")
         try response(AreaTracksJSON.self, "/tracks/area", "get")
         try response(TracksJSON.self, "/tracks/{id}", "get")
         try response(TrackTypesJSON.self, "/track-types", "get")

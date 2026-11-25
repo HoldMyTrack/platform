@@ -1,6 +1,5 @@
 {
   "rule": "libraryPageQuery",
-  "clients": ["web", "android"],
   "description": "The GET /v2/tracks query Library (docs/SPEC.md FR-17.1) asks for its state, given every type the account has: the Type filter sent as the types kept, a Distance end at 0 or unbounded (null) left out, the sort as key_desc or key_asc. Null when every type is left out, which matches no track.",
   "cases": [
     { "name": "the first page as it opens", "input": { "state": { "sort": "started", "desc": true, "page": 1, "q": "", "exclude": [], "distance": null, "after": null, "before": null, "trip": null }, "allTypes": ["walking", "cycling"] }, "expected": { "page": 1, "sort": "started_desc" } },

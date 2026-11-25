@@ -252,9 +252,14 @@ public final class APIClient: Sendable {
     }
 
     func perform(_ request: URLRequest) async throws -> Data {
+        try await performWithResponse(request).0
+    }
+
+    /// perform with the response, for a call that reads its headers.
+    func performWithResponse(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         let (data, http) = try await exchange(request)
         try check(http, data)
-        return data
+        return (data, http)
     }
 
     private func exchange(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
