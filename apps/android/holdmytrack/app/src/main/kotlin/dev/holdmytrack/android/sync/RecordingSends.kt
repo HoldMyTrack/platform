@@ -62,7 +62,7 @@ object RecordingSends {
     /** What the row of the recording with this [key] says. */
     fun note(key: String, hidden: Boolean): RecordingSendRules.Note? {
         forThisAccount()
-        return RecordingSendRules.note(key in sending, hidden, refused[key])
+        return RecordingSendRules.note(SyncProgress.isProcessing(key), key in sending, hidden, refused[key], Session.isDemo)
     }
 
     /** Keeps the recording with this [key] out of any send while a screen or question about it is
@@ -106,7 +106,7 @@ object RecordingSends {
                 val store = RecordedTrackStore(app)
                 val waiting = store.all().map { SyncCandidates.fromRecording(it) }
                 val onItsWay = SyncProgress.candidates.mapTo(HashSet()) { it.key }
-                val keys = RecordingSendRules.toSend(waiting.map { it.key }, onItsWay, HiddenCandidates(app, Session.email).all(), held, refused.keys, setBack, retry)
+                val keys = RecordingSendRules.toSend(waiting.map { RecordingSendRules.Unsent(it.key, it.startedAt) }, onItsWay, HiddenCandidates(app, Session.email).all(), held, refused.keys, setBack, retry)
                 val batch = keys.mapNotNull { key -> waiting.find { it.key == key } }
                 if (batch.isEmpty()) return@launch
                 sending = keys.toSet()

@@ -49,6 +49,12 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `typeSearch` | `options` (`{ value, label, count }`), `query`, `maxLength` | `{ shown, add }`: values, and the text offered as a new type or `null` |
 | `typeOptions` | `current`, `known` (`{ type, count }`) | `[{ type, count }]` |
 | `recordingTypes` | `server` (`{ type, count }`), `local` (types) | `[{ type, count }]` |
+| `recordingSends` | `emailVerified`, `isDemo` | boolean |
+| `recordingToSend` | `recordings` (`{ id, startedAt, sent }`), `hidden`, `held`, `refused`, `setBack`, `retry` | ids, in order |
+| `recordingSendFailure` | `answer` (a status, `"none"` or `"unreadable"`), `afterUnanswered` | `{ outcome, unanswered }` |
+| `recordingDeletion` | `stored`, `going`, `landed` | `"deleted"`, `"sending"` or `"landed"` |
+| `recordingNote` | `sent`, `sending`, `hidden`, `refused`, `isDemo` | a tag or null |
+| `recordingWaiting` | `recordings` (`{ id, sent }`), `hidden`, `isDemo` | count |
 | `passesFilters` | `track`, `excludedTypes`, `distanceFilter` | boolean |
 | `fitBoxes` | `tracks` (`{ bbox, pending, private }`) | the boxes, in order |
 | `selectionBoxes` | `tracks` (`{ bbox, pending, private }`) | the boxes, in order |

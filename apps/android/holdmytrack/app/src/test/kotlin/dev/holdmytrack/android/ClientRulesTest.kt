@@ -15,6 +15,7 @@ import dev.holdmytrack.android.map.OpeningView
 import dev.holdmytrack.android.map.PendingDiff
 import dev.holdmytrack.android.map.SatelliteStatus
 import dev.holdmytrack.android.net.AttachmentName
+import dev.holdmytrack.android.net.ApiException
 import dev.holdmytrack.android.net.deleteDone
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.RouteEdit
@@ -25,13 +26,13 @@ import dev.holdmytrack.android.panel.TripFold
 import dev.holdmytrack.android.panel.TripForms
 import dev.holdmytrack.android.panel.TrackFacets
 import dev.holdmytrack.android.recording.RecordingTypes
+import dev.holdmytrack.android.sync.RecordingSendRules
 import dev.holdmytrack.android.sync.Similar
 import kotlinx.serialization.json.longOrNull
 import java.time.LocalDate
 import dev.holdmytrack.android.profile.YouRefresh
 import dev.holdmytrack.android.profile.ProfileStats
 import dev.holdmytrack.android.net.TrackDay
-import java.time.Instant
 import dev.holdmytrack.android.recording.TypeCount
 import dev.holdmytrack.android.recording.TypeSearch
 import dev.holdmytrack.android.panel.TrackZone
@@ -86,6 +87,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.time.Instant
 import java.time.ZoneId
 
 /**
@@ -256,6 +258,47 @@ class ClientRulesTest {
         },
         "libraryEmptyReason" to { input ->
             JsonPrimitive(caseName(LibraryRules.emptyReason(libraryState(input["state"]!!.jsonObject), input.int("total"), input.bool("anyTrack")).name))
+        },
+        "recordingSends" to { input -> JsonPrimitive(RecordingSendRules.sends(signedIn = true, input.bool("emailVerified"), input.bool("isDemo"))) },
+        "recordingToSend" to { input ->
+            val recordings = input["recordings"]!!.jsonArray.map { it.jsonObject }
+            val unsent = recordings.map { RecordingSendRules.Unsent(it.string("id")!!, Instant.ofEpochMilli(it["startedAt"]!!.jsonPrimitive.long)) }
+            val onItsWay = recordings.filter { it.bool("sent") }.map { it.string("id")!! }.toSet()
+            ids(
+                RecordingSendRules.toSend(
+                    unsent, onItsWay, input.strings("hidden").toSet(), input.strings("held").toSet(), input.strings("refused").toSet(),
+                    input.strings("setBack"), input.bool("retry"),
+                ),
+                sort = false,
+            )
+        },
+        "recordingSendFailure" to { input ->
+            val failure = when (val answer = input.string("answer")!!) {
+                "none" -> java.net.SocketTimeoutException()
+                "unreadable" -> IllegalArgumentException()
+                else -> ApiException(answer.toInt(), "")
+            }
+            buildJsonObject {
+                put("outcome", RecordingSendRules.failure(failure, input.bool("afterUnanswered")).name.lowercase())
+                put("unanswered", RecordingSendRules.unanswered(failure))
+            }
+        },
+        "recordingDeletion" to { input ->
+            JsonPrimitive(RecordingSendRules.deletion(input.bool("stored"), input.bool("going"), input.bool("landed")).name.lowercase())
+        },
+        "recordingNote" to { input ->
+            val reason = if (input.bool("refused")) "why" else null
+            when (RecordingSendRules.note(input.bool("sent"), input.bool("sending"), input.bool("hidden"), reason, input.bool("isDemo"))) {
+                null -> JsonNull
+                RecordingSendRules.Note.Processing -> JsonPrimitive("processing")
+                RecordingSendRules.Note.Sending -> JsonPrimitive("sending")
+                RecordingSendRules.Note.Waiting -> JsonPrimitive("waiting")
+                is RecordingSendRules.Note.Refused -> JsonPrimitive("refused")
+            }
+        },
+        "recordingWaiting" to { input ->
+            val keys = input["recordings"]!!.jsonArray.map { it.jsonObject }.filterNot { it.bool("sent") }.map { it.string("id")!! }
+            JsonPrimitive(RecordingSendRules.waiting(keys, input.strings("hidden").toSet(), input.bool("isDemo")))
         },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
         "privateDrawOrder" to { input ->

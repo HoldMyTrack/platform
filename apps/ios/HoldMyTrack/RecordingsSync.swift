@@ -124,7 +124,8 @@ final class RecordingsSync {
     func isSending(_ id: String) -> Bool { inFlight.contains(id) }
 
     func delete(_ id: String) -> RecordingSends.Deletion {
-        let deletion = RecordingSends.deletion(all.first { $0.id == id }, sending: isSending(id), landed: landedIDs.contains(id))
+        let stored = all.first { $0.id == id }
+        let deletion = RecordingSends.deletion(stored: stored != nil, going: isSending(id) || stored?.sent == true, landed: landedIDs.contains(id))
         guard deletion == .deleted else { return deletion }
         store.delete(id: id, account: account)
         refused[id] = nil

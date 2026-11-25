@@ -225,7 +225,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     /// The recordings not sent yet, sent by themselves, or now on Retry.
     private func renderBar() {
         let unsent = SyncList.waiting(list.everything, hidden: hidden, isDemo: account.isDemo)
-        bar.isHidden = !RecordingSends.retryShown(isDemo: account.isDemo, unsent: unsent)
+        bar.isHidden = unsent == 0
         unsentLine.text = recordings.sending
             ? String(localized: "sync.sending", defaultValue: "Sending recordings…", comment: "Sync: recordings are being sent now.")
             : String(localized: "sync.unsent", defaultValue: "\(unsent) recordings not sent yet", comment: "Sync: how many recordings aren't sent yet.")

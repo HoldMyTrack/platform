@@ -263,7 +263,7 @@ class MainActivity : AppCompatActivity() {
         if (Session.isDemo) return
         lifecycleScope.launch {
             val keys = RecordedTrackStore(this@MainActivity).all().map { SyncCandidates.key(HoldMyTrackApi.SOURCE_RECORDED, it.id) }
-            val waiting = RecordingSendRules.unsent(keys, HiddenCandidates(this@MainActivity, Session.email).all())
+            val waiting = RecordingSendRules.waiting(keys, HiddenCandidates(this@MainActivity, Session.email).all(), Session.isDemo)
             map()?.setSyncWaiting(waiting)
             if (waiting <= 0) {
                 nav.removeBadge(R.id.nav_library)
