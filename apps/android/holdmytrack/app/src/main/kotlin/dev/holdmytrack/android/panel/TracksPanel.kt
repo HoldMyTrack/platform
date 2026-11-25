@@ -423,12 +423,17 @@ class TracksPanel(
     private fun fitContent(): Boolean {
         val parentHeight = (sheet.parent as? View)?.height?.takeIf { it > 0 } ?: return false
         val halfTop = (parentHeight * (1 - behavior.halfExpandedRatio)).toInt()
+        val fitFor = behavior.expandedOffset to halfTop
         val moving = behavior.state !in RESTING_STATES
-        val padding = SheetFit.bottomPadding(sheet.top, behavior.expandedOffset, halfTop, sheet.paddingBottom, moving)
+        val padding = SheetFit.bottomPadding(sheet.top, fitFor.first, halfTop, sheet.paddingBottom, moving, resized = fitFor != fittedFor)
+        fittedFor = fitFor
         if (sheet.paddingBottom == padding) return false
         sheet.setPadding(sheet.paddingLeft, sheet.paddingTop, sheet.paddingRight, padding)
         return true
     }
+
+    /** The open and half tops the padding was last fitted for. */
+    private var fittedFor: Pair<Int, Int>? = null
 
     /** The offset last asked for, before [setExpandedOffset] clamps it. */
     private var expandedOffsetWanted = 0

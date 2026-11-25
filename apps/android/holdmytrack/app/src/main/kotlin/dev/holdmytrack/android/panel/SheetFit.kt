@@ -10,7 +10,7 @@ object SheetFit {
      *  [halfTop]. Below halfway it stays the half's, so a collapsed sheet's lists keep their size
      *  and scroll position, covered rather than squeezed. While the sheet is [moving] it keeps
      *  [current]: a padding that changes lays the whole sheet out again, which no frame of a slide
-     *  has time for. */
-    fun bottomPadding(top: Int, expandedTop: Int, halfTop: Int, current: Int, moving: Boolean): Int =
-        if (moving) current else (minOf(top, halfTop) - expandedTop).coerceAtLeast(0)
+     *  has time for. A window [resized] mid-slide fits it all the same. */
+    fun bottomPadding(top: Int, expandedTop: Int, halfTop: Int, current: Int, moving: Boolean, resized: Boolean): Int =
+        if (moving && !resized) current else (minOf(top, halfTop) - expandedTop).coerceAtLeast(0)
 }
