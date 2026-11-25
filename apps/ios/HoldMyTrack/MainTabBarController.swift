@@ -410,9 +410,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         map.editPrivateLocation(id)
     }
 
-    /// Files opened or shared from another app: Upload on the Sync tab, for an account that can.
+    /// Files opened or shared from another app: Upload over Sync, in Library's place, for an
+    /// account that can; Back from Upload lands on Sync.
     func upload(_ files: [URL]) {
-        guard let sync = viewControllers?[3] as? UINavigationController else { return }
+        guard let sync = libraryNav else { return }
+        libraryHost?.switchTo(.sync)
         selectedViewController = sync
         guard !account.isDemo else {
             TripDialogs.inform(over: view, String(localized: "Not available for demo accounts — create an account to upload your own tracks."))
