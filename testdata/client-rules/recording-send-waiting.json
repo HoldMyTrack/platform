@@ -1,0 +1,12 @@
+{
+  "rule": "recordingSendWaiting",
+  "description": "How many recordings Library's badge, its + and the Sync sheet's Retry line count as waiting to be sent (apps/android/docs/SPEC.md FR-2.9, FR-5.2): not sent and not swiped aside, none for the demo account. Retry shows while there are any.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "the unsent", "input": { "recordings": [{ "id": "a", "sent": false }, { "id": "b", "sent": false }, { "id": "c", "sent": true }], "hidden": [], "isDemo": false }, "expected": 2 },
+    { "name": "not one swiped aside", "input": { "recordings": [{ "id": "a", "sent": false }, { "id": "b", "sent": false }, { "id": "c", "sent": true }], "hidden": ["a"], "isDemo": false }, "expected": 1 },
+    { "name": "all swiped aside", "input": { "recordings": [{ "id": "a", "sent": false }, { "id": "b", "sent": false }, { "id": "c", "sent": true }], "hidden": ["a", "b"], "isDemo": false }, "expected": 0 },
+    { "name": "the demo's", "input": { "recordings": [{ "id": "a", "sent": false }, { "id": "b", "sent": false }, { "id": "c", "sent": true }], "hidden": [], "isDemo": true }, "expected": 0 },
+    { "name": "none", "input": { "recordings": [], "hidden": [], "isDemo": false }, "expected": 0 }
+  ]
+}

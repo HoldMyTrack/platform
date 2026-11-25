@@ -16,13 +16,6 @@ struct SyncListTests {
         [track("old", hours: 0), track("new", hours: 2, type: "ride", meters: 5000), track("mid", hours: 1), track("away", hours: 3, sent: true)]
     }
 
-    @Test func libraryCountsWhatsNotSentYetAndNothingForTheDemo() {
-        #expect(SyncList.waiting(walks, hidden: [], isDemo: false) == 3, "the one on its way isn't waiting")
-        #expect(SyncList.waiting(walks, hidden: ["mid"], isDemo: false) == 2, "nor one swiped aside, which isn't sent")
-        #expect(SyncList.waiting(walks, hidden: [], isDemo: true) == 0)
-        #expect(SyncList.waiting([], hidden: [], isDemo: false) == 0)
-    }
-
     @Test func newestFirstWithWhatsOnItsWayListed() {
         let list = SyncList.of(walks, hidden: [], showHidden: false, types: [])
         #expect(list.shown.map(\.id) == ["away", "new", "mid", "old"])

@@ -1,0 +1,18 @@
+{
+  "rule": "recordingSendNote",
+  "description": "What a recording's row on the Sync tab says of its send (apps/android/docs/SPEC.md FR-5.2): processing once the server took it, sending, refused with the reason, or waiting; null for one that goes nowhere, the demo account's or one swiped aside.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "not sent yet", "input": { "sent": false, "sending": false, "hidden": false, "refused": false, "isDemo": false }, "expected": "waiting" },
+    { "name": "being sent", "input": { "sent": false, "sending": true, "hidden": false, "refused": false, "isDemo": false }, "expected": "sending" },
+    { "name": "being sent again after a refusal", "input": { "sent": false, "sending": true, "hidden": false, "refused": true, "isDemo": false }, "expected": "sending" },
+    { "name": "refused", "input": { "sent": false, "sending": false, "hidden": false, "refused": true, "isDemo": false }, "expected": "refused" },
+    { "name": "on its way", "input": { "sent": true, "sending": false, "hidden": false, "refused": false, "isDemo": false }, "expected": "processing" },
+    { "name": "on its way, in a send still running", "input": { "sent": true, "sending": true, "hidden": false, "refused": false, "isDemo": false }, "expected": "processing" },
+    { "name": "swiped aside", "input": { "sent": false, "sending": false, "hidden": true, "refused": false, "isDemo": false }, "expected": null },
+    { "name": "swiped aside after a refusal", "input": { "sent": false, "sending": false, "hidden": true, "refused": true, "isDemo": false }, "expected": null },
+    { "name": "swiped aside once on its way", "input": { "sent": true, "sending": false, "hidden": true, "refused": false, "isDemo": false }, "expected": "processing" },
+    { "name": "swiped aside while being sent", "input": { "sent": false, "sending": true, "hidden": true, "refused": false, "isDemo": false }, "expected": "sending" },
+    { "name": "the demo's", "input": { "sent": false, "sending": false, "hidden": false, "refused": false, "isDemo": true }, "expected": null }
+  ]
+}

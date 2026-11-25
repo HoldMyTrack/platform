@@ -430,9 +430,9 @@ class SyncTab(
         refresh.isEnabled = !loading && runJob == null
 
         // The recordings not sent yet, which send themselves; Retry sends them now.
-        val unsent = RecordingSendRules.unsent(recordings.filterNot { processing(it) }.map { it.key }, hidden)
+        val unsent = RecordingSendRules.waiting(recordings.filterNot { processing(it) }.map { it.key }, hidden, demo)
         val sendingRecordings = recordings.any { RecordingSends.note(it.key, it.key in hidden) == RecordingSendRules.Note.Sending }
-        recordingsRow.visibility = if (RecordingSendRules.retryShown(demo, unsent)) View.VISIBLE else View.GONE
+        recordingsRow.visibility = if (unsent > 0) View.VISIBLE else View.GONE
         recordingsStatus.text = if (sendingRecordings) {
             res.getString(R.string.sync_recordings_sending)
         } else {
@@ -718,10 +718,10 @@ class SyncTab(
             TrackTypes.label(candidate.trackType),
             res.getString(if (candidate.isRecording) R.string.sync_origin_recorded else R.string.sync_origin_health_connect),
         ).joinToString(" · ")
-        val sendNote = if (candidate.isRecording && !Session.isDemo) RecordingSends.note(candidate.key, candidate.key in hidden) else null
+        val sendNote = if (candidate.isRecording) RecordingSends.note(candidate.key, candidate.key in hidden) else null
         val processing = processing(candidate) || sendNote == RecordingSendRules.Note.Sending
         val note = when {
-            processing(candidate) -> res.getString(R.string.sync_row_processing)
+            processing(candidate) || sendNote == RecordingSendRules.Note.Processing -> res.getString(R.string.sync_row_processing)
             sendNote == RecordingSendRules.Note.Sending -> res.getString(R.string.recording_note_sending)
             sendNote is RecordingSendRules.Note.Refused -> res.getString(R.string.recording_note_refused, sendNote.reason)
             sendNote == RecordingSendRules.Note.Waiting -> res.getString(R.string.recording_note_waiting)

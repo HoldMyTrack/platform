@@ -395,7 +395,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
 
     /// Library counts the recordings waiting to be sent, on its item and beside its +.
     private func countWaiting() {
-        let waiting = SyncList.waiting(recordings.all, hidden: recordings.hidden, isDemo: account.isDemo)
+        let waiting = RecordingSends.waiting(recordings.all, hidden: recordings.hidden, isDemo: account.isDemo)
         libraryNav?.tabBarItem.badgeValue = waiting > 0 ? "\(waiting)" : nil
         map.syncWaiting = waiting
     }

@@ -2,23 +2,28 @@ package dev.holdmytrack.android.sync
 
 import dev.holdmytrack.android.net.ApiException
 import java.io.IOException
+import java.time.Instant
 
 /**
  * What [RecordingSends] decides, as values (`apps/android/docs/SPEC.md` FR-5.2): a saved
- * recording is sent without a tick, since Save was the choice (ADR-0039).
+ * recording is sent without a tick, since Save was the choice (ADR-0039). The cases are
+ * `testdata/client-rules/recording-send-*.json`, which iOS's `RecordingSends` runs too.
  */
 object RecordingSendRules {
 
     /** The demo account's recordings stay on the phone: the server refuses its uploads. */
     fun sends(signedIn: Boolean, emailVerified: Boolean, demo: Boolean): Boolean = signedIn && emailVerified && !demo
 
-    /** Of the unsent recordings' [keys], those to send now: none on their way already, none swiped
+    /** A recording not marked sent in the store: its [Candidate.key] and start. */
+    data class Unsent(val key: String, val startedAt: Instant)
+
+    /** Of the [unsent] recordings, the keys to send now, newest first: none on their way already, none swiped
      *  aside ([hidden]), none whose Delete is being asked about ([held]), and none the server
      *  refused this session unless the user asked again ([retry]), so a refusal isn't sent on every
      *  return to the app. Those whose last request failed ([setBack], the latest last) go last
      *  in that order, or one that stops every send would keep the rest on the phone. */
     fun toSend(
-        keys: List<String>,
+        unsent: List<Unsent>,
         onItsWay: Set<String>,
         hidden: Set<String>,
         held: Set<String>,
@@ -26,7 +31,7 @@ object RecordingSendRules {
         setBack: List<String>,
         retry: Boolean,
     ): List<String> {
-        val going = keys.filter { it !in onItsWay && it !in hidden && it !in held && (retry || it !in refused) }
+        val going = unsent.sortedByDescending { it.startedAt }.map { it.key }.filter { it !in onItsWay && it !in hidden && it !in held && (retry || it !in refused) }
         return going.filter { it !in setBack } + setBack.filter { it in going }
     }
 
@@ -48,8 +53,9 @@ object RecordingSendRules {
         else -> Deletion.DELETED
     }
 
-    /** Of the unsent recordings' [keys], how many wait to be sent: none swiped aside. */
-    fun unsent(keys: List<String>, hidden: Set<String>): Int = keys.count { it !in hidden }
+    /** Of the unsent recordings' [keys], how many wait to be sent: none swiped aside, and none of
+     *  the demo account's. Library's badge and the Sync sheet's Retry line count them. */
+    fun waiting(keys: List<String>, hidden: Set<String>, demo: Boolean): Int = if (demo) 0 else keys.count { it !in hidden }
 
     /** What a failed request means for the rest of the send. */
     enum class Failure {
@@ -81,12 +87,11 @@ object RecordingSendRules {
         else -> Failure.NEXT
     }
 
-    /** The Sync sheet's line for the recordings not sent yet, with Retry: never for the demo
-     *  account, whose recordings stay on the phone. */
-    fun retryShown(demo: Boolean, unsent: Int): Boolean = !demo && unsent > 0
-
-    /** What an unsent recording's row says. */
+    /** What a recording's row says. */
     sealed interface Note {
+        /** Taken by the server, on its way to the map. */
+        data object Processing : Note
+
         data object Sending : Note
 
         /** Not sent yet: no connection, most likely; it goes on the next return to the app. */
@@ -95,8 +100,10 @@ object RecordingSendRules {
         data class Refused(val reason: String) : Note
     }
 
-    /** Null for one swiped aside, which goes nowhere. */
-    fun note(sending: Boolean, hidden: Boolean, refusedReason: String?): Note? = when {
+    /** Null for one that goes nowhere: the demo account's, or one swiped aside. */
+    fun note(sent: Boolean, sending: Boolean, hidden: Boolean, refusedReason: String?, demo: Boolean): Note? = when {
+        demo -> null
+        sent -> Note.Processing
         sending -> Note.Sending
         hidden -> null
         refusedReason != null -> Note.Refused(refusedReason)

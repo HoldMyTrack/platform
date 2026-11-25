@@ -74,11 +74,56 @@ struct ClientRulesTests {
     }
 }
 
+/// A case's recording, with no route.
+private func ruleRecording(_ json: RuleJSON) -> RecordedTrack {
+    let at = Date(timeIntervalSince1970: (json["startedAt"].double ?? 0) / 1000)
+    return RecordedTrack(id: json["id"].string!, startedAt: at, endedAt: at, movingSeconds: 0, meters: 0, type: "walk", points: [], sent: json["sent"].bool!)
+}
+
 /// Each rule, from a case's input to the JSON its expected value is written in.
 let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "pendingChange": { input in
         let change = PendingDiff.of(previous: Set(input.strings("previous")), now: Set(input.strings("now")), awaiting: Set(input.strings("awaiting")), listed: Set(input.strings("listed")))
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting), "pending": .ids(change.pending)]
+    },
+    "recordingSendAllowed": { input in .bool(RecordingSends.sends(emailVerified: input["emailVerified"].bool!, isDemo: input["isDemo"].bool!)) },
+    "recordingSendOrder": { input in
+        let sends = RecordingSends.toSend(input["recordings"].list!.map(ruleRecording), hidden: Set(input.strings("hidden")), held: Set(input.strings("held")),
+                                          refused: Set(input.strings("refused")), setBack: input.strings("setBack"), retry: input["retry"].bool!)
+        return .array(sends.map { .string($0.id) })
+    },
+    "recordingSendFailure": { input in
+        let error: APIError = switch input["answer"].string {
+        case "none": .unreachable
+        case "unreadable": .unreadable
+        default: input.int("answer") == 426 ? .outdated : .http(status: input.int("answer"), code: nil, message: nil)
+        }
+        let outcome = switch RecordingSends.failure(error, afterUnanswered: input["afterUnanswered"].bool!) {
+        case .stop: "stop"
+        case .next: "next"
+        case .refuse: "refuse"
+        }
+        return ["outcome": .string(outcome), "unanswered": .bool(RecordingSends.unanswered(error))]
+    },
+    "recordingSendDeletion": { input in
+        switch RecordingSends.deletion(stored: input["stored"].bool!, going: input["going"].bool!, landed: input["landed"].bool!) {
+        case .deleted: .string("deleted")
+        case .sending: .string("sending")
+        case .landed: .string("landed")
+        }
+    },
+    "recordingSendNote": { input in
+        switch RecordingSends.note(sent: input["sent"].bool!, sending: input["sending"].bool!, hidden: input["hidden"].bool!,
+                                   refusal: input["refused"].bool! ? .server(nil) : nil, isDemo: input["isDemo"].bool!) {
+        case nil: .null
+        case .processing: .string("processing")
+        case .sending: .string("sending")
+        case .waiting: .string("waiting")
+        case .refused: .string("refused")
+        }
+    },
+    "recordingSendWaiting": { input in
+        .number(Double(RecordingSends.waiting(input["recordings"].list!.map(ruleRecording), hidden: Set(input.strings("hidden")), isDemo: input["isDemo"].bool!)))
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
     "attachmentName": { input in .string(AttachmentName.of(input["header"].string)) },
