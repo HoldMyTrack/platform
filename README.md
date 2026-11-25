@@ -59,7 +59,6 @@ holdmytrack/
 │   ├── IMPLEMENTATION.md        # schema, workflows, each feature's own detail
 │   ├── SPEC.md                  # observable behavior, FR-N.M, independent of the above
 │   ├── ROADMAP.md               # the remaining-work checklist
-│   ├── KNOWN_ISSUES.md          # currently-open defects in shipped functionality
 │   ├── adr/                     # Architecture Decision Records — why, not just what
 │   ├── DEVELOPMENT.md           # running it locally, verification, gotchas, commands
 │   ├── DEPLOY.md                # the production deployment runbook
@@ -102,7 +101,7 @@ This is the repository's only layout tree; other documents point here.
 | [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | How the built pieces work where the code can't say it: the schema, ingest and tile flows, invariants, reasons and traps. |
 | [`docs/SPEC.md`](docs/SPEC.md) | What a user or client can rely on, as numbered requirements (FR-N.M): limits, guarantees, cross-feature rules. |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | The remaining-work checklist toward the product `VISION.md` describes. |
-| [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md) | Open defects in shipped functionality. A bug found while building something goes here. |
+| [Issues labelled `bug`](https://github.com/HoldMyTrack/platform/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug) | Open defects in shipped functionality. A bug found while building something is filed there. |
 | [`docs/adr/`](docs/adr/) | Why each hard-to-reverse decision was made, and what was rejected. |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Running the stack, verifying a change, and gotchas already hit. |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | Standing up a deployment. |
