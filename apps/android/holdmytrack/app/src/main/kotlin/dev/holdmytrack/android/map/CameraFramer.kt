@@ -21,6 +21,7 @@ class CameraFramer(
     private val panel: TracksPanel,
     private val map: () -> MapLibreMap?,
     private val recording: () -> Boolean,
+    private val tripOpen: () -> Boolean,
     /** The top on screen of a sheet over the map in a window of its own (`panel/MapSheet`), or
      *  null when none is open. */
     private val sheetTop: () -> Int?,
@@ -58,8 +59,7 @@ class CameraFramer(
             val instance = map()
             val view = OpeningView.of(boxes, root.width / density.toDouble(), root.height / density.toDouble())
             onEmpty(view == null)
-            // Reopening the app mid-recording: the camera belongs to the live track.
-            if (view != null && instance != null && !recording()) {
+            if (view != null && instance != null && MapChromeRules.opens(recording(), tripOpen())) {
                 appFlight = true
                 instance.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(view.lat, view.lon), view.zoom))
             }

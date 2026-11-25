@@ -42,7 +42,7 @@ extension MapViewController {
             let boxes = FitBoxes.of(newest.tracks)
             if let view = OpeningView.of(boxes, width: mapView.bounds.width, height: mapView.bounds.height) {
                 hideNotice(.empty)
-                if MapChrome.opens(flightAsked: session.flyRequest, recording: recordingLive) {
+                if MapChrome.opens(flightAsked: session.flyRequest, recording: recordingLive, tripOpen: session.tripID != nil) {
                     appFlying = true
                     mapView.setCenter(CLLocationCoordinate2D(latitude: view.lat, longitude: view.lon), zoomLevel: view.zoom, animated: false)
                     DispatchQueue.main.async { [weak self] in self?.appFlying = false }

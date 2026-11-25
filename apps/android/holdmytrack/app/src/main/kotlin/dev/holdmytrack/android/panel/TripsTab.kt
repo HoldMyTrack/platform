@@ -134,14 +134,23 @@ class TripsTab(
         loadInbox()
     }
 
-    private fun loadTrips() {
+    /** The app came back with the tab showing: the list and the copies waiting are read again. A
+     *  failed read leaves the last one shown. */
+    fun refresh() {
+        if (!showing) return
+        loadTrips(quiet = true)
+        loadInbox()
+    }
+
+    private fun loadTrips(quiet: Boolean = false) {
         HoldMyTrackApi.trips { result ->
             if (!showing) return@trips
             result.onSuccess { next ->
                 trips = next
                 ready = true
+                error = null
                 openNewest()
-            }.onFailure { error = FailureText.of(it, res.getString(R.string.trip_load_failed)) }
+            }.onFailure { if (!quiet || !ready) error = FailureText.of(it, res.getString(R.string.trip_load_failed)) }
             render()
         }
     }
@@ -211,8 +220,11 @@ class TripsTab(
                 openError = null
                 trips = trips.map { if (it.id == trip.id) trip else it }
             }.onFailure { failure ->
+                val gone = failure is ApiException && failure.code == 404
+                // A failed read keeps the numbers shown, unless the Trip is gone.
+                if (openTrip?.id == id && !gone) return@trip
                 openTrip = null
-                openError = if (failure is ApiException && failure.code == 404) {
+                openError = if (gone) {
                     res.getString(R.string.trip_not_found)
                 } else {
                     FailureText.of(failure, res.getString(R.string.trip_load_failed))

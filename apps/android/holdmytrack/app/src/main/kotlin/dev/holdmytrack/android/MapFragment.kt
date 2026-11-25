@@ -437,9 +437,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 photos.refresh(force = true)
             },
             onRemovedFromTrip = { views?.refresh?.afterRemovedFromTrip(it) },
-            // The map has history now, so the empty notice goes.
+            // A copy can add nothing, so whether the map has history is asked again.
             onTripCopyArrived = {
-                notices.hide(MapNotice.EMPTY)
+                if (notices.shown == MapNotice.EMPTY) views?.let { v -> v.camera.openAgain { v.area.followArea() } }
                 views?.refresh?.afterTripCopy()
             },
             onTripsWaiting = { host?.setTripsWaiting(it) },
@@ -448,7 +448,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             libraryTab = libraryTab,
             download = trackDownload,
         )
-        val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, sheetTop = { views?.area?.datesSheetTop() }, onEmpty = ::onEmptyChecked)
+        val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, tripOpen = { tripId != null }, sheetTop = { views?.area?.datesSheetTop() }, onEmpty = ::onEmptyChecked)
         val area = AreaController(
             this,
             sheet,
@@ -663,6 +663,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             // Sync or a recording may have changed the area's tracks and an open Trip too.
             v.area.reloadList()
             v.panel.tripsTab.reloadOpen()
+            v.panel.tripsTab.refresh()
         }
         renderSheet()
         viewOnMapRequest?.let { (id, day) ->

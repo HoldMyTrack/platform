@@ -135,4 +135,11 @@ class MapChromeRulesTest {
         // Only the last ask is kept, and it meets the panel as it's built.
         assertNull(MapChromeRules.tabRequest(PanelTab.TRACKS, PanelTab.TRACKS))
     }
+
+    @Test
+    fun `the opening view leaves the camera to a recording or an open Trip`() {
+        assertTrue(MapChromeRules.opens(recording = false, tripOpen = false))
+        assertFalse(MapChromeRules.opens(recording = true, tripOpen = false))
+        assertFalse(MapChromeRules.opens(recording = false, tripOpen = true))
+    }
 }

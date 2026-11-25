@@ -138,7 +138,8 @@ class YouFragment : Fragment(R.layout.fragment_you) {
                     profile = loaded
                     Session.update(loaded)
                     if (view != null) renderAccount()
-                }
+                    // A failed read is made again on the next show.
+                }.onFailure { accountReadAtMs = null }
             }
         }
         HoldMyTrackApi.privateLocations { result ->

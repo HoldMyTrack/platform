@@ -250,7 +250,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         loadHistory()
         loadList()
         tripsPanel.reloadOpen()
-        tripsPanel.refreshCount()
+        tripsPanel.refresh()
     }
 
     override func viewDidLayoutSubviews() {

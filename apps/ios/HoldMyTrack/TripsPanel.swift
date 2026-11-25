@@ -50,6 +50,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var answering = false
     private var answerError: String?
     private var inboxTask: Task<Void, Never>?
+    /// The list's read under way.
+    private var tripsTask: Task<Void, Never>?
 
     private enum Item {
         case send(TripSend), copying(TripCopying), folder(Trip, open: Bool, expanded: Bool), text(String, small: Bool), stats(Trip)
@@ -116,17 +118,31 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
     }
 
-    private func loadTrips() {
-        Task {
+    /// The map is back: with the tab showing the list and the copies waiting are read again, unless
+    /// the tab's own opening is reading them, else only the count. A failed read leaves the last
+    /// one shown.
+    func refresh() {
+        guard showing else { return refreshCount() }
+        guard tripsTask == nil else { return }
+        loadTrips(quiet: true)
+        loadInbox()
+    }
+
+    private func loadTrips(quiet: Bool = false) {
+        tripsTask?.cancel()
+        tripsTask = Task {
+            defer { if !Task.isCancelled { tripsTask = nil } }
             do {
                 let read = try await api.trips()
-                guard showing else { return }
+                guard showing, !Task.isCancelled else { return }
                 read.forEach { TrackTypes.shared.merge($0.types) }
                 trips = read.map(\.trip)
                 ready = true
+                self.error = nil
                 if openID == nil, let newest = trips.first { onEvent?(.open(newest.id, collapse: false)) }
             } catch {
-                self.error = Self.message(error, String(localized: "Could not load your trips"))
+                guard !Task.isCancelled else { return }
+                if !quiet || !ready { self.error = Self.message(error, String(localized: "Could not load your trips")) }
             }
             render()
         }
