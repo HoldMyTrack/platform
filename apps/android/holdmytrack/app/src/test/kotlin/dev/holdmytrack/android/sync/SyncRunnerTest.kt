@@ -3,12 +3,14 @@ package dev.holdmytrack.android.sync
 import androidx.health.connect.client.records.ExerciseRoute
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.metadata.Metadata
+import dev.holdmytrack.android.net.ApiException
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.SyncResult
 import dev.holdmytrack.android.net.SyncTrackJson
 import dev.holdmytrack.android.recording.RecordedPoint
 import dev.holdmytrack.android.recording.db.RecordedTrackRecord
 import java.io.IOException
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.time.Duration
 import java.time.Instant
@@ -228,7 +230,40 @@ class SyncRunnerTest {
     }
 
     @Test
-    fun `a failed recording stops the run with the ones before it marked sent`() {
+    fun `a recording the server won't take is refused with its reason, and the rest go`() {
+        val server = object {
+            fun answer(tracks: List<SyncTrackJson>): List<SyncResult> {
+                if (tracks.single().externalId == "r1") throw ApiException(413, "too big", "too_large")
+                return tracks.map { SyncResult(it.externalId, "enqueued", "") }
+            }
+        }
+        val runner = SyncRunner(post = { tracks, _ -> server.answer(tracks) }, markSent = { marked += it }, text = Words, reread = { null })
+
+        val report = send(runner, listOf(recording("r1"), recording("r2")))
+
+        assertEquals(listOf("r2"), marked)
+        assertEquals(listOf("too big"), report.rejected.map { it.reason })
+        assertNull(report.stoppedBecause)
+    }
+
+    @Test
+    fun `a recording whose request gets no answer doesn't hold up the rest`() {
+        val runner = SyncRunner(
+            post = { tracks, _ ->
+                if (tracks.single().externalId == "r1") throw SocketTimeoutException()
+                tracks.map { SyncResult(it.externalId, "enqueued", "") }
+            },
+            markSent = { marked += it }, text = Words, reread = { null },
+        )
+
+        val report = send(runner, listOf(recording("r1"), recording("r2"), recording("r3")))
+
+        assertEquals(listOf("r2", "r3"), marked)
+        assertTrue(report.rejected.isEmpty())
+    }
+
+    @Test
+    fun `a second unanswered recording stops the run with the ones before it marked sent`() {
         val server = Server(failOnRequest = 2)
         val report = send(runner(server), listOf(recording("r1"), recording("r2"), recording("r3")))
         assertEquals(listOf("r1"), marked)

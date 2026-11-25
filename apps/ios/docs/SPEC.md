@@ -113,8 +113,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-5.1), except as below.
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-5.2), except as below.
 
-- A recording swiped aside on the Sync tab isn't sent, nor counted as waiting, until it's brought back.
-- A recording the server can't take doesn't hold up the others.
 - Download GPX goes to the share sheet, which saves to Files among its choices.
 
 ## 8. Non-Functional Requirements (summary)

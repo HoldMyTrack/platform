@@ -393,6 +393,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onCandidates = syncCandidates::set,
             onFrame = { candidates -> BoxUnion.of(candidates.map { it.bbox }.filter { it.isNotEmpty() })?.let { views?.camera?.flyTo(it) } },
             onSynced = ::onSyncedFromPhone,
+            onWaitingChanged = { host?.refreshSyncBadge() },
         )
         val libraryTab = LibraryTab(
             findViewById(R.id.panel_library_content),
@@ -1040,6 +1041,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         recording.dismissDialogs()
         // A search waiting to be read, or a Delete finishing, would read in the scope going now.
         v?.panel?.libraryTab?.destroy()
+        v?.panel?.syncTab?.destroy()
         layers.dismiss()
         v?.modes?.dismissFogLevel()
         spots.stopCapture()

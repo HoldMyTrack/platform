@@ -27,11 +27,17 @@ object RecordingSends {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var running = false
 
+    /** A send asked for while one ran, which picked its recordings already: it runs after. */
+    private var again = false
+
     /** The account the refusals below belong to. */
     private var account: String? = null
 
     /** Recording keys going now. */
     private var sending: Set<String> = emptySet()
+
+    /** Recording keys whose Delete is being asked about, which no send takes meanwhile. */
+    private val held = mutableSetOf<String>()
 
     /** Recording keys the server refused, with its reason. */
     private val refused = mutableMapOf<String, String>()
@@ -47,15 +53,32 @@ object RecordingSends {
     }
 
     /** What the row of the recording with this [key] says. */
-    fun note(key: String): RecordingSendRules.Note {
+    fun note(key: String, hidden: Boolean): RecordingSendRules.Note? {
         forThisAccount()
-        return RecordingSendRules.note(key in sending, refused[key])
+        return RecordingSendRules.note(key in sending, hidden, refused[key])
     }
 
-    /** Sends what's waiting; [retry] sends what the server refused too. A send under way, or an
-     *  account that can't send, does nothing. */
+    /** Keeps the recording with this [key] out of any send while its Delete is asked about, or a
+     *  return to the app would send it from under the question. */
+    fun hold(key: String) {
+        held += key
+    }
+
+    /** The question closed: what's kept goes now. */
+    fun release(context: Context, key: String) {
+        if (held.remove(key)) send(context)
+    }
+
+    fun deletable(key: String): Boolean = RecordingSendRules.deletable(key in sending, SyncProgress.isProcessing(key))
+
+    /** Sends what's waiting; [retry] sends what the server refused too. One asked for during a
+     *  send runs after it; an account that can't send does nothing. */
     fun send(context: Context, retry: Boolean = false) {
-        if (running || !RecordingSendRules.sends(Session.isSignedIn, Session.emailVerified, Session.isDemo)) return
+        if (!RecordingSendRules.sends(Session.isSignedIn, Session.emailVerified, Session.isDemo)) return
+        if (running) {
+            again = true
+            return
+        }
         forThisAccount()
         val app = context.applicationContext
         running = true
@@ -64,14 +87,20 @@ object RecordingSends {
                 val store = RecordedTrackStore(app)
                 val waiting = store.all().map { SyncCandidates.fromRecording(it) }
                 val onItsWay = SyncProgress.candidates.mapTo(HashSet()) { it.key }
-                val keys = RecordingSendRules.toSend(waiting.map { it.key }, onItsWay, refused.keys, retry).toSet()
+                val keys = RecordingSendRules.toSend(waiting.map { it.key }, onItsWay, HiddenCandidates(app, Session.email).all(), held, refused.keys, retry).toSet()
                 val batch = waiting.filter { it.key in keys }
                 if (batch.isEmpty()) return@launch
                 sending = keys
                 changed()
-                val report = SyncRunner(store, app.resources, healthConnect = null).send(batch, onLanded = { SyncProgress.add(app, it) }) {}
-                for (key in keys) refused -= key
-                for (rejection in report.rejected) refused[rejection.key] = rejection.reason
+                SyncRunner(store, app.resources, healthConnect = null).send(
+                    batch,
+                    onLanded = { landed ->
+                        // Only an answer clears a refusal: a run with no connection keeps it.
+                        for (candidate in landed) refused -= candidate.key
+                        SyncProgress.add(app, landed)
+                    },
+                    onRejected = { refused[it.key] = it.reason },
+                ) {}
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -81,6 +110,10 @@ object RecordingSends {
                 running = false
                 sending = emptySet()
                 changed()
+                if (again) {
+                    again = false
+                    send(app)
+                }
             }
         }
     }

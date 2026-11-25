@@ -1,5 +1,8 @@
 package dev.holdmytrack.android.sync
 
+import dev.holdmytrack.android.net.ApiException
+import java.io.IOException
+
 /**
  * What [RecordingSends] decides, as values (`apps/android/docs/SPEC.md` FR-5.2): a saved
  * recording is sent without a tick, since Save was the choice (ADR-0039).
@@ -9,11 +12,44 @@ object RecordingSendRules {
     /** The demo account's recordings stay on the phone: the server refuses its uploads. */
     fun sends(signedIn: Boolean, emailVerified: Boolean, demo: Boolean): Boolean = signedIn && emailVerified && !demo
 
-    /** Of the unsent recordings' [keys], those to send now: none on their way already, and none
-     *  the server refused this session unless the user asked again ([retry]), so a refusal isn't
+    /** Of the unsent recordings' [keys], those to send now: none on their way already, none swiped
+     *  aside ([hidden]), none whose Delete is being asked about ([held]), and none the server refused this session unless the user asked again ([retry]), so a refusal isn't
      *  sent on every return to the app. */
-    fun toSend(keys: List<String>, onItsWay: Set<String>, refused: Set<String>, retry: Boolean): List<String> =
-        keys.filter { it !in onItsWay && (retry || it !in refused) }
+    fun toSend(keys: List<String>, onItsWay: Set<String>, hidden: Set<String>, held: Set<String>, refused: Set<String>, retry: Boolean): List<String> =
+        keys.filter { it !in onItsWay && it !in hidden && it !in held && (retry || it !in refused) }
+
+    /** Whether Delete may remove the phone's copy: one sent lands whatever the phone keeps. */
+    fun deletable(sending: Boolean, onItsWay: Boolean): Boolean = !sending && !onItsWay
+
+    /** Of the unsent recordings' [keys], how many wait to be sent: none swiped aside. */
+    fun unsent(keys: List<String>, hidden: Set<String>): Int = keys.count { it !in hidden }
+
+    /** What a failed request means for the rest of the send. */
+    enum class Failure {
+        /** Nothing would go: the rest waits too. */
+        STOP,
+
+        /** This one waits; the rest goes on. */
+        NEXT,
+
+        /** The server won't take this one; the rest goes on. */
+        REFUSE,
+    }
+
+    /** Only a failure every recording would meet stops the send, or one the server can't take
+     *  would keep all those after it on the phone; only an answer about the recording itself
+     *  refuses it. A request with no answer may be this recording's, too long to upload, or the
+     *  connection's: a second in one send ([unanswered] before it) says it's the connection. */
+    fun failure(e: Exception, unanswered: Int): Failure = when {
+        e is ApiException -> when (e.code) {
+            400, 413, 422 -> Failure.REFUSE
+            408, 500 -> Failure.NEXT
+            else -> Failure.STOP
+        }
+        e is IOException -> if (unanswered == 0) Failure.NEXT else Failure.STOP
+        // An answer the app can't read.
+        else -> Failure.NEXT
+    }
 
     /** The Sync sheet's line for the recordings not sent yet, with Retry: never for the demo
      *  account, whose recordings stay on the phone. */
@@ -29,8 +65,10 @@ object RecordingSendRules {
         data class Refused(val reason: String) : Note
     }
 
-    fun note(sending: Boolean, refusedReason: String?): Note = when {
+    /** Null for one swiped aside, which goes nowhere. */
+    fun note(sending: Boolean, hidden: Boolean, refusedReason: String?): Note? = when {
         sending -> Note.Sending
+        hidden -> null
         refusedReason != null -> Note.Refused(refusedReason)
         else -> Note.Waiting
     }

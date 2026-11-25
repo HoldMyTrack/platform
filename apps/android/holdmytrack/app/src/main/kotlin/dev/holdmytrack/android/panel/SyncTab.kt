@@ -1,5 +1,6 @@
 package dev.holdmytrack.android.panel
 
+import android.app.Dialog
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
@@ -7,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -88,6 +90,8 @@ class SyncTab(
     private val onFrame: (List<Candidate>) -> Unit,
     /** A run sent something: the map's tracks, its days and its tiles are out of date. */
     private val onSynced: () -> Unit,
+    /** A row was hidden, brought back or deleted: what's waiting to be sent changed. */
+    private val onWaitingChanged: () -> Unit,
 ) {
     private val res = content.resources
     private val store = RecordedTrackStore(activity)
@@ -225,10 +229,17 @@ class SyncTab(
         showing = false
         similarSheet?.dismiss()
         similarSheet = null
+        destroy()
         SyncProgress.removeListener(progressListener)
         RecordingSends.removeListener(recordingsListener)
         pause()
         onCandidates(emptyList(), null)
+    }
+
+    /** The map's view is going, or the tab: Delete's question too, which would go with its window
+     *  undismissed, and its recording stay held. */
+    fun destroy() {
+        deleteDialog?.dismiss()
     }
 
     /** Back on screen — from Health Connect access, a recording's Edit, or the app itself: what's kept
@@ -419,8 +430,8 @@ class SyncTab(
         refresh.isEnabled = !loading && runJob == null
 
         // The recordings not sent yet, which send themselves; Retry sends them now.
-        val unsent = recordings.count { !processing(it) }
-        val sendingRecordings = recordings.any { RecordingSends.note(it.key) == RecordingSendRules.Note.Sending }
+        val unsent = RecordingSendRules.unsent(recordings.filterNot { processing(it) }.map { it.key }, hidden)
+        val sendingRecordings = recordings.any { RecordingSends.note(it.key, it.key in hidden) == RecordingSendRules.Note.Sending }
         recordingsRow.visibility = if (RecordingSendRules.retryShown(demo, unsent)) View.VISIBLE else View.GONE
         recordingsStatus.text = if (sendingRecordings) {
             res.getString(R.string.sync_recordings_sending)
@@ -540,6 +551,9 @@ class SyncTab(
         )
     }
 
+    /** Delete's question while it's up. */
+    private var deleteDialog: Dialog? = null
+
     /** Swiped aside: hidden, with Undo; a hidden one swiped is back on the list. */
     private fun swiped(key: String) {
         val store = hiddenStore()
@@ -548,6 +562,9 @@ class SyncTab(
         ticked -= key
         hidden = store.all()
         render()
+        onWaitingChanged()
+        // Brought back, a recording goes now.
+        if (wasHidden) RecordingSends.send(activity)
         Snackbar.make(list, if (wasHidden) R.string.sync_unhidden else R.string.sync_hidden, Snackbar.LENGTH_LONG)
             .apply { if (bar.visibility == View.VISIBLE) anchorView = bar }
             .setAction(R.string.sync_undo) {
@@ -555,25 +572,45 @@ class SyncTab(
                 if (wasHidden) again.hide(key) else again.unhide(key)
                 hidden = again.all()
                 render()
+                onWaitingChanged()
+                if (!wasHidden) RecordingSends.send(activity)
             }
             .show()
     }
 
     private fun confirmDelete(candidate: Candidate) {
-        MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_HoldMyTrack_Dialog_Destructive)
+        // A double tap: one question, so closing it is closing the hold.
+        if (deleteDialog != null) return
+        val app = activity.applicationContext
+        var deleting: Job? = null
+        RecordingSends.hold(candidate.key)
+        deleteDialog = MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_HoldMyTrack_Dialog_Destructive)
             .setTitle(R.string.recorded_delete_confirm_title)
             .setMessage(R.string.recorded_delete_confirm_message)
             .setPositiveButton(R.string.recording_delete) { _, _ ->
-                scope().launch {
+                deleting = scope().launch {
+                    if (!RecordingSends.deletable(candidate.key)) {
+                        render()
+                        Snackbar.make(list, R.string.recorded_delete_sending, Snackbar.LENGTH_LONG)
+                            .apply { if (bar.isVisible) anchorView = bar }
+                            .show()
+                        return@launch
+                    }
                     store.delete(candidate.externalId)
                     hiddenStore().unhide(candidate.key)
                     hidden = hiddenStore().all()
                     recordings = recordings.filterNot { it.key == candidate.key }
                     ticked -= candidate.key
                     render()
+                    onWaitingChanged()
                 }
             }
             .setNegativeButton(android.R.string.cancel, null)
+            .setOnDismissListener {
+                deleteDialog = null
+                // After the delete, if that was the answer, however it ended.
+                deleting?.invokeOnCompletion { RecordingSends.release(app, candidate.key) } ?: RecordingSends.release(app, candidate.key)
+            }
             .show()
     }
 
@@ -682,7 +719,7 @@ class SyncTab(
             TrackTypes.label(candidate.trackType),
             res.getString(if (candidate.isRecording) R.string.sync_origin_recorded else R.string.sync_origin_health_connect),
         ).joinToString(" · ")
-        val sendNote = if (candidate.isRecording && !Session.isDemo) RecordingSends.note(candidate.key) else null
+        val sendNote = if (candidate.isRecording && !Session.isDemo) RecordingSends.note(candidate.key, candidate.key in hidden) else null
         val processing = processing(candidate) || sendNote == RecordingSendRules.Note.Sending
         val note = when {
             processing(candidate) -> res.getString(R.string.sync_row_processing)

@@ -22,7 +22,10 @@ import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.panel.PanelTab
 import dev.holdmytrack.android.recording.RecordingService
+import dev.holdmytrack.android.sync.HiddenCandidates
+import dev.holdmytrack.android.sync.RecordingSendRules
 import dev.holdmytrack.android.sync.RecordingSends
+import dev.holdmytrack.android.sync.SyncCandidates
 import dev.holdmytrack.android.tour.TourController
 import dev.holdmytrack.android.tour.TourEvent
 import dev.holdmytrack.android.tour.TourHost
@@ -254,12 +257,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Library's badge, and the count on its +: the recordings on this phone waiting to be sent
-     *  from Library › Sync. Read on every return to the map, a recording's Save screen included,
+     *  from Library › Sync, none swiped aside. Read on every return to the map, a recording's Save screen included,
      *  and after a send. */
     fun refreshSyncBadge() {
         if (Session.isDemo) return
         lifecycleScope.launch {
-            val waiting = RecordedTrackStore(this@MainActivity).all().size
+            val keys = RecordedTrackStore(this@MainActivity).all().map { SyncCandidates.key(HoldMyTrackApi.SOURCE_RECORDED, it.id) }
+            val waiting = RecordingSendRules.unsent(keys, HiddenCandidates(this@MainActivity, Session.email).all())
             map()?.setSyncWaiting(waiting)
             if (waiting <= 0) {
                 nav.removeBadge(R.id.nav_library)
