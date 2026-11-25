@@ -144,7 +144,8 @@ final class YouViewController: UITableViewController {
         let reads = YouRefresh.of(numbers: numbersRead, accountAtMs: accountReadAtMs, now: now, resumed: resumed)
         if reads.account {
             accountReadAtMs = now.atMs
-            flow.refreshAccount()
+            // A failed read is made again on the next showing.
+            flow.refreshAccount { [weak self] read in if !read { self?.accountReadAtMs = nil } }
         }
         if reads.numbers {
             numbersRead = now

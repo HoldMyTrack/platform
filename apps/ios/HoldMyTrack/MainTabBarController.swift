@@ -205,7 +205,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             let pauses = self.recorder.state == .recording
             self.recorder.tap()
             // A tap is the obvious guess at stop.
-            if pauses { self.map.say(String(localized: "record.holdToStop", defaultValue: "Hold to stop recording", comment: "Recording: said on a pause, since a tap is the obvious guess at stop.")) }
+            if pauses { self.say(String(localized: "record.holdToStop", defaultValue: "Hold to stop recording", comment: "Recording: said on a pause, since a tap is the obvious guess at stop.")) }
         }
         recordButton.onStop = { [weak self] in
             guard let self else { return }
@@ -269,6 +269,12 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     private func renderRecordingStatus() {
         guard let status = recorder.status(format: PanelFormat(account: account), at: Date()) else { return }
         map.showRecordingStatus(clock: status.clock, detail: status.detail, paused: status.paused)
+    }
+
+    /// Over the map while it shows, else over the tab that does.
+    private func say(_ text: String) {
+        if map.viewIfLoaded?.window != nil { return map.say(text) }
+        Toast.show(text, over: view, above: tabBar)
     }
 
     /// The Tracks tab, where the recording is drawn and its outcome said.

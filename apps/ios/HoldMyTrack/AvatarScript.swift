@@ -11,12 +11,14 @@ enum AvatarScript {
     static let source = """
     (() => {
       let small = null;
+      let latest = 0;
       document.addEventListener('change', (event) => {
         const input = event.target;
         if (!input.matches || !input.matches('#avatar-form input[type=file]')) return;
         const file = input.files[0];
         if (!file || file === small) return;
         event.stopImmediatePropagation();
+        const pick = ++latest;
         const send = () => input.dispatchEvent(new Event('change', { bubbles: true }));
         createImageBitmap(file).then((image) => {
           const scale = Math.min(1, 512 / Math.max(image.width, image.height));
@@ -29,10 +31,14 @@ enum AvatarScript {
           context.drawImage(image, 0, 0, canvas.width, canvas.height);
           return new Promise((done) => canvas.toBlob(done, 'image/jpeg', 0.9));
         }).then((blob) => {
+          if (!blob) throw new Error('not encoded');
+          if (pick !== latest) return;
           const files = new DataTransfer();
           files.items.add(new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
           input.files = files.files;
         }).catch(() => {}).finally(() => {
+          // Another photo was picked meanwhile: that one goes.
+          if (pick !== latest) return;
           small = input.files[0];
           send();
         });

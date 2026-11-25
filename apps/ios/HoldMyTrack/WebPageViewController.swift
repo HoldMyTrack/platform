@@ -111,8 +111,9 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
             tabLeft: tabBarController.map { $0.selectedViewController !== navigation } ?? false,
             covered: presentedViewController != nil || navigation?.presentedViewController != nil,
             onboarding: onboarding)
-        // Settings may have changed the units, the name, the Country or the language.
-        if left { flow.refreshAccount() }
+        // Settings may have changed the units, the name, the Country or the language. Popped, You
+        // reads it as it shows.
+        if left && !isMovingFromParent { flow.refreshAccount() }
     }
 
     /// The cookies first, then the page.
