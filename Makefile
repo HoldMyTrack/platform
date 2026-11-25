@@ -56,13 +56,15 @@ test-go: ## Go tests (services/server), one package at a time, against compose's
 	$(COMPOSE) exec -T db sh -c 'createdb -U holdmytrack holdmytrack_test 2>/dev/null || true'
 	$(GO) go test -p 1 ./...
 
-# verify:style compares against services/server/internal/mapstyle/styles, and verify:api-types
-# against the API contract in services/server/api, and the client rule cases read testdata/; the web
-# container sees none of these otherwise, so each is mounted where the relative paths land.
+# verify:style compares against the style and layers documents in services/server/internal/mapstyle,
+# verify:api-types against the API contract in services/server/api, the client rule cases read
+# testdata/ and the Play screenshots' rules brand/; the web container sees none of these otherwise,
+# so each is mounted where the relative paths land.
 test-unit: ## Web unit tests and drift checks (fix: npm run build:style / gen:api-types)
-	$(COMPOSE) run --rm -v $(CURDIR)/services/server/internal/mapstyle/styles:/services/server/internal/mapstyle/styles:ro \
+	$(COMPOSE) run --rm -v $(CURDIR)/services/server/internal/mapstyle:/services/server/internal/mapstyle:ro \
 	  -v $(CURDIR)/services/server/api:/services/server/api:ro \
 	  -v $(CURDIR)/testdata:/testdata:ro \
+	  -v $(CURDIR)/brand:/brand:ro \
 	  web sh -c "npm run test:unit && npm run verify:style && npm run verify:api-types"
 
 verify: ## Headless Playwright map checks against a dev server (test profile)
