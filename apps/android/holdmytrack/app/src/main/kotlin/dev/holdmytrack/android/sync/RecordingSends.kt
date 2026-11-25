@@ -27,6 +27,9 @@ object RecordingSends {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var running = false
 
+    /** A send asked for while one ran, which picked its recordings already: it runs after. */
+    private var again = false
+
     /** The account the refusals below belong to. */
     private var account: String? = null
 
@@ -68,10 +71,14 @@ object RecordingSends {
 
     fun deletable(key: String): Boolean = RecordingSendRules.deletable(key in sending, SyncProgress.isProcessing(key))
 
-    /** Sends what's waiting; [retry] sends what the server refused too. A send under way, or an
-     *  account that can't send, does nothing. */
+    /** Sends what's waiting; [retry] sends what the server refused too. One asked for during a
+     *  send runs after it; an account that can't send does nothing. */
     fun send(context: Context, retry: Boolean = false) {
-        if (running || !RecordingSendRules.sends(Session.isSignedIn, Session.emailVerified, Session.isDemo)) return
+        if (!RecordingSendRules.sends(Session.isSignedIn, Session.emailVerified, Session.isDemo)) return
+        if (running) {
+            again = true
+            return
+        }
         forThisAccount()
         val app = context.applicationContext
         running = true
@@ -85,15 +92,15 @@ object RecordingSends {
                 if (batch.isEmpty()) return@launch
                 sending = keys
                 changed()
-                val report = SyncRunner(store, app.resources, healthConnect = null).send(
+                SyncRunner(store, app.resources, healthConnect = null).send(
                     batch,
                     onLanded = { landed ->
                         // Only an answer clears a refusal: a run with no connection keeps it.
                         for (candidate in landed) refused -= candidate.key
                         SyncProgress.add(app, landed)
                     },
+                    onRejected = { refused[it.key] = it.reason },
                 ) {}
-                for (rejection in report.rejected) refused[rejection.key] = rejection.reason
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -103,6 +110,10 @@ object RecordingSends {
                 running = false
                 sending = emptySet()
                 changed()
+                if (again) {
+                    again = false
+                    send(app)
+                }
             }
         }
     }

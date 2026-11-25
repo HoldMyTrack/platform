@@ -10,6 +10,7 @@ import dev.holdmytrack.android.net.SyncTrackJson
 import dev.holdmytrack.android.recording.RecordedPoint
 import dev.holdmytrack.android.recording.db.RecordedTrackRecord
 import java.io.IOException
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.time.Duration
 import java.time.Instant
@@ -246,7 +247,23 @@ class SyncRunnerTest {
     }
 
     @Test
-    fun `a failed recording stops the run with the ones before it marked sent`() {
+    fun `a recording whose request gets no answer doesn't hold up the rest`() {
+        val runner = SyncRunner(
+            post = { tracks, _ ->
+                if (tracks.single().externalId == "r1") throw SocketTimeoutException()
+                tracks.map { SyncResult(it.externalId, "enqueued", "") }
+            },
+            markSent = { marked += it }, text = Words, reread = { null },
+        )
+
+        val report = send(runner, listOf(recording("r1"), recording("r2"), recording("r3")))
+
+        assertEquals(listOf("r2", "r3"), marked)
+        assertTrue(report.rejected.isEmpty())
+    }
+
+    @Test
+    fun `a second unanswered recording stops the run with the ones before it marked sent`() {
         val server = Server(failOnRequest = 2)
         val report = send(runner(server), listOf(recording("r1"), recording("r2"), recording("r3")))
         assertEquals(listOf("r1"), marked)

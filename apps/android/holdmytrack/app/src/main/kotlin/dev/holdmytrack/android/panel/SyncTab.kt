@@ -89,8 +89,8 @@ class SyncTab(
     private val onFrame: (List<Candidate>) -> Unit,
     /** A run sent something: the map's tracks, its days and its tiles are out of date. */
     private val onSynced: () -> Unit,
-    /** A row was hidden or brought back: what's waiting to be sent changed. */
-    private val onHidden: () -> Unit,
+    /** A row was hidden, brought back or deleted: what's waiting to be sent changed. */
+    private val onWaitingChanged: () -> Unit,
 ) {
     private val res = content.resources
     private val store = RecordedTrackStore(activity)
@@ -561,7 +561,9 @@ class SyncTab(
         ticked -= key
         hidden = store.all()
         render()
-        onHidden()
+        onWaitingChanged()
+        // Brought back, a recording goes now.
+        if (wasHidden) RecordingSends.send(activity)
         Snackbar.make(list, if (wasHidden) R.string.sync_unhidden else R.string.sync_hidden, Snackbar.LENGTH_LONG)
             .apply { if (bar.visibility == View.VISIBLE) anchorView = bar }
             .setAction(R.string.sync_undo) {
@@ -569,12 +571,15 @@ class SyncTab(
                 if (wasHidden) again.hide(key) else again.unhide(key)
                 hidden = again.all()
                 render()
-                onHidden()
+                onWaitingChanged()
+                if (!wasHidden) RecordingSends.send(activity)
             }
             .show()
     }
 
     private fun confirmDelete(candidate: Candidate) {
+        // A double tap: one question, so closing it is closing the hold.
+        if (deleteDialog != null) return
         val app = activity.applicationContext
         var deleting: Job? = null
         RecordingSends.hold(candidate.key)
@@ -583,13 +588,20 @@ class SyncTab(
             .setMessage(R.string.recorded_delete_confirm_message)
             .setPositiveButton(R.string.recording_delete) { _, _ ->
                 deleting = scope().launch {
-                    if (!RecordingSends.deletable(candidate.key)) return@launch
+                    if (!RecordingSends.deletable(candidate.key)) {
+                        render()
+                        Snackbar.make(list, R.string.recorded_delete_sending, Snackbar.LENGTH_LONG)
+                            .apply { if (bar.visibility == View.VISIBLE) anchorView = bar }
+                            .show()
+                        return@launch
+                    }
                     store.delete(candidate.externalId)
                     hiddenStore().unhide(candidate.key)
                     hidden = hiddenStore().all()
                     recordings = recordings.filterNot { it.key == candidate.key }
                     ticked -= candidate.key
                     render()
+                    onWaitingChanged()
                 }
             }
             .setNegativeButton(android.R.string.cancel, null)

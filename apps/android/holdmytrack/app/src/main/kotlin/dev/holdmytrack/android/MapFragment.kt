@@ -393,7 +393,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onCandidates = syncCandidates::set,
             onFrame = { candidates -> BoxUnion.of(candidates.map { it.bbox }.filter { it.isNotEmpty() })?.let { views?.camera?.flyTo(it) } },
             onSynced = ::onSyncedFromPhone,
-            onHidden = { host?.refreshSyncBadge() },
+            onWaitingChanged = { host?.refreshSyncBadge() },
         )
         val libraryTab = LibraryTab(
             findViewById(R.id.panel_library_content),

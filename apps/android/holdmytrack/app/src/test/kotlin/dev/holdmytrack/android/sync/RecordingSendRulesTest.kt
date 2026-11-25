@@ -1,7 +1,7 @@
 package dev.holdmytrack.android.sync
 
 import dev.holdmytrack.android.net.ApiException
-import java.net.UnknownHostException
+import java.net.SocketTimeoutException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -48,12 +48,17 @@ class RecordingSendRulesTest {
 
     @Test
     fun `only a failure every recording would meet stops the send`() {
-        fun http(code: Int) = RecordingSendRules.failure(ApiException(code, "why"))
-        for (code in listOf(401, 403, 426, 429)) assertEquals(RecordingSendRules.Failure.STOP, http(code))
-        for (code in listOf(400, 413)) assertEquals(RecordingSendRules.Failure.REFUSE, http(code))
+        fun http(code: Int) = RecordingSendRules.failure(ApiException(code, "why"), unanswered = 0)
+        for (code in listOf(401, 403, 404, 421, 426, 429, 502, 503, 504)) assertEquals(RecordingSendRules.Failure.STOP, http(code))
+        for (code in listOf(400, 413, 422)) assertEquals(RecordingSendRules.Failure.REFUSE, http(code))
         for (code in listOf(408, 500)) assertEquals(RecordingSendRules.Failure.NEXT, http(code))
-        assertEquals(RecordingSendRules.Failure.STOP, RecordingSendRules.failure(UnknownHostException("offline")))
-        assertEquals(RecordingSendRules.Failure.NEXT, RecordingSendRules.failure(IllegalArgumentException("unreadable")))
+        assertEquals(RecordingSendRules.Failure.NEXT, RecordingSendRules.failure(IllegalArgumentException("unreadable"), unanswered = 1))
+    }
+
+    @Test
+    fun `one request with no answer may be the recording's, a second is the connection's`() {
+        assertEquals(RecordingSendRules.Failure.NEXT, RecordingSendRules.failure(SocketTimeoutException(), unanswered = 0))
+        assertEquals(RecordingSendRules.Failure.STOP, RecordingSendRules.failure(SocketTimeoutException(), unanswered = 1))
     }
 
     @Test

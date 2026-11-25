@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.ExerciseRoute
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.ApiException
 import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.SyncResult
@@ -97,14 +98,21 @@ class SyncRunner internal constructor(
     private var alreadyPresent = 0
     private val rejected = mutableListOf<Rejection>()
     private var onLanded: (List<Candidate>) -> Unit = {}
+    private var onRejected: (Rejection) -> Unit = {}
 
     /**
      * Sends [ticked]. [onLanded] hears each batch the account has now as it lands — a recording
      * once marked sent — so a run cancelled or failing part-way (the tab leaving, a bad answer)
-     * keeps what landed before it.
+     * keeps what landed before it; [onRejected] likewise hears each refusal.
      */
-    suspend fun send(ticked: List<Candidate>, onLanded: (List<Candidate>) -> Unit, onProgress: (sent: Int) -> Unit): SyncReport {
+    suspend fun send(
+        ticked: List<Candidate>,
+        onLanded: (List<Candidate>) -> Unit,
+        onRejected: (Rejection) -> Unit = {},
+        onProgress: (sent: Int) -> Unit,
+    ): SyncReport {
         this.onLanded = onLanded
+        this.onRejected = onRejected
         val stopped = sendSessions(ticked.filter { it.source == HoldMyTrackApi.SOURCE_HEALTH_CONNECT }, onProgress)
             ?: sendRecordings(ticked.filter { it.origin is Recording }, onProgress)
         return SyncReport(landed.toSet(), synced, alreadyPresent, rejected.toList(), stopped)
@@ -116,7 +124,7 @@ class SyncRunner internal constructor(
         for (ticked in sessions) {
             val candidate = withRoute(ticked) ?: continue
             if (SyncBatcher.tooLarge(candidate.pointCount)) {
-                rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, text.tooManyPoints(candidate.pointCount))
+                reject(candidate, text.tooManyPoints(candidate.pointCount))
                 continue
             }
             val full = batches.add(candidate, candidate.pointCount) ?: continue
@@ -137,7 +145,7 @@ class SyncRunner internal constructor(
             SyncCandidates.Reread.Gone -> text.gone()
             SyncCandidates.Reread.Refused, null -> text.routeUnreadable()
         }
-        rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, reason)
+        reject(candidate, reason)
         return null
     }
 
@@ -145,6 +153,7 @@ class SyncRunner internal constructor(
      *  phone until its ingest lands (`SyncProgress`). One whose request failed doesn't hold up the
      *  rest unless they'd fail too ([RecordingSendRules.failure]). */
     private suspend fun sendRecordings(recordings: List<Candidate>, onProgress: (Int) -> Unit): String? {
+        var unanswered = 0
         for (candidate in recordings) {
             val batch = listOf(candidate)
             try {
@@ -153,11 +162,12 @@ class SyncRunner internal constructor(
                 throw e
             } catch (e: Exception) {
                 val reason = FailureText.of(e, text.requestFailed())
-                when (RecordingSendRules.failure(e)) {
+                when (RecordingSendRules.failure(e, unanswered)) {
                     RecordingSendRules.Failure.STOP -> return reason
                     RecordingSendRules.Failure.NEXT -> Unit
-                    RecordingSendRules.Failure.REFUSE -> rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, reason)
+                    RecordingSendRules.Failure.REFUSE -> reject(candidate, reason)
                 }
+                if (e is IOException && e !is ApiException) unanswered++
             }
             if (candidate.key in landed) {
                 markSent(candidate.externalId)
@@ -185,6 +195,12 @@ class SyncRunner internal constructor(
         return null
     }
 
+    private fun reject(candidate: Candidate, reason: String) {
+        val rejection = Rejection(candidate.key, candidate.startedAt, candidate.trackType, reason)
+        rejected += rejection
+        onRejected(rejection)
+    }
+
     /** Counts the server's verdicts on [batch] ([SyncVerdicts]); what the account has now. */
     private fun sort(batch: List<Candidate>, results: List<SyncResult>): List<Candidate> {
         val verdicts = SyncVerdicts.of(batch, results)
@@ -194,7 +210,7 @@ class SyncRunner internal constructor(
         landed += now.map { it.key }
         for ((candidate, result) in verdicts.refused) {
             val reason = result?.error?.ifBlank { null } ?: text.noReport(result?.status ?: "missing")
-            rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, reason)
+            reject(candidate, reason)
         }
         return now
     }

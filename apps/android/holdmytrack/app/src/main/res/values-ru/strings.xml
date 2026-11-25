@@ -257,6 +257,7 @@
     <string name="recording_delete">Удалить</string>
     <string name="recorded_delete_confirm_title">Удалить эту запись?</string>
     <string name="recorded_delete_confirm_message">Она ещё не попала в ваш аккаунт, так что это единственная копия. Это нельзя отменить.</string>
+    <string name="recorded_delete_sending">Она уже отправляется. Когда она появится на карте, удалите её там.</string>
 
     <string name="sync_rationale">HoldMyTrack читает из Health Connect ваши записанные тренировки и их GPS-маршруты и добавляет тренировки на улице на вашу карту. Больше он ничего не читает — ни пульс, ни вес, ни сон — и никогда ничего не записывает обратно. У тренировок в помещении нет маршрута, поэтому они пропускаются.</string>
     <string name="sync_source_health_connect">Health Connect</string>

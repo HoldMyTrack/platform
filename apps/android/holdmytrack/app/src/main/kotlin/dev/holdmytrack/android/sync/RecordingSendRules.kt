@@ -37,16 +37,16 @@ object RecordingSendRules {
     }
 
     /** Only a failure every recording would meet stops the send, or one the server can't take
-     *  would keep all those after it on the phone. */
-    fun failure(e: Exception): Failure = when {
+     *  would keep all those after it on the phone; only an answer about the recording itself
+     *  refuses it. A request with no answer may be this recording's, too long to upload, or the
+     *  connection's: a second in one send ([unanswered] before it) says it's the connection. */
+    fun failure(e: Exception, unanswered: Int): Failure = when {
         e is ApiException -> when (e.code) {
-            401, 403, 426, 429 -> Failure.STOP
-            408 -> Failure.NEXT
-            in 400..499 -> Failure.REFUSE
-            else -> Failure.NEXT
+            400, 413, 422 -> Failure.REFUSE
+            408, 500 -> Failure.NEXT
+            else -> Failure.STOP
         }
-        // No answer came.
-        e is IOException -> Failure.STOP
+        e is IOException -> if (unanswered == 0) Failure.NEXT else Failure.STOP
         // An answer the app can't read.
         else -> Failure.NEXT
     }
