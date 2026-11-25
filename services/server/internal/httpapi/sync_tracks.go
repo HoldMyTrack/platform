@@ -163,12 +163,14 @@ func (s *Server) handleSyncTracks(w http.ResponseWriter, r *http.Request) {
 	}
 	enqueued, err := ingest.EnqueueRaw(ctx, s.pool, userID, items)
 	if err != nil {
+		// Nothing was enqueued, and nothing is wrong with the tracks: "rejected" would have the
+		// phone keep them unsent until the user asks again.
 		s.log.Error("sync enqueue failed", "err", err, "tracks", len(items))
+		httpErrorT(w, r, http.StatusInternalServerError, "error.internal")
+		return
 	}
 	for k, i := range slots {
 		switch {
-		case err != nil:
-			results[i] = syncTrackResult{ExternalID: items[k].ExternalID, Status: "rejected", Error: l.T("error.internal")}
 		case enqueued[k].AlreadyProcessed:
 			results[i] = syncTrackResult{ExternalID: enqueued[k].ExternalID, Status: "already_processed"}
 		default:

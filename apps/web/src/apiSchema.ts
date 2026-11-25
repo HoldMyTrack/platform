@@ -3787,6 +3787,7 @@ export interface paths {
                 401: components["responses"]["Unauthenticated"];
                 403: components["responses"]["Forbidden"];
                 429: components["responses"]["Error"];
+                500: components["responses"]["Error"];
                 503: components["responses"]["DailyCapacity"];
             };
         };
