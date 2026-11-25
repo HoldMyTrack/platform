@@ -72,6 +72,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let sheet = PanelSheetView()
     var tracksPanel: TracksPanel!
     var tripsPanel: TripsPanel!
+    var libraryPanel: LibraryPanel!
     /// The Sync tab's sheet, handed in by the tab bar, which owns the recordings it lists.
     var syncPanel: SyncPanel?
     /// The Sync tab's routes, simplified and banded once each (SyncLines.Shape), and what was
@@ -127,8 +128,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var onWaiting: ((Int) -> Void)?
     /// A row's Trip badge on the Tracks tab: the tab bar moves to Trips.
     var onWantsTrips: ((String) -> Void)?
-    /// The empty map's Sync: the bottom bar's Sync tab.
+    /// The empty map's Sync and Library's +: Sync in Library's place.
     var onWantsSync: (() -> Void)?
+    /// A Library row's tap: the Tracks tab with that track focused on its day.
+    var onOpenTrack: ((_ track: String, _ day: String) -> Void)?
     /// The user picked a mode on the toggle, which may earn Fog's first-time card (TourController).
     var onModePicked: ((MapMode) -> Void)?
     /// The first framing found whether the account has any track: the tour starts or is offered.

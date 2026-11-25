@@ -46,9 +46,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         trips.tabBarItem.accessibilityIdentifier = "tabTrips"
         let syncPanel = SyncPanel(recordings: recordings, api: flow.api, account: account, host: map)
         map.syncPanel = syncPanel
-        let sync = UINavigationController(rootViewController: MapHostViewController(map: map, tab: .sync))
+        // Library, with Sync opened from its head in its place (apps/android/docs/SPEC.md FR-4.1).
+        let libraryHost = MapHostViewController(map: map, tab: .library)
+        let sync = UINavigationController(rootViewController: libraryHost)
         sync.setNavigationBarHidden(true, animated: false)
-        sync.tabBarItem = UITabBarItem(title: String(localized: "Sync"), image: UIImage(resource: .refreshCw), tag: 2)
+        sync.tabBarItem = UITabBarItem(title: String(localized: "library.title", defaultValue: "Library", comment: "Library: the tab's title."), image: UIImage(resource: .library), tag: 2)
         let home = YouViewController(flow: flow, account: account)
         let you = UINavigationController(rootViewController: home)
         you.navigationBar.prefersLargeTitles = false
@@ -61,11 +63,12 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         viewControllers = [mapHost, trips, gap, sync, you]
         tabBar.tintColor = UIColor(resource: .accent)
         tabBar.backgroundColor = UIColor(resource: .surface)
-        sync.tabBarItem.accessibilityIdentifier = "tabSync"
+        sync.tabBarItem.accessibilityIdentifier = "tabLibrary"
         sync.delegate = self
-        syncPanel.onEvent = { [weak self, weak sync, weak map] event in
+        syncPanel.onEvent = { [weak self, weak sync, weak map, weak libraryHost] event in
             guard let self, let sync else { return }
             switch event {
+            case .library: libraryHost?.switchTo(.library)
             case .upload: sync.pushViewController(UploadViewController(api: flow.api), animated: true)
             case .history:
                 let page = WebPageViewController(flow: flow, page: .syncHistory)
@@ -90,19 +93,17 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             }
         }
         home.onTour = { [weak self] in self?.tour.request() }
-        home.onOpenSync = { [weak self, weak sync] in
-            guard let self, let sync else { return }
-            sync.popToRootViewController(animated: false)
-            self.selectedViewController = sync
-        }
+        home.onOpenSync = { [weak self] in self?.openSync() }
         home.tileVersion = { [weak map] in map?.pair?.layers.tileVersion ?? "" }
         map.onHistoryKnown = { [weak self] any in self?.tour.historyKnown(any) }
         map.onModePicked = { [weak self] mode in self?.tour.notice(.mode(mode)) }
         map.onMapFreed = { [weak self] in self?.tour.mapFreed() }
         map.onWaiting = { [weak trips] count in trips?.tabBarItem.badgeValue = count > 0 ? "\(count)" : nil }
-        map.onWantsSync = { [weak self, weak sync] in
-            sync?.popToRootViewController(animated: false)
-            self?.selectedViewController = sync
+        map.onWantsSync = { [weak self] in self?.openSync() }
+        map.onOpenTrack = { [weak self, weak map] track, day in
+            guard let self, let map, let mapHost = self.viewControllers?.first else { return }
+            self.selectedViewController = mapHost
+            map.viewOnMap(track: track, day: day)
         }
         map.onWantsTrips = { [weak self, weak trips] id in
             guard let self, let trips else { return }
@@ -338,8 +339,12 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     }
 
     /// The middle item is the record button's place, never a tab.
+    /// A tap on Library while it shows Sync goes back to Library, as Back does on Android.
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
-        viewController !== gap
+        if viewController === selectedViewController, viewController === libraryNav, libraryHost?.panelTab == .sync {
+            libraryHost?.switchTo(.library)
+        }
+        return viewController !== gap
     }
 
     /// The user's own pick of a tab, which may earn the Trips card.
@@ -359,7 +364,31 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
     func showTourTab(_ tab: TourTab, root: Bool) {
         guard let index = Self.tourTabs.firstIndex(of: tab), let next = viewControllers?[index] else { return }
         if root { (next as? UINavigationController)?.popToRootViewController(animated: false) }
+        // The tour's Sync step, its only root Sync, is Library's Sync; once the tour moves on,
+        // Library is Library again, so its end or the user's next visit doesn't find Sync.
+        if tab == .sync && root {
+            libraryHost?.switchTo(.sync)
+            tourOpenedSync = true
+        } else if tourOpenedSync {
+            libraryHost?.switchTo(.library)
+            tourOpenedSync = false
+        }
         selectedViewController = next
+    }
+
+    /// The tour's Sync step put Sync in Library's place.
+    private var tourOpenedSync = false
+
+    /// The fourth item: Library's navigation, its map host at the root.
+    private var libraryNav: UINavigationController? { viewControllers?[3] as? UINavigationController }
+    private var libraryHost: MapHostViewController? { libraryNav?.viewControllers.first as? MapHostViewController }
+
+    /// Sync, in Library's place: the empty map's pointer, Library's + and You's Sync row.
+    private func openSync() {
+        guard let nav = libraryNav else { return }
+        nav.popToRootViewController(animated: false)
+        libraryHost?.switchTo(.sync)
+        selectedViewController = nav
     }
 
     func tourViews(_ target: TourTarget) -> [UIView] {
@@ -391,9 +420,11 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         map.editPrivateLocation(id)
     }
 
-    /// Files opened or shared from another app: Upload on the Sync tab, for an account that can.
+    /// Files opened or shared from another app: Upload over Sync, in Library's place, for an
+    /// account that can; Back from Upload lands on Sync.
     func upload(_ files: [URL]) {
-        guard let sync = viewControllers?[3] as? UINavigationController else { return }
+        guard let sync = libraryNav else { return }
+        libraryHost?.switchTo(.sync)
         selectedViewController = sync
         guard !account.isDemo else {
             TripDialogs.inform(over: view, String(localized: "Not available for demo accounts — create an account to upload your own tracks."))

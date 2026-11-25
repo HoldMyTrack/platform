@@ -124,4 +124,25 @@ public enum LibraryRules {
     public static func keepListed(_ checked: Set<String>, rows: [String]) -> Set<String> {
         checked.intersection(rows)
     }
+
+    /// Why Library's Download can't take a row, as its `route_edit` says it.
+    public enum Blocked: String, Sendable {
+        case pending, `private`, noOriginal = "no_original"
+    }
+
+    /// The first of rows Download can't take, and why; nil when it can take them all.
+    public static func downloadBlocked(_ rows: [(id: String, routeEdit: String?)]) -> (id: String, why: Blocked)? {
+        for row in rows {
+            if let why = row.routeEdit.flatMap(Blocked.init(rawValue:)) { return (row.id, why) }
+        }
+        return nil
+    }
+
+    /// A Distance filter's knobs on the account's bounds, which may have shrunk under it since it
+    /// was set: each inside them, the lower never past the upper, as the slider demands.
+    public static func sliderRange(_ filter: Distance, bounds: DistanceRange) -> DistanceRange {
+        let low = Swift.min(Swift.max(filter.min, bounds.min), bounds.max)
+        let high = Swift.min(Swift.max(filter.max ?? bounds.max, bounds.min), bounds.max)
+        return DistanceRange(min: low, max: Swift.max(high, low))
+    }
 }
