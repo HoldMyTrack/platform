@@ -4,6 +4,7 @@ import WebKit
 /// pixels on its long side, as JPEG, so a camera photo isn't past the server's limit. iOS hands the
 /// picked file to the page itself, so this runs in it, ahead of the page's own listener, which
 /// submits the form. An image the page can't decode goes as picked, for the server to judge.
+@MainActor
 enum AvatarScript {
     static let script = WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
 
