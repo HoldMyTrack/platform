@@ -176,8 +176,11 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 trips = trips.map { $0.id == id ? read.trip : $0 }
             } catch {
                 guard id == openID else { return }
+                // A failed read keeps the numbers shown, unless the Trip is gone.
+                let gone = if case APIError.http(status: 404, _, _) = error { true } else { false }
+                if openTrip?.id == id, !gone { return }
                 openTrip = nil
-                if case APIError.http(status: 404, _, _) = error {
+                if gone {
                     openError = String(localized: "This trip doesn't exist, or isn't yours.")
                 } else {
                     openError = Self.message(error, String(localized: "Could not load your trips"))

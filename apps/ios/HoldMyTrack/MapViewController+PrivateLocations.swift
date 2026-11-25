@@ -200,24 +200,29 @@ extension MapViewController {
     }
 
     /// A change reprocesses every track it touches, which the server marks Pending with the
-    /// change itself: the list shows them at once, and the tracks are fetched again once coverage
-    /// stops rendering, the listed ones and any off the list alike. A newer change's wait
-    /// replaces this one's.
+    /// change itself: the list shows them at once, and everything drawn from them is read again once
+    /// coverage stops rendering, since a batch that finishes before the first read never shows a row
+    /// Pending. A newer change's wait replaces this one's, which ends with the map.
     private func privateLocationsChanged() {
         loadList()
         privateLocations.refresh?.cancel()
-        privateLocations.refresh = Task {
-            for _ in 0..<90 {
-                try? await Task.sleep(for: .seconds(2))
-                if Task.isCancelled { return }
+        privateLocations.refresh = Task { [weak self, api = flow.api!] in
+            var polls = 0
+            repeat {
+                try? await Task.sleep(for: CoveragePoll.delay(polls: polls))
+                polls += 1
+                if Task.isCancelled || self == nil { return }
                 // A failed check waits for the next, rather than leaving the tracks unclipped.
-                if let status = try? await flow.api.coverageStatus(), !status.rendering { break }
-            }
-            guard !Task.isCancelled else { return }
-            tracksVersion += 1
-            updateTracksQuery()
-            render()
-            loadList()
+            } while (try? await api.coverageStatus())?.rendering ?? true
+            guard !Task.isCancelled, let self else { return }
+            self.tracksVersion += 1
+            self.updateTracksQuery()
+            self.loadList()
+            self.loadHistory()
+            self.updateBands(refetch: true)
+            self.render()
+            self.refreshPhotos(force: true)
+            self.tripsPanel.reloadOpen()
         }
     }
 

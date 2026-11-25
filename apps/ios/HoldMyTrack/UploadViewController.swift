@@ -12,6 +12,7 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
     private let notes = Controls.column([], spacing: DesignTokens.Space.s8)
     private let running = Controls.column([], spacing: DesignTokens.Space.s8)
     private var poll: Task<Void, Never>?
+    private var onClose: (() -> Void)?
     private let sharedNames = Controls.body("", color: UIColor(resource: .ink))
     private lazy var sharedSection: UIStackView = {
         let title = Controls.body(String(localized: "Upload these files to your account?", comment: "Upload: over the files another app opened in HoldMyTrack."), color: UIColor(resource: .ink))
@@ -37,8 +38,10 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
 
     /// Upload as a sheet over the screen it opens from (apps/android/docs/SPEC.md FR-3.6), closed
     /// by Close or a swipe; files carry on once it's gone.
-    static func sheet(api: APIClient) -> UINavigationController {
+    /// onClose: what's under the sheet, which iOS doesn't tell, reads again.
+    static func sheet(api: APIClient, onClose: @escaping () -> Void) -> UINavigationController {
         let upload = UploadViewController(api: api)
+        upload.onClose = onClose
         let close = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak upload] _ in upload?.dismiss(animated: true) })
         close.accessibilityIdentifier = "uploadClose"
         upload.navigationItem.rightBarButtonItem = close
@@ -76,6 +79,11 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         poll?.cancel()
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if navigationController?.isBeingDismissed == true { onClose?() }
     }
 
     /// Files from the picker, sent at once.

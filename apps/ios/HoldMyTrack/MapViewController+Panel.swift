@@ -208,6 +208,8 @@ extension MapViewController {
         updateTracksQuery()
         loadHistory()
         loadList()
+        // The first on an empty map: the pointer goes and the camera frames it.
+        if noticeShown(.empty) { openOnce() }
     }
 
     /// Reprocesses of ids finished, seen by a list or by the Pending check: the tracks' tiles,
@@ -386,6 +388,8 @@ extension MapViewController {
             updateTracksQuery()
             loadList()
         case .copyArrived:
+            // The copy gives the map history, so the pointer goes.
+            hideNotice(.empty)
             tracksVersion += 1
             updateTracksQuery()
             loadHistory()

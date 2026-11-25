@@ -9,22 +9,35 @@ import UIKit
 extension MapViewController {
     // MARK: The opening view
 
-    /// Once per app session per account: the newest few tracks framed at zoom 12 (OpeningView),
+    /// Once per sign-in, whose screens are new: the newest few tracks framed at zoom 12 (OpeningView),
     /// then the list asked about wherever the camera is. An account with nothing on the map gets a
     /// pointer, the demo never, and is asked again on every return to the map while it shows, as
     /// on Android; a flight already asked for (View on map) keeps its camera.
     func openOnce() {
-        guard !Self.framed.contains(accountKey) || noticeShown(.empty) else {
-            if let known = Self.hasTracks[accountKey] { onHistoryKnown?(known) }
+        guard !framed || noticeShown(.empty) else {
+            if let known = hasTracks { onHistoryKnown?(known) }
             return
         }
+        // One read at a time, or a later answer would pull the camera back from the user.
+        guard !opening else {
+            openAgain = true
+            return
+        }
+        opening = true
         Task {
+            defer {
+                opening = false
+                // Asked while this one read an empty account: something may have come since.
+                let again = openAgain && noticeShown(.empty)
+                openAgain = false
+                if again { openOnce() }
+            }
             guard let newest = try? await flow.api.areaList(box: nil, dates: .allTime, limit: OpeningView.tracks) else {
                 followArea()
                 return
             }
-            Self.framed.insert(accountKey)
-            Self.hasTracks[accountKey] = !newest.tracks.isEmpty
+            framed = true
+            hasTracks = !newest.tracks.isEmpty
             onHistoryKnown?(!newest.tracks.isEmpty)
             let boxes = FitBoxes.of(newest.tracks)
             if let view = OpeningView.of(boxes, width: mapView.bounds.width, height: mapView.bounds.height) {

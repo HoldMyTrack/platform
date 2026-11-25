@@ -143,9 +143,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var onHistoryKnown: ((Bool) -> Void)?
     /// The Edit window or the Private location editor gave the map back (tourBlocked).
     var onMapFreed: (() -> Void)?
-    /// Whether each account (AccountKey) has any track, as its first framing found, for a later
-    /// signed-in screen in the same app session, which doesn't frame again.
-    static var hasTracks: [String: Bool] = [:]
+    /// Whether the account has any track, as the first framing found; nil until then.
+    var hasTracks: Bool?
     /// A recording runs: the map shows only it (MapViewController+Recording).
     var recordingLive = false
     /// Whether the camera has flown to this recording's first fix; later fixes only pan.
@@ -164,11 +163,17 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     private var basemapFailed = false
     private var basemapClock: Date?
     private var coverageTask: Task<Void, Never>?
+    private var loadTask: Task<Void, Never>?
+    /// The theme last loaded.
+    private var loadedFlavor: String?
     /// Find my location was tapped and waits on the prompt or the first position.
     private var locating = false
 
-    /// The first framing happens once per app session, not on every return to the map.
-    static var framed: Set<String> = []
+    /// The first framing happens once per sign-in, not on every return to the map.
+    var framed = false
+    /// The opening view's read is out, and was asked for again meanwhile.
+    var opening = false
+    var openAgain = false
 
     var format: PanelFormat { PanelFormat(account: account) }
 
@@ -212,22 +217,40 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             }
         }
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
+            // iOS flips the theme in the background for its snapshots; a real change there is caught
+            // on the return (returned).
+            guard UIApplication.shared.applicationState != .background else { return }
             self.load()
             self.exportLookChanged()
         }
         location.delegate = self
+        // iOS calls no viewDidAppear as the app comes back to the front.
+        NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.viewIfLoaded?.window != nil else { return }
+                self.returned()
+            }
+        }
         load()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        checkCoverage()
         countSatelliteWait(onScreen: true)
+        returned()
+    }
+
+    /// The map is back, from another tab, the background or Upload over it: what may have changed
+    /// meanwhile is read again (apps/android/docs/SPEC.md FR-2.2, FR-2.3, FR-2.7, FR-2.8).
+    func returned() {
+        if loadedFlavor != flavor { load() }
+        checkCoverage()
         loadCaptures()
         openOnce()
         loadHistory()
         loadList()
-        if panelTab != .trips { tripsPanel.refreshCount() }
+        tripsPanel.reloadOpen()
+        tripsPanel.refreshCount()
     }
 
     override func viewDidLayoutSubviews() {
@@ -264,12 +287,17 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// version, comes through here.
     private func load() {
         let flavor = flavor, language = AppLanguage.current
+        loadedFlavor = flavor
+        loadTask?.cancel()
         if let kept = documents.kept(flavor: flavor, language: language) { show(kept) }
-        Task {
+        loadTask = Task {
             do {
-                show(try await documents.fetch(flavor: flavor, language: language))
+                let fetched = try await documents.fetch(flavor: flavor, language: language)
+                // An earlier theme's answer, landing late, would replace this one's.
+                guard !Task.isCancelled else { return }
+                show(fetched)
             } catch let error as APIError {
-                if pair == nil, error != .outdated { mapFailed(Self.describe(MapChrome.loadFailure(error))) }
+                if pair == nil, error != .outdated, !Task.isCancelled { mapFailed(Self.describe(MapChrome.loadFailure(error))) }
             } catch {}
         }
     }
@@ -476,14 +504,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Coverage still updating
 
-    /// Fog says when coverage is still being redrawn, checked on every opening of the map, and
-    /// refreshes when the server is done (root docs/SPEC.md FR-4.2).
+    /// Whether the account's tiles moved, checked on every return in every mode: the layers and the
+    /// tracks are fetched again if so, or once the server is done redrawing. Fog says while it is
+    /// (root docs/SPEC.md FR-4.2).
     func checkCoverage() {
         coverageTask?.cancel()
-        guard state.mode != .normal else {
-            hideNotice(.coverage)
-            return
-        }
+        if state.mode == .normal { hideNotice(.coverage) }
         coverageTask = Task {
             var wasRendering = false
             while !Task.isCancelled {
@@ -491,12 +517,16 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                 if let explored = status.explored { fogViews.explored = explored }
                 if status.rendering {
                     wasRendering = true
-                    notice(.coverage, String(localized: "Your map is still being updated, so Fog may be incomplete for now. It'll refresh on its own."))
+                    if state.mode != .normal { notice(.coverage, String(localized: "Your map is still being updated, so Fog may be incomplete for now. It'll refresh on its own.")) }
                     try? await Task.sleep(for: .seconds(5))
                     continue
                 }
                 hideNotice(.coverage)
-                if wasRendering || status.tileVersion != pair?.layers.tileVersion { load() }
+                // With no document yet, the one on its way is the latest.
+                guard let shown = pair?.layers.tileVersion, wasRendering || status.tileVersion != shown else { return }
+                tracksVersion += 1
+                updateTracksQuery()
+                load()
                 return
             }
         }

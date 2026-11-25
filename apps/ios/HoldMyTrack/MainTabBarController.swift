@@ -121,6 +121,9 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
                 guard let self, self.viewIfLoaded?.window != nil else { return }
                 self.importFailures.check(over: self)
                 self.recordings.send()
+                // Copies of Trips may have been sent while the app was away: the map counts them
+                // itself while it shows (returned).
+                if self.map.isViewLoaded, self.map.view.window == nil { self.map.tripsPanel.refreshCount() }
             }
         }
     }
@@ -463,7 +466,10 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
                 if (controller as? UINavigationController)?.viewControllers.first is UploadViewController { return }
                 shown = controller.presentedViewController
             }
-            top.present(UploadViewController.sheet(api: self.flow.api), animated: true)
+            top.present(UploadViewController.sheet(api: self.flow.api) { [weak self] in
+                guard let map = self?.map, map.viewIfLoaded?.window != nil else { return }
+                map.returned()
+            }, animated: true)
         }
     }
 }
