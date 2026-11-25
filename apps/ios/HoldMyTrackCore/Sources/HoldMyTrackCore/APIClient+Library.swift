@@ -75,7 +75,7 @@ extension APIClient {
         return TrackPage(
             tracks: json.tracks.map(Track.init),
             total: json.total ?? 0,
-            pageSize: json.pageSize ?? DownloadRules.maxTracks,
+            pageSize: json.pageSize.flatMap { $0 > 0 ? $0 : nil } ?? DownloadRules.maxTracks,
             distance: distance,
             firstDate: bounds.firstDate,
             lastDate: bounds.lastDate,
@@ -86,7 +86,8 @@ extension APIClient {
 
     /// `GET /v2/tracks/gpx?ids=` (root docs/SPEC.md FR-17.2): one track as GPX, or several as a
     /// zip, saved to a temporary file named as the server names it (AttachmentName). The long
-    /// timeout is for a page of tracks, zipped before the first byte comes back.
+    /// timeout is for a page of tracks, zipped before the first byte comes back. The caller removes
+    /// the file's directory once it is shared or saved.
     public func downloadTracksGPX(_ ids: [String]) async throws -> URL {
         var request = request("GET", "v2/tracks/gpx")
         var components = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
@@ -98,7 +99,8 @@ extension APIClient {
         let name = (AttachmentName.of(http.value(forHTTPHeaderField: "Content-Disposition")) as NSString).lastPathComponent
         let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let file = dir.appending(path: name.isEmpty || name == "." || name == ".." ? AttachmentName.fallback : name)
+        let unsafe = name.isEmpty || name == "." || name == ".." || name.contains("/") || name.contains("\0")
+        let file = dir.appending(path: unsafe ? AttachmentName.fallback : name)
         try data.write(to: file)
         return file
     }

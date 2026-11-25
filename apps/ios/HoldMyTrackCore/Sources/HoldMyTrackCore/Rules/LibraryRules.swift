@@ -75,7 +75,7 @@ public enum LibraryRules {
             q: state.q.isEmpty ? nil : state.q,
             types: types,
             minDistance: state.distance.flatMap { $0.min > 0 ? $0.min : nil },
-            maxDistance: state.distance?.max,
+            maxDistance: state.distance?.max.flatMap { $0.isFinite ? $0 : nil },
             from: state.after,
             to: state.before,
             trip: state.trip

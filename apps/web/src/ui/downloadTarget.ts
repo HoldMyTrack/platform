@@ -14,7 +14,7 @@ export type DownloadBlock<T> = { kind: 'too_many'; count: number } | { kind: 'pe
  * Why the target can't be downloaded, or null when it can: more tracks than one download takes,
  * else the first Pending track, else the first entirely inside Private locations. A missing or
  * unreadable original only the server can tell; its refusal names the track. Its cases are
- * `testdata/client-rules/download-block.json`, which Android runs too.
+ * `testdata/client-rules/download-block.json`, which Android and iOS run too.
  */
 export function downloadBlock<T extends { pending: boolean; private: boolean }>(
   target: readonly T[],
