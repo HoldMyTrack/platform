@@ -40,6 +40,9 @@ object SyncProgress {
     private var account: String? = null
     private val inFlight = LinkedHashMap<String, Candidate>()
     private val failed = mutableListOf<Candidate>()
+
+    /** Keys seen to land, for a Delete asked about before. */
+    private val landedKeys = mutableSetOf<String>()
     private var store: RecordedTrackStore? = null
 
     /** What a recording's row says when its job failed, in the app's language. */
@@ -51,6 +54,8 @@ object SyncProgress {
         get() = if (forThisAccount()) inFlight.values.toList() else emptyList()
 
     fun isProcessing(key: String) = forThisAccount() && key in inFlight
+
+    fun hasLanded(key: String) = forThisAccount() && key in landedKeys
 
     /** Listeners: [onChange] when the set changes, [onLanded] when any of it reached the map. */
     class Listener(val onChange: () -> Unit, val onLanded: () -> Unit)
@@ -135,6 +140,7 @@ object SyncProgress {
     private fun clear() {
         inFlight.clear()
         failed.clear()
+        landedKeys.clear()
     }
 
     private fun changed() = listeners.toList().forEach { it.onChange() }
@@ -175,6 +181,7 @@ object SyncProgress {
                 val recording = (candidate.origin as? Recording)?.record?.id
                 if (outcome == Outcome.LANDED) {
                     landed = true
+                    landedKeys += candidate.key
                     recording?.let { settle(it) { store?.delete(it) } }
                 } else {
                     failed += candidate

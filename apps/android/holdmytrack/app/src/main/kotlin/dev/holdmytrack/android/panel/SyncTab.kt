@@ -563,8 +563,6 @@ class SyncTab(
         hidden = store.all()
         render()
         onWaitingChanged()
-        // Brought back, a recording goes now.
-        if (wasHidden) RecordingSends.send(activity)
         Snackbar.make(list, if (wasHidden) R.string.sync_unhidden else R.string.sync_hidden, Snackbar.LENGTH_LONG)
             .apply { if (bar.visibility == View.VISIBLE) anchorView = bar }
             .setAction(R.string.sync_undo) {
@@ -573,7 +571,6 @@ class SyncTab(
                 hidden = again.all()
                 render()
                 onWaitingChanged()
-                if (!wasHidden) RecordingSends.send(activity)
             }
             .show()
     }
@@ -589,9 +586,11 @@ class SyncTab(
             .setMessage(R.string.recorded_delete_confirm_message)
             .setPositiveButton(R.string.recording_delete) { _, _ ->
                 deleting = scope().launch {
-                    if (!RecordingSends.deletable(candidate.key)) {
+                    val stored = store.header(candidate.externalId) != null
+                    val refusal = RecordingSends.refusal(RecordingSends.deletion(candidate.key, stored))
+                    if (refusal != null) {
                         render()
-                        Snackbar.make(list, R.string.recorded_delete_sending, Snackbar.LENGTH_LONG)
+                        Snackbar.make(list, refusal, Snackbar.LENGTH_LONG)
                             .apply { if (bar.isVisible) anchorView = bar }
                             .show()
                         return@launch

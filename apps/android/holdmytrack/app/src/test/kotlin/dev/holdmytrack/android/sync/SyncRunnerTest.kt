@@ -263,6 +263,29 @@ class SyncRunnerTest {
     }
 
     @Test
+    fun `an answer between two unanswered recordings keeps the send going, and one hidden meanwhile is skipped`() {
+        val runner = SyncRunner(
+            post = { tracks, _ ->
+                if (tracks.single().externalId in setOf("r1", "r3")) throw SocketTimeoutException()
+                tracks.map { SyncResult(it.externalId, "enqueued", "") }
+            },
+            markSent = { marked += it }, text = Words, reread = { null },
+        )
+        val asked = mutableListOf<Pair<String, Boolean>>()
+
+        val report = runBlocking {
+            runner.send(
+                listOf("r1", "r2", "hidden", "r3", "r4").map { recording(it) }, onLanded = {},
+                skip = { it.externalId == "hidden" }, onAsked = { c, failed -> asked += c.externalId to failed },
+            ) {}
+        }
+
+        assertEquals(listOf("r2", "r4"), marked)
+        assertEquals(listOf("r1" to true, "r2" to false, "r3" to true, "r4" to false), asked)
+        assertNull(report.stoppedBecause)
+    }
+
+    @Test
     fun `a second unanswered recording stops the run with the ones before it marked sent`() {
         val server = Server(failOnRequest = 2)
         val report = send(runner(server), listOf(recording("r1"), recording("r2"), recording("r3")))
