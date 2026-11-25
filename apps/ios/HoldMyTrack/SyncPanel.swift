@@ -147,7 +147,7 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private func takeFailed() {
         guard showing else { return }
         failedLines += recordings.takeFailed().map {
-            String(localized: "sync.rowFailed", defaultValue: "Couldn't add \(Self.date($0)) \(TrackTypes.shared.label($0.type)) — Sync history says why. It's back on the list.",
+            String(localized: "sync.rowFailed", defaultValue: "Couldn't add \(Self.date($0)) \(TrackTypes.shared.label($0.type)): something went wrong on our side. It's back on the list to try again.",
                    comment: "Sync: a sent recording's ingest failed; its start and type.")
         }
     }

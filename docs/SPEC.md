@@ -195,7 +195,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 ### FR-3.2 Import status
 
 - Files come in through the header's Upload menu, which shows each one queued, uploading or processing, and a phone sync's tracks still processing. What came in is Library sorted by date added (FR-17.1); no list of imports is shown on the web or Android.
-- A failed import is listed in the Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened. The Android app shows it in an alert, which dismisses it (`apps/android/docs/SPEC.md` FR-3.4).
+- A failed import is listed in the Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened. The apps show it in an alert, which dismisses it (`apps/android/docs/SPEC.md` FR-3.4).
 - A finished import is kept 90 days, for the Upload menu's failures and `/sync` (FR-3.7).
 - A phone sync of several tracks is one import. The web can't start a phone sync.
 

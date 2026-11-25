@@ -58,6 +58,7 @@ struct WireContractTests {
         try response(UploadResultJSON.self, "/tracks/upload", "post", 202)
         try response(UploadResultJSON.self, "/tracks/upload", "post", 200)
         try response(UploadsActiveJSON.self, "/uploads/active", "get")
+        try request(UploadSeenJSON.self, "/uploads/seen", "post")
 
         try request(SyncTracksRequestJSON.self, "/sync/tracks", "post")
         try response(SyncResultsJSON.self, "/sync/tracks", "post")
