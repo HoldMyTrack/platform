@@ -28,6 +28,12 @@ final class RecordingsSync {
     private var holds: [UUID: String] = [:]
     /// What the server refused, or failed to add, since launch: sent again only on Retry.
     private var refused: [String: RecordingSync.Refusal] = [:]
+    /// The recordings whose last request failed, the latest last: last in the next send.
+    private var setBack: [String] = []
+    /// The recording whose request is out now.
+    private var asking: String?
+    /// The recordings seen to land, for a Delete asked about before (RecordingSends.deletion).
+    private var landedIDs: Set<String> = []
     /// Sent recordings whose ingest failed since the tab last asked (takeFailed).
     private var failed: [RecordedTrack] = []
 
@@ -72,6 +78,8 @@ final class RecordingsSync {
     func hold(_ id: String) -> Hold {
         let key = UUID()
         holds[key] = id
+        // Picked by a running send and not asked yet: left out of it.
+        if asking != id, inFlight.remove(id) != nil { changed() }
         return Hold { [weak self] in
             guard let self, self.holds.removeValue(forKey: key) != nil else { return }
             // What's kept goes now.
@@ -115,12 +123,13 @@ final class RecordingsSync {
     /// Whether id is being sent now: Edit and Delete wait for the send.
     func isSending(_ id: String) -> Bool { inFlight.contains(id) }
 
-    func delete(_ id: String) {
-        // Sent, it lands whatever the phone keeps.
-        guard !isSending(id), !all.contains(where: { $0.id == id && $0.sent }) else { return }
+    func delete(_ id: String) -> RecordingSends.Deletion {
+        let deletion = RecordingSends.deletion(all.first { $0.id == id }, sending: isSending(id), landed: landedIDs.contains(id))
+        guard deletion == .deleted else { return deletion }
         store.delete(id: id, account: account)
         refused[id] = nil
         changed()
+        return .deleted
     }
 
     /// Sends what's waiting, one recording at a time; retry sends what the server refused too. A
@@ -131,7 +140,7 @@ final class RecordingsSync {
             sendAgain = true
             return
         }
-        let batch = RecordingSends.toSend(all, hidden: hidden, held: Set(holds.values), refused: Set(refused.keys), retry: retry)
+        let batch = RecordingSends.toSend(all, hidden: hidden, held: Set(holds.values), refused: Set(refused.keys), setBack: setBack, retry: retry)
         guard !batch.isEmpty else { return }
         sending = true
         inFlight = Set(batch.map(\.id))
@@ -151,13 +160,29 @@ final class RecordingsSync {
     }
 
     private func run(_ batch: [RecordedTrack]) async {
+        var afterUnanswered = false
         for track in batch {
+            // Left out since the batch was picked, by a hold or an Undo that hid it again.
+            guard inFlight.contains(track.id) else { continue }
+            defer {
+                inFlight.remove(track.id)
+                changed()
+                follow()
+            }
+            if hidden.contains(track.id) { continue }
+            if let refusal = RecordingSync.refusal(track) {
+                refused[track.id] = refusal
+                continue
+            }
+            asking = track.id
+            defer { asking = nil }
             do {
-                let refusal: RecordingSync.Refusal?
-                if let known = RecordingSync.refusal(track) { refusal = known } else { refusal = try await ask(track) }
+                let refusal = try await ask(track)
                 // Signed out meanwhile: the account's folder may be gone, and stays gone.
                 if stopped { return }
                 refused[track.id] = refusal
+                setBack.removeAll { $0 == track.id }
+                afterUnanswered = false
                 // The stored copy as it is now, so nothing written meanwhile is lost.
                 if refusal == nil, var sent = all.first(where: { $0.id == track.id }) {
                     sent.sent = true
@@ -165,15 +190,18 @@ final class RecordingsSync {
                 }
             } catch {
                 if stopped { return }
-                switch RecordingSends.failure((error as? APIError) ?? .unreachable) {
-                case .stop: return
-                case .next: break
+                let error = (error as? APIError) ?? .unreachable
+                let failure = RecordingSends.failure(error, afterUnanswered: afterUnanswered)
+                afterUnanswered = RecordingSends.unanswered(error)
+                setBack.removeAll { $0 == track.id }
+                switch failure {
+                case .stop:
+                    setBack.append(track.id)
+                    return
+                case .next: setBack.append(track.id)
                 case .refuse(let refusal): refused[track.id] = refusal
                 }
             }
-            inFlight.remove(track.id)
-            changed()
-            follow()
         }
     }
 
@@ -209,6 +237,7 @@ final class RecordingsSync {
             case nil: continue
             case .landed:
                 store.delete(id: track.id, account: account)
+                landedIDs.insert(track.id)
                 landed = true
             case .failed:
                 var back = track

@@ -110,8 +110,9 @@ extension MapViewController {
         panelChanged()
     }
 
-    /// Sync history's View on map (apps/android/docs/SPEC.md FR-4.1): the track focused once
-    /// the list has it; one not listed sets Dates to its day, which flies the camera there.
+    /// A track opened on the map from Library, or as the one a Sync row overlaps
+    /// (apps/android/docs/SPEC.md FR-4.1): focused once the list has it; one not listed sets Dates
+    /// to its day, which flies the camera there.
     func viewOnMap(track: String, day: String) {
         loadViewIfNeeded()
         // The track's route is Normal mode's.

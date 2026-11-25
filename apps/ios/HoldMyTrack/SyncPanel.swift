@@ -21,6 +21,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         case lines([RecordedTrack], highlight: String?)
         /// The camera onto this box.
         case frame([Double])
+        /// A message over the map.
+        case say(String)
         /// The account's track a row overlaps, opened on the Tracks tab on its day.
         case openOnMap(TrackOverlap)
     }
@@ -59,6 +61,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var overlaps: [String: TrackOverlap] = [:]
     private var overlapsAsked: Set<String>?
     private var overlapsTask: Task<Void, Never>?
+    /// Delete's question while it's up.
+    private weak var deleteAlert: UIAlertController?
 
     private enum Item {
         case notice(String, id: String, failed: Bool)
@@ -352,9 +356,18 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         host.present(UINavigationController(rootViewController: editor), animated: true)
     }
 
-    /// Delete asks first: the phone's copy is the only one.
+    /// Why Delete or Discard left a recording; nil for one it deleted.
+    static func words(_ deletion: RecordingSends.Deletion) -> String? {
+        switch deletion {
+        case .sending: String(localized: "sync.deleteSending", defaultValue: "It's already being sent. Once it's on your map, delete it there.", comment: "Sync: Delete on a recording whose send had started.")
+        case .landed: String(localized: "sync.deleteLanded", defaultValue: "It's already on your map. Delete it there.", comment: "Sync: Delete on a recording that landed while the question was open.")
+        case .deleted: nil
+        }
+    }
+
+    /// Delete asks first: the phone's copy is the only one. One question at a time.
     private func confirmDelete(_ track: RecordedTrack) {
-        guard let host else { return }
+        guard let host, deleteAlert?.presentingViewController == nil else { return }
         // Kept by the alert's actions, so it goes with the alert.
         let hold = recordings.hold(track.id)
         let alert = UIAlertController(title: String(localized: "sync.deleteTitle", defaultValue: "Delete this recording?", comment: "Sync: deleting a recording, the question."),
@@ -362,9 +375,10 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                                       preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { _ in hold.release() })
         alert.addAction(UIAlertAction(title: String(localized: "recording.delete", defaultValue: "Delete", comment: "A recording: delete it from the phone."), style: .destructive) { [weak self] _ in
-            self?.recordings.delete(track.id)
+            if let self, let text = Self.words(self.recordings.delete(track.id)) { self.onEvent?(.say(text)) }
             hold.release()
         })
+        deleteAlert = alert
         (host.presentedViewController ?? host).present(alert, animated: true)
     }
 
