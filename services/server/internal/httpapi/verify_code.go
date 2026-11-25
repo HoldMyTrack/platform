@@ -15,10 +15,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// A verification email carries a 6-digit code beside its link, typed where the account is signed
-// in: the apps' "check your email" screens and /verify-pending. A code proves the mailbox to the
-// session that types it, so that session stays signed in, where a link opened in a browser
-// signs out every session but one already signed in there (verifyEmail). Only the newest
+// A verification email carries a 6-digit code, typed where the account is signed in: the apps'
+// "check your email" screens and /verify-pending. A code proves the mailbox to the session that
+// types it, so that session stays signed in, and a first verification ends every other session
+// of the account (applyVerification). Only the newest
 // email's code works; it lives verificationCodeTTL and allows verificationCodeTries wrong tries,
 // and a resend, limited with address changes, sends a new one. Wrong tries are also limited per
 // address across accounts (codeTriesPerAddress), since each account guessing at one address has
@@ -43,11 +43,11 @@ func newVerificationCode() (string, error) {
 	return fmt.Sprintf("%06d", n.Int64()), nil
 }
 
-// verificationCodeHash is what a row keeps of its code, bound to the row's link so the same code
+// verificationCodeHash is what a row keeps of its code, bound to the row's key so the same code
 // in two rows hashes differently.
-func verificationCodeHash(linkHash []byte, code string) []byte {
+func verificationCodeHash(rowHash []byte, code string) []byte {
 	h := sha256.New()
-	h.Write(linkHash)
+	h.Write(rowHash)
 	h.Write([]byte(code))
 	return h.Sum(nil)
 }
@@ -116,7 +116,7 @@ func (s *Server) verifyCode(ctx context.Context, info authInfo, sessionID, raw s
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 
-	var linkHash, codeHash []byte
+	var rowHash, codeHash []byte
 	var email, current string
 	var live, wasVerified bool
 	var attempts int
@@ -127,7 +127,7 @@ func (s *Server) verifyCode(ctx context.Context, info authInfo, sessionID, raw s
 		WHERE ev.user_id = $1 AND u.deleted_at IS NULL
 		ORDER BY ev.created_at DESC LIMIT 1
 		FOR UPDATE OF u, ev
-	`, info.userID).Scan(&linkHash, &email, &codeHash, &live, &attempts, &current, &wasVerified)
+	`, info.userID).Scan(&rowHash, &email, &codeHash, &live, &attempts, &current, &wasVerified)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return accountFailure(http.StatusBadRequest, "error.code_expired")
 	}
@@ -137,14 +137,14 @@ func (s *Server) verifyCode(ctx context.Context, info authInfo, sessionID, raw s
 	if codeTriesPerAddress.full(email) {
 		return accountFailure(http.StatusTooManyRequests, "error.code_rate_limited")
 	}
-	matches := codeHash != nil && subtle.ConstantTimeCompare(codeHash, verificationCodeHash(linkHash, code)) == 1
+	matches := codeHash != nil && subtle.ConstantTimeCompare(codeHash, verificationCodeHash(rowHash, code)) == 1
 	verdict := checkVerificationCode(live && codeHash != nil, attempts, matches)
 	switch verdict {
 	case codeExpired:
 		return accountFailure(http.StatusBadRequest, "error.code_expired")
 	case codeWrong, codeUsedUp:
 		codeTriesPerAddress.allow(email)
-		if _, err := tx.Exec(ctx, `UPDATE email_verifications SET code_attempts = code_attempts + 1 WHERE token_hash = $1`, linkHash); err != nil {
+		if _, err := tx.Exec(ctx, `UPDATE email_verifications SET code_attempts = code_attempts + 1 WHERE token_hash = $1`, rowHash); err != nil {
 			return err
 		}
 		if err := tx.Commit(ctx); err != nil {

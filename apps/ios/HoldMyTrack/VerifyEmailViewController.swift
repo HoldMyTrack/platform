@@ -4,8 +4,8 @@ import UIKit
 /// "Check your email", in place of everything else until the address is confirmed
 /// (apps/android/docs/SPEC.md FR-1.4), since the server would refuse the map's every tile. The
 /// email's code typed here confirms the address and keeps this session. It asks the server again
-/// on Confirm with the field empty and on every return to the app; confirming by the email's link
-/// in the phone's browser ends this session (docs/SPEC.md FR-1.8), and the check then signs out.
+/// on Confirm with the field empty and on every return to the app; the code typed on the web ends
+/// this session (docs/SPEC.md FR-1.8), and the check then signs out.
 /// Changing the address is the web's.
 final class VerifyEmailViewController: UIViewController, SessionCheckScreen {
     private unowned let flow: AppFlow

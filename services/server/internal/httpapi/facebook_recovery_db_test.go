@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -34,7 +33,7 @@ func newFacebookRecovery(t *testing.T) facebookRecovery {
 }
 
 // facebookAccount makes the account a Facebook sign-in creates for an address not yet in use
-// (resolveFacebookUser): no password, the address unverified, a verification link mailed.
+// (resolveFacebookUser): no password, the address unverified, a verification code mailed.
 func (f facebookRecovery) facebookAccount(verified bool) (a account, email, subject string) {
 	f.t.Helper()
 	ctx := context.Background()
@@ -61,13 +60,12 @@ func (f facebookRecovery) facebookAccount(verified bool) (a account, email, subj
 }
 
 // facebookCallback finishes a Facebook round trip as subject with the callback query given
-// (Facebook's answer), the round trip's cookie carrying verifyToken when it's set. It returns
-// the redirect's target and the session it started.
-func (f facebookRecovery) facebookCallback(query, subject, email, verifyToken string) (location string, as account) {
+// (Facebook's answer). It returns the redirect's target and the session it started.
+func (f facebookRecovery) facebookCallback(query, subject, email string) (location string, as account) {
 	f.t.Helper()
 	f.graph.me = map[string]string{"id": subject, "email": email, "name": "Some One"}
 	req := httptest.NewRequest(http.MethodGet, "/v2/auth/facebook/callback?"+query, nil)
-	req.AddCookie(&http.Cookie{Name: oauthCookieName, Value: "s..UTC.." + verifyToken})
+	req.AddCookie(&http.Cookie{Name: oauthCookieName, Value: "s..UTC."})
 	rec := serveChecked(f.t, f.srv.ServeHTTP, req)
 	if rec.Code != http.StatusFound {
 		f.t.Fatalf("callback: %d, want a redirect", rec.Code)
@@ -89,45 +87,31 @@ func (f facebookRecovery) facebookLinks(a account) int {
 	return n
 }
 
-// The address's owner opens the verification link a Facebook sign-in under their address had
-// mailed them: it verifies nothing, keeps working, and offers Facebook or a reset instead.
-// Whoever holds that Facebook account signs in through the page's button and comes back to the
-// link, which then verifies.
-func TestFacebookMadeAccountVerifiesOnlyWhenSignedIn(t *testing.T) {
+// A Facebook-made account is verified only by the code typed in a session signed in to it, which
+// whoever holds the Facebook account starts; the address's owner who isn't them resets the
+// password instead. The first verification keeps the Facebook link and ends unredeemed app
+// sign-ins.
+func TestFacebookMadeAccountVerifiesInItsOwnSession(t *testing.T) {
 	f := newFacebookRecovery(t)
 	a, email, subject := f.facebookAccount(false)
-	token := f.verificationToken(a)
-
-	rec := f.confirmLink(account{}, token)
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("link opened signed out: %d, want 403", rec.Code)
-	}
-	body := rec.Body.String()
-	if !strings.Contains(body, `href="/v2/auth/facebook/start?verify=`+token+`"`) || !strings.Contains(body, `href="/forgot"`) {
-		t.Errorf("the page offers neither Continue with Facebook back to the link nor a reset:\n%s", body)
-	}
-	var apiErr struct{ Error string }
-	f.decode(f.do(account{}, http.MethodPost, "/v2/auth/verify-email", map[string]any{"token": token}), http.StatusForbidden, &apiErr)
-	if apiErr.Error != "verify_needs_facebook" {
-		t.Errorf("verify-email signed out: error %q, want verify_needs_facebook", apiErr.Error)
-	}
-	if _, verified := f.email(a); verified {
-		t.Fatal("verified from a browser not signed in to the account")
+	code := f.mailedCode(email)
+	if rec := f.do(account{}, http.MethodPost, "/v2/auth/verify-code", map[string]string{"code": code}); rec.Code != http.StatusUnauthorized {
+		t.Fatalf("code typed signed out: %d, want 401", rec.Code)
 	}
 
-	location, session := f.facebookCallback("state=s&code=x", subject, email, token)
-	if !strings.HasSuffix(location, "/verify?"+url.Values{"token": {token}}.Encode()) {
-		t.Fatalf("Facebook round trip from /verify ended at %q, want back at the link", location)
+	_, session := f.facebookCallback("state=s&code=x", subject, email)
+	if session.session == "" {
+		t.Fatal("the Facebook sign-in started no session")
 	}
 	session.id = a.id
 	if _, err := f.srv.createHandoff(context.Background(), a.id, testChallenge("another-app")); err != nil {
 		t.Fatal(err)
 	}
-	if rec := f.do(session, http.MethodGet, "/verify?token="+token, nil); rec.Code != http.StatusSeeOther {
-		t.Fatalf("link opened signed in: %d, want a redirect", rec.Code)
+	if status, errCode := f.typeCode(session, code); status != http.StatusOK {
+		t.Fatalf("code typed in the Facebook session: %d %q, want 200", status, errCode)
 	}
 	if _, verified := f.email(a); !verified {
-		t.Fatal("not verified by the browser signed in with Facebook")
+		t.Fatal("not verified by the session signed in with Facebook")
 	}
 	if f.facebookLinks(a) != 1 {
 		t.Error("verifying dropped the account's own Facebook link")
@@ -157,9 +141,11 @@ func TestResetDropsAnUnverifiedAccountsFacebookLink(t *testing.T) {
 		t.Fatal("the reset kept the Facebook link")
 	}
 	owner.id = a.id
-	f.decode(f.do(owner, http.MethodPost, "/v2/auth/verify-email", map[string]any{"token": f.verificationToken(a)}), http.StatusOK, nil)
+	if status, errCode := f.typeCode(owner, f.mailedCode(email)); status != http.StatusOK {
+		t.Fatalf("the owner's code: %d %q, want 200", status, errCode)
+	}
 
-	if location, _ := f.facebookCallback("state=s&code=x", subject, email, ""); !strings.HasSuffix(location, "/signin?error=facebook_email_in_use") {
+	if location, _ := f.facebookCallback("state=s&code=x", subject, email); !strings.HasSuffix(location, "/signin?error=facebook_email_in_use") {
 		t.Errorf("the Facebook account after the reset: sent to %q, want refused with facebook_email_in_use", location)
 	}
 }
@@ -178,41 +164,6 @@ func TestResetKeepsAVerifiedAccountsFacebookLink(t *testing.T) {
 	}
 	if f.facebookLinks(a) != 1 {
 		t.Error("the reset dropped a verified account's Facebook link")
-	}
-}
-
-// A round trip from the /verify page that ends with another Facebook account, or none, makes
-// and signs in to nothing and goes back to the link, which says why when it was another account.
-func TestFacebookVerifyRoundTripWithAnotherAccount(t *testing.T) {
-	f := newFacebookRecovery(t)
-	a, _, _ := f.facebookAccount(false)
-	token := f.verificationToken(a)
-	link := "/verify?" + url.Values{"token": {token}}.Encode()
-
-	otherEmail := fmt.Sprintf("other-%d@holdmytrack.invalid", time.Now().UnixNano())
-	location, session := f.facebookCallback("state=s&code=x", fmt.Sprintf("fb-other-%d", time.Now().UnixNano()), otherEmail, token)
-	back, err := url.Parse(location)
-	if err != nil || back.Path != "/verify" || back.Query().Get("token") != token || back.Query().Get("error") != "other_facebook" || session.session != "" {
-		t.Fatalf("another Facebook account: sent to %q with session %q, want back at the link signed out", location, session.session)
-	}
-	var made int
-	if err := f.pool.QueryRow(context.Background(), `SELECT count(*) FROM users WHERE email = $1`, otherEmail).Scan(&made); err != nil || made != 0 {
-		t.Fatalf("another Facebook account made %d accounts (%v), want none", made, err)
-	}
-	rec := f.do(account{}, http.MethodGet, link+"&error=other_facebook", nil)
-	if rec.Code != http.StatusForbidden || !strings.Contains(rec.Body.String(), "isn&#39;t the one linked") {
-		t.Errorf("the link back from another Facebook account: %d without saying why", rec.Code)
-	}
-	if body := rec.Body.String(); !strings.Contains(body, `href="/v2/auth/facebook/start?verify=`+token+`"`) || strings.Contains(body, `action="/verify"`) {
-		t.Errorf("the link back from another Facebook account offers no Facebook sign-in, or a Confirm button that can't verify it:\n%s", body)
-	}
-
-	location, _ = f.facebookCallback("error=access_denied&state=s", "", "", token)
-	if back, err := url.Parse(location); err != nil || back.Query().Get("token") != token || back.Query().Get("error") != "facebook" {
-		t.Errorf("a cancelled round trip: sent to %q, want back at the link with error=facebook", location)
-	}
-	if _, verified := f.email(a); verified {
-		t.Fatal("verified by a round trip that didn't sign in to the account")
 	}
 }
 

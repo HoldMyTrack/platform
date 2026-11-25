@@ -8,11 +8,6 @@ OAuthAppChallenge:
   in: query
   description: A native app's S256 PKCE challenge; the round trip then ends in the app with a one-time code.
   schema: { type: string }
-OAuthVerify:
-  name: verify
-  in: query
-  description: A verification link's token, from the /verify page; the browser round trip ends back at that link. Not with app_challenge.
-  schema: { type: string }
 FilterFrom:
   name: from
   in: query

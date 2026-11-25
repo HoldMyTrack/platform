@@ -258,53 +258,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/verify-email": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Verify an address with a verification link's token
-         * @description Signs in only a caller already signed in to the account; any other caller gets 204 and signs in with the password, or, on a first verification of an account made through Facebook, 403 verify_needs_facebook, whose token stays usable. A first verification also ends the account's other sessions (SPEC FR-1.8).
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        token: string;
-                    };
-                };
-            };
-            responses: {
-                200: components["responses"]["Session"];
-                /** @description Verified, not signed in */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                400: components["responses"]["Error"];
-                403: components["responses"]["Error"];
-                409: components["responses"]["Error"];
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/verify-code": {
         parameters: {
             query?: never;
@@ -484,8 +437,6 @@ export interface paths {
                     tz?: components["parameters"]["OAuthTZ"];
                     /** @description A native app's S256 PKCE challenge; the round trip then ends in the app with a one-time code. */
                     app_challenge?: components["parameters"]["OAuthAppChallenge"];
-                    /** @description A verification link's token, from the /verify page; the browser round trip ends back at that link. Not with app_challenge. */
-                    verify?: components["parameters"]["OAuthVerify"];
                 };
                 header?: never;
                 path?: never;
@@ -832,7 +783,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Email a new verification code and link; works before the account is verified */
+        /** Email a new verification code; works before the account is verified */
         post: {
             parameters: {
                 query?: never;
@@ -867,7 +818,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Change the address of an account that isn't verified yet, and send it a new link */
+        /** Change the address of an account that isn't verified yet, and send it a new code */
         patch: {
             parameters: {
                 query?: never;
@@ -4763,8 +4714,6 @@ export interface components {
         OAuthTZ: string;
         /** @description A native app's S256 PKCE challenge; the round trip then ends in the app with a one-time code. */
         OAuthAppChallenge: string;
-        /** @description A verification link's token, from the /verify page; the browser round trip ends back at that link. Not with app_challenge. */
-        OAuthVerify: string;
         /** @description Local start date, inclusive. */
         FilterFrom: string;
         /** @description Local start date, inclusive. */

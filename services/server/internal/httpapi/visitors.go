@@ -22,7 +22,7 @@ import (
 // admin panel or a form's POST.
 var visitorPages = map[string]bool{
 	"GET /{$}": true, "GET /about": true, "GET /help": true, "GET /contacts": true, "GET /privacy": true,
-	"GET /signin": true, "GET /signup": true, "GET /forgot": true, "GET /reset": true, "GET /verify": true,
+	"GET /signin": true, "GET /signup": true, "GET /forgot": true, "GET /reset": true,
 	"GET /verify-pending": true, "GET /settings": true, "GET /profile": true, "GET /sync": true,
 }
 

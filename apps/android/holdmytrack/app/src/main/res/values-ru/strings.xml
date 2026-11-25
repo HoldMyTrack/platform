@@ -263,7 +263,7 @@
     <string name="sync_health_connect_info">О синхронизации с Health Connect</string>
     <string name="privacy_policy">Политика конфиденциальности</string>
     <string name="sync_needs_account">Сначала войдите в HoldMyTrack — до этого синхронизировать некуда.</string>
-    <string name="sync_needs_verified_email">Сначала подтвердите адрес почты — если нужна новая ссылка, откройте HoldMyTrack.</string>
+    <string name="sync_needs_verified_email">Сначала подтвердите адрес почты — если нужен новый код, откройте HoldMyTrack.</string>
     <string name="sync_demo_read_only">Демо-аккаунт только для просмотра — в нём нельзя добавлять, изменять и удалять треки. Создайте аккаунт, чтобы синхронизировать свои данные.</string>
     <string name="sync_unavailable">На этом устройстве нет Health Connect, так что синхронизировать не из чего.</string>
     <string name="sync_update_required">Health Connect нужно обновить, прежде чем он сможет чем-то поделиться.</string>

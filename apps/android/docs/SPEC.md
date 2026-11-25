@@ -66,7 +66,6 @@ An unverified account (`docs/SPEC.md` FR-1.8) sees a "check your email" screen i
 
 - The email's 6-digit code, typed on the screen, verifies the account and opens the map with the app still signed in. The server's refusal of a code is shown as sent.
 - The screen asks `GET /v2/auth/me` again on every resume, and on Confirm with the field empty, and opens the map once the email is verified. A `401` signs out as in FR-1.2.
-- Confirming by the email's link in the phone's browser ends the app's session (`docs/SPEC.md` FR-1.8), so the app returns to Sign in.
 - Resend shows the server's answer as sent, its hourly limit included.
 - Health Connect access, which Health Connect can open without the map, shows only a notice for such an account.
 - Changing the address is web-only: the phone keeps recordings and Sync state by email (FR-5.3), which a change would orphan. A demo account is never gated.

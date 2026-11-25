@@ -122,7 +122,7 @@ public final class APIClient: Sendable {
         return Account(json)
     }
 
-    /// Mails a fresh verification link; the server's answer, its hourly limit included, is the
+    /// Mails a fresh verification code; the server's answer, its hourly limit included, is the
     /// message to show.
     public func resendVerification() async throws -> String {
         let json: MessageJSON = try await decode(send("POST", "v2/auth/resend-verification"))

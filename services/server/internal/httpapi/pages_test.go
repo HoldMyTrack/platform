@@ -225,7 +225,7 @@ func TestAuthFormsRerenderOnValidationError(t *testing.T) {
 
 func TestAuthFormsRequireSameOrigin(t *testing.T) {
 	s := newPagesTestServer(t)
-	for _, path := range []string{"/signin", "/signup", "/demo", "/forgot", "/reset", "/verify", "/verify-pending/resend", "/verify-pending/email", "/settings", "/settings/avatar", "/settings/avatar/remove"} {
+	for _, path := range []string{"/signin", "/signup", "/demo", "/forgot", "/reset", "/verify-pending/code", "/verify-pending/resend", "/verify-pending/email", "/settings", "/settings/avatar", "/settings/avatar/remove"} {
 		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader("email=a%40b.c&password=long-enough"))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.Header.Set("Origin", "https://evil.example")

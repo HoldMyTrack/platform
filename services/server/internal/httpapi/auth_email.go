@@ -13,8 +13,8 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
 
-// The flows an emailed link finishes: password reset, email verification and changing the
-// account's address.
+// The flows an email finishes: password reset by its link, and email verification and changing
+// the account's address by its code (verify_code.go).
 
 type forgotPasswordRequest struct {
 	Email string `json:"email"`
@@ -186,102 +186,8 @@ func (s *Server) resetPassword(ctx context.Context, token, password string) (str
 // arbitrary address through this endpoint.
 var forgotPasswordLimiter = newFixedWindowLimiter(5, time.Hour)
 
-type verifyEmailRequest struct {
-	Token string `json:"token"`
-}
-
-// handleVerifyEmail serves `POST /v2/auth/verify-email` — the link handleSignup/
-// handleChangeEmail/handleResendVerification email out. Token-based, so the link verifies from
-// any device; it answers with a session only to a caller already signed in to the account
-// (verifyEmail), and 204 to anyone else. A generic error for a missing or expired token, same
-// "don't tell a caller more than it needs to know" reasoning as reset-password.
-func (s *Server) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
-	var req verifyEmailRequest
-	if err := decodeJSON(r.Body, &req); err != nil {
-		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
-		return
-	}
-	sessionID, _ := sessionIDFromRequest(r)
-	userID, signIn, err := s.verifyEmail(r.Context(), req.Token, sessionID)
-	if err != nil {
-		s.writeAccountError(w, r, "verify-email", err)
-		return
-	}
-	if !signIn {
-		// Verified, and signing in is up to whoever knows the password (verifyEmail).
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	s.writeSession(w, r, userID, sessionTTL, http.StatusOK)
-}
-
-// errVerifyNeedsFacebook refuses a first verification of a Facebook-linked account from a
-// browser not signed in to it: the /verify page answers with a Continue with Facebook that
-// returns to the link.
-var errVerifyNeedsFacebook = accountFailure(http.StatusForbidden, "error.verify_needs_facebook")
-
-// verifyEmail is the verification core (the JSON endpoint and the /verify page): confirms the
-// address the token was sent to, makes it the account's own if it was a pending change, and
-// returns the account id and whether the caller may start a session for it.
-//
-// One transaction with the account row locked, the token's address applied rather than just a
-// flag set: a token sent to the account's old address can't confirm a new one changed to
-// meanwhile, however the two requests interleave.
-//
-// A link proves who holds the mailbox, not who holds the account, so it signs in only a browser
-// already signed in to the account (sessionID, the browser's own); anyone else signs in with
-// the password, or resets it (IMPLEMENTATION.md §4.9).
-//
-// An account's first verification also ends every session but the browser's own: anyone can
-// sign up with someone else's email. A Facebook-made account has no password, and its Facebook
-// link was never vouched for by the address, so only a browser signed in to it verifies it:
-// anywhere else gets errVerifyNeedsFacebook and the token stays usable (ADR-0009).
-//
-// deleted_at is checked although closing deletes the token: the worker's unverified-account
-// sweep can close the account while this waits for the row lock, and the token row read
-// before it would otherwise verify the closed account.
-func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (string, bool, error) {
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return "", false, err
-	}
-	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
-
-	var userID, email, current string
-	var wasVerified bool
-	err = tx.QueryRow(ctx, `
-		SELECT ev.user_id, ev.email, u.email, u.email_verified
-		FROM email_verifications ev JOIN users u ON u.id = ev.user_id
-		WHERE ev.token_hash = $1 AND ev.expires_at > NOW() AND u.deleted_at IS NULL
-		FOR UPDATE OF u
-	`, tokenHash(token)).Scan(&userID, &email, &current, &wasVerified)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return "", false, accountFailure(http.StatusBadRequest, "error.verify_link_invalid")
-	}
-	if err != nil {
-		return "", false, err
-	}
-	var signIn, facebook bool
-	mine := tokenHash(sessionID)
-	if err := tx.QueryRow(ctx, `
-		SELECT EXISTS (SELECT 1 FROM sessions WHERE user_id = $1 AND token_hash = $2 AND expires_at > NOW()),
-		       NOT $3 AND EXISTS (SELECT 1 FROM user_identities WHERE user_id = $1 AND provider = 'facebook')
-	`, userID, mine, wasVerified).Scan(&signIn, &facebook); err != nil {
-		return "", false, err
-	}
-	// The mailbox's owner may not be whoever linked Facebook, so a Facebook-linked account is
-	// first verified only by a browser signed in to it. The link stays usable for that.
-	if facebook && !signIn {
-		return "", false, errVerifyNeedsFacebook
-	}
-	if err := applyVerification(ctx, tx, userID, email, current, wasVerified, mine); err != nil {
-		return "", false, err
-	}
-	return userID, signIn, tx.Commit(ctx)
-}
-
 // applyVerification makes email the verified address of userID, whose row the caller holds
-// locked in tx, the way a link or a code does it: current is the address before, wasVerified
+// locked in tx: current is the address before, wasVerified
 // whether it was verified, and keep the hash of the one session a first verification leaves.
 func applyVerification(ctx context.Context, tx pgx.Tx, userID, email, current string, wasVerified bool, keep []byte) error {
 	if _, err := tx.Exec(ctx, `UPDATE users SET email = $2, email_verified = true WHERE id = $1`, userID, email); err != nil {
@@ -291,9 +197,8 @@ func applyVerification(ctx context.Context, tx pgx.Tx, userID, email, current st
 		}
 		return err
 	}
-	// Every outstanding token for this account, not just the one used — mirrors
-	// resetPassword's own "close every other still-live link too" reasoning, applied to a
-	// resend that arrived after this one was already clicked.
+	// Every outstanding row for this account, not just the newest: an older one would keep
+	// holding its address against other accounts (changeEmail).
 	if _, err := tx.Exec(ctx, `DELETE FROM email_verifications WHERE user_id = $1`, userID); err != nil {
 		return err
 	}
@@ -317,10 +222,10 @@ func applyVerification(ctx context.Context, tx pgx.Tx, userID, email, current st
 	return nil
 }
 
-// pendingEmail is the address the account's newest live verification link went to — a
+// pendingEmail is the address the account's newest live verification email went to — a
 // pending change's new address, or the account's own — falling back to the account's
-// address when no link is outstanding. It's where a resend goes, and what /verify-pending
-// says it sent a link to.
+// address when none is outstanding. It's where a resend goes, and what /verify-pending
+// says it sent a code to.
 func (s *Server) pendingEmail(ctx context.Context, userID string) (string, error) {
 	var email string
 	err := s.pool.QueryRow(ctx, `
@@ -377,8 +282,8 @@ type changeEmailRequest struct {
 // handleChangeEmail serves `PATCH /v2/auth/email` — plain requireAuth like
 // handleResendVerification, reachable before verification specifically so a mistyped signup
 // email can be corrected: resending alone doesn't help someone who typed the address wrong.
-// The change is pending until the link sent to the new
-// address is clicked (changeEmail); the response is the account as it stands meanwhile.
+// The change is pending until the code sent to the new address is typed (changeEmail); the
+// response is the account as it stands meanwhile.
 func (s *Server) handleChangeEmail(w http.ResponseWriter, r *http.Request) {
 	info := authInfoFromContext(r.Context())
 	var req changeEmailRequest
@@ -402,8 +307,8 @@ func (s *Server) handleChangeEmail(w http.ResponseWriter, r *http.Request) {
 // changeEmail is the change-email core (the JSON endpoint and the /verify-pending page). lang
 // is the verification email's language.
 //
-// The new address is not the account's until its owner clicks the link sent there
-// (verifyEmail applies it); the account keeps its current address, and its verified state,
+// The new address is not the account's until the code sent there is typed (verifyCode applies
+// it); the account keeps its current address, and its verified state,
 // meanwhile. Applied at once, any account could take an address nobody had proven: the real
 // owner couldn't sign up with it, and a password reset by them would hand them an account
 // whose Google or Facebook sign-in still belonged to whoever made the change. Rate-limited
@@ -427,14 +332,14 @@ func (s *Server) changeEmail(ctx context.Context, info authInfo, rawEmail, lang 
 		return accountFailure(http.StatusConflict, "error.email_taken")
 	}
 	// One account at a time confirms an address: each would have a code of its own to guess at,
-	// and another account's change waits until that one's link expires.
+	// and another account's change waits until that one's row expires (emailVerificationTTL).
 	if pending {
 		return accountFailure(http.StatusConflict, "error.email_pending")
 	}
 	if !resendVerificationLimiter.allow(info.userID) {
 		return accountFailure(http.StatusTooManyRequests, "error.rate_limited")
 	}
-	// One pending address at a time: a link sent before this change, to either address,
+	// One pending address at a time: a code sent before this change, to either address,
 	// stops working.
 	if _, err := s.pool.Exec(ctx, `DELETE FROM email_verifications WHERE user_id = $1`, info.userID); err != nil {
 		return err

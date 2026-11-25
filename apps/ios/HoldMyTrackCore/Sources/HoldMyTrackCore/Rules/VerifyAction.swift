@@ -3,7 +3,7 @@
 public enum VerifyAction: Equatable, Sendable {
     /// Send the code; the server judges it, as it judges sign-in's fields.
     case submit(String)
-    /// Nothing typed: ask whether the address was confirmed some other way, by the email's link.
+    /// Nothing typed: ask whether the address was confirmed some other way, by the code on the web.
     case check
 
     public static func of(_ typed: String) -> VerifyAction {

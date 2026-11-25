@@ -10,7 +10,7 @@ import (
 
 // The sign-in, sign-up, password-reset and email-verification pages (ADR-0012,
 // IMPLEMENTATION.md §4.19). Each form calls the same account core its JSON endpoint does
-// (auth.go, auth_email.go: checkPassword, createAccount, resetPassword, verifyEmail, …), so the two can't
+// (auth.go, auth_email.go: checkPassword, createAccount, resetPassword, verifyCode, …), so the two can't
 // drift; what differs is only the answer — a redirect and a cookie here, instead of JSON. A
 // failed form is rendered again with the message and the email kept, at the failure's own
 // status. Every form POST is behind sameOrigin.
@@ -41,8 +41,6 @@ type authForm struct {
 	// Created is /signup's page after an app's account was made but couldn't be handed to the
 	// app: it says to sign in there, and shows no form.
 	Created bool
-	// Confirm is /verify's button that confirms the link's address.
-	Confirm bool
 	// TurnstileSiteKey shows /signup's Turnstile widget when set (turnstile.go).
 	TurnstileSiteKey string
 }
@@ -231,10 +229,6 @@ func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
 	// handleSettingsDeleteForm's landing, once the account is gone (FR-1.12).
 	if r.URL.Query().Has("deleted") {
 		form.NoticeKey = "signin.account_deleted"
-	}
-	// handleVerifyPage's landing after a verification from a browser not signed in to the account.
-	if r.URL.Query().Has("verified") {
-		form.NoticeKey = "signin.email_verified"
 	}
 	s.renderAuth(w, r, acct, http.StatusOK, "signin", "signin.title", false, form)
 }

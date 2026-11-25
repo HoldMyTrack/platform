@@ -111,9 +111,9 @@ func TestAppSignupHandsOffToTheApp(t *testing.T) {
 	if me.Email != email || me.EmailVerified {
 		t.Errorf("the app's session is on %q verified %v, want the new unverified %q", me.Email, me.EmailVerified, email)
 	}
-	var links int
-	if err := d.pool.QueryRow(context.Background(), `SELECT count(*) FROM email_verifications WHERE email = $1`, email).Scan(&links); err != nil || links != 1 {
-		t.Errorf("verification links for the new account: %d (%v), want 1", links, err)
+	var rows int
+	if err := d.pool.QueryRow(context.Background(), `SELECT count(*) FROM email_verifications WHERE email = $1`, email).Scan(&rows); err != nil || rows != 1 {
+		t.Errorf("verification emails for the new account: %d (%v), want 1", rows, err)
 	}
 }
 

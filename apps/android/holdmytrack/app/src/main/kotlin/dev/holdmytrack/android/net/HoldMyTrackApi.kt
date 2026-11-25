@@ -706,7 +706,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `POST /v2/auth/resend-verification` — mails a fresh confirmation link. Answers with the
+     * `POST /v2/auth/resend-verification` — mails a fresh verification code. Answers with the
      * server's own confirmation text ("Verification email sent."), in the app's language.
      */
     fun resendVerification(onResult: (Result<String>) -> Unit) {

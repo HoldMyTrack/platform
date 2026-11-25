@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-23.
+Last updated: 2026-11-25.
 
 ## How to read this document
 
@@ -15,10 +15,6 @@ The current milestone, from the public launch on, with no exit gate (`VISION.md`
 Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] Serve the basemap as `/{z}/{x}/{y}` tiles Cloudflare can cache, with `pmtiles serve` on the droplet first: every range read reaches R2, since the free plan caches files only up to 512 MB (`IMPLEMENTATION.md` §5.4). Worth it once traffic grows: about 97,000 basemap requests in the 30 days to 2026-10-14 were under 1% of R2's free reads. The web style (`apps/web/src/map/style.ts`) and the server-built Android style (`mapstyle.go`) move from `pmtiles://` to the tile URL.
-
-### Verification by code
-
-- [ ] When `MIN_ANDROID_BUILD` reaches a build whose "check your email" screen takes the code, make the email code-only: drop its link, the `/verify` page and its Confirm button, the Facebook round trip from that page, and `POST /v2/auth/verify-email` (`IMPLEMENTATION.md` §4.9).
 
 ### Library replaces Sync
 
@@ -52,4 +48,5 @@ Public pages, followers and the rest (`VISION.md` §5.1, §5.2). No steps: the f
 - [x] Typed Android wire classes (`net/Wire.kt`) checked against the contract (`WireContractTest`).
 - [x] Fail a pull request whose contract change breaks an installed client (`scripts/check-contract-break.sh`).
 - [ ] Make `apps/web/scripts/build-basemap.sh` resolve the newest Protomaps build from `https://build-metadata.protomaps.dev/builds.json` when `BUILD` is unset, so CI's basemap cache miss stops failing once the pinned build ages out (`DEVELOPMENT.md`, "CI").
+- [ ] A day after the code-only verification email deploys, remove the `GET /verify` redirect for older emails' links (`httpapi/server.go`).
 - [ ] Turn on Sign in with Facebook (`SPEC.md` FR-1.10): Meta publishes the app only after Business Verification, which needs a business document such as an EIN letter or a DBA filing (`docs/DEPLOY.md` §4). Not a launch gate.
