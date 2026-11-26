@@ -126,6 +126,49 @@ final class PanelTests: XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: fewer, object: rows)], timeout: 15), .completed)
     }
 
+    /// Trips has no head of its own: its list starts under the grip at every height of the sheet,
+    /// whichever tab showed before, and the sheet opens up to the map's top row.
+    @MainActor
+    func testTheTripsListStartsUnderTheGrip() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
+        try account.trip("Lakeside")
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        let handle = app.buttons["panelHandle"]
+        let folder = app.cells["tripFolder"].firstMatch
+        func underTheGrip(_ when: String) {
+            XCTAssertTrue(folder.waitForExistence(timeout: 10), when)
+            sleep(1)
+            XCTAssertLessThan(folder.frame.minY - handle.frame.maxY, 24, "the list starts under the grip: \(when)")
+        }
+
+        // A drag, not swipeUp, which the grip takes as a tap and closes the sheet.
+        func drag(toY y: CGFloat) {
+            handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+                .press(forDuration: 0.2, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: y)))
+        }
+
+        app.tabBars.buttons["tabTrips"].tap()
+        underTheGrip("opened")
+        let topRow = app.buttons["layers"].frame.minY
+        drag(toY: 0.05)
+        underTheGrip("open all the way")
+        XCTAssertLessThan(handle.frame.minY, topRow, "open all the way, over the map's top row")
+        app.tabBars.buttons["tabLibrary"].tap()
+        XCTAssertTrue(app.textFields["librarySearch"].waitForExistence(timeout: 10))
+        app.tabBars.buttons["tabTrips"].tap()
+        underTheGrip("back from Library")
+        drag(toY: 0.98)
+        XCTAssertEqual(handle.label, "Expand the panel", "closed")
+        handle.tap()
+        underTheGrip("closed and opened again")
+    }
+
     /// Trips shows its Trip in Normal, with no mode toggle, and the Tracks tab gets its mode back.
     @MainActor
     func testTripsShowNormalAndTheTracksTabKeepsItsMode() throws {
