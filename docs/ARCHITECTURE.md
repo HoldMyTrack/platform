@@ -112,4 +112,4 @@ Path 2 for Health Connect (`VISION.md` §4.1), a map viewer on the same accounts
 
 ## 4. iOS app
 
-Path 2 for HealthKit (`VISION.md` §4.1), and the same map viewer and GPS recording as Android, in Swift. So far sign-in and the map (`apps/ios/docs/ROADMAP.md`). Its shape, key decisions and stack are `apps/ios/docs/ARCHITECTURE.md`.
+The same map viewer and GPS recording as Android, in Swift, and Path 2 for HealthKit (`VISION.md` §4.1), still to come (`apps/ios/docs/ROADMAP.md`). Its shape, key decisions and stack are `apps/ios/docs/ARCHITECTURE.md`.

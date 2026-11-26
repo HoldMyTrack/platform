@@ -71,7 +71,7 @@ holdmytrack/
 │   ├── android/                 # Kotlin. Health Connect sync + in-app GPS recording; own docs/
 │   ├── docs/SPEC.md             # what both apps do; each app's docs/SPEC.md holds only where it differs
 │   ├── docs/ui-states.json      # the screens both apps must keep alike, for make ui-compare
-│   ├── ios/                     # Swift, HealthKit ingest. A skeleton; own docs/, whose ROADMAP.md is its plan
+│   ├── ios/                     # Swift. In-app GPS recording, HealthKit planned; own docs/, whose ROADMAP.md is its plan
 │   └── web/                     # the React map app (pages are server-rendered by services/server)
 │       ├── Dockerfile  .dockerignore  docker/entrypoint.sh
 │       ├── package.json  tsconfig.json  vite.config.ts

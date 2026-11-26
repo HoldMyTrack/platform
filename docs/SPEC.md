@@ -114,7 +114,7 @@ A real account must confirm its email before using anything else. Why: a mistype
 - The account is, in order: the one linked to this Google account, even if its email changed; else a real account with the same email, which is linked and counts as verified from then on; else a new verified account, named from the Google profile, on the browser's timezone (UTC if none).
 - Linking an unverified account also removes its password and other provider links and ends its sessions and links: whoever set them never proved they own the address.
 - An account linked to a different Google account isn't relinked; the sign-in fails. Every failure gets one generic message, the cause logged on the server only.
-- Kept from Google: the stable id, email and name. The Android app sends a Google ID token for the same checks.
+- Kept from Google: the stable id, email and name. The Android app sends a Google ID token for the same checks; the iOS app runs the flow as for Facebook (FR-1.10).
 
 ### FR-1.10 Sign in with Facebook
 
@@ -122,7 +122,7 @@ A real account must confirm its email before using anything else. Why: a mistype
 - Never linked to an existing account by email, because Facebook doesn't say whether the email is verified: an email another account has is refused, pointing to the usual sign-in or a password reset. There is no way to link Facebook to an existing account.
 - A Facebook account that shares no email is refused.
 - An account linked to the Facebook account signs in even if its email changed; otherwise a new, unverified account is made and sent a verification email (FR-1.8).
-- Kept from Facebook: the app-scoped id, email and name. The Android app runs the flow in a browser tab and gets its session with a one-time code valid for 2 minutes and tied to the app's S256 challenge; a wrong verifier uses it up.
+- Kept from Facebook: the app-scoped id, email and name. The apps run the flow in a browser tab and get their session with a one-time code valid for 2 minutes and tied to the app's S256 challenge; a wrong verifier uses it up.
 
 ### FR-1.11 Sign in with Apple
 
@@ -165,7 +165,7 @@ Every account can keep up to 50,000 tracks and 5 GB of originals, the same for e
 
 - At most 5 demo starts an hour from one address.
 - Every demo session is on the one persistent Demo Customer account, so every visitor sees the same data. A demo session lasts 24 hours.
-- Every write (upload, sync, edit, delete, settings, avatar, Private locations, Trips, photos, captures, data download, account deletion) is refused, whatever the client sends. On Android a demo session can record on the phone but not sync.
+- Every write (upload, sync, edit, delete, settings, avatar, Private locations, Trips, photos, captures, data download, account deletion) is refused, whatever the client sends. In the apps a demo session can record on the phone but not sync.
 - It holds a real history from a live deployment: 55 tracks from 2026 around Cleveland, OH and on trips to Niagara Falls, Rome, Tallinn and Vietnam, with photos, Trips and captures; a preset profile (Demo User, United States, America/New_York); three 305 m Private locations where the history starts and ends.
 
 ### FR-2.2 Demo account seeding and lifetime
@@ -194,7 +194,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 
 ### FR-3.2 Import status
 
-- Files come in through the header's Upload menu, which shows each one queued, uploading or processing, and a phone sync's tracks still processing. What came in is Library sorted by date added (FR-17.1); no list of imports is shown on the web or Android.
+- Files come in through the header's Upload menu, which shows each one queued, uploading or processing, and a phone sync's tracks still processing. What came in is Library sorted by date added (FR-17.1); no list of imports is shown on the web or in the apps.
 - A failed import is listed in the Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened. The apps show it in an alert, which dismisses it (`apps/docs/SPEC.md` FR-3.4).
 - A finished import is kept 90 days, for the Upload menu's failures and `/sync` (FR-3.7).
 - A phone sync of several tracks is one import. The web can't start a phone sync.
@@ -241,7 +241,7 @@ The apps record tracks on the phone and send each one the user saves; a discarde
 A track's times and dates are the wall clock where it was recorded, whatever the account's or viewer's zone.
 
 - The zone is the one the first recorded point lies in, before Private locations clip it; at sea, the nautical zone. A split part takes its own first point's. With no zone known, the account's at ingest.
-- Every time of the track, its points and photos is shown in that zone, on the web and Android; a browser or phone that doesn't know the zone shows its own.
+- Every time of the track, its points and photos is shown in that zone, on the web and in the apps; a browser or phone that doesn't know the zone shows its own.
 - A track counts on its local date everywhere days are counted: date filtering, totals, drawn routes, the track graph and Trends.
 - The offset is the one in force on the track's date.
 
@@ -273,7 +273,7 @@ Exactly one of Normal and Fog of War shows at a time.
 - A self-hosted vector base map covering the whole planet at every zoom, light or dark with the theme (FR-4.8). A URL can pin `white`, `black` or `grayscale` until the theme changes.
 - The camera is kept in the URL (`#map=<zoom>/<lat>/<lon>`); an incomplete or out-of-range one is ignored.
 - The opening view: the URL's camera; else zoom 12 centred on the newest five tracks with a route, or fewer when five don't fit the screen there, down to the newest alone; else the account's Country; else a world view. It never asks for the browser's location, and a new session doesn't inherit an earlier one's camera.
-- The web map is a globe out to zoom 3 and flat from 4; Android's is flat. Zoomed all the way out, the globe fills 80% of the map's shorter side.
+- The web map is a globe out to zoom 3 and flat from 4; the apps' are flat. Zoomed all the way out, the globe fills 80% of the map's shorter side.
 - If no base map tile arrives within 15 seconds on screen, or one fails first, the map says its tile server is unreachable until one arrives.
 
 ### FR-4.5 Find my location
@@ -289,15 +289,15 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 
 ### FR-4.7 Map image export
 
-- Any framed view as a PNG, on the web and Android: Custom with a long side of 1920, 2560 or 3840 px, or an Instagram, Facebook or X preset. A size the browser can't draw isn't offered.
+- Any framed view as a PNG, on the web and in the apps: Custom with a long side of 1920, 2560 or 3840 px, or an Instagram, Facebook or X preset. A size the browser can't draw isn't offered.
 - While the frame is open the map only pans and zooms: a tap selects, opens and clears nothing.
 - The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Trip with its bold routes, pace bands and photo markers as on screen, Fog's all-time coverage. Spots and Private location circles are never drawn.
 - OpenStreetMap's attribution, the imagery credit with Satellite on, and a HoldMyTrack watermark are drawn in and can't be removed: the basemap is an ODbL Produced Work (`IMPLEMENTATION.md` §5.6).
-- On the web and Android, a stats card of the Checked tracks (FR-5.8), none with a Trip open: newest first, five at most and a count of the rest, each with type, distance, moving time (FR-5.1) and elevation gain, or type alone inside Private locations; with more than one, their totals.
+- On the web and in the apps, a stats card of the Checked tracks (FR-5.8), none with a Trip open: newest first, five at most and a count of the rest, each with type, distance, moving time (FR-5.1) and elevation gain, or type alone inside Private locations; with more than one, their totals.
 
 ### FR-4.8 Light and dark theme
 
-- Pages and the Android app follow the device's setting, or a Light or Dark choice.
+- Pages and the apps follow the device's setting, or a Light or Dark choice.
 - The base map and Fog's veil follow the theme. A saved dark choice never flashes light first.
 
 ### FR-4.9 Trails and bike paths
@@ -329,7 +329,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 | 12 | Drawn | Exact | Drawn | Dirt tracks | On request | Drawn |
 | 13+ | Drawn | Exact | Drawn | Drawn | Drawn | Drawn |
 
-- Each band runs up to the next band's first zoom. The Android app follows the same bands.
+- Each band runs up to the next band's first zoom. The apps follow the same bands.
 - Bottom to top: base map or imagery, Fog, paths, routes and pace bands, labels, Spots, photos.
 - Past the deepest stored level the map enlarges it: routes, Fog, bike kinds and Spots past zoom 14, the base map past 15, imagery past the deployment's deepest level (18 on holdmytrack.com).
 - At most 1,200 tile requests a minute per account across every layer (per address for the demo account); past that a tile is refused for the minute and an export that meets one fails. Caching is `IMPLEMENTATION.md` §4.2.6.
@@ -432,7 +432,7 @@ stateDiagram-v2
 | Checked | Bold | Counted | Ticked | No |
 
 - At most one track is Focused, by clicking its row or route; any number are Checked. Bold is either, on the map and in its image (FR-4.7). The toolbar acts on the Checked ones when any are, else the Focused one. A Type or Distance filter that hides a Checked track unchecks it.
-- On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/docs/SPEC.md` FR-2.7).
+- On the web they're independent and checking never moves the camera; in the apps focusing unchecks the rest, and the first check takes the Focused one in (`apps/docs/SPEC.md` FR-2.7).
 - Hiding keeps Focused and Checked; camera fits skip Hidden. A fit over several tracks (the opening view, Dates, a Trip's, the toolbar's over Checked ones) skips Pending and Private ones too, so only a Private row framed alone frames its location's circle (FR-5.11). Opening or closing a Trip clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on tracks still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden track stays hidden after Pending clears.
 - Leaving Pending brings the route back at once, and Fog once redrawn.
@@ -540,9 +540,9 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-9.4).
 
 `/privacy`, in English and Russian, is the policy the Play Store listing and the Android app's Health Connect rationale point to. Its text must agree with `DPIA.md` and this document: a change to what is kept, who processes it or for how long changes all three.
 
-### FR-9.6 Pages inside the Android app
+### FR-9.6 Pages inside the apps
 
-- The Android app shows Settings, Profile and About as web pages; the `hmt_app` cookie drops their header and footer.
+- The apps show Settings, Profile and About as web pages; the `hmt_app` cookie drops their header and footer.
 - For the app, pages leave out what the app has natively. Signed out, the app's About is cached apart from the browser's.
 - The cookie's value names the app, `android` or `ios`, and a page names that platform's app and health store; any value but `ios` counts as Android.
 
@@ -596,7 +596,7 @@ flowchart TD
 - Verification and reset emails use the account's language, else the request's.
 - Error codes never change; messages follow the request reading them, so an old import failure reads in today's language.
 - Map labels use the language where OpenStreetMap has it, else English, with the local name beneath when it's in another script.
-- The Android app follows its per-app language, else the phone's; its Language setting sets that and the account's together, signing in applies the account's, and it sends `Accept-Language`.
+- The apps follow their per-app language, else the phone's, and send `Accept-Language`. On Android its Language setting sets that and the account's together, and signing in applies the account's; on iOS the per-app language is iOS's own setting (`apps/ios/docs/SPEC.md` FR-1.5).
 - Not translated: names and descriptions people type, place names OSM lacks in either language, uncommon track types.
 
 ### FR-12.2 The language menu
@@ -668,7 +668,7 @@ Accepting puts a Trip and tracks in the recipient's account that are theirs from
 
 ## 16. FR-14 — Spots
 
-Outdoor places from OpenStreetMap in six categories, with what OSM says about each (`VISION.md` §4.2), on the web and Android (`apps/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
+Outdoor places from OpenStreetMap in six categories, with what OSM says about each (`VISION.md` §4.2), on the web and in the apps (`apps/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
 
 ### FR-14.1 Places
 
@@ -707,7 +707,7 @@ A place is captured by staying inside it for 30 seconds with an app's capture mo
 
 ## 17. FR-15 — Track photos
 
-The user's own photos on a track, each at a moment on its route, so a track or Trip shows its pictures on the map (`VISION.md` §4.2, ADR-0024). Each is stored as a resized copy and thumbnail without EXIF, visible only to the account. The web and Android add and show them (`apps/docs/SPEC.md` FR-2.10).
+The user's own photos on a track, each at a moment on its route, so a track or Trip shows its pictures on the map (`VISION.md` §4.2, ADR-0024). Each is stored as a resized copy and thumbnail without EXIF, visible only to the account. The web and the apps add and show them (`apps/docs/SPEC.md` FR-2.10).
 
 ### FR-15.1 Upload
 
