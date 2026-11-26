@@ -12,9 +12,16 @@ object FrameRules {
      */
     fun padding(rootHeight: Int, chromeBottom: Int, bannerBottom: Int?, coveredBelow: Int, minSpanPx: Int): IntArray {
         val top = maxOf(PADDING_PX, chromeBottom, bannerBottom?.let { it + PADDING_PX / 2 } ?: 0)
-        val bottom = PADDING_PX + coveredBelow
-        val fitTop = top.coerceAtMost(maxOf(PADDING_PX, rootHeight - bottom - minSpanPx))
-        val fitBottom = bottom.coerceAtMost(maxOf(PADDING_PX, rootHeight - fitTop - minSpanPx))
+        val (fitTop, fitBottom) = fit(rootHeight, top, coveredBelow, PADDING_PX, minSpanPx)
         return intArrayOf(PADDING_PX, fitTop, PADDING_PX, fitBottom)
+    }
+
+    /** The fit's top and bottom padding under [top] and over [coveredBelow] plus [pad], keeping a
+     *  strip of [minSpan] (`testdata/client-rules/frame-padding.json`). */
+    fun fit(height: Int, top: Int, coveredBelow: Int, pad: Int, minSpan: Int): Pair<Int, Int> {
+        val bottom = pad + coveredBelow
+        val fitTop = top.coerceAtMost(maxOf(pad, height - bottom - minSpan))
+        val fitBottom = bottom.coerceAtMost(maxOf(pad, height - fitTop - minSpan))
+        return fitTop to fitBottom
     }
 }

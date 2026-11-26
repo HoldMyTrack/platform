@@ -5,9 +5,9 @@ public enum MapFraming {
     /// The furthest a flight zooms in.
     public static let maxZoom = 15.0
 
-    /// A fit's top and bottom padding, as Android's FrameRules: under top, above what covers the
-    /// bottom of a map height tall, each with pad. When they leave no room, as with the sheet open
-    /// all the way, the fit keeps a strip of minSpan, taken from the top first.
+    /// A fit's top and bottom padding (testdata/client-rules/frame-padding.json): under top, above
+    /// what covers the bottom of a map height tall plus pad. When they leave no room, as with the
+    /// sheet open all the way, the fit keeps a strip of minSpan, taken from the top first.
     public static func padding(height: Double, top: Double, coveredBelow: Double, pad: Double = 48, minSpan: Double = 96) -> (top: Double, bottom: Double) {
         let bottom = coveredBelow + pad
         let fitTop = min(top, max(pad, height - bottom - minSpan))

@@ -149,6 +149,11 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         let step = ImportWatch.step(status: input["status"].string!)
         return ["landed": .bool(step.landed), "done": .bool(step.done)]
     },
+    "framePadding": { input in
+        let fit = MapFraming.padding(height: Double(input.int("height")), top: Double(input.int("top")), coveredBelow: Double(input.int("coveredBelow")),
+                                     pad: Double(input.int("pad")), minSpan: Double(input.int("minSpan")))
+        return ["top": .number(fit.top), "bottom": .number(fit.bottom)]
+    },
     "importRetry": { input in ImportWatch.delay(failures: input.int("failures"), watched: input.int("watched")).map { .number(Double($0)) } ?? .null },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
     "attachmentName": { input in .string(AttachmentName.of(input["header"].string)) },
