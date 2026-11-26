@@ -449,7 +449,7 @@
     <string name="panel_type_empty">Пока нечего фильтровать.</string>
     <string name="panel_distance">Расстояние</string>
     <string name="panel_any_distance_chip">Любое расстояние</string>
-    <string name="panel_distance_range">%1$s – %2$s %3$s</string>
+    <string name="panel_distance_range">%1$s–%2$s %3$s</string>
     <string name="panel_check_all">Отметить все треки</string>
     <string name="panel_uncheck_all">Снять отметку со всех треков</string>
     <string name="panel_hide_target">Скрыть с карты: %1$s</string>
