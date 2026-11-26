@@ -253,7 +253,7 @@ class TripsTab(
      *  never the sheet around it. */
     fun scrollToRow(trackId: String) {
         list.post {
-            val position = adapter.currentList.indexOfFirst { it is Item.Row && it.row.track.id == trackId }
+            val position = adapter.currentList.indexOfFirst { it is TripsItem.Row && it.row.track.id == trackId }
             if (position < 0) return@post
             val rowHeight = list.getChildAt(0)?.height ?: 0
             (list.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, (list.height - rowHeight) / 2)
@@ -273,40 +273,20 @@ class TripsTab(
     }
 
     private fun render() {
-        val items = ArrayList<Item>()
-        sends.forEach { items += Item.Inbox(it, answering) }
-        copying.forEachIndexed { i, copy -> items += Item.Copying(copy, i) }
-        answerError?.let { items += Item.Note(it, failed = true) }
-        val openListed = trips.any { it.id == openId }
-        if (openError != null && !openListed) items += Item.Note(openError!!, failed = true)
-        for (listed in trips) {
-            val open = listed.id == openId
-            // The open Trip's own copy is the fresher one.
-            val trip = if (open && openTrip?.id == listed.id) openTrip!! else listed
-            val expanded = open && !TripFold.isFolded(foldedId, openId)
-            items += Item.Folder(trip, open, expanded)
-            if (!expanded) continue
-            trip.from?.let { items += Item.From(trip.id, res.getString(R.string.trip_from, it)) }
-            if (trip.description.isNotEmpty()) items += Item.Description(trip.id, trip.description)
-            items += Item.Stats(trip)
-            removeError?.let { items += Item.Note(it, failed = true) }
-            rows.forEach { items += Item.Row(it, trip.id) }
-            when {
-                rowsLoading -> items += Item.Note(res.getString(R.string.panel_loading), failed = false)
-                rowsError != null -> items += Item.Note(rowsError!!, failed = true)
-                // An empty Trip's statistics already say it has no tracks.
-                rows.isEmpty() && trip.stats.count > 0 -> items += Item.Note(res.getString(R.string.panel_none_match), failed = false)
-            }
-        }
-        when {
-            error != null -> items += Item.Note(error!!, failed = true)
-            !ready && trips.isEmpty() -> items += Item.Note(res.getString(R.string.panel_loading), failed = false)
-            ready && trips.isEmpty() -> items += Item.Note(res.getString(R.string.trip_empty), failed = false)
-        }
-        adapter.submitList(items)
+        val state = TripsState(
+            sends, answering, copying, answerError, trips, ready, error, openId, openTrip, openError,
+            foldedId, rows, rowsLoading, rowsError, removeError,
+        )
+        val words = TripsWords(
+            loading = res.getString(R.string.panel_loading),
+            noneMatch = res.getString(R.string.panel_none_match),
+            empty = res.getString(R.string.trip_empty),
+            from = { res.getString(R.string.trip_from, it) },
+        )
+        adapter.submitList(TripsItems.of(state, words))
     }
 
-    /** The whole Trip, whatever the date range selects (FR-13.1), into an [Item.Stats] view. */
+    /** The whole Trip, whatever the date range selects (FR-13.1), into a [TripsItem.Stats] view. */
     private fun bindStats(view: View, trip: Trip) {
         val line: TextView = view.findViewById(R.id.trips_stats_line)
         val types: TableLayout = view.findViewById(R.id.trips_types)
@@ -430,31 +410,19 @@ class TripsTab(
         }
     }
 
-    /** What the list draws, in order: folders, the open one's description, statistics and rows, notes. */
-    private sealed class Item(val key: String) {
-        data class Folder(val trip: Trip, val open: Boolean, val expanded: Boolean) : Item("folder:" + trip.id)
-        data class Description(val tripId: String, val text: String) : Item("description:$tripId")
-        data class From(val tripId: String, val text: String) : Item("from:$tripId")
-        data class Stats(val trip: Trip) : Item("stats:" + trip.id)
-        data class Inbox(val send: TripSend, val answering: Boolean) : Item("inbox:" + send.id)
-        data class Copying(val copy: TripCopying, val index: Int) : Item("copying:$index")
-        data class Row(val row: TrackRowItem, val tripId: String) : Item("row:" + row.track.id)
-        data class Note(val text: String, val failed: Boolean) : Item("note:$text")
-    }
-
-    private inner class ItemAdapter : ListAdapter<Item, RecyclerView.ViewHolder>(
-        object : DiffUtil.ItemCallback<Item>() {
-            override fun areItemsTheSame(old: Item, new: Item) = old.key == new.key
-            override fun areContentsTheSame(old: Item, new: Item) = old == new
+    private inner class ItemAdapter : ListAdapter<TripsItem, RecyclerView.ViewHolder>(
+        object : DiffUtil.ItemCallback<TripsItem>() {
+            override fun areItemsTheSame(old: TripsItem, new: TripsItem) = old.key == new.key
+            override fun areContentsTheSame(old: TripsItem, new: TripsItem) = old == new
         },
     ) {
         override fun getItemViewType(position: Int) = when (getItem(position)) {
-            is Item.Folder -> TYPE_FOLDER
-            is Item.Description, is Item.From -> TYPE_DESCRIPTION
-            is Item.Inbox, is Item.Copying -> TYPE_INBOX
-            is Item.Row -> TYPE_ROW
-            is Item.Note -> TYPE_NOTE
-            is Item.Stats -> TYPE_STATS
+            is TripsItem.Folder -> TYPE_FOLDER
+            is TripsItem.Description, is TripsItem.From -> TYPE_DESCRIPTION
+            is TripsItem.Inbox, is TripsItem.Copying -> TYPE_INBOX
+            is TripsItem.Row -> TYPE_ROW
+            is TripsItem.Note -> TYPE_NOTE
+            is TripsItem.Stats -> TYPE_STATS
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -477,21 +445,21 @@ class TripsTab(
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (val item = getItem(position)) {
-                is Item.Folder -> (holder as FolderHolder).bind(item)
-                is Item.Description -> (holder.itemView as TextView).apply {
+                is TripsItem.Folder -> (holder as FolderHolder).bind(item)
+                is TripsItem.Description -> (holder.itemView as TextView).apply {
                     text = item.text
                     setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.hmt_text_md))
                 }
                 // Who sent the copy, smaller, over the description (.trips-tab__from).
-                is Item.From -> (holder.itemView as TextView).apply {
+                is TripsItem.From -> (holder.itemView as TextView).apply {
                     text = item.text
                     setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.hmt_text_sm))
                 }
-                is Item.Stats -> bindStats(holder.itemView, item.trip)
-                is Item.Inbox -> (holder as InboxHolder).bind(item)
-                is Item.Copying -> (holder as InboxHolder).bind(item)
+                is TripsItem.Stats -> bindStats(holder.itemView, item.trip)
+                is TripsItem.Inbox -> (holder as InboxHolder).bind(item)
+                is TripsItem.Copying -> (holder as InboxHolder).bind(item)
                 // Badged only for the row's other Trips: every row here is in this one.
-                is Item.Row -> (holder as TrackRowHolder).bind(
+                is TripsItem.Row -> (holder as TrackRowHolder).bind(
                     item.row,
                     item.tripId,
                     onCheck = null,
@@ -499,7 +467,7 @@ class TripsTab(
                     onOpenTrip = { id -> onOpen(id, true) },
                     onRemove = { trackId -> remove(item.tripId, trackId) },
                 )
-                is Item.Note -> (holder.itemView as TextView).apply {
+                is TripsItem.Note -> (holder.itemView as TextView).apply {
                     text = item.text
                     setTextColor(context.getColor(if (item.failed) R.color.hmt_danger else R.color.panel_ink_50))
                     setOnClickListener { onClearFocus() }
@@ -514,7 +482,7 @@ class TripsTab(
         private val accept: Button = view.findViewById(R.id.trip_inbox_accept)
         private val decline: Button = view.findViewById(R.id.trip_inbox_decline)
 
-        fun bind(item: Item.Inbox) {
+        fun bind(item: TripsItem.Inbox) {
             val send = item.send
             text.text = res.getString(
                 R.string.trip_inbox_sent,
@@ -530,7 +498,7 @@ class TripsTab(
             decline.setOnClickListener { answer(send, false) }
         }
 
-        fun bind(item: Item.Copying) {
+        fun bind(item: TripsItem.Copying) {
             text.text = res.getString(R.string.trip_inbox_copying, item.copy.tripName, item.copy.from)
             text.setTextColor(context.getColor(R.color.hmt_ink_secondary))
             actions.visibility = View.GONE
@@ -545,7 +513,7 @@ class TripsTab(
         private val send: ImageButton = view.findViewById(R.id.trip_send)
         private val delete: ImageButton = view.findViewById(R.id.trip_delete)
 
-        fun bind(item: Item.Folder) {
+        fun bind(item: TripsItem.Folder) {
             val trip = item.trip
             name.text = trip.name
             // The triangle points down while the list shows and right while folded; the accent,
