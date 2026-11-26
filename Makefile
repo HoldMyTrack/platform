@@ -25,7 +25,7 @@ IOS_UI_TESTS    ?= HoldMyTrackUITests
 ANDROID_TESTS   ?=
 
 .DEFAULT_GOAL := help
-.PHONY: help up down logs shell build typecheck basemap test-go test-unit verify verify-build doc-checks test test-android test-android-device test-ios test-all e2e-stack e2e-web e2e-android e2e-ios clean
+.PHONY: help up down logs shell build typecheck basemap test-go test-unit verify verify-build doc-checks test test-android test-android-device test-ios test-all e2e-stack e2e-web e2e-android e2e-ios ui-compare clean
 
 help: ## List targets
 	@grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  %-20s %s\n", $$1, $$2}'
@@ -127,6 +127,23 @@ test-android-device: ## Android instrumented tests on an emulator, no dev stack:
 e2e-ios: e2e-stack ## iOS end-to-end: the UI tests on a simulator (IOS_DESTINATION, IOS_UI_TESTS narrow it)
 	cd apps/ios && xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
 	  -destination '$(IOS_DESTINATION)' -only-testing:$(IOS_UI_TESTS) HMT_API_BASE_URL=http://localhost:5173
+
+# Each app's shot test captures apps/docs/ui-states.json's entries on the demo account; both skip
+# unless asked (uiShots, HMT_UI_SHOTS). The Android shots are pulled from the app's files folder
+# before the emulator script stops an emulator it started.
+UI_SHOTS := ui-compare
+ui-compare: e2e-stack ## Android and iOS side by side, one static page: ui-compare/index.html (IOS_DESTINATION picks the iPhone)
+	rm -rf $(UI_SHOTS) && mkdir -p $(UI_SHOTS)/android
+	cd apps/android/holdmytrack && ../../../scripts/with-android-emulator.sh sh -c '\
+	  adb shell rm -rf /sdcard/Android/data/dev.holdmytrack.android/files/ui-shots; \
+	  ./gradlew :app:connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true \
+	    -Pandroid.testInstrumentationRunnerArguments.class=dev.holdmytrack.android.shots.UiShotsTest \
+	    -Pandroid.testInstrumentationRunnerArguments.uiShots=true; \
+	  adb pull /sdcard/Android/data/dev.holdmytrack.android/files/ui-shots/. ../../../$(UI_SHOTS)/android'
+	cd apps/ios && TEST_RUNNER_HMT_UI_SHOTS=1 xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
+	  -destination '$(IOS_DESTINATION)' -only-testing:HoldMyTrackUITests/UIShotsTests \
+	  -resultBundlePath ../../$(UI_SHOTS)/ios.xcresult HMT_API_BASE_URL=http://localhost:5173 || true
+	python3 scripts/ui-compare.py --android $(UI_SHOTS)/android --ios $(UI_SHOTS)/ios.xcresult --out $(UI_SHOTS)/index.html
 
 clean: ## Stop and drop every volume (database, object store, node_modules)
 	$(COMPOSE) down -v
