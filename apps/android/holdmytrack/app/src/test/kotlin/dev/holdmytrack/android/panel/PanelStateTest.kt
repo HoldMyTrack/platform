@@ -7,7 +7,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The Tracks panel's rules (`apps/android/docs/SPEC.md` FR-2.7). */
+/** The Tracks panel's rules (`apps/docs/SPEC.md` FR-2.7). */
 class PanelStateTest {
 
     private fun track(id: String, type: String = "walking", meters: Double? = 1000.0, pending: Boolean = false) =

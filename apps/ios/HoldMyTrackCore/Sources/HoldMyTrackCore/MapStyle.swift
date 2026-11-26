@@ -67,10 +67,10 @@ public struct LayersDocument: Equatable, Sendable {
     }
 }
 
-/// The mode the map shows for the tab bar's tab (apps/android/docs/SPEC.md FR-2.2): the one picked
+/// The mode the map shows for the tab bar's tab (apps/docs/SPEC.md FR-2.2): the one picked
 /// on the Tracks tab there, Normal on Trips, whose sheet and tracks are Normal mode's. The toggle is
 /// the Tracks tab's, so back there the pick comes back.
-/// While a recording runs the map shows only it (apps/android/docs/SPEC.md FR-5.1): Normal, with
+/// While a recording runs the map shows only it (apps/docs/SPEC.md FR-5.1): Normal, with
 /// the toggle gone and the tracks' groups hidden.
 public enum TabMode {
     public static func shown(picked: MapMode, onTracksTab: Bool, recording: Bool = false) -> MapMode {

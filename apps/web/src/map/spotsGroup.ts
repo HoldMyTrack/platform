@@ -12,7 +12,7 @@ import { IMAGES_METADATA, ROLE_METADATA, tilePath, TOGGLE_METADATA, VARS_METADAT
  * icon.
  *
  * The client binds the categories shown, the ids the account captured (FR-14.6) and capture
- * mode's target (`apps/android/docs/SPEC.md` FR-2.8) as vars, and draws each badge image the
+ * mode's target (`apps/docs/SPEC.md` FR-2.8) as vars, and draws each badge image the
  * layers name in the colors given: the icon shapes are the client's.
  */
 

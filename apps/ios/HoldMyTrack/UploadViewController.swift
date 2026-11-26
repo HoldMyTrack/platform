@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import UIKit
 import UniformTypeIdentifiers
 
-/// Upload (apps/android/docs/SPEC.md FR-3.6): GPX, FIT and TCX files from the document picker, sent
+/// Upload (apps/docs/SPEC.md FR-3.6): GPX, FIT and TCX files from the document picker, sent
 /// by Uploads, or opened or shared from another app, listed until Upload sends them or Cancel
 /// drops them; the files going, what the server said, and the imports still running, read every
 /// 2 seconds while the screen shows.
@@ -36,7 +36,7 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    /// Upload as a sheet over the screen it opens from (apps/android/docs/SPEC.md FR-3.6), closed
+    /// Upload as a sheet over the screen it opens from (apps/docs/SPEC.md FR-3.6), closed
     /// by Close or a swipe; files carry on once it's gone.
     /// onClose: what's under the sheet, which iOS doesn't tell, reads again.
     static func sheet(api: APIClient, onClose: @escaping () -> Void) -> UINavigationController {

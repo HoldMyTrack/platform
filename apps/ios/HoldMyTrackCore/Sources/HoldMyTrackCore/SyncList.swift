@@ -1,6 +1,6 @@
 import Foundation
 
-/// What the Sync tab lists and offers, as values (apps/android/docs/SPEC.md FR-3.2, FR-3.5).
+/// What the Sync tab lists and offers, as values (apps/docs/SPEC.md FR-3.2, FR-3.5).
 /// Every row is a recording, which sends itself (RecordingSends), so none is ticked. One sent and
 /// not landed yet, or in the send running now (inFlight), is neither swiped, edited nor deleted.
 public struct SyncList: Equatable, Sendable {
@@ -48,7 +48,7 @@ public struct SyncList: Equatable, Sendable {
     public func pickedTypes(_ types: Set<String>) -> Set<String> { types.intersection(self.types) }
 }
 
-/// The phone's hidden Sync rows (apps/android/docs/SPEC.md FR-3.5): recordings swiped aside, by
+/// The phone's hidden Sync rows (apps/docs/SPEC.md FR-3.5): recordings swiped aside, by
 /// id, kept by RecordingStore.
 public enum SyncHidden {
     /// A swipe: hidden, or a hidden row back on the list.

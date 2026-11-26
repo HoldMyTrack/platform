@@ -1,6 +1,6 @@
 import XCTest
 
-/// Library (apps/android/docs/SPEC.md FR-4.1), end to end against the dev stack on the demo
+/// Library (apps/docs/SPEC.md FR-4.1), end to end against the dev stack on the demo
 /// account. Skipped where no dev stack answers, as on CI.
 final class LibraryTests: XCTestCase {
     @MainActor

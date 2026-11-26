@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The sheet's Sync tab, opened from Library's head (apps/android/docs/SPEC.md FR-3.5): every
+/// The sheet's Sync tab, opened from Library's head (apps/docs/SPEC.md FR-3.5): every
 /// recording on this phone not on the map yet, newest first. Recordings send themselves
 /// (RecordingsSync); each row says how far it got, with Retry over them. Type chips narrow the
 /// list; a row swiped aside is hidden, with Undo, and Show hidden brings it back. One sent stays
@@ -87,10 +87,10 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         super.init()
         head.axis = .vertical
         head.spacing = DesignTokens.Space.s8
-        // Sync opens from Library's head (apps/android/docs/SPEC.md FR-4.1); ‹ goes back to it.
+        // Sync opens from Library's head (apps/docs/SPEC.md FR-4.1); ‹ goes back to it.
         let back = Controls.iconButton(UIImage(resource: .chevronLeft), label: String(localized: "sync.back", defaultValue: "Back to Library", comment: "Sync: the ‹ that goes back to Library."), id: "syncBack")
         back.addAction(UIAction { [weak self] _ in self?.onEvent?(.library) }, for: .primaryActionTriggered)
-        // Upload heads the sheet, apart from the recordings' Retry (apps/android/docs/SPEC.md FR-3.5).
+        // Upload heads the sheet, apart from the recordings' Retry (apps/docs/SPEC.md FR-3.5).
         let upload = Controls.secondaryButton(String(localized: "Upload"), id: "syncUpload", icon: UIImage(resource: .upload))
         upload.addAction(UIAction { [weak self] _ in self?.onEvent?(.upload) }, for: .primaryActionTriggered)
         upload.isHidden = account.isDemo

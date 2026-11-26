@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// A photo's popup (apps/android/docs/SPEC.md FR-2.10), the web's PhotoPopup.tsx in the spot
+/// A photo's popup (apps/docs/SPEC.md FR-2.10), the web's PhotoPopup.tsx in the spot
 /// popup's frame: over the photo's marker, or under it when there's no room above, following it
 /// as the camera moves (place). The picture, its caption, when it was taken, and Full size, which
 /// opens the viewer; a tap on the picture opens it too. Opened on a group (photos at one spot,

@@ -1,5 +1,5 @@
 /// What the "check your email" screen's Confirm does with its code field
-/// (apps/android/docs/SPEC.md FR-1.4).
+/// (apps/docs/SPEC.md FR-1.4).
 public enum VerifyAction: Equatable, Sendable {
     /// Send the code; the server judges it, as it judges sign-in's fields.
     case submit(String)

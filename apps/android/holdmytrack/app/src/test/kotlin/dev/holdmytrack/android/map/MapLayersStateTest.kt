@@ -5,7 +5,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** The next account's map draws nothing of the last one's (`apps/android/docs/SPEC.md` FR-1.3). */
+/** The next account's map draws nothing of the last one's (`apps/docs/SPEC.md` FR-1.3). */
 class MapLayersStateTest {
 
     @Test

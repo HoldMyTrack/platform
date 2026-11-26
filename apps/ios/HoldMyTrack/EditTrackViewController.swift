@@ -3,7 +3,7 @@ import PhotosUI
 import UIKit
 import UniformTypeIdentifiers
 
-/// Edit (root docs/SPEC.md FR-5.5, apps/android/docs/SPEC.md FR-2.7) over the toolbar's target:
+/// Edit (root docs/SPEC.md FR-5.5, apps/docs/SPEC.md FR-2.7) over the toolbar's target:
 /// one track's type, name and description, or a group's type alone. Save writes only what
 /// changed, one track at a time (EditPlan); a group of mixed types starts with Type empty, and
 /// leaving it empty keeps each its own. A Route tab (RouteEditorView) and a Photos tab

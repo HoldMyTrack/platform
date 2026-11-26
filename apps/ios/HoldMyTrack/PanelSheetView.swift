@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The sheet over the bottom of the map (apps/android/docs/SPEC.md FR-2.7): a handle, a head and
+/// The sheet over the bottom of the map (apps/docs/SPEC.md FR-2.7): a handle, a head and
 /// the tab's content, resting at its head alone, half the map or nearly all of it (SheetRules).
 /// Dragged by its handle or head, so the list inside scrolls on its own; a tap on the handle opens
 /// it halfway or closes it.

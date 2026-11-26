@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The files Upload sends to `POST /v2/tracks/upload` (apps/android/docs/SPEC.md FR-3.6): the
+/// The files Upload sends to `POST /v2/tracks/upload` (apps/docs/SPEC.md FR-3.6): the
 /// web upload's checks (UploadPlan), then each file on a background URLSession, so they carry on
 /// when the app is left. The session allows one connection to the API, which sends the queue one
 /// file at a time without the app waking between them (apps/ios/docs/IMPLEMENTATION.md §4.4).
@@ -113,7 +113,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
     }
 
     /// The session token ended: what it queued is cancelled, and its notes and listed files go,
-    /// so nothing it picked is sent for, or shown to, the next account (apps/android/docs/SPEC.md
+    /// so nothing it picked is sent for, or shown to, the next account (apps/docs/SPEC.md
     /// FR-1.3). Only the tasks queued under token are cancelled: the session lists its tasks
     /// later, by when the next account may have queued its own.
     func drop(token: String) {

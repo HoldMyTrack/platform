@@ -1,4 +1,4 @@
-/// What sending the saved recordings decides, as values (apps/android/docs/SPEC.md FR-5.2): each
+/// What sending the saved recordings decides, as values (apps/docs/SPEC.md FR-5.2): each
 /// goes without a tick, since Save was the choice (ADR-0039). The cases are
 /// testdata/client-rules/recording-send-*.json, which Android's RecordingSendRules runs too.
 public enum RecordingSends {

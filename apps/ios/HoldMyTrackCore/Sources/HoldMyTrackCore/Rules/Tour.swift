@@ -181,7 +181,7 @@ public enum MenuHold: Equatable, Sendable {
     }
 }
 
-/// The iOS tour's steps (apps/android/docs/SPEC.md FR-2.12).
+/// The iOS tour's steps (apps/docs/SPEC.md FR-2.12).
 public enum TourSteps {
     /// The demo's views over its fixed history (`services/server/internal/httpapi/demo_data`), the
     /// web's `DEMO_VIEWS`, one per Fog level: Brecksville Reservation's tracks, exact coverage

@@ -108,7 +108,7 @@ public final class APIClient: Sendable {
     }
 
     /// Ends the session token names on the server. The phone forgets it without waiting
-    /// (apps/android/docs/SPEC.md FR-1.3), so the token is passed in rather than read when the
+    /// (apps/docs/SPEC.md FR-1.3), so the token is passed in rather than read when the
     /// request is built, by which time it's gone.
     public func logout(token: String) async throws {
         var request = request("POST", "v2/auth/logout")

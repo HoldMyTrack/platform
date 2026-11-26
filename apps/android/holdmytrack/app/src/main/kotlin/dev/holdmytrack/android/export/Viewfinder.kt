@@ -7,7 +7,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
- * The export viewfinder's geometry and the image's sizes (`apps/android/docs/SPEC.md` FR-2.11),
+ * The export viewfinder's geometry and the image's sizes (`apps/docs/SPEC.md` FR-2.11),
  * as plain values so they're unit-tested apart from the view that draws them
  * ([ExportViewfinderView]). The web's `map/exportViewfinder.ts`, the same rules: every rect is
  * in the map view's pixels.

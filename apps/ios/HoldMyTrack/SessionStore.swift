@@ -16,7 +16,7 @@ final class SessionStore {
 
     private(set) var stored: StoredSession?
     /// The account the server confirmed this run; nil until `GET /v2/auth/me` has answered, so a
-    /// restored token is never trusted before then (apps/android/docs/SPEC.md FR-1.2).
+    /// restored token is never trusted before then (apps/docs/SPEC.md FR-1.2).
     private(set) var confirmed: Account?
 
     private static let service = "dev.holdmytrack.ios.session"

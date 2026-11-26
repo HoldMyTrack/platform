@@ -1,4 +1,4 @@
-/// Where the map's Tracks sheet rests (apps/android/docs/SPEC.md FR-2.7): its head alone,
+/// Where the map's Tracks sheet rests (apps/docs/SPEC.md FR-2.7): its head alone,
 /// half the map, or nearly all of it.
 public enum SheetDetent: Int, Equatable, Sendable, CaseIterable {
     case collapsed, half, expanded
@@ -30,7 +30,7 @@ public enum SheetRules {
     }
 }
 
-/// Which track a tap on the map picks (apps/android/docs/SPEC.md FR-2.7: a track within 14
+/// Which track a tap on the map picks (apps/docs/SPEC.md FR-2.7: a track within 14
 /// points of the finger).
 public enum TrackTap {
     /// How far from the finger a track still counts as tapped.

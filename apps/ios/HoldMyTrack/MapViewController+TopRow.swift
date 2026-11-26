@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The map's top row (apps/android/docs/SPEC.md FR-2.2): the mode toggle at its start, or in its
+/// The map's top row (apps/docs/SPEC.md FR-2.2): the mode toggle at its start, or in its
 /// place the selection bar while rows are checked or the recording's status while one runs; the
 /// rail at its end, stepping aside for an editor or checked rows, when the export's camera comes
 /// under the selection bar. The tab bar goes while an editor or the export has the screen. The

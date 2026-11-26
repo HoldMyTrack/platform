@@ -3,7 +3,7 @@ import Testing
 
 @testable import HoldMyTrackCore
 
-/// Spots on the map (apps/android/docs/SPEC.md FR-2.8), what the app decides of them.
+/// Spots on the map (apps/docs/SPEC.md FR-2.8), what the app decides of them.
 struct SpotsTests {
     private let document = LayersDocument(JSONValue.parse(Data("""
     {"views": {}, "groups": [

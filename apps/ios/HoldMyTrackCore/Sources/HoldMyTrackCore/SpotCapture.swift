@@ -15,7 +15,7 @@ public struct GeoPoint: Equatable, Sendable {
 /// each ring closed.
 public typealias SpotArea = [[[GeoPoint]]]
 
-/// What capture measures a position against (apps/android/docs/SPEC.md FR-2.8): inside a place's
+/// What capture measures a position against (apps/docs/SPEC.md FR-2.8): inside a place's
 /// area or not, how far from it, and which way. A place is metres to hundreds of metres across,
 /// so each measure is taken on a flat projection centred on the position, equirectangular with x
 /// scaled by cos(latitude), well under a metre off at that size.
@@ -86,7 +86,7 @@ public enum SpotGeometry {
     }
 }
 
-/// Capture's count (apps/android/docs/SPEC.md FR-2.8): fed location fixes, it says whether the
+/// Capture's count (apps/docs/SPEC.md FR-2.8): fed location fixes, it says whether the
 /// user is on the way to the place, holding inside it, or has held for holdMs and captured it.
 /// Only a fix accurate to maxAccuracyM counts: a coarse one can land inside a place its owner is
 /// only walking past. A counted fix outside starts the hold again. The hold runs only on fixes, so

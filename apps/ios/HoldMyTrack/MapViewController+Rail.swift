@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The rail down the map's right edge (apps/android/docs/SPEC.md FR-2.2): Layers, Places, Find my
+/// The rail down the map's right edge (apps/docs/SPEC.md FR-2.2): Layers, Places, Find my
 /// location and the export, each on a panel of its own. Layers and Places each open a menu
 /// (MapMenuPopup) of picks under a switch that shows or hides them all and keeps them; the button
 /// is filled while picks show, with a badge counting them (MapChrome.RailLook). When the rail

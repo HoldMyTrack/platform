@@ -4,7 +4,7 @@ import Testing
 
 @testable import HoldMyTrack
 
-/// The panel's counts and moments as Android writes them (apps/android/docs/SPEC.md FR-2.7), in
+/// The panel's counts and moments as Android writes them (apps/docs/SPEC.md FR-2.7), in
 /// the test run's English.
 @MainActor
 struct PanelFormatTests {

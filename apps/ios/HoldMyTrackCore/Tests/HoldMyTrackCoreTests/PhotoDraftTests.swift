@@ -3,7 +3,7 @@ import Testing
 
 @testable import HoldMyTrackCore
 
-/// The Photos tab's unsaved changes (apps/android/docs/SPEC.md FR-2.10), Android's PhotoDraftTest.
+/// The Photos tab's unsaved changes (apps/docs/SPEC.md FR-2.10), Android's PhotoDraftTest.
 struct PhotoDraftTests {
     private func saved(_ id: String, _ routeAt: Double, caption: String? = nil) -> Photo {
         Photo(id: id, trackID: "a1", routeAt: ISOMoment.format(Date(timeIntervalSince1970: routeAt)), lon: 0, lat: 0, caption: caption,

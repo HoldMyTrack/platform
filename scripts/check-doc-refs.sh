@@ -3,7 +3,8 @@
 #
 # A citation belongs to the document named before it in the same sentence or parenthesis
 # (`docs/SPEC.md` FR-4.2, IMPLEMENTATION §4.7). Without one, a Markdown file cites itself, and
-# any other file (code, templates) cites docs/IMPLEMENTATION.md for § and docs/SPEC.md for FR.
+# any other file (code, templates) cites docs/IMPLEMENTATION.md for § and docs/SPEC.md for FR; an
+# app's files also cite apps/docs/SPEC.md, the spec both apps share, by bare FR.
 # A bare name like `SPEC.md` means the file of that name beside the citing one if there is one,
 # else the one in docs/. Usage: scripts/check-doc-refs.sh [file...] (default: every tracked text file).
 set -euo pipefail
@@ -126,6 +127,8 @@ for path in sys.argv[1:]:
                 if k == "fr" and not current:
                     # An app's own docs and code also cite the root spec's FRs bare.
                     frs = frs | headings("docs/SPEC.md")[1]
+                    if path.startswith("apps/android/") or path.startswith("apps/ios/") or path.startswith("apps/docs/"):
+                        frs = frs | headings("apps/docs/SPEC.md")[1]
                 if (k == "sec" and ident not in secs) or (k == "fr" and ident not in frs):
                     label = "§" + ident if k == "sec" else "FR-" + ident
                     print(f"{path}:{n}: {label} has no heading in {target}")

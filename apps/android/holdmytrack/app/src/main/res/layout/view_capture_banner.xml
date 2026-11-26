@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Capture mode's banner (map/CaptureMode, apps/android/docs/SPEC.md FR-2.8), a map panel
+<!-- Capture mode's banner (map/CaptureMode, apps/docs/SPEC.md FR-2.8), a map panel
      under the chrome's second row: an arrow turned towards the spot, what to do ("Get into …",
      "Stay here", "Captured!"), the distance or the seconds left over the hold's progress, and
      Stop. -->

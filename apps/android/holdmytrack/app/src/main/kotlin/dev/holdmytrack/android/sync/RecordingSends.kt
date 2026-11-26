@@ -12,7 +12,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * Sends the saved recordings on this phone without a tick (`apps/android/docs/SPEC.md` FR-5.2):
+ * Sends the saved recordings on this phone without a tick (`apps/docs/SPEC.md` FR-5.2):
  * on Save, on every return to the map, and on the Sync sheet's Retry. Each goes as the Sync tab
  * would send it ([SyncRunner]), then waits in [SyncProgress] until its ingest lands, so a
  * recording leaves the phone only once the account has it.

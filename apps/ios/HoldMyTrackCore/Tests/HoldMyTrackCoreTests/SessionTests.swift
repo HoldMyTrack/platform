@@ -3,7 +3,7 @@ import Testing
 
 import HoldMyTrackCore
 
-/// Where a session sends the user (apps/android/docs/SPEC.md FR-1.2, FR-1.4), and what a failed
+/// Where a session sends the user (apps/docs/SPEC.md FR-1.2, FR-1.4), and what a failed
 /// check does to it.
 struct SessionRouteTests {
     private let stored = StoredSession(token: "t", email: "a@b.c", isDemo: false)

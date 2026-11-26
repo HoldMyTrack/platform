@@ -1,6 +1,6 @@
 import Foundation
 
-/// The Sync tab's recordings on the map (apps/android/docs/SPEC.md FR-3.2): each listed one
+/// The Sync tab's recordings on the map (apps/docs/SPEC.md FR-3.2): each listed one
 /// dashed, drawn from the phone's own points since none is on the server yet, and the one picked
 /// on the list or the map solid over a halo in its pace bands, as the layers document draws a
 /// focused track. One group added to the document, styled from its `casing`, `track`, `focused`

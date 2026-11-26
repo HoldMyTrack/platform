@@ -20,7 +20,7 @@ import dev.holdmytrack.android.imports.SharedFiles
 import dev.holdmytrack.android.net.Session
 
 /**
- * Upload: files made somewhere else — a watch's or an app's export — brought into the account (`apps/android/docs/SPEC.md` FR-3.6).
+ * Upload: files made somewhere else — a watch's or an app's export — brought into the account (`apps/docs/SPEC.md` FR-3.6).
  * The web's Upload menu as a sheet over the screen it opened from, the Sync tab or another app, kept apart from the Sync tab as Upload
  * sits apart from Sync in the web's header: Sync is for what lives on the phone and keeps coming, this is for a file,
  * usually once. The uploads themselves are [FileImports]'s, so they carry on when this screen

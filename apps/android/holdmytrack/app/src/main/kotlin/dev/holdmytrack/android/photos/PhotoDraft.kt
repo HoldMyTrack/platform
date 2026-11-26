@@ -42,7 +42,7 @@ sealed interface DraftRow {
 }
 
 /**
- * The Photos tab's unsaved changes (`apps/android/docs/SPEC.md` FR-2.10), the web's
+ * The Photos tab's unsaved changes (`apps/docs/SPEC.md` FR-2.10), the web's
  * `apps/web/src/ui/photoDraft.ts`: what the Edit window's one Save writes, after the track's
  * fields and before its route edit, and what its Cancel throws away. Nothing here has reached
  * the server: a new photo is prepared on the phone and its place settled by the placement check

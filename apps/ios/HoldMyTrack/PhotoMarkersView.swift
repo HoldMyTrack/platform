@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// Photo markers (apps/android/docs/SPEC.md FR-2.10), as Android's: each photo of the focused
+/// Photo markers (apps/docs/SPEC.md FR-2.10), as Android's: each photo of the focused
 /// track or the open Trip as its thumbnail in a round frame at its point on the route, or,
 /// where several would overlap on screen, one marker for the group, stacked, with a count
 /// (PhotoMarkers.groups). The groups are worked out again when the camera rests (regroup), so

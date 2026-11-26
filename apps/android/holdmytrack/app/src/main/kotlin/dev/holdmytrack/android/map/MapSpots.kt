@@ -156,7 +156,7 @@ object MapSpots {
     }
 
     /**
-     * Capture mode (`apps/android/docs/SPEC.md` FR-2.8) on [targetId], or off with null: every
+     * Capture mode (`apps/docs/SPEC.md` FR-2.8) on [targetId], or off with null: every
      * area shaded darker, the target's darkest and its edge thicker, so the places stand out
      * from the map while the user is looking for one.
      */

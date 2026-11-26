@@ -43,7 +43,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 
 /**
- * The map image export (`apps/android/docs/SPEC.md` FR-2.11, `IMPLEMENTATION.md` §3.5): the
+ * The map image export (`apps/docs/SPEC.md` FR-2.11, `IMPLEMENTATION.md` §3.5): the
  * viewfinder over the map, and what Capture does — draw the window on a hidden map
  * ([MapImageRenderer]), draw the photo markers on it ([ExportPhotos]), bake in the credit and the
  * logo ([ImageMarks]), save it to Pictures and

@@ -37,7 +37,7 @@ interface TourHost {
 }
 
 /**
- * The tour, its offer and the first-time cards (`apps/android/docs/SPEC.md` FR-2.12), the state around
+ * The tour, its offer and the first-time cards (`apps/docs/SPEC.md` FR-2.12), the state around
  * [TourRules] and [TourSteps]: the web's `useTour.ts`. Each step puts its tab, mode, sheet and
  * menus as it says, and the user's come back when the tour ends. The map's camera follows
  * [TourSteps]' views, and goes back to where it was before the first move.

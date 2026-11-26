@@ -20,9 +20,9 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 The web and both apps link Library and no import history; `/sync` stays for app releases that still open it as Sync history (`SPEC.md` FR-3.7).
 
-- [x] Android: Library as a tab, with Sync in its head (`apps/android/docs/SPEC.md` FR-2.9, FR-4.1).
+- [x] Android: Library as a tab, with Sync in its head (`apps/docs/SPEC.md` FR-2.9, FR-4.1).
 - [x] iOS: the same layout as Android's, Library as a tab with Sync in its head (`apps/ios/docs/ROADMAP.md` 7e.5).
-- [x] Android: Save sends a recording, with no tick (ADR-0039, `apps/android/docs/SPEC.md` FR-5.2).
+- [x] Android: Save sends a recording, with no tick (ADR-0039, `apps/docs/SPEC.md` FR-5.2).
 - [x] iOS: Save sends a recording (`apps/ios/docs/ROADMAP.md` 7d.4).
 - [ ] When `MIN_ANDROID_BUILD` and `MIN_IOS_BUILD` reach those releases, remove `/sync` and the unused `GET /v2/uploads`, and keep finished jobs only as long as the Upload menu's failures need them (`IMPLEMENTATION.md` §4.0).
 

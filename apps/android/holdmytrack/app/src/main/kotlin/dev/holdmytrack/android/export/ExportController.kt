@@ -10,7 +10,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 
 /**
- * The map image export (`apps/android/docs/SPEC.md` FR-2.11): the rail's camera opens the
+ * The map image export (`apps/docs/SPEC.md` FR-2.11): the rail's camera opens the
  * viewfinder (`ExportViewfinder`), and while it shows the map's chrome steps aside, since it would
  * cover the picture. Back closes it, nothing captured.
  */

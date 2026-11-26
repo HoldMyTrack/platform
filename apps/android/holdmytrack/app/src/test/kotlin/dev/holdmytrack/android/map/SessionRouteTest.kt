@@ -3,7 +3,7 @@ package dev.holdmytrack.android.map
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Where the map's session check sends the user (`apps/android/docs/SPEC.md` FR-1.2). */
+/** Where the map's session check sends the user (`apps/docs/SPEC.md` FR-1.2). */
 class SessionRouteTest {
 
     private fun route(

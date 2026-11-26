@@ -1,7 +1,7 @@
 import CoreLocation
 import XCTest
 
-/// Capturing a place (apps/android/docs/SPEC.md FR-2.8) on a fresh account against the dev stack,
+/// Capturing a place (apps/docs/SPEC.md FR-2.8) on a fresh account against the dev stack,
 /// with the simulator's position moved: away from the place, the banner says how far; inside,
 /// 30 seconds of fixes capture it on the server.
 final class CaptureTests: XCTestCase {
