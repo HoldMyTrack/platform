@@ -315,7 +315,7 @@
     <style name="Widget.HoldMyTrack.BottomNav" parent="Widget.HoldMyTrack.BottomNav.Base" />
 
     <style name="Widget.HoldMyTrack.BottomNav.Base" parent="Widget.Material3.BottomNavigationView">
-        <item name="android:background">@color/hmt_bg</item>
+        <item name="android:background">@color/hmt_surface</item>
         <item name="itemIconTint">@color/nav_item_icon</item>
         <item name="itemTextColor">@color/nav_item_text</item>
         <item name="itemActiveIndicatorStyle">@style/Widget.HoldMyTrack.BottomNav.Indicator</item>

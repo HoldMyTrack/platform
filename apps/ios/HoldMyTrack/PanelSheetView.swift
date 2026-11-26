@@ -87,12 +87,16 @@ final class PanelSheetView: UIView, UIGestureRecognizerDelegate {
             content.trailingAnchor.constraint(equalTo: trailingAnchor),
             content.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
-        for v in [handle, head] as [UIView] {
-            let pan = UIPanGestureRecognizer(target: self, action: #selector(drag(_:)))
-            pan.delegate = self
-            v.addGestureRecognizer(pan)
-        }
+        for v in [handle, head] as [UIView] { dragsSheet(v) }
         updateHandleLabel()
+    }
+
+    /// An up or down drag on view moves the sheet, as one on its handle and head does: for a
+    /// tab's top row that sits in its content, so the closed sheet is its grip alone.
+    func dragsSheet(_ view: UIView) {
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(drag(_:)))
+        pan.delegate = self
+        view.addGestureRecognizer(pan)
     }
 
     @available(*, unavailable)

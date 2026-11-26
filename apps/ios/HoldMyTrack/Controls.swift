@@ -156,7 +156,7 @@ enum Controls {
         button.accessibilityIdentifier = id
     }
 
-    private static func font(_ font: UIFont) -> UIConfigurationTextAttributesTransformer {
+    static func font(_ font: UIFont) -> UIConfigurationTextAttributesTransformer {
         UIConfigurationTextAttributesTransformer { attributes in
             var attributes = attributes
             attributes.font = font
