@@ -413,7 +413,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let unbroken = NSMutableParagraphStyle()
         unbroken.usesDefaultHyphenation = false
         config.attributedText = NSAttributedString(string: trip.name, attributes: [
-            .font: Typeface.sans(DesignTokens.Text.lg, weight: DesignTokens.Weight.semibold),
+            // The heading face, as Android's folder names.
+            .font: Typeface.serif(DesignTokens.Text.lg, relativeTo: .body),
             .foregroundColor: UIColor(resource: .ink),
             .paragraphStyle: unbroken,
         ])

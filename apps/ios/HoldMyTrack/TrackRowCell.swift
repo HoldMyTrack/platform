@@ -135,7 +135,7 @@ final class TrackRowCell: UITableViewCell {
 
     private func tripBadge(_ trips: [TripRef], onOpenTrip: @escaping (String) -> Void) -> UIButton {
         let text = trips.count == 1 ? String(localized: "Trip") : String(localized: "panel.tripBadge", defaultValue: "\(trips.count) trips", comment: "Tracks tab: a row's badge for several Trips.")
-        let button = Self.badge(text, id: "badgeTrip", icon: UIImage(resource: .bookOpen), accent: true)
+        let button = Self.badge(text, id: "badgeTrip", accent: true)
         if trips.count == 1 {
             button.addAction(UIAction { _ in onOpenTrip(trips[0].id) }, for: .primaryActionTriggered)
             button.accessibilityLabel = String(localized: "Open “\(trips[0].name)”")
@@ -149,7 +149,8 @@ final class TrackRowCell: UITableViewCell {
 
     private static func badge(_ text: String, id: String, icon: UIImage? = nil, accent: Bool = false) -> UIButton {
         var config = UIButton.Configuration.filled()
-        config.title = text
+        // In capitals, slightly spaced, as Android's.
+        config.title = text.localizedUppercase
         config.image = icon.map { Controls.icon($0, size: 11) }
         config.imagePadding = 3
         config.cornerStyle = .capsule
@@ -160,6 +161,7 @@ final class TrackRowCell: UITableViewCell {
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
             var attributes = attributes
             attributes.font = Typeface.sans(DesignTokens.Text.xs, weight: DesignTokens.Weight.semibold, relativeTo: .caption2)
+            attributes.uiKit.kern = 0.2
             return attributes
         }
         let button = UIButton(configuration: config)
@@ -168,6 +170,8 @@ final class TrackRowCell: UITableViewCell {
         button.setContentHuggingPriority(.required - 1, for: .horizontal)
         button.setContentCompressionResistancePriority(.required - 1, for: .horizontal)
         button.accessibilityIdentifier = id
+        // Read as the word, not spelled out as capitals; the Trip badge sets its own.
+        button.accessibilityLabel = text
         button.isUserInteractionEnabled = accent
         return button
     }

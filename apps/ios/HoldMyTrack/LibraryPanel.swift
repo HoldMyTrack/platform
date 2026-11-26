@@ -120,14 +120,26 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     // MARK: Building
 
     private func buildHead() {
-        var config = UIButton.Configuration.plain()
+        // As Android's: + in a round tinted button, the search in a bordered box.
+        var config = UIButton.Configuration.filled()
         config.image = UIImage(resource: .plus)
-        config.baseForegroundColor = UIColor(resource: .accent)
+        config.baseBackgroundColor = UIColor(resource: .surfaceTintStrong)
+        config.baseForegroundColor = UIColor(resource: .ink)
+        config.cornerStyle = .capsule
         config.imagePadding = DesignTokens.Space.s4
         addButton.configuration = config
         addButton.accessibilityIdentifier = "librarySync"
-        addButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-        addButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        addButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
+        addButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
+        search.borderStyle = .none
+        search.backgroundColor = UIColor(resource: .surface)
+        // A layer's color doesn't follow light and dark on its own: render sets it too.
+        search.registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (field: UISearchTextField, _) in
+            field.layer.borderColor = UIColor(resource: .borderStrong).resolvedColor(with: field.traitCollection).cgColor
+        }
+        search.layer.borderWidth = 1
+        search.layer.cornerRadius = DesignTokens.Radius.md
+        search.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
         // The search takes the row's width; + keeps its own, its waiting count too.
         addButton.setContentHuggingPriority(.required, for: .horizontal)
         addButton.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -318,6 +330,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     private func render() {
         let page = page
+        // The search's border in the field's own light or dark, once it's on screen.
+        search.layer.borderColor = UIColor(resource: .borderStrong).resolvedColor(with: search.traitCollection).cgColor
         let sorts: [(LibraryRules.Sort, Bool)] = [(.started, true), (.started, false), (.distance, true), (.distance, false),
                                                   (.moving, true), (.moving, false), (.added, true), (.added, false)]
         sortButton.configuration?.title = Self.sortLabel(state.sort, desc: state.desc)
