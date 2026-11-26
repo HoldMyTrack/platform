@@ -13000,7 +13000,7 @@
       }
     },
     "trips.byType" : {
-      "comment" : "A Trip's numbers: the heading over each type's.",
+      "comment" : "A Trip's numbers: what VoiceOver calls each type's share of them.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {

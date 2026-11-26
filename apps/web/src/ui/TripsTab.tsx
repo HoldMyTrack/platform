@@ -13,6 +13,32 @@ import { formatTrackType, formatDuration, formatTotalDistance } from './format.t
 import { useUnitSystem, type UnitSystem } from './units.ts';
 import { t, tn } from '../i18n/index.ts';
 
+/** The whole Trip's statistics (FR-13.1), whatever the dates select, inside its folder under the
+ *  description: they fold away with its rows. */
+function TripStats({ trip, system }: { trip: Trip; system: UnitSystem }) {
+  return (
+    <div className="trips-tab__stats" data-testid="trips-tab-stats">
+      {trip.stats.count > 0 ? (
+        <>
+          <p className="trips-tab__stats-line">{tripStatsLine(trip.stats, system)}</p>
+          <table className="trips-tab__types" aria-label={t('trips.by_type')}>
+            <tbody>
+              {trip.stats.byType.map((type) => (
+                <tr key={type.trackType}>
+                  <th scope="row">{formatTrackType(type.trackType)}</th>
+                  <td>{tripStatsLine(type, system)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <p className="trips-tab__stats-line">{t('trips.no_tracks')}</p>
+      )}
+    </div>
+  );
+}
+
 /** A Trip's numbers, or one type's share of them, in one line — "3 tracks · 58 km · 3h 26m
  *  moving". */
 function tripStatsLine(totals: TripTotals, system: UnitSystem): string {
@@ -35,7 +61,7 @@ interface TripsTabProps {
    *  loaded, one always is (MapView opens the newest). */
   openId: string | null;
   /** The open Trip as `GET /v2/trips/{id}` last returned it (useTrip) — its whole-Trip
-   *  statistics for the footer. */
+   *  statistics, shown under its description. */
   openTrip: Trip | null;
   /** Why the open Trip couldn't be read — a `?trip=` that doesn't exist or isn't this account's. */
   openError: string | null;
@@ -62,8 +88,8 @@ interface TripsTabProps {
  * The Tracks panel's Trips tab (`SPEC.md` FR-13.6): the copies others sent, to accept or
  * decline (FR-13.7), then every Trip as a folder, newest first,
  * exactly one of them open. Opening one is viewing it — MapView narrows the drawn tracks and the
- * list to it, whatever area and Dates the Tracks tab has, and this tab shows that list inside the folder and the whole
- * Trip's statistics in the footer. A row previews on hover and focuses on click, like the
+ * list to it, whatever area and Dates the Tracks tab has, and this tab shows that list inside the folder under the whole
+ * Trip's statistics. A row previews on hover and focuses on click, like the
  * Tracks tab's, and its × takes the track out of the Trip (`DELETE
  * /v2/trips/{id}/tracks`) — here, where the Trip is open, rather than where tracks are
  * picked, which is where they go in (AddToTripMenu.tsx). A folder's pencil and trash rename and
@@ -201,6 +227,7 @@ export function TripsTab({
                 >
                   {trip.from !== null && <p className="trips-tab__from">{t('trips.from', { from: trip.from })}</p>}
                   {trip.description !== '' && <p className="trips-tab__description">{trip.description}</p>}
+                  <TripStats trip={trip} system={system} />
                   {removeError && <p className="tracks-panel__note tracks-panel__note--error">{removeError}</p>}
                   <ul className="trips-tab__rows" ref={rowsRef}>
                     {start > 0 && <li className="tracks-panel__spacer" style={{ height: start * rowHeight }} aria-hidden="true" />}
@@ -234,10 +261,9 @@ export function TripsTab({
                     {tracksError && !tracksLoading && (
                       <li className="tracks-panel__note tracks-panel__note--error">{tracksError}</li>
                     )}
-                    {!tracksLoading && !tracksError && tracks.length === 0 && (
-                      <li className="tracks-panel__note">
-                        {trip.stats.count === 0 ? t('trips.no_tracks') : t('tracks.none_match')}
-                      </li>
+                    {/* An empty Trip's statistics already say it has no tracks. */}
+                    {!tracksLoading && !tracksError && tracks.length === 0 && trip.stats.count > 0 && (
+                      <li className="tracks-panel__note">{t('tracks.none_match')}</li>
                     )}
                   </ul>
                 </div>
@@ -249,29 +275,6 @@ export function TripsTab({
         {tripsError && <li className="tracks-panel__note tracks-panel__note--error">{tripsError}</li>}
         {tripsReady && trips.length === 0 && <li className="tracks-panel__note">{t('trips.empty')}</li>}
       </ul>
-
-      {/* The whole Trip's statistics (FR-13.1). */}
-      {openTrip && openTrip.id === openId && (
-        <div className="tracks-panel__footer trips-tab__stats" data-testid="trips-tab-stats">
-          {openTrip.stats.count > 0 ? (
-            <>
-              <p className="trips-tab__stats-line">{tripStatsLine(openTrip.stats, system)}</p>
-              <table className="trips-tab__types" aria-label={t('trips.by_type')}>
-                <tbody>
-                  {openTrip.stats.byType.map((type) => (
-                    <tr key={type.trackType}>
-                      <th scope="row">{formatTrackType(type.trackType)}</th>
-                      <td>{tripStatsLine(type, system)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          ) : (
-            <p className="trips-tab__stats-line">{t('trips.no_tracks')}</p>
-          )}
-        </div>
-      )}
 
       {editing && (
         <TripDialog mode="edit" trip={editing} onSaved={onEdited} onClose={() => setEditing(null)} />

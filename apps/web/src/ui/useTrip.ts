@@ -15,7 +15,7 @@ export interface TripState {
 }
 
 /** Reader for `GET /v2/trips/{id}` — the open Trip on the Trips tab: its whole-Trip
- *  statistics (FR-13.1) for the footer, whatever the area and Dates. */
+ *  statistics (FR-13.1) under its description, whatever the area and Dates. */
 export function useTrip(id: string | null): TripState {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [error, setError] = useState<string | null>(null);

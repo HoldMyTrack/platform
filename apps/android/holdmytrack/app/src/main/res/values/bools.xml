@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- The open Trip's statistics scroll with its rows (panel/TripsTab) rather than sit
-         under them: true in landscape (values-land), where pinned they left the rows a sliver. -->
-    <bool name="trips_stats_scroll">false</bool>
-</resources>

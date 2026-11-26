@@ -235,7 +235,7 @@ body {
 }
 
 /* The Trips tab (TripsTab.tsx, FR-13.6): one scrolling list of folders, one of them open
-   with its tracks inside, and the open Trip's numbers pinned below in the footer. */
+   with its description, numbers and tracks inside. */
 .trips-tab {
   flex: 1;
   min-height: 0;
@@ -400,12 +400,13 @@ body {
   border-bottom: 0;
 }
 
-/* Two classes, to win over .tracks-panel__footer's row layout further down. */
-.tracks-panel__footer.trips-tab__stats {
+/* Under the description, set in as the rows are. */
+.trips-tab__stats {
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--fm-space-4);
-  text-align: left;
+  padding: var(--fm-space-8) var(--fm-space-16) var(--fm-space-8) 36px;
 }
 
 .trips-tab__stats-line {

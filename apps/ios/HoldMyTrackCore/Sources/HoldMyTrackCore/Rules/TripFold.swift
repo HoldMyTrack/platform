@@ -1,7 +1,7 @@
 /// Folding the open Trip on the Trips tab (root docs/SPEC.md FR-13.6), the web's
 /// `apps/web/src/ui/tripFold.ts` (`testdata/client-rules/trip-fold.json`): a tap on the open Trip's
-/// folder hides or shows its list and changes nothing else, so it stays open with the map and
-/// totals narrowed to it. A tap on another folder opens that one unfolded.
+/// folder hides or shows its description, numbers and rows and changes nothing else, so it stays
+/// open with the map narrowed to it. A tap on another folder opens that one unfolded.
 public enum TripFold {
     /// `foldedID`: the Trip whose list is folded after the tap; `open`: the tapped Trip is another
     /// one, to open.
@@ -31,14 +31,4 @@ public enum TripsList {
 
     /// A failed read says so when nothing is shown yet, or when the tab asked itself.
     public static func showsError(quiet: Bool, ready: Bool, failed: Bool) -> Bool { failed && (!quiet || !ready) }
-}
-
-/// Where the open Trip's numbers go on the Trips tab: pinned under the list, as Android's footer,
-/// unless that leaves the rows too little room, as in landscape, at the half sheet with many types
-/// or at large text; then the list's footer, scrolled to.
-public enum TripStatsPlace {
-    /// height: the numbers' at the tab's width; available: the tab's content height.
-    public static func pinned(compactHeight: Bool, height: Double, available: Double) -> Bool {
-        !compactHeight && height <= available * 0.4
-    }
 }
