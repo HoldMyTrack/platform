@@ -25,6 +25,8 @@ class LocateController(
     private val fragment: Fragment,
     private val map: () -> MapLibreMap?,
     private val style: () -> Style?,
+    /** The camera is about to follow the user: a move the opening view leaves alone. */
+    private val onMoved: () -> Unit,
 ) {
     /** The button's panel, hidden whole while recording so no empty panel is left. */
     private lateinit var panel: View
@@ -69,6 +71,7 @@ class LocateController(
             location.activateLocationComponent(LocationComponentActivationOptions.Builder(fragment.requireContext(), loaded).build())
         }
         location.isLocationComponentEnabled = true
+        onMoved()
         location.setCameraMode(CameraMode.TRACKING, FLY_DURATION_MS, maxOf(instance.cameraPosition.zoom, LOCATE_ZOOM), null, null, null)
     }
 

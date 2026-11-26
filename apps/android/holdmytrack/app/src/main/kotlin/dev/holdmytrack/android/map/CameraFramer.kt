@@ -76,9 +76,17 @@ class CameraFramer(
             opening = false
             val page = result.getOrNull()
             if (page == null) {
+                // Asked again meanwhile: that ask reads now, with its retries.
+                if (askedAgain) {
+                    askedAgain = false
+                    retriesLeft = OpeningView.RETRIES
+                    return@areaTracks again(onOpened)
+                }
                 if (OpeningView.retries(emptyShown(), retriesLeft)) {
                     retriesLeft--
                     pendingRetry = onOpened
+                    // One retry waits at a time.
+                    root.removeCallbacks(retry)
                     root.postDelayed(retry, RETRY_MS)
                 }
                 return@areaTracks onOpened()
@@ -114,6 +122,7 @@ class CameraFramer(
             return
         }
         retriesLeft = OpeningView.RETRIES
+        root.removeCallbacks(retry)
         again(onOpened)
     }
 
@@ -123,7 +132,8 @@ class CameraFramer(
         open(onOpened)
     }
 
-    /** A Trip closed: an opening view it held back is taken, unless the camera has moved since. */
+    /** A Trip closed: an opening view it held back is taken, unless the camera has moved since, the
+     *  Trip's own flight included, which has framed its tracks. */
     fun tripClosed(onOpened: () -> Unit) {
         val held = heldAt ?: return
         heldAt = null

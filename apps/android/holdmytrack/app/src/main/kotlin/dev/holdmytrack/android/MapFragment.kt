@@ -230,7 +230,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     )
 
     /** Find my location's dot and tracking camera. */
-    private val locate = LocateController(this, map = { map }, style = { style })
+    private val locate = LocateController(this, map = { map }, style = { style }, onMoved = { views?.camera?.moved() })
 
     /** Points of interest: the shown places, their badges and popup, and capture mode. */
     private val spots = SpotsController(this, map = { map }, style = { style?.takeIf { overlaysAttached } }, frame = { views?.camera?.flyTo(it) })
@@ -582,7 +582,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             instance.addOnCameraIdleListener { spots.onCameraIdle() }
             // The list follows the map (AreaController).
             instance.addOnCameraIdleListener { area.onCameraIdle() }
-            // A move the app's own fits didn't make: the user's, or Find my location's.
+            // The user's moves; MapLibre reports Find my location's as the app's, so it counts them
+            // itself (LocateController.onMoved).
             instance.addOnCameraMoveStartedListener { reason ->
                 if (reason != MapLibreMap.OnCameraMoveStartedListener.REASON_DEVELOPER_ANIMATION) camera.moved()
             }

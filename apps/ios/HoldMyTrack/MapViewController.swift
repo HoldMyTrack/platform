@@ -176,6 +176,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var openAgain = false
     /// How many more times a failed read for an empty map is made.
     var openRetriesLeft = 0
+    var openRetry: Task<Void, Never>?
     /// Counts the camera's moves by the user or the app's fits, so an opening view's answer that
     /// lands after one leaves the camera where it went.
     var cameraMoves = 0

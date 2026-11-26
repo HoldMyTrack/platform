@@ -16,7 +16,10 @@ extension MapViewController {
     /// asked: a new ask, a return or something arriving, which a failed read is made again for
     /// while the empty map's pointer shows.
     func openOnce(asked: Bool = false) {
-        if asked { openRetriesLeft = OpeningView.retries }
+        if asked {
+            openRetriesLeft = OpeningView.retries
+            openRetry?.cancel()
+        }
         guard !framed || noticeShown(.empty) else {
             if let known = hasTracks { onHistoryKnown?(known) }
             return
@@ -38,11 +41,13 @@ extension MapViewController {
             }
             guard let newest = try? await flow.api.areaList(box: nil, dates: .allTime, limit: OpeningView.tracks) else {
                 followArea()
-                if OpeningView.retries(emptyShown: noticeShown(.empty), left: openRetriesLeft) {
+                // Asked again meanwhile: the defer reads now. Else one retry waits at a time.
+                if !openAgain, OpeningView.retries(emptyShown: noticeShown(.empty), left: openRetriesLeft) {
                     openRetriesLeft -= 1
-                    Task { [weak self] in
+                    openRetry?.cancel()
+                    openRetry = Task { [weak self] in
                         try? await Task.sleep(for: .seconds(5))
-                        guard let self, self.noticeShown(.empty) else { return }
+                        guard !Task.isCancelled, let self, self.noticeShown(.empty) else { return }
                         self.openOnce()
                     }
                 }
@@ -73,7 +78,8 @@ extension MapViewController {
         }
     }
 
-    /// A Trip closed: an opening view it held back is taken, unless the camera has moved since.
+    /// A Trip closed: an opening view it held back is taken, unless the camera has moved since, the
+    /// Trip's own flight included, which has framed its tracks.
     func tripClosed() {
         guard let held = openingHeldAt else { return }
         openingHeldAt = nil

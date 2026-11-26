@@ -1,6 +1,6 @@
 {
   "rule": "openingMove",
-  "description": "What the opening view's answer does with the camera (apps/android/docs/SPEC.md FR-2.3), decided when it lands: moves it onto the newest tracks found, holds the move for an open Trip, whose own flight frames it, to take when the Trip closes if the camera hasn't moved by then, or leaves it: nothing found, a live recording's camera, a flight already asked for, or a camera moved since the read went out, by the user or the app.",
+  "description": "What the opening view's answer does with the camera (apps/android/docs/SPEC.md FR-2.3), decided when it lands: moves it onto the newest tracks found, holds the move for an open Trip, whose own flight frames it, or leaves it: nothing found, a live recording's camera, a flight already asked for, or a camera moved since the read went out, by the user or the app. A held move is taken when the Trip closes only if nothing has moved the camera since, the Trip's own flight included: a Trip with nothing to fly to leaves the map where the opening view would have put it.",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "tracks found, nothing else going on", "input": {"found": true, "recording": false, "tripOpen": false, "flightAsked": false, "moved": false}, "expected": "move"},
