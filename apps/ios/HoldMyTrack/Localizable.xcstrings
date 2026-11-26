@@ -13197,24 +13197,6 @@
         }
       }
     },
-    "trips.subtext" : {
-      "comment" : "The Trips tab: what a Trip is.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hand-picked sets of your tracks. Only you can see them."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Подборки ваших треков. Видны только вам."
-          }
-        }
-      }
-    },
     "Try again" : {
       "comment" : "Repeats a session check that couldn't reach the server.",
       "localizations" : {

@@ -5,7 +5,7 @@ import UIKit
 /// recording on this phone not on the map yet, newest first. Recordings send themselves
 /// (RecordingsSync); each row says how far it got, with Retry over them. Type chips narrow the
 /// list; a row swiped aside is hidden, with Undo, and Show hidden brings it back. One sent stays
-/// listed, on its way, until it lands. Upload heads it, beside its title. What a row offers is SyncList's. The rows are drawn dashed on the map (SyncLines), the first
+/// listed, on its way, until it lands. Upload heads it, across from ‹. What a row offers is SyncList's. The rows are drawn dashed on the map (SyncLines), the first
 /// showing framed; a tap on a row or its line picks it out, and ⓘ says what else covers its time
 /// (SyncSimilar, and the server for the account's tracks).
 @MainActor
@@ -94,7 +94,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let upload = Controls.secondaryButton(String(localized: "Upload"), id: "syncUpload", icon: UIImage(resource: .upload))
         upload.addAction(UIAction { [weak self] _ in self?.onEvent?(.upload) }, for: .primaryActionTriggered)
         upload.isHidden = account.isDemo
-        let title = UIStackView(arrangedSubviews: [back, Controls.label(String(localized: "Sync"), font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink)), UIView(), upload])
+        // No title, as on Android: ‹ and the rows say where this is.
+        let title = UIStackView(arrangedSubviews: [back, UIView(), upload])
         title.alignment = .center
         head.addArrangedSubview(title)
         head.addArrangedSubview(bar)

@@ -108,6 +108,15 @@ struct PanelTests {
         #expect(SheetRules.toggled(.collapsed) == .half && SheetRules.toggled(.expanded) == .collapsed)
     }
 
+    // MARK: Trips
+
+    @Test func theTripsNumbersArePinnedOnlyWhereTheyLeaveTheListRoom() {
+        #expect(TripStatsPlace.pinned(compactHeight: false, height: 120, available: 500))
+        #expect(TripStatsPlace.pinned(compactHeight: false, height: 200, available: 500), "at the cap")
+        #expect(!TripStatsPlace.pinned(compactHeight: false, height: 201, available: 500), "many types or large text")
+        #expect(!TripStatsPlace.pinned(compactHeight: true, height: 60, available: 500), "landscape")
+    }
+
     // MARK: A tap on the map
 
     @Test func aTapPicksTheTopmostListedTrack() {
