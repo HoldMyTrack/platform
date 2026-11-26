@@ -265,7 +265,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         super.viewDidLayoutSubviews()
         let guide = view.safeAreaLayoutGuide.layoutFrame
         // Open all the way, the sheet reaches the status bar, over the map's top row, as on Android
-        // (apps/android/docs/SPEC.md FR-2.7).
+        // (apps/docs/SPEC.md FR-2.7).
         sheet.setRoom(container: guide.height)
         layersMenu.place()
         placesMenu.place()
