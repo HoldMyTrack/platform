@@ -431,8 +431,9 @@ class ClientRulesTest {
         "distanceBounds" to { input -> distanceJson(TrackFacets.distanceBounds(tracks(input["tracks"]))) },
         "distanceFilter" to { input ->
             val knob = DistanceKnob.valueOf(input.string("knob")!!.uppercase())
-            distanceJson(TrackFacets.nextDistanceFilter(distance(input["bounds"])!!, distance(input["current"])!!, knob, input.number("value")))
+            distanceJson(TrackFacets.nextDistanceFilter(distance(input["bounds"])!!, distance(input["current"])!!, knob, input.number("value"), input.string("system") == "imperial"))
         },
+        "distanceWholeBounds" to { input -> distanceJson(TrackFacets.wholeDistanceBounds(distance(input["bounds"]), input.string("system") == "imperial")) },
         "typeFacets" to { input ->
             buildJsonArray {
                 TrackFacets.typeFacets(tracks(input["tracks"]), distance(input["distanceFilter"])).forEach { facet ->
@@ -536,6 +537,7 @@ class ClientRulesTest {
         "photoClamp" to { input -> viewJson(PhotoZoom.clamp(view(input), size(input["fitted"]), size(input["stage"]))) },
         "distanceParts" to { input -> partsJson(FormatParts.distance(input.number("meters"), input.string("system") == "imperial")) },
         "totalDistanceParts" to { input -> partsJson(FormatParts.totalDistance(input.number("meters"), input.string("system") == "imperial")) },
+        "distanceBandParts" to { input -> partsJson(FormatParts.distanceBand(input.number("meters"), input.string("system") == "imperial")) },
         "durationParts" to { input ->
             val (key, args) = when (val parts = FormatParts.duration(input["seconds"]!!.jsonPrimitive.long)) {
                 is DurationParts.HoursMinutes -> "duration.hm" to buildJsonObject { put("h", parts.h); put("m", parts.m) }

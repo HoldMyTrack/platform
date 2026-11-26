@@ -251,8 +251,10 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "distanceBounds": { input in distanceJSON(TrackFacets.distanceBounds(tracks(input["tracks"]))) },
     "distanceFilter": { input in
         let knob: DistanceKnob = input["knob"].string == "min" ? .min : .max
-        return distanceJSON(TrackFacets.nextDistanceFilter(bounds: distance(input["bounds"])!, current: distance(input["current"])!, knob: knob, value: input.number("value")))
+        return distanceJSON(TrackFacets.nextDistanceFilter(bounds: distance(input["bounds"])!, current: distance(input["current"])!, knob: knob, value: input.number("value"),
+                                                           imperial: input["system"].string == "imperial"))
     },
+    "distanceWholeBounds": { input in distanceJSON(TrackFacets.wholeDistanceBounds(distance(input["bounds"]), imperial: input["system"].string == "imperial")) },
     "typeFacets": { input in
         .array(TrackFacets.typeFacets(tracks(input["tracks"]), distanceFilter: distance(input["distanceFilter"])).map { ["type": .string($0.type), "count": .num($0.count)] })
     },
@@ -444,6 +446,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "trackZone": { input in .opt(TrackZone.of(own: input["own"].string, account: input["account"].string)) },
     "distanceParts": { input in partsJSON(FormatParts.distance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
     "totalDistanceParts": { input in partsJSON(FormatParts.totalDistance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
+    "distanceBandParts": { input in partsJSON(FormatParts.distanceBand(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
     "durationParts": { input in
         switch FormatParts.duration(seconds: input.int("seconds")) {
         case .hoursMinutes(let h, let m): ["key": "duration.hm", "args": ["h": .num(h), "m": .num(m)]]

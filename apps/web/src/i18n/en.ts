@@ -130,7 +130,7 @@ export const en = {
   'filters.any_distance': 'any distance',
   'filters.distance': 'Distance',
   'filters.clear_distance': 'Clear distance',
-  'filters.distance_between': '{min}–{max} {unit}',
+  'filters.distance_between': '{min} – {max} {unit}',
   'filters.max_distance': 'Maximum distance',
   'filters.min_distance': 'Minimum distance',
   'edit.description': 'Description',

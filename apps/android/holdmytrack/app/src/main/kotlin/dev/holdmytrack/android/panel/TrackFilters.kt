@@ -11,7 +11,7 @@ import android.widget.TextView
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.slider.RangeSlider
 import dev.holdmytrack.android.R
-import kotlin.math.abs
+import dev.holdmytrack.android.recording.RecordingFormat
 
 /**
  * The Tracks tab's TYPE and DISTANCE filters and their Reset, the web's `TrackFilters`: each
@@ -47,11 +47,12 @@ class TrackFilters(
         distance.setOnClickListener { showDistanceFilter() }
         distanceSlider.addOnChangeListener { slider, _, fromUser ->
             if (!fromUser) return@addOnChangeListener
-            val bounds = TrackFacets.distanceBounds(state.tracks) ?: return@addOnChangeListener
-            fun snap(value: Float): Double = snap(value, bounds)
+            val imperial = RecordingFormat.imperial()
+            val bounds = TrackFacets.wholeDistanceBounds(TrackFacets.distanceBounds(state.tracks), imperial) ?: return@addOnChangeListener
+            fun meters(units: Float): Double = TrackFacets.sliderMeters(units, imperial)
             // The slider reports both knobs; the rule takes them one at a time, so both at the ends is no filter.
-            val min = TrackFacets.nextDistanceFilter(bounds, state.distanceFilter ?: bounds, DistanceKnob.MIN, snap(slider.values[0]))
-            state.setDistanceFilter(TrackFacets.nextDistanceFilter(bounds, min ?: bounds, DistanceKnob.MAX, snap(slider.values[1])))
+            val min = TrackFacets.nextDistanceFilter(bounds, state.distanceFilter ?: bounds, DistanceKnob.MIN, meters(slider.values[0]), imperial)
+            state.setDistanceFilter(TrackFacets.nextDistanceFilter(bounds, min ?: bounds, DistanceKnob.MAX, meters(slider.values[1]), imperial))
             onChanged()
         }
         resetFilters.setOnClickListener {
@@ -75,31 +76,36 @@ class TrackFilters(
 
     /** DISTANCE, the web's `DistanceFilter`: gone while the list has no spread of distances. */
     private fun renderDistance() {
-        val bounds = TrackFacets.distanceBounds(state.tracks)
-        if (bounds == null || bounds.min >= bounds.max) {
+        // Offered while the tracks themselves span distances; the slider runs between whole units.
+        val exact = TrackFacets.distanceBounds(state.tracks)
+        if (exact == null || exact.min >= exact.max) {
             distance.visibility = View.GONE
             return
         }
         distance.visibility = View.VISIBLE
+        val imperial = RecordingFormat.imperial()
+        val bounds = TrackFacets.wholeDistanceBounds(exact, imperial)!!
         val current = state.distanceFilter ?: bounds
-        val lo = current.min.coerceIn(bounds.min, bounds.max).toFloat()
-        val hi = current.max.coerceIn(bounds.min, bounds.max).toFloat()
-        distanceSlider.valueFrom = bounds.min.toFloat()
-        distanceSlider.valueTo = bounds.max.toFloat()
+        // In whole units, one a step, so a key press or TalkBack moves a knob a whole unit.
+        val lo = TrackFacets.sliderUnits(current.min.coerceIn(bounds.min, bounds.max), imperial)
+        val hi = TrackFacets.sliderUnits(current.max.coerceIn(bounds.min, bounds.max), imperial)
+        distanceSlider.valueFrom = TrackFacets.sliderUnits(bounds.min, imperial)
+        distanceSlider.valueTo = TrackFacets.sliderUnits(bounds.max, imperial)
+        distanceSlider.stepSize = 1f
         if (distanceSlider.values != listOf(lo, hi)) distanceSlider.setValues(lo, hi)
         distanceReadout.text = if (state.distanceFilter == null) {
             res.getString(R.string.panel_any_distance_chip)
         } else {
             res.getString(
                 R.string.panel_distance_range,
-                PanelFormat.distanceValue(res, current.min),
-                PanelFormat.distanceValue(res, current.max),
+                PanelFormat.distanceBandValue(res, current.min),
+                PanelFormat.distanceBandValue(res, current.max),
                 PanelFormat.unit(res),
             )
         }
         distance.contentDescription = "${res.getString(R.string.panel_distance)}, ${distanceReadout.text}"
-        distanceMin.text = PanelFormat.distance(res, bounds.min)
-        distanceMax.text = PanelFormat.distance(res, bounds.max)
+        distanceMin.text = PanelFormat.distanceBand(res, bounds.min)
+        distanceMax.text = PanelFormat.distanceBand(res, bounds.max)
     }
 
     private fun showDistanceFilter() {
@@ -173,15 +179,5 @@ class TrackFilters(
 
     companion object {
         private const val DISTANCE_POPUP_DP = 288
-        private const val SNAP_METERS = 1.0
-
-        /** A knob's [value] in metres. The slider holds Floats, which can't carry every distance
-         *  exactly: a knob at an end of [bounds] is snapped back onto that end's own track, or the
-         *  band would leave it out. */
-        fun snap(value: Float, bounds: DistanceRange): Double = when {
-            abs(value - bounds.min) < SNAP_METERS -> bounds.min
-            abs(value - bounds.max) < SNAP_METERS -> bounds.max
-            else -> value.toDouble()
-        }
     }
 }

@@ -425,7 +425,7 @@
     <string name="panel_type_empty">No tracks to filter yet.</string>
     <string name="panel_distance">Distance</string>
     <string name="panel_any_distance_chip">Any distance</string>
-    <string name="panel_distance_range">%1$s–%2$s %3$s</string>
+    <string name="panel_distance_range">%1$s – %2$s %3$s</string>
     <string name="panel_check_all">Check all tracks</string>
     <string name="panel_uncheck_all">Uncheck all tracks</string>
     <string name="panel_hide_target">Hide %1$s from the map</string>
@@ -1039,7 +1039,6 @@
         <item quantity="one">%1$d of %2$d track</item>
         <item quantity="other">%1$d of %2$d tracks</item>
     </plurals>
-    <string name="library_distance_band">%1$s – %2$s</string>
     <string name="library_range">%1$d–%2$d of %3$d</string>
     <string name="library_prev">Previous page</string>
     <string name="library_next">Next page</string>

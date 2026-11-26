@@ -3,7 +3,7 @@ import { ChevronDown, X } from 'lucide-react';
 import { DistanceFilter } from './DistanceFilter.tsx';
 import type { DistanceRange, TypeFacet } from './trackFacets.ts';
 import { dateFilterLabel, type DateFilter } from './dateFilter.ts';
-import { distanceValue, formatTrackType, formatFilterDate, formatShortDate, unitLabel } from './format.ts';
+import { distanceBandValue, formatFilterDate, formatShortDate, formatTrackType, unitLabel } from './format.ts';
 import { useUnitSystem } from './units.ts';
 import { t } from '../i18n/index.ts';
 import { useDismiss } from './useDismiss.ts';
@@ -150,7 +150,7 @@ export function TrackFilters({ facets, excludedTypes, onToggleType, distanceBoun
   const distanceText =
     distanceFilter === null
       ? t('filters.distance')
-      : t('filters.distance_between', { min: distanceValue(distanceFilter.min, system), max: distanceValue(distanceFilter.max, system), unit: unitLabel(system) });
+      : t('filters.distance_between', { min: distanceBandValue(distanceFilter.min, system), max: distanceBandValue(distanceFilter.max, system), unit: unitLabel(system) });
   return (
     <div className="tracks-panel__filters">
       <div className="tracks-panel__type-dropdown" ref={typeRef}>

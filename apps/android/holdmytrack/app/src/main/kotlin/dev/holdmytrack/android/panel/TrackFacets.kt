@@ -27,13 +27,37 @@ object TrackFacets {
         return DistanceRange(distances.min(), distances.max())
     }
 
-    /** The DISTANCE filter after [knob] moved to [value]: the other knob held, the two never
-     *  crossing, and null — no filter — once both are back at [bounds], so a knob dragged away
-     *  and back leaves nothing filtered out. */
-    fun nextDistanceFilter(bounds: DistanceRange, current: DistanceRange, knob: DistanceKnob, value: Double): DistanceRange? {
+    /** One kilometer or mile, in meters: the DISTANCE filter moves in whole ones. */
+    private fun unitMeters(imperial: Boolean) = if (imperial) 1609.344 else 1000.0
+
+    /** [meters] in units, the floating-point noise of the division taken off, so 10 miles is 10
+     *  and not a hair over, which would round up to 11. */
+    private fun inUnits(meters: Double, unit: Double) = Math.round(meters / unit * 1e6) / 1e6
+
+    /** The DISTANCE slider's ends (`testdata/client-rules/distance-whole-bounds.json`): [bounds]
+     *  rounded outward to whole kilometers or miles, so every track lies within them. */
+    fun wholeDistanceBounds(bounds: DistanceRange?, imperial: Boolean): DistanceRange? {
+        if (bounds == null) return null
+        val unit = unitMeters(imperial)
+        return DistanceRange(Math.floor(inUnits(bounds.min, unit)) * unit, Math.ceil(inUnits(bounds.max, unit)) * unit)
+    }
+
+    /** [meters] as a DISTANCE slider position, in whole units: the slider moves one unit a step,
+     *  and a position off a step is refused, so an end that isn't whole draws at the nearest. */
+    fun sliderUnits(meters: Double, imperial: Boolean): Float = Math.round(inUnits(meters, unitMeters(imperial))).toFloat()
+
+    /** A DISTANCE slider position back in meters. */
+    fun sliderMeters(units: Float, imperial: Boolean): Double = units.toDouble() * unitMeters(imperial)
+
+    /** The DISTANCE filter after [knob] moved to [value], snapped to a whole kilometer or mile
+     *  within [bounds]: the other knob held, the two never crossing, and null — no filter — once
+     *  both are back at [bounds], so a knob dragged away and back leaves nothing filtered out. */
+    fun nextDistanceFilter(bounds: DistanceRange, current: DistanceRange, knob: DistanceKnob, value: Double, imperial: Boolean): DistanceRange? {
+        val unit = unitMeters(imperial)
+        val snapped = (Math.round(inUnits(value, unit)) * unit).coerceIn(bounds.min, bounds.max)
         val next = when (knob) {
-            DistanceKnob.MIN -> DistanceRange(minOf(value, current.max), current.max)
-            DistanceKnob.MAX -> DistanceRange(current.min, maxOf(value, current.min))
+            DistanceKnob.MIN -> DistanceRange(minOf(snapped, current.max), current.max)
+            DistanceKnob.MAX -> DistanceRange(current.min, maxOf(snapped, current.min))
         }
         return next.takeUnless { it.min <= bounds.min && it.max >= bounds.max }
     }
