@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The photo viewer (apps/android/docs/SPEC.md FR-2.10), the web's PhotoViewer.tsx: a photo over
+/// The photo viewer (apps/docs/SPEC.md FR-2.10), the web's PhotoViewer.tsx: a photo over
 /// the whole screen, opened from its popup, to pinch, double-tap and drag, or zoom with the
 /// bottom bar's buttons, up to PhotoZoom's limits. Steps through a group as the popup does, and
 /// with it (onIndex). Close leaves the popup open.

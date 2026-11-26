@@ -1,6 +1,6 @@
 {
   "rule": "recordingSendOrder",
-  "description": "Which of the phone's recordings a send takes, in order (apps/android/docs/SPEC.md FR-5.2): newest first (startedAt, epoch ms), then those whose last request failed (setBack, the latest last) in that order, or one that stops every send would keep the rest on the phone. None the server has taken (sent), swiped aside (hidden) or open in Save, Edit or Delete's question (held), and none refused since launch unless the user asked again (retry).",
+  "description": "Which of the phone's recordings a send takes, in order (apps/docs/SPEC.md FR-5.2): newest first (startedAt, epoch ms), then those whose last request failed (setBack, the latest last) in that order, or one that stops every send would keep the rest on the phone. None the server has taken (sent), swiped aside (hidden) or open in Save, Edit or Delete's question (held), and none refused since launch unless the user asked again (retry).",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "newest first", "input": { "recordings": [{ "id": "a", "startedAt": 100, "sent": false }, { "id": "b", "startedAt": 200, "sent": false }, { "id": "c", "startedAt": 300, "sent": false }], "hidden": [], "held": [], "refused": [], "setBack": [], "retry": false }, "expected": ["c", "b", "a"] },

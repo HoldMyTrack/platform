@@ -8,7 +8,7 @@ import (
 
 // An app build older than its platform's minimum (MIN_ANDROID_BUILD, MIN_IOS_BUILD) is refused
 // on /v2/ with 426 app_outdated, which the app answers with its Update screen
-// (apps/android/docs/SPEC.md FR-1.8, docs/IMPLEMENTATION.md §4.33).
+// (apps/docs/SPEC.md FR-1.8, docs/IMPLEMENTATION.md §4.33).
 
 // The apps' User-Agents start with these, then the release number and, in brackets, the commit
 // and the build: "HoldMyTrack-Android/0.13 (62da50b; 812)", "HoldMyTrack-iOS/0.1 (62da50b; 1400)".

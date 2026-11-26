@@ -44,7 +44,7 @@ public enum RecordTap: Equatable, Sendable {
     }
 }
 
-/// A recording in progress, as values (apps/android/docs/SPEC.md FR-5.1): its fixes, its moving
+/// A recording in progress, as values (apps/docs/SPEC.md FR-5.1): its fixes, its moving
 /// time with pauses left out, and its distance, none of it across a pause. The first fix after a
 /// pause is a fresh baseline, not a jump from wherever the phone was when it paused.
 public struct Recording: Equatable, Sendable {
@@ -231,7 +231,7 @@ public struct RecordedTrack: Codable, Equatable, Sendable {
     }
 }
 
-/// Stopped recordings on the phone, each account's in a folder of its own (apps/android/docs/SPEC.md
+/// Stopped recordings on the phone, each account's in a folder of its own (apps/docs/SPEC.md
 /// FR-5.3), so two accounts on one phone never see each other's, with the account's default type
 /// and its hidden Sync rows beside them. A file per recording. Nothing here goes into a device
 /// backup.
@@ -293,7 +293,7 @@ public struct RecordingStore: Sendable {
         if hidden.contains(id) { setHidden(hidden.subtracting([id]), account: account) }
     }
 
-    /// The Sync rows swiped aside (apps/android/docs/SPEC.md FR-3.5), by recording id. Only a
+    /// The Sync rows swiped aside (apps/docs/SPEC.md FR-3.5), by recording id. Only a
     /// delete prunes it: a list that failed to read never empties it.
     public func hidden(account: String) -> Set<String> {
         guard let data = try? Data(contentsOf: folder(account: account).appending(path: "hidden")),

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Files another app opened in HoldMyTrack, listed on Upload until its Upload sends them or
-/// Cancel drops them (apps/android/docs/SPEC.md FR-3.6): nothing is sent unasked.
+/// Cancel drops them (apps/docs/SPEC.md FR-3.6): nothing is sent unasked.
 public struct SharedFiles: Equatable, Sendable {
     public private(set) var urls: [URL] = []
 

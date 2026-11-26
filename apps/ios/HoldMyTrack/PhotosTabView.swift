@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The Edit window's Photos tab (apps/android/docs/SPEC.md FR-2.10), Android's PhotosTab: the
+/// The Edit window's Photos tab (apps/docs/SPEC.md FR-2.10), Android's PhotosTab: the
 /// track's photos as a list, each with Edit and Delete, and Add photos. Nothing is written
 /// until the window's Save (save); Cancel throws the draft away. The list and the map (onOverlay)
 /// show the photos as Save would leave them.

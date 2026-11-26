@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The Tracks tab's views (apps/android/docs/SPEC.md FR-2.7): the Type and Distance filters,
+/// The Tracks tab's views (apps/docs/SPEC.md FR-2.7): the Type and Distance filters,
 /// the selection bar while rows are checked, the rows and the target's footer, and the focused
 /// track's card for the sheet's head. It draws PanelState and reports each tap as an Event;
 /// the map screen owns the state and applies them, since most touch the map too.

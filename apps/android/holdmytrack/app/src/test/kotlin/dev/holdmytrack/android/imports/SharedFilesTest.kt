@@ -5,7 +5,7 @@ import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** What another app's intent puts on the Upload screen (`apps/android/docs/SPEC.md` FR-3.6). */
+/** What another app's intent puts on the Upload screen (`apps/docs/SPEC.md` FR-3.6). */
 class SharedFilesTest {
 
     private val ride = URI("content://drive/ride.gpx")

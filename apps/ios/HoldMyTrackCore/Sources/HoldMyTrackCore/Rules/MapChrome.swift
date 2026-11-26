@@ -1,4 +1,4 @@
-/// What the controls over the map show, beside the modes (apps/android/docs/SPEC.md FR-2.2).
+/// What the controls over the map show, beside the modes (apps/docs/SPEC.md FR-2.2).
 public enum MapChrome {
     /// A rail button with a menu of picks under a show-or-hide switch, Layers or Places: filled
     /// while picks show, a badge counting them, greyed while the switch hides them, and the
@@ -84,7 +84,7 @@ public enum MapChrome {
     }
 
     /// Where the base map's credit sits (root docs/IMPLEMENTATION.md §5.6): above the collapsed
-    /// sheet while the sheet shows, whatever its detent (apps/android/docs/SPEC.md FR-2.4), else at
+    /// sheet while the sheet shows, whatever its detent (apps/docs/SPEC.md FR-2.4), else at
     /// the bottom; the mark at the start and the credit's button after it. Offsets are from the
     /// safe area's bottom and start.
     public struct CreditPlace: Equatable, Sendable {

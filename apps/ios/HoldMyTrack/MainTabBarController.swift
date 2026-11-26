@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import UIKit
 
 /// The signed-in app: Tracks, Trips, the record button, Sync and You
-/// (apps/android/docs/SPEC.md FR-2.9), each tab keeping its state across a switch. Tracks, Trips
+/// (apps/docs/SPEC.md FR-2.9), each tab keeping its state across a switch. Tracks, Trips
 /// and Sync are one map screen with its sheet on that tab (MapHostViewController); Sync's sits in
 /// a navigation controller whose bar stays hidden, and Upload opens as a sheet over it. Trips counts
 /// copies waiting to be answered. The record button sits
@@ -46,7 +46,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         trips.tabBarItem.accessibilityIdentifier = "tabTrips"
         let syncPanel = SyncPanel(recordings: recordings, api: flow.api, account: account, host: map)
         map.syncPanel = syncPanel
-        // Library, with Sync opened from its head in its place (apps/android/docs/SPEC.md FR-4.1).
+        // Library, with Sync opened from its head in its place (apps/docs/SPEC.md FR-4.1).
         let libraryHost = MapHostViewController(map: map, tab: .library)
         let sync = UINavigationController(rootViewController: libraryHost)
         sync.setNavigationBarHidden(true, animated: false)

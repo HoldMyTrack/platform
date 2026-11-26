@@ -2,7 +2,7 @@ import CoreLocation
 import HoldMyTrackCore
 import UIKit
 
-/// Capture (apps/android/docs/SPEC.md FR-2.8): started from a place's popup, it reads the phone's
+/// Capture (apps/docs/SPEC.md FR-2.8): started from a place's popup, it reads the phone's
 /// position and guides the user there, an arrow turned towards it, the distance, a dashed line on
 /// the map and every place's area shaded darker, then counts 30 seconds inside (SpotCapture) and
 /// captures it on the server.

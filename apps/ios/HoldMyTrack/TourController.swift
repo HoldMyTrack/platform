@@ -18,7 +18,7 @@ protocol TourHost: AnyObject {
     var tourContainer: UIView { get }
 }
 
-/// The tour, its offer and the first-time cards (apps/android/docs/SPEC.md FR-2.12), the state around
+/// The tour, its offer and the first-time cards (apps/docs/SPEC.md FR-2.12), the state around
 /// TourRules and TourSteps: the web's `useTour.ts` and Android's `TourController`. Each step puts
 /// its tab, mode and sheet as it says, and the user's come back when the tour ends. The camera
 /// follows the steps' views, and goes back to where it was before the first move.
@@ -312,7 +312,7 @@ final class TourController {
     private static func duration(_ seconds: TimeInterval) -> TimeInterval { UIAccessibility.isReduceMotionEnabled ? 0 : seconds }
 }
 
-/// What the tour has shown on this phone (apps/android/docs/SPEC.md FR-2.12): kept by the phone, not
+/// What the tour has shown on this phone (apps/docs/SPEC.md FR-2.12): kept by the phone, not
 /// the account, as the web keeps it by browser, since the demo is one account every visitor shares.
 @MainActor
 enum TourStore {

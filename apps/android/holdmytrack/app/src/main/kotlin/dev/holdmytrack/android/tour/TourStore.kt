@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 
 /**
- * What the tour has shown on this phone (`apps/android/docs/SPEC.md` FR-2.12): kept by the phone, not the
+ * What the tour has shown on this phone (`apps/docs/SPEC.md` FR-2.12): kept by the phone, not the
  * account, as the web keeps it by browser, since the demo is one account every visitor shares.
  */
 class TourStore(context: Context) {

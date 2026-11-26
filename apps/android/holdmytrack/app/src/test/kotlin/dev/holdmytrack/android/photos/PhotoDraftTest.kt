@@ -10,7 +10,7 @@ import org.junit.Test
 import java.io.File
 import java.time.Instant
 
-/** The Photos tab's unsaved changes (`apps/android/docs/SPEC.md` FR-2.10). */
+/** The Photos tab's unsaved changes (`apps/docs/SPEC.md` FR-2.10). */
 class PhotoDraftTest {
 
     private fun saved(id: String, routeAt: Long, caption: String? = null) = Photo(

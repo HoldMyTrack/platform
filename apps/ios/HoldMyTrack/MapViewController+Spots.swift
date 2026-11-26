@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// Points of interest on the map (apps/android/docs/SPEC.md FR-2.8): the Layers menu's
+/// Points of interest on the map (apps/docs/SPEC.md FR-2.8): the Layers menu's
 /// categories, kept on the phone, the badge images the layers document names, the account's
 /// captured badges, a badge's popup and "Show in this area". What each layer does with the picks
 /// is the document's (Spots.apply).

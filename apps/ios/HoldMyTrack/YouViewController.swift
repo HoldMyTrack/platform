@@ -35,7 +35,7 @@ enum Theme: String, CaseIterable {
     }
 }
 
-/// The You tab (apps/android/docs/SPEC.md FR-2.9), in Android's order: the account (avatar, name,
+/// The You tab (apps/docs/SPEC.md FR-2.9), in Android's order: the account (avatar, name,
 /// email, "country · timezone · units") over its all-time numbers and recent weeks, the halves
 /// opening Settings and Track graph & trends; Privacy with its count; App: Theme inline,
 /// Language and Take a tour; HoldMyTrack's About, Help and Contacts as tiles; Sign out and

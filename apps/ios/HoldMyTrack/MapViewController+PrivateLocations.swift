@@ -3,7 +3,7 @@ import MapLibre
 import UIKit
 
 /// The Private location editor on the map (root docs/SPEC.md FR-7.1,
-/// apps/android/docs/SPEC.md FR-2.7), opened from Privacy: the map switches to Normal, the Tracks sheet steps aside for the editor's,
+/// apps/docs/SPEC.md FR-2.7), opened from Privacy: the map switches to Normal, the Tracks sheet steps aside for the editor's,
 /// and every Private location is drawn, the one being edited stronger with a handle at its centre
 /// to drag it by. A new one is 200 m at the middle of the map left showing, flying in first from
 /// too far out; a tap on another circle opens that one. Cancel, a mode change or leaving the Tracks

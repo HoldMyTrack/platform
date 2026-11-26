@@ -11,7 +11,7 @@ import kotlin.math.sqrt
 data class TimedPoint(val lon: Double, val lat: Double, val t: Long)
 
 /**
- * A track as the Photos tab's slider walks it (`apps/android/docs/SPEC.md` FR-2.10): the display
+ * A track as the Photos tab's slider walks it (`apps/docs/SPEC.md` FR-2.10): the display
  * points with their moments (`GET /v2/tracks/{id}/route-metrics`'s `time_s`), measured along
  * their length. The slider runs by distance, not time, so a long stop doesn't take up half its
  * travel; a photo's place is still kept as a moment (`route_at`), which is what the server stores.

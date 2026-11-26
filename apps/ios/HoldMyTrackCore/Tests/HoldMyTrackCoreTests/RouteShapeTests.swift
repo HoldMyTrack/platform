@@ -3,7 +3,7 @@ import Testing
 
 @testable import HoldMyTrackCore
 
-/// A Sync row's line and pace bands, worked out on the phone (apps/android/docs/SPEC.md FR-3.2).
+/// A Sync row's line and pace bands, worked out on the phone (apps/docs/SPEC.md FR-3.2).
 struct RouteShapeTests {
     @Test func theServersPaceBandCases() throws {
         let file = Contract().root.appending(path: "testdata/pace-bands.json")

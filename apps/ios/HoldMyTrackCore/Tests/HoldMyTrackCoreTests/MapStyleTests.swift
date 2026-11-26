@@ -453,7 +453,7 @@ struct MapStyleTests {
     }
 }
 
-/// Where the map first frames an account (apps/android/docs/SPEC.md FR-2.3).
+/// Where the map first frames an account (apps/docs/SPEC.md FR-2.3).
 struct MapFramingTests {
 
     @Test func aFailedReadForAnEmptyMapIsMadeAgainOnlyWhileItsPointerShows() {

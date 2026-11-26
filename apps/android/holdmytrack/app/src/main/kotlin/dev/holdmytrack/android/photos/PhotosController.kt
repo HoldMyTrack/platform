@@ -18,7 +18,7 @@ import dev.holdmytrack.android.panel.PanelState
 import org.maplibre.android.maps.MapLibreMap
 
 /**
- * Photos on the map (`apps/android/docs/SPEC.md` FR-2.10): the scope's photos as markers on their
+ * Photos on the map (`apps/docs/SPEC.md` FR-2.10): the scope's photos as markers on their
  * routes, the popup a marker's tap opens, and Android's photo picker for the Edit window's Photos
  * tab, which needs no storage permission. Which photos and markers show is [PhotoMarkerScope]'s.
  *

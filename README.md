@@ -69,6 +69,7 @@ holdmytrack/
 │   └── play/                    # the Play store listing per language: feature-graphic.png and the phone screenshots uploaded (phone-NN-<what>.png); source/ holds shoot.mjs, which retakes the raw captures, and render.mjs, which draws the callouts
 ├── apps/
 │   ├── android/                 # Kotlin. Health Connect sync + in-app GPS recording; own docs/
+│   ├── docs/SPEC.md             # what both apps do; each app's docs/SPEC.md holds only where it differs
 │   ├── ios/                     # Swift, HealthKit ingest. A skeleton; own docs/, whose ROADMAP.md is its plan
 │   └── web/                     # the React map app (pages are server-rendered by services/server)
 │       ├── Dockerfile  .dockerignore  docker/entrypoint.sh
@@ -108,7 +109,8 @@ This is the repository's only layout tree; other documents point here.
 | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Measured performance: how to run a load test or benchmark, and the latest result per area. A session you run updates its area. |
 | [`docs/DPIA.md`](docs/DPIA.md) | The data protection impact assessment: the personal data processed, its legal basis, the risks to users and the measures against them. |
 | [`services/server/api/`](services/server/api/) | The JSON API's contract: `openapi.yaml` indexes every path, `paths/` holds each area's operations and `components/` the shared shapes. The server's tests and the apps' wire contract tests hold the code to it. |
-| [`apps/android/docs/`](apps/android/docs/) | The Android app's own `ARCHITECTURE.md` (shape, decisions, stack), `SPEC.md`, `IMPLEMENTATION.md` and `ROADMAP.md`. |
+| [`apps/docs/SPEC.md`](apps/docs/SPEC.md) | What both apps do, as numbered requirements under the same rules as `docs/SPEC.md`. |
+| [`apps/android/docs/`](apps/android/docs/) | The Android app's own `ARCHITECTURE.md` (shape, decisions, stack), `SPEC.md` (where it differs from `apps/docs/SPEC.md`), `IMPLEMENTATION.md` and `ROADMAP.md`. |
 | [`apps/ios/docs/`](apps/ios/docs/) | The iOS app's own four documents, the same as Android's. Its `ROADMAP.md` is the plan from here to the App Store: read it before any iOS work. |
 | [`AGENTS.md`](AGENTS.md) | You are a coding agent: the product's boundaries and the documentation, commit and Markdown conventions. |
 

@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var nav: BottomNavigationView
     private var tab = Tab.TRACKS
 
-    /** The tour, its offer and its first-time cards (`apps/android/docs/SPEC.md` FR-2.12). */
+    /** The tour, its offer and its first-time cards (`apps/docs/SPEC.md` FR-2.12). */
     lateinit var tour: TourController
         private set
 

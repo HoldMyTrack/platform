@@ -3,7 +3,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// Fog's level control and place popup (root docs/SPEC.md FR-4.2, apps/android/docs/SPEC.md
+/// Fog's level control and place popup (root docs/SPEC.md FR-4.2, apps/docs/SPEC.md
 /// FR-2.2). While Fog shows, its button names the level in view, with a lock while one is locked,
 /// and a tap on it opens the level menu (MapMenuPopup): Auto, which follows the zoom, and every
 /// level with how many of its places the account has explored, read on each opening. A picked

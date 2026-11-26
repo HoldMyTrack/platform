@@ -1,6 +1,6 @@
 import Foundation
 
-/// Sending recordings (apps/android/docs/SPEC.md FR-3.4, FR-5.2), as values: what
+/// Sending recordings (apps/docs/SPEC.md FR-3.4, FR-5.2), as values: what
 /// goes to `POST /v2/sync/tracks` under `recorded`, what `POST /v2/sync/known`'s
 /// answer means for one sent, and the GPX Download writes.
 public enum RecordingSync {

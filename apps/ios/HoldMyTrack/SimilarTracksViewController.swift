@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// A Sync row's ⓘ (docs/SPEC.md FR-3.5, apps/android/docs/SPEC.md FR-3.2): what else covers the
+/// A Sync row's ⓘ (docs/SPEC.md FR-3.5, apps/docs/SPEC.md FR-3.2): what else covers the
 /// same time as it, the rows waiting on this phone (SyncSimilar), each picked out on the map when
 /// tapped, and the account's track it overlaps the most, opened on the Tracks tab. It says what
 /// sending both does and chooses nothing.

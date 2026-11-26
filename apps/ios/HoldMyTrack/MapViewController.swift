@@ -3,7 +3,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The map (apps/android/docs/SPEC.md FR-2.1–FR-2.7): the basemap style and the account's layers
+/// The map (apps/docs/SPEC.md FR-2.1–FR-2.7): the basemap style and the account's layers
 /// document combined into one style (MapStyle), Normal and Fog of War, the Layers menu,
 /// the first framing, Find my location, the notices for an unreachable basemap, coverage still
 /// updating and an empty account, and the sheet with the Tracks and Trips tabs, shared by
@@ -249,7 +249,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     }
 
     /// The map is back, from another tab, the background or Upload over it: what may have changed
-    /// meanwhile is read again (apps/android/docs/SPEC.md FR-2.2, FR-2.3, FR-2.7, FR-2.8).
+    /// meanwhile is read again (apps/docs/SPEC.md FR-2.2, FR-2.3, FR-2.7, FR-2.8).
     func returned() {
         if loadedFlavor != flavor { load() }
         checkCoverage()
@@ -724,7 +724,7 @@ enum EmptyNoticeDismissal {
     static func forget(account: String) { defaults.removeObject(forKey: key(account)) }
 }
 
-/// The Layers menu, kept on the phone rather than the account (apps/android/docs/SPEC.md FR-2.2):
+/// The Layers menu, kept on the phone rather than the account (apps/docs/SPEC.md FR-2.2):
 /// all off but Roads and Show layers until changed. The mode lasts the app session, through a
 /// theme or language change.
 @MainActor

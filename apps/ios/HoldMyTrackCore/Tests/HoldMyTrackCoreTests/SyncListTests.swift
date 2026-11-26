@@ -3,7 +3,7 @@ import Testing
 
 import HoldMyTrackCore
 
-/// What the Sync tab lists and offers (apps/android/docs/SPEC.md FR-3.2, FR-3.4).
+/// What the Sync tab lists and offers (apps/docs/SPEC.md FR-3.2, FR-3.4).
 struct SyncListTests {
     private let t0 = Date(timeIntervalSince1970: 1_800_000_000)
 

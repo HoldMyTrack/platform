@@ -1,6 +1,6 @@
 import XCTest
 
-/// The tour, its offer and the first-time cards (apps/android/docs/SPEC.md FR-2.12), from a phone that
+/// The tour, its offer and the first-time cards (apps/docs/SPEC.md FR-2.12), from a phone that
 /// has shown none of them (-hmtTourReset).
 final class TourTests: XCTestCase {
     /// The demo gets the tour unasked: every step to Done, which puts the Tracks tab and Normal back;

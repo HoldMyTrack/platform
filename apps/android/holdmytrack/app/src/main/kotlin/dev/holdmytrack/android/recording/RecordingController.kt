@@ -28,7 +28,7 @@ import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.maps.MapLibreMap
 
 /**
- * GPS recording on the map (`apps/android/docs/SPEC.md` FR-5.1): the record button in
+ * GPS recording on the map (`apps/docs/SPEC.md` FR-5.1): the record button in
  * `MainActivity`'s bottom bar, the status pill, the binding to `RecordingService`, the Stop and
  * leftover prompts, and the camera following the latest fix. The button taps to start, pause and
  * resume; a two-second hold stops ([RecordTapRules]). The service does the recording itself.

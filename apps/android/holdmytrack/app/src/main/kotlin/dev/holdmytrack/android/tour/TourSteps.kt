@@ -36,7 +36,7 @@ data class TourStep(
 )
 
 /**
- * The Android tour's steps (`apps/android/docs/SPEC.md` FR-2.12): the web's (`apps/web/src/ui/tour/tourRules.ts`)
+ * The Android tour's steps (`apps/docs/SPEC.md` FR-2.12): the web's (`apps/web/src/ui/tour/tourRules.ts`)
  * with the bottom bar's own, Record and Sync, and the You tab's Take a tour to end on.
  */
 object TourSteps {

@@ -20,7 +20,7 @@ import androidx.core.view.isVisible
 import dev.holdmytrack.android.R
 
 /**
- * The tour drawn over the whole window (`apps/android/docs/SPEC.md` FR-2.12), in one of two looks:
+ * The tour drawn over the whole window (`apps/docs/SPEC.md` FR-2.12), in one of two looks:
  *
  * - **A step**: the screen dimmed but for a ring around the step's target, every touch taken so
  *   nothing under it changes, and the card across the top or bottom ([TourSteps.edge]).

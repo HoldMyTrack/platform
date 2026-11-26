@@ -8,7 +8,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** The recording in progress: moving time, distance, pauses, leftovers and ownership
- *  (`apps/android/docs/SPEC.md` FR-5.1). */
+ *  (`apps/docs/SPEC.md` FR-5.1). */
 class RecordingSessionTest {
 
     /** Fixes on a line, so a step is the difference of two numbers; times are `elapsedRealtime`. */

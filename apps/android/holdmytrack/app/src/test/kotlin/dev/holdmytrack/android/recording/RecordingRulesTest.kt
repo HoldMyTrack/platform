@@ -5,7 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** What a recording keeps (`apps/android/docs/SPEC.md` FR-5.1). */
+/** What a recording keeps (`apps/docs/SPEC.md` FR-5.1). */
 class RecordingRulesTest {
 
     @Test

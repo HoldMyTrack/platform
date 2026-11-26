@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built in the Android app: Settings, Track graph & trends and About are the site's pages in a WebView (`SPEC.md` FR-9.6, `apps/android/docs/SPEC.md` FR-1.5, FR-1.6). The iOS app is a skeleton so far; its pages come in `apps/ios/docs/ROADMAP.md` phase 6.
+Accepted. Built in the Android app: Settings, Track graph & trends and About are the site's pages in a WebView (`SPEC.md` FR-9.6, `apps/docs/SPEC.md` FR-1.5, FR-1.6). The iOS app is a skeleton so far; its pages come in `apps/ios/docs/ROADMAP.md` phase 6.
 
 ## Context
 
@@ -14,7 +14,7 @@ The parts that have to be native are few and known. Health Connect and HealthKit
 
 - **Native where the platform is the point**: Health Connect and HealthKit sync, in-app GPS recording, sign-in, sharing files into the app to upload, and the map with the tools that work on it (the Tracks panel, the route editor, the Private location editor).
 - **The site's own page for the rest.** A screen the server already renders as a page is that page in a WebView (`WKWebView` on iOS), not a native copy. A new feature of that kind is built once, as a page.
-- **Except a page that is a tab of the bottom bar.** Library is one (`apps/android/docs/SPEC.md` FR-4.1): a sheet over the map like Tracks and Trips, so a row opens on the map behind it with no change of screen, and a download needs no bridge. It is native, and stays in step with the web's page because the server decides its sort, filters, pages and bounds, and the rules a client applies itself are shared cases (`testdata/client-rules/library-*.json`, ADR-0049).
+- **Except a page that is a tab of the bottom bar.** Library is one (`apps/docs/SPEC.md` FR-4.1): a sheet over the map like Tracks and Trips, so a row opens on the map behind it with no change of screen, and a download needs no bridge. It is native, and stays in step with the web's page because the server decides its sort, filters, pages and bounds, and the rules a client applies itself are shared cases (`testdata/client-rules/library-*.json`, ADR-0049).
 - **The server renders a page for an app** when the request carries the `hmt_app` cookie: no site header, footer or Back to map, and none of what the app keeps as screens of its own (`IMPLEMENTATION.md` §4.19). The app signs the WebView in with the session as the site's own session cookie, in the WebView's own cookie store (`apps/android/docs/IMPLEMENTATION.md` §2.5).
 - **Links between the two halves**: a link to the map opens the native map; a link within the page stays in the WebView; anything else opens in the browser.
 - **The map is native** (ADR-0048).

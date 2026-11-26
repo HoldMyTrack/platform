@@ -4,7 +4,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** One account's uploads never go out under another (`apps/android/docs/SPEC.md` FR-3.6). */
+/** One account's uploads never go out under another (`apps/docs/SPEC.md` FR-3.6). */
 class ImportsAccountTest {
 
     @Test

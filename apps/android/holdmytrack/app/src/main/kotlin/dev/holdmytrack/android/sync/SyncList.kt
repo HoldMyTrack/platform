@@ -1,7 +1,7 @@
 package dev.holdmytrack.android.sync
 
 /**
- * What the Sync tab lists and offers, as values (`apps/android/docs/SPEC.md` FR-3.2, FR-3.4).
+ * What the Sync tab lists and offers, as values (`apps/docs/SPEC.md` FR-3.2, FR-3.4).
  * Sent and not landed yet ([inFlight]): the server knows such a session and a recording is off
  * the phone, so neither is in [SyncCandidates.listed]; they're listed from [SyncProgress]
  * instead, never tickable, and not drawn, since each is drawn as itself once it lands. A
