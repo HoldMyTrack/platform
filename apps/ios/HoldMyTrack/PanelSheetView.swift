@@ -63,6 +63,11 @@ final class PanelSheetView: UIView, UIGestureRecognizerDelegate {
             v.translatesAutoresizingMaskIntoConstraints = false
             addSubview(v)
         }
+        // A tab whose head shows nothing, as Trips', leaves the head's height to no constraint;
+        // without this it may take the content's room, which measuredHead then sizes the sheet by.
+        let hug = head.heightAnchor.constraint(equalToConstant: 0)
+        hug.priority = .defaultLow
+        hug.isActive = true
         heightConstraint = heightAnchor.constraint(equalToConstant: 120)
         collapsedConstraint = content.heightAnchor.constraint(equalToConstant: 0)
         collapsedConstraint.isActive = true

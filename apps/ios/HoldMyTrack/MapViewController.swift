@@ -264,7 +264,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let guide = view.safeAreaLayoutGuide.layoutFrame
-        sheet.setRoom(container: guide.height, topInset: chromeBottom - guide.minY)
+        // Open all the way, the sheet reaches the status bar, over the map's top row, as on Android
+        // (apps/android/docs/SPEC.md FR-2.7).
+        sheet.setRoom(container: guide.height, topInset: 0)
         layersMenu.place()
         placesMenu.place()
         fogLevelMenu.place()
