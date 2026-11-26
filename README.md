@@ -70,6 +70,7 @@ holdmytrack/
 ├── apps/
 │   ├── android/                 # Kotlin. Health Connect sync + in-app GPS recording; own docs/
 │   ├── docs/SPEC.md             # what both apps do; each app's docs/SPEC.md holds only where it differs
+│   ├── docs/ui-states.json      # the screens both apps must keep alike, for make ui-compare
 │   ├── ios/                     # Swift, HealthKit ingest. A skeleton; own docs/, whose ROADMAP.md is its plan
 │   └── web/                     # the React map app (pages are server-rendered by services/server)
 │       ├── Dockerfile  .dockerignore  docker/entrypoint.sh
@@ -110,6 +111,7 @@ This is the repository's only layout tree; other documents point here.
 | [`docs/DPIA.md`](docs/DPIA.md) | The data protection impact assessment: the personal data processed, its legal basis, the risks to users and the measures against them. |
 | [`services/server/api/`](services/server/api/) | The JSON API's contract: `openapi.yaml` indexes every path, `paths/` holds each area's operations and `components/` the shared shapes. The server's tests and the apps' wire contract tests hold the code to it. |
 | [`apps/docs/SPEC.md`](apps/docs/SPEC.md) | What both apps do, as numbered requirements under the same rules as `docs/SPEC.md`. |
+| [`apps/docs/ui-states.json`](apps/docs/ui-states.json) | The screens and states both apps must keep alike, with what may differ and why; `make ui-compare` shows them side by side. |
 | [`apps/android/docs/`](apps/android/docs/) | The Android app's own `ARCHITECTURE.md` (shape, decisions, stack), `SPEC.md` (where it differs from `apps/docs/SPEC.md`), `IMPLEMENTATION.md` and `ROADMAP.md`. |
 | [`apps/ios/docs/`](apps/ios/docs/) | The iOS app's own four documents, the same as Android's. Its `ROADMAP.md` is the plan from here to the App Store: read it before any iOS work. |
 | [`AGENTS.md`](AGENTS.md) | You are a coding agent: the product's boundaries and the documentation, commit and Markdown conventions. |

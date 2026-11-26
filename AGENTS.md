@@ -50,6 +50,8 @@ New code puts what it decides (which screen a session goes to, whether a day is 
 
 A rule every client applies has its cases in `testdata/client-rules/` (ADR-0049): change the cases first, then every client's implementation, in the same pull request, and fix a bug in a rule by adding the failing case.
 
+The two apps look alike, each keeping its platform's standard only for platform patterns (back navigation, pickers, share sheets, switches, segmented controls, chips). `apps/docs/ui-states.json` lists the screens and states to compare, with what may differ and why: a change to how an app looks updates its entry in the same pull request, a new screen or state adds one with a step in both apps' shot tests, and `make ui-compare` puts the two apps side by side (`docs/DEVELOPMENT.md`, "Comparing the apps").
+
 CI on a pull request runs only the suites whose files the change touches, and neither app's instrumented or UI tests (`docs/DEVELOPMENT.md`, "CI"). When a change could break a suite CI won't run on it, such as a test that reads a file outside its job's path filter or app code those tests cover (the Android stores and flows, the iOS screens), name that suite to the user before the pull request is opened and ask them to run it: Run workflow on the branch for a suite CI has, or the `make` target from `docs/DEVELOPMENT.md`'s "End-to-end suites" for the apps' instrumented and UI tests, which no workflow runs.
 
 A pull request that changes what an app does, its code or resources outside `docs/` and tests, raises that app's release number in the same change (`docs/DEPLOY.md` §10): patch for a fix, minor with patch reset for a feature.
