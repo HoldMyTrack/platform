@@ -131,6 +131,13 @@ extension APIClient {
         _ = try await send("DELETE", "v2/account", body: EmailJSON(email: email))
     }
 
+    /// `GET /v2/uploads/{external_id}`: an uploaded file's state, processing, done, failed or unknown.
+    public func uploadStatus(_ externalID: String) async throws -> String {
+        let id = externalID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? externalID
+        let json: UploadStatusJSON = try decode(try await send("GET", "v2/uploads/\(id)"))
+        return json.status
+    }
+
     /// `GET /v2/uploads/active`: imports still running.
     public func activeImports() async throws -> [ActiveImport] {
         let json: UploadsActiveJSON = try decode(try await send("GET", "v2/uploads/active"))
@@ -165,7 +172,9 @@ extension APIClient {
         if error != nil { return .unreachable }
         if (200..<300).contains(status) {
             let json = try? JSONDecoder().decode(UploadResultJSON.self, from: body)
-            return json?.status == "already_processed" ? .already : .sent
+            if json?.status == "already_processed" { return .already }
+            // An answer the app can't read went all the same; it just can't be followed.
+            return .sent(json?.externalID ?? "")
         }
         let failure = try? JSONDecoder().decode(ErrorJSON.self, from: body)
         return .refused(failure?.message ?? "")
@@ -173,7 +182,9 @@ extension APIClient {
 }
 
 public enum UploadOutcome: Equatable, Sendable {
-    case sent, already, unreachable
+    /// Queued, with the id its state is asked about by.
+    case sent(String)
+    case already, unreachable
     /// The server's reason, empty when it gave none.
     case refused(String)
 }

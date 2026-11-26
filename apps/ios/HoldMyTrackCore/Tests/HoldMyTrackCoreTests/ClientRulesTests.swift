@@ -145,9 +145,9 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["openGone": .bool(TripsList.openGone(quiet: input["quiet"].bool!, open: input["open"].string, listed: Set(input.strings("listed")), failed: failed)),
                 "showsError": .bool(TripsList.showsError(quiet: input["quiet"].bool!, ready: input["ready"].bool!, failed: failed))]
     },
-    "importWatch": { input in
-        let step = ImportWatch.step(expected: input.int("expected"), running: input.int("running"), acceptedSince: input.int("acceptedSince"))
-        return ["landed": .bool(step.landed), "next": .number(Double(step.next)), "again": .bool(step.again)]
+    "uploadWatch": { input in
+        let step = ImportWatch.step(status: input["status"].string!)
+        return ["landed": .bool(step.landed), "done": .bool(step.done)]
     },
     "importRetry": { input in ImportWatch.delay(failures: input.int("failures")).map { .number(Double($0)) } ?? .null },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },

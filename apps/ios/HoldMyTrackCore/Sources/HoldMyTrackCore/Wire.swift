@@ -417,6 +417,19 @@ struct OverlapsJSON: Codable, Sendable, Equatable {
 
 struct UploadResultJSON: Codable, Sendable, Equatable {
     let status: String
+    let externalID: String
+    let filename: String
+
+    enum CodingKeys: String, CodingKey {
+        case status, filename
+        case externalID = "external_id"
+    }
+}
+
+/// `GET /v2/uploads/{external_id}`: an uploaded file's state.
+struct UploadStatusJSON: Codable, Sendable, Equatable {
+    let status: String
+    let error: String?
 }
 
 /// One batch of imports still running, `GET /v2/uploads/active`.

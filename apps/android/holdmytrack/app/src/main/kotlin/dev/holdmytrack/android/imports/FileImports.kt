@@ -70,15 +70,13 @@ object FileImports {
     /** Heard when an import this phone uploaded has ended: its track is in the account. */
     private val landedListeners = mutableSetOf<() -> Unit>()
 
-    /** Running at the last read of the imports, with the uploads accepted since ([ImportWatch]). */
-    private var expected = 0
-
-    /** Uploads accepted, counted so a read knows which came while it was out. */
-    private var accepted = 0
+    /** The uploaded files still processing, by the id their upload answered with. */
+    private val processing = mutableSetOf<String>()
 
     /** Bumped when a watch starts or the account goes, so an old watch's reads change nothing. */
     private var watch = 0
     private var watching = false
+    private var watchRead: Runnable? = null
 
     fun addLandedListener(listener: () -> Unit) {
         landedListeners += listener
@@ -88,34 +86,57 @@ object FileImports {
         landedListeners -= listener
     }
 
-    /** An upload was accepted: the imports are read every few seconds until none runs, and each
-     *  that ends is heard ([addLandedListener]). Failed reads wait longer each time, and give up
-     *  ([ImportWatch.delay]). */
-    private fun watch() {
-        expected++
-        accepted++
+    /** An upload was accepted: each file still processing is asked about every few seconds
+     *  (`GET /v2/uploads/{external_id}`) until none is, and each that lands is heard
+     *  ([addLandedListener]). Failed reads wait longer each time, and give up ([ImportWatch.delay]). */
+    private fun watch(externalId: String) {
+        processing += externalId
         if (watching) return
         watching = true
-        val mine = ++watch
-        var failures = 0
-        fun read() {
-            val acceptedBefore = accepted
-            scope.launch {
-                val running = runCatching { HoldMyTrackApi.importsRunning() }.getOrNull()
+        failures = 0
+        schedule(++watch, ImportWatch.delay(0)!!)
+    }
+
+    /** Failed reads in a row. */
+    private var failures = 0
+
+    private fun schedule(mine: Int, seconds: Int) {
+        val read = Runnable { if (mine == watch) round(mine) }
+        watchRead = read
+        main.postDelayed(read, seconds * 1000L)
+    }
+
+    /** One round over the files processing; a failed read ends it and waits longer. */
+    private fun round(mine: Int) {
+        scope.launch {
+            var landed = false
+            var wait = ImportWatch.delay(0)
+            for (id in processing.toList()) {
+                val status = runCatching { HoldMyTrackApi.uploadStatus(id) }.getOrNull()
                 if (mine != watch) return@launch
-                if (running == null) {
-                    failures++
-                    val wait = ImportWatch.delay(failures) ?: return@launch run { watching = false }
-                    return@launch run { main.postDelayed(::read, wait * 1000L) }
+                if (status == null) {
+                    wait = ImportWatch.delay(++failures)
+                    break
                 }
                 failures = 0
-                val step = ImportWatch.step(expected, running, accepted - acceptedBefore)
-                expected = step.next
-                if (step.landed) landedListeners.toList().forEach { it() }
-                if (step.again) main.postDelayed(::read, ImportWatch.delay(0)!! * 1000L) else watching = false
+                val step = ImportWatch.step(status)
+                if (step.done) processing -= id
+                if (step.landed) landed = true
+            }
+            if (landed) landedListeners.toList().forEach { it() }
+            when {
+                wait == null -> giveUp()
+                processing.isEmpty() -> watching = false
+                else -> schedule(mine, wait)
             }
         }
-        main.postDelayed(::read, ImportWatch.delay(0)!! * 1000L)
+    }
+
+    /** The reads failed too often: the map catches up on the next return anyway. */
+    private fun giveUp() {
+        processing.clear()
+        watching = false
+        failures = 0
     }
 
     init {
@@ -192,10 +213,11 @@ object FileImports {
         _transfers.clear()
         _notes.clear()
         sentCount = 0
-        // The next account's imports are none of this one's.
+        // The next account's files are none of this one's, and a read waiting doesn't go.
         watch++
-        watching = false
-        expected = 0
+        watchRead?.let(main::removeCallbacks)
+        watchRead = null
+        giveUp()
         if (!running) clearCopies(context)
         changed()
     }
@@ -229,7 +251,7 @@ object FileImports {
                 }
                 if (ImportsAccount.reports(sentFor, owner)) {
                     sentCount++
-                    if (outcome.status != "already_processed") watch()
+                    if (outcome.status != "already_processed" && outcome.externalId.isNotEmpty()) watch(outcome.externalId)
                     if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
                 }
             } catch (e: Exception) {

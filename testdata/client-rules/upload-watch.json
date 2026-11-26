@@ -1,0 +1,12 @@
+{
+  "rule": "uploadWatch",
+  "description": "What an uploaded file's state (GET /v2/uploads/{external_id}) means for the phone that sent it (docs/SPEC.md FR-3.2): landed, so the map and Library catch up; done, so it's no longer watched. Only processing is watched on.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "still processing", "input": {"status": "processing"}, "expected": {"landed": false, "done": false}},
+    { "name": "on the map", "input": {"status": "done"}, "expected": {"landed": true, "done": true}},
+    { "name": "failed: the failures alert says why", "input": {"status": "failed"}, "expected": {"landed": false, "done": true}},
+    { "name": "unknown to the server", "input": {"status": "unknown"}, "expected": {"landed": false, "done": true}},
+    { "name": "a state a newer server added", "input": {"status": "held"}, "expected": {"landed": false, "done": true}}
+  ]
+}

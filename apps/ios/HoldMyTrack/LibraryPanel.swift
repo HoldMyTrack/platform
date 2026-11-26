@@ -96,7 +96,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     /// Tracks came: the page is read again, unless rows are checked, which a read would clear. A
     /// failed read leaves the page as it was.
     func refresh() {
-        if checked.isEmpty { read(quiet: true) }
+        // Nor while a read the user asked for is out: it would be cancelled, and its failure lost.
+        if checked.isEmpty, reading == nil { read(quiet: true) }
     }
 
     func stop() {
@@ -299,6 +300,7 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 if !quiet { self.failed = (error as? APIError)?.serverMessage ?? String(localized: "The server couldn't be reached.") }
             }
             self?.progress.stopAnimating()
+            self?.reading = nil
             self?.render()
         }
     }

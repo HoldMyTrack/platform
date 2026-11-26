@@ -175,6 +175,8 @@ The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Con
 
 ### 4.4 File upload
 
+`imports/FileImports` follows each accepted file by its own id (`GET /v2/uploads/{external_id}`) until it's no longer processing, and tells its landed listeners, `MapFragment` while it's started, to catch up. Not by the count of imports running: that counts every source on the account, so a web import starting as the phone's ends would hide it.
+
 `imports/FileImports` is process-wide with its own scope, so an upload outlives a rotation or a trip to another app, unlike a Health Connect read. Each file is copied into the app's cache as it is queued, off the main thread, since the read grant on a picked or shared file ends with the screen that received it. The picker asks for `*/*` and the queue decides by file name, because providers label these files inconsistently; for the same reason the manifest doesn't claim `application/octet-stream`, or the app would be offered for every binary file.
 
 ## 5. Recording and crash recovery

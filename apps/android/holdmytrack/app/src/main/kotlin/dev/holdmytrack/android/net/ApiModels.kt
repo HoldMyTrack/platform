@@ -82,7 +82,7 @@ data class SyncResult(val externalId: String, val status: String, val error: Str
 data class SyncKnown(val known: Set<String>, val processing: Set<String>)
 
 /** What `POST /v2/tracks/upload` said about one file: "enqueued" or "already_processed". */
-data class UploadOutcome(val status: String)
+data class UploadOutcome(val status: String, val externalId: String)
 
 /** `GET /v2/tracks`'s query for one page of Library: [sort] is `key_desc` or `key_asc`, and a
  *  null field asks for no filter. */

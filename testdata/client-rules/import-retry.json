@@ -1,6 +1,6 @@
 {
   "rule": "importRetry",
-  "description": "How long the watch of the imports waits after a run of failed reads (docs/SPEC.md FR-3.2), in seconds: 2 while they answer, doubling after each failure up to a minute, and null, giving up, after 8 in a row. The map is read again on every return anyway.",
+  "description": "How long the watch of the uploaded files waits after a run of failed reads (docs/SPEC.md FR-3.2), in seconds: 2 while they answer, doubling after each failure up to a minute, and null, giving up, after 8 in a row. The map is read again on every return anyway.",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "answering", "input": {"failures": 0}, "expected": 2},

@@ -1,18 +1,13 @@
 package dev.holdmytrack.android.imports
 
-/** What a read of the imports still running means for the files this phone uploaded
- *  (`testdata/client-rules/import-watch.json`, `import-retry.json`). */
+/** What an uploaded file's state means for the phone that sent it, and how long the watch waits
+ *  (`testdata/client-rules/upload-watch.json`, `import-retry.json`). */
 object ImportWatch {
-    /** [landed]: one ended since, so the map is read again; [next]: what the next read is
-     *  compared with; [again]: reading goes on. */
-    data class Step(val landed: Boolean, val next: Int, val again: Boolean)
+    /** [landed]: the map and Library catch up; [done]: the file is no longer watched. */
+    data class Step(val landed: Boolean, val done: Boolean)
 
-    /** [expected]: running at the last read, with the uploads accepted since; [running]: now;
-     *  [acceptedSince]: accepted while this read was out, which it can't have seen. */
-    fun step(expected: Int, running: Int, acceptedSince: Int): Step {
-        val next = running + acceptedSince
-        return Step(landed = running < expected - acceptedSince, next = next, again = next > 0)
-    }
+    /** [status]: `GET /v2/uploads/{external_id}`'s; only processing is watched on. */
+    fun step(status: String): Step = Step(landed = status == "done", done = status != "processing")
 
     /** Seconds to wait after [failures] failed reads in a row, or null to give up. */
     fun delay(failures: Int): Int? = if (failures >= GIVE_UP) null else minOf(2 shl failures, MAX_DELAY)

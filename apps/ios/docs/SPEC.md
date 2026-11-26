@@ -86,7 +86,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.12), except as b
 As the Android app's (`apps/android/docs/SPEC.md` FR-3.6), except as below.
 
 - Files come from the document picker, or are opened in HoldMyTrack from Files or another app's share sheet.
-- Files go on even after the app is left, sent by iOS one at a time. Imports still running show on the Upload sheet.
+- Files go on even after the app is left, sent by iOS one at a time. Imports still running show on the Upload sheet, and the map and Library catch up as each finishes processing, whichever tab shows.
 
 ## 6. FR-4 — Library
 

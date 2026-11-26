@@ -142,7 +142,8 @@ class LibraryTab(
     /** Tracks came: the page is read again while it shows, unless rows are checked, which a read
      *  would clear. A failed read leaves the page as it was. */
     fun refresh() {
-        if (showing && checked.isEmpty()) read(quiet = true)
+        // Nor while a read the user asked for is out: it would be cancelled, and its failure lost.
+        if (showing && checked.isEmpty() && reading?.isActive != true) read(quiet = true)
     }
 
     fun stop() {

@@ -122,7 +122,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
         watching?.cancel()
         watching = nil
         watchGeneration += 1
-        expected = 0
+        processing = []
         session.getAllTasks { [endedTokens] tasks in
             for task in tasks where UploadTasks.ofEndedSession(task.originalRequest?.value(forHTTPHeaderField: "Authorization"), ended: endedTokens) {
                 task.cancel()
@@ -169,7 +169,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             }
             sentCount += 1
             switch APIClient.uploadOutcome(error: error, status: status, body: body) {
-            case .sent: watch()
+            case .sent(let id): if !id.isEmpty { watch(id) }
             case .unreachable: notes.append(Note(text: String(localized: "\(name): the server couldn't be reached"), error: true))
             case .already: notes.append(Note(text: String(localized: "\(name) was already uploaded before."), error: false))
             case .refused(let reason):
@@ -189,41 +189,47 @@ final class Uploads: NSObject, URLSessionDataDelegate {
     /// An import this phone uploaded has ended: its track is in the account.
     static let landed = Notification.Name("Uploads.landed")
 
-    /// Running at the last read of the imports, with the uploads accepted since (ImportWatch).
-    private var expected = 0
-    /// Uploads accepted, counted so a read knows which came while it was out.
-    private var accepted = 0
+    /// The uploaded files still processing, by the id their upload answered with.
+    private var processing: Set<String> = []
     private var watching: Task<Void, Never>?
     /// Bumped when a watch starts or the session ends, so an old watch changes nothing.
     private var watchGeneration = 0
 
-    /// An upload was accepted: the imports are read every few seconds until none runs, and each
-    /// that ends is posted (landed). Failed reads wait longer each time, and give up
-    /// (ImportWatch.delay); iOS holds the reads while the app is away, and they go on as it comes back.
-    private func watch() {
-        expected += 1
-        accepted += 1
-        guard watching == nil, let api else { return }
+    /// An upload was accepted: each file still processing is asked about every few seconds
+    /// (`GET /v2/uploads/{external_id}`) until none is, and each that lands is posted (landed).
+    /// Failed reads wait longer each time, and give up (ImportWatch.delay); iOS holds the reads
+    /// while the app is away, and they go on as it comes back.
+    private func watch(_ externalID: String) {
+        guard let api else { return }
+        processing.insert(externalID)
+        guard watching == nil else { return }
         watchGeneration += 1
         let mine = watchGeneration
         watching = Task { [weak self] in
             var failures = 0
             while let wait = ImportWatch.delay(failures: failures) {
                 try? await Task.sleep(for: .seconds(wait))
-                guard let before = self?.accepted, !Task.isCancelled else { return }
-                guard let running = try? await api.activeImports().count else {
-                    failures += 1
-                    continue
+                guard let ids = self?.processing, !Task.isCancelled else { return }
+                var landed = false, failed = false
+                for id in ids {
+                    guard let status = try? await api.uploadStatus(id) else {
+                        failed = true
+                        break
+                    }
+                    guard let self, !Task.isCancelled, self.watchGeneration == mine else { return }
+                    let step = ImportWatch.step(status: status)
+                    if step.done { self.processing.remove(id) }
+                    if step.landed { landed = true }
                 }
-                guard let self, !Task.isCancelled, self.watchGeneration == mine else { return }
-                failures = 0
-                let step = ImportWatch.step(expected: self.expected, running: running, acceptedSince: self.accepted - before)
-                self.expected = step.next
-                if step.landed { NotificationCenter.default.post(name: Self.landed, object: nil) }
-                if !step.again { break }
+                if landed { NotificationCenter.default.post(name: Self.landed, object: nil) }
+                failures = failed ? failures + 1 : 0
+                guard let self, !(self.processing.isEmpty) else { break }
             }
-            // Not a later watch's handle.
-            if let self, self.watchGeneration == mine { self.watching = nil }
+            // Not a later watch's handle; given up, the map catches up on the next return anyway.
+            if let self, self.watchGeneration == mine {
+                self.watching = nil
+                self.processing = []
+            }
         }
     }
 

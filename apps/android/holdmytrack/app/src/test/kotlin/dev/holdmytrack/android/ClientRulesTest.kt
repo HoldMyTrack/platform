@@ -324,9 +324,9 @@ class ClientRulesTest {
                 put("showsError", TripsList.showsError(input.bool("quiet"), input.bool("ready"), failed))
             }
         },
-        "importWatch" to { input ->
-            val step = ImportWatch.step(input.int("expected"), input.int("running"), input.int("acceptedSince"))
-            buildJsonObject { put("landed", step.landed); put("next", step.next); put("again", step.again) }
+        "uploadWatch" to { input ->
+            val step = ImportWatch.step(input.string("status")!!)
+            buildJsonObject { put("landed", step.landed); put("done", step.done) }
         },
         "importRetry" to { input -> ImportWatch.delay(input.int("failures"))?.let { JsonPrimitive(it) } ?: JsonNull },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },

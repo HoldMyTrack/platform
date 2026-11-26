@@ -57,6 +57,7 @@ struct WireContractTests {
         try response(OverlapsJSON.self, "/tracks/overlaps", "post")
         try response(UploadResultJSON.self, "/tracks/upload", "post", 202)
         try response(UploadResultJSON.self, "/tracks/upload", "post", 200)
+        try response(UploadStatusJSON.self, "/uploads/{external_id}", "get")
         try response(UploadsActiveJSON.self, "/uploads/active", "get")
         try request(UploadSeenJSON.self, "/uploads/seen", "post")
 
