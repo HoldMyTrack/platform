@@ -139,6 +139,12 @@ class LibraryTab(
         HoldMyTrackApi.trips { result -> result.onSuccess { trips = it; render() } }
     }
 
+    /** Tracks came: the page is read again while it shows, unless rows are checked, which a read
+     *  would clear. */
+    fun refresh() {
+        if (showing && checked.isEmpty()) read()
+    }
+
     fun stop() {
         showing = false
         dates.dismiss()

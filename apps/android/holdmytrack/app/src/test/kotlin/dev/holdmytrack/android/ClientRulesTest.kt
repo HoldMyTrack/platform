@@ -1,6 +1,7 @@
 package dev.holdmytrack.android
 
 import dev.holdmytrack.android.export.ExportStatsRules
+import dev.holdmytrack.android.imports.ImportWatch
 import dev.holdmytrack.android.imports.UploadPlan
 import dev.holdmytrack.android.map.BasemapStatus
 import dev.holdmytrack.android.map.FitBoxes
@@ -322,6 +323,10 @@ class ClientRulesTest {
                 put("openGone", TripsList.openGone(input.bool("quiet"), input.string("open"), input.strings("listed").toSet(), failed))
                 put("showsError", TripsList.showsError(input.bool("quiet"), input.bool("ready"), failed))
             }
+        },
+        "importWatch" to { input ->
+            val step = ImportWatch.step(input.int("expected"), input.int("running"))
+            buildJsonObject { put("landed", step.landed); put("next", step.next); put("again", step.again) }
         },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
         "privateDrawOrder" to { input ->

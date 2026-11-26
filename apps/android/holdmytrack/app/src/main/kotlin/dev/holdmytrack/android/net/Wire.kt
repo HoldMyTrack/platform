@@ -515,9 +515,17 @@ internal data class SpotCaptureRequestJson(val lat: Double, val lon: Double)
 @Serializable
 internal data class ImportFailureJson(val id: Long, val title: String, val reason: String)
 
-/** `GET /v2/uploads/active`, read for its failures only: what's still processing is the web's. */
+/** One of `GET /v2/uploads/active`'s imports still running. */
 @Serializable
-internal data class UploadsActiveJson(val failures: List<ImportFailureJson> = emptyList())
+internal data class ActiveImportJson(val title: String, val source: String, val done: Int, val total: Int)
+
+/** `GET /v2/uploads/active`: the imports still running, and the unseen failures. */
+@Serializable
+internal data class UploadsActiveJson(
+    val imports: List<ActiveImportJson> = emptyList(),
+    @SerialName("unseen_failures") val unseenFailures: Int = 0,
+    val failures: List<ImportFailureJson> = emptyList(),
+)
 
 /** `POST /v2/uploads/seen`: the failure dismissed. */
 @Serializable

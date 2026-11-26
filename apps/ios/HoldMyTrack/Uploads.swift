@@ -118,6 +118,10 @@ final class Uploads: NSObject, URLSessionDataDelegate {
     /// later, by when the next account may have queued its own.
     func drop(token: String) {
         endedTokens.insert(token)
+        // The next account's imports are none of this one's.
+        watching?.cancel()
+        watching = nil
+        expected = 0
         session.getAllTasks { [endedTokens] tasks in
             for task in tasks where UploadTasks.ofEndedSession(task.originalRequest?.value(forHTTPHeaderField: "Authorization"), ended: endedTokens) {
                 task.cancel()
@@ -164,7 +168,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             }
             sentCount += 1
             switch APIClient.uploadOutcome(error: error, status: status, body: body) {
-            case .sent: break
+            case .sent: watch()
             case .unreachable: notes.append(Note(text: String(localized: "\(name): the server couldn't be reached"), error: true))
             case .already: notes.append(Note(text: String(localized: "\(name) was already uploaded before."), error: false))
             case .refused(let reason):
@@ -178,6 +182,33 @@ final class Uploads: NSObject, URLSessionDataDelegate {
         MainActor.assumeIsolated {
             backgroundCompletion?()
             backgroundCompletion = nil
+        }
+    }
+
+    /// An import this phone uploaded has ended: its track is in the account.
+    static let landed = Notification.Name("Uploads.landed")
+
+    /// Running at the last read of the imports, with the uploads accepted since (ImportWatch).
+    private var expected = 0
+    private var watching: Task<Void, Never>?
+
+    /// An upload was accepted: the imports are read every few seconds until none runs, and each
+    /// that ends is posted (landed). A failed read tries again; iOS holds the reads while the app
+    /// is away, and they go on as it comes back.
+    private func watch() {
+        expected += 1
+        guard watching == nil, let api else { return }
+        watching = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                guard let running = try? await api.activeImports().count else { continue }
+                guard let self, !Task.isCancelled else { return }
+                let step = ImportWatch.step(expected: self.expected, running: running)
+                self.expected = step.next
+                if step.landed { NotificationCenter.default.post(name: Self.landed, object: nil) }
+                if !step.again { break }
+            }
+            self?.watching = nil
         }
     }
 

@@ -286,6 +286,15 @@ object HoldMyTrackApi {
         decode<UploadsActiveJson>(text).failures.map { ImportFailure(it.id, it.title, it.reason) }
     }
 
+    /** `GET /v2/uploads/active`: how many imports are still running. */
+    suspend fun importsRunning(): Int = withContext(Dispatchers.IO) {
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/uploads/active").build()
+        val response = waitingClient.newCall(request).await()
+        val text = response.use { it.body.string() }
+        if (!response.isSuccessful) throw ApiException.from(response.code, text)
+        decode<UploadsActiveJson>(text).imports.size
+    }
+
     /** `POST /v2/uploads/seen`: the failure [id] has been shown and dismissed. */
     suspend fun dismissImportFailure(id: Long): Unit = withContext(Dispatchers.IO) {
         val request = Request.Builder()

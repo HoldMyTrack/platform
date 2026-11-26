@@ -60,6 +60,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `selectionBoxes` | `tracks` (`{ bbox, pending, private }`) | the boxes, in order |
 | `openingMove` (Android and iOS) | `found`, `recording`, `tripOpen`, `flightAsked`, `moved` | `"move"`, `"hold"` or `"stay"` |
 | `tripListAnswer` (Android and iOS) | `quiet`, `ready`, `open` (an id or null), `listed` (ids), `failed` | `{ openGone, showsError }` |
+| `importWatch` (Android and iOS) | `expected`, `running` (counts) | `{ landed, next, again }` |
 | `openingView` | `boxes` (`[west, south, east, north]`, newest first), `viewport` (`{ width, height }`) | `{ center: [lon, lat], zoom }` or `null` |
 | `areaLoad` | `zoom`, `listed`, `total` | `{ load, capped }`, `load` `auto` or `none` |
 | `fogLevelInView` | `levels` (`{ level, from, below }`), `zoom`, `locked` | a level |

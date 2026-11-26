@@ -69,6 +69,9 @@ class DataRefresh(
         coverage.checkTileVersion()
     }
 
+    /** An uploaded file became a track: the list, Dates' bounds and the tiles catch up. */
+    fun afterUpload() = afterSync()
+
     /** The toolbar's Delete finished: tracks, list and Dates' bounds read again, and Fog watched
      *  until re-rendered. Deleted ids leave the selection with the reload. */
     fun afterDelete(ids: List<String>) {

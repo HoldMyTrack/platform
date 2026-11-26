@@ -93,6 +93,11 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
     }
 
+    /// Tracks came: the page is read again, unless rows are checked, which a read would clear.
+    func refresh() {
+        if checked.isEmpty { read() }
+    }
+
     func stop() {
         searchSoon?.cancel()
         search.resignFirstResponder()

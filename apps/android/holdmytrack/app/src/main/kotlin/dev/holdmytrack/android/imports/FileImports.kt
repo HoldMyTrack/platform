@@ -67,6 +67,43 @@ object FileImports {
 
     private val listeners = mutableSetOf<() -> Unit>()
 
+    /** Heard when an import this phone uploaded has ended: its track is in the account. */
+    private val landedListeners = mutableSetOf<() -> Unit>()
+
+    /** Running at the last read of the imports, with the uploads accepted since ([ImportWatch]). */
+    private var expected = 0
+    private var watching = false
+
+    fun addLandedListener(listener: () -> Unit) {
+        landedListeners += listener
+    }
+
+    fun removeLandedListener(listener: () -> Unit) {
+        landedListeners -= listener
+    }
+
+    /** An upload was accepted: the imports are read every few seconds until none runs, and each
+     *  that ends is heard ([addLandedListener]). A failed read tries again. */
+    private fun watch(context: Context) {
+        expected++
+        if (watching) return
+        watching = true
+        val app = context.applicationContext
+        val asked = Session.generation
+        fun read() {
+            scope.launch {
+                val running = runCatching { HoldMyTrackApi.importsRunning() }.getOrNull()
+                if (!Session.isCurrent(asked)) return@launch run { watching = false; expected = 0 }
+                if (running == null) return@launch run { main.postDelayed(::read, WATCH_MS) }
+                val step = ImportWatch.step(expected, running)
+                expected = step.next
+                if (step.landed) landedListeners.toList().forEach { it() }
+                if (step.again) main.postDelayed(::read, WATCH_MS) else watching = false
+            }
+        }
+        main.postDelayed(::read, WATCH_MS)
+    }
+
     init {
         // The copies of the account's files go as it signs out, not when the next one queues.
         Session.onClear { forAccount(it, null) }
@@ -174,6 +211,7 @@ object FileImports {
                 }
                 if (ImportsAccount.reports(sentFor, owner)) {
                     sentCount++
+                    if (outcome.status != "already_processed") watch(context)
                     if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
                 }
             } catch (e: Exception) {
@@ -222,4 +260,5 @@ object FileImports {
         }.getOrNull()
 
     private const val COPIES = "imports"
+    private const val WATCH_MS = 2_000L
 }

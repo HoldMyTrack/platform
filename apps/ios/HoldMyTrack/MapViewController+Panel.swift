@@ -213,6 +213,18 @@ extension MapViewController {
         if noticeShown(.empty) { openOnce(asked: true) }
     }
 
+    /// An uploaded file became a track, whichever tab shows: the tiles, Dates' bounds, the list and
+    /// Library catch up, and an empty map frames it.
+    func importLanded() {
+        guard isViewLoaded else { return }
+        tracksVersion += 1
+        updateTracksQuery()
+        loadHistory()
+        loadList()
+        if panelTab == .library { libraryPanel.refresh() }
+        if noticeShown(.empty) { openOnce(asked: true) }
+    }
+
     /// Reprocesses of ids finished, seen by a list or by the Pending check: the tracks' tiles,
     /// Dates' bounds and the photos follow the new points, and the focused track's bands if it
     /// is among them.
