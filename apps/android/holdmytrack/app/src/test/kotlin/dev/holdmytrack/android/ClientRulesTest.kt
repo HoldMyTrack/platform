@@ -6,6 +6,7 @@ import dev.holdmytrack.android.imports.UploadPlan
 import dev.holdmytrack.android.map.BasemapStatus
 import dev.holdmytrack.android.map.FitBoxes
 import dev.holdmytrack.android.map.FogLevels
+import dev.holdmytrack.android.map.FrameRules
 import dev.holdmytrack.android.map.FogPlaceLabel
 import dev.holdmytrack.android.map.MapLayersDoc
 import dev.holdmytrack.android.map.MapMode
@@ -327,6 +328,10 @@ class ClientRulesTest {
         "uploadWatch" to { input ->
             val step = ImportWatch.step(input.string("status")!!)
             buildJsonObject { put("landed", step.landed); put("done", step.done) }
+        },
+        "framePadding" to { input ->
+            val (top, bottom) = FrameRules.fit(input.int("height"), input.int("top"), input.int("coveredBelow"), input.int("pad"), input.int("minSpan"))
+            buildJsonObject { put("top", top); put("bottom", bottom) }
         },
         "importRetry" to { input -> ImportWatch.delay(input.int("failures"), input.int("watched").toLong())?.let { JsonPrimitive(it) } ?: JsonNull },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },

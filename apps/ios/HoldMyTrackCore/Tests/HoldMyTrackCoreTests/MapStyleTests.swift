@@ -462,21 +462,4 @@ struct MapFramingTests {
         #expect(!OpeningView.retries(emptyShown: true, left: 0))
     }
 
-    // A fit's padding, with Android's FrameRulesTest cases.
-    @Test func theFitSitsBetweenTheTopAndTheCoveredBottom() {
-        let fit = MapFraming.padding(height: 2000, top: 200, coveredBelow: 300, pad: 64, minSpan: 96)
-        #expect(fit.top == 200 && fit.bottom == 364)
-    }
-
-    @Test func withNoRoomLeftTheFitKeepsAStripTakenFromTheTopFirst() {
-        let fit = MapFraming.padding(height: 600, top: 300, coveredBelow: 376, pad: 64, minSpan: 96)
-        #expect(fit.top == 64 && fit.bottom == 440)
-    }
-
-    @Test func theSheetOpenAllTheWayLeavesAStripAboveIt() {
-        // An iPhone 15's map, the sheet over the whole safe area.
-        let fit = MapFraming.padding(height: 852, top: 120, coveredBelow: 710)
-        #expect(fit.top == 48 && fit.bottom == 708)
-        #expect(852 - fit.top - fit.bottom == 96)
-    }
 }

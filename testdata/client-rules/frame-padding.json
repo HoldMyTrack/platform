@@ -1,0 +1,12 @@
+{
+  "rule": "framePadding",
+  "description": "A camera fit's top and bottom padding (docs/SPEC.md FR-4.4, apps/docs/SPEC.md FR-2.3), in screen units: top under the chrome over the map, bottom over what covers it (the sheet or an editor) plus pad. When the two leave no room, as with the sheet open all the way or in landscape, the fit keeps a strip of minSpan between them, taken from the top first, neither padding going below pad.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "between the top and the covered bottom", "input": {"height": 2000, "top": 200, "coveredBelow": 300, "pad": 64, "minSpan": 96}, "expected": {"top": 200, "bottom": 364}},
+    { "name": "nothing covered", "input": {"height": 2000, "top": 432, "coveredBelow": 0, "pad": 64, "minSpan": 96}, "expected": {"top": 432, "bottom": 64}},
+    { "name": "no room: the strip is taken from the top first", "input": {"height": 600, "top": 300, "coveredBelow": 376, "pad": 64, "minSpan": 96}, "expected": {"top": 64, "bottom": 440}},
+    { "name": "the sheet open all the way: the bottom gives way too", "input": {"height": 852, "top": 120, "coveredBelow": 710, "pad": 48, "minSpan": 96}, "expected": {"top": 48, "bottom": 708}},
+    { "name": "a map shorter than the strip keeps both paddings", "input": {"height": 150, "top": 120, "coveredBelow": 100, "pad": 48, "minSpan": 96}, "expected": {"top": 48, "bottom": 48}}
+  ]
+}
