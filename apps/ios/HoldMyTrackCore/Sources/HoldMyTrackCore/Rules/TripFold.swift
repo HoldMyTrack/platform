@@ -32,3 +32,13 @@ public enum TripsList {
     /// A failed read says so when nothing is shown yet, or when the tab asked itself.
     public static func showsError(quiet: Bool, ready: Bool, failed: Bool) -> Bool { failed && (!quiet || !ready) }
 }
+
+/// Where the open Trip's numbers go on the Trips tab: pinned under the list, as Android's footer,
+/// unless that leaves the rows too little room, as in landscape, at the half sheet with many types
+/// or at large text; then the list's footer, scrolled to.
+public enum TripStatsPlace {
+    /// height: the numbers' at the tab's width; available: the tab's content height.
+    public static func pinned(compactHeight: Bool, height: Double, available: Double) -> Bool {
+        !compactHeight && height <= available * 0.4
+    }
+}
