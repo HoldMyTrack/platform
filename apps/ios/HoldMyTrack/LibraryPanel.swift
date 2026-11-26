@@ -93,9 +93,10 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
     }
 
-    /// Tracks came: the page is read again, unless rows are checked, which a read would clear.
+    /// Tracks came: the page is read again, unless rows are checked, which a read would clear. A
+    /// failed read leaves the page as it was.
     func refresh() {
-        if checked.isEmpty { read() }
+        if checked.isEmpty { read(quiet: true) }
     }
 
     func stop() {
@@ -271,7 +272,7 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     /// Reads the page state asks for; a newer read replaces one under way. Checked stays within
     /// the page, so a read clears it.
-    private func read() {
+    private func read(quiet: Bool = false) {
         reading?.cancel()
         checked = []
         guard let query = LibraryRules.pageQuery(state, allTypes: page?.typeCounts.map(\.type) ?? []) else {
@@ -295,7 +296,7 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 return
             } catch {
                 guard let self, !Task.isCancelled else { return }
-                self.failed = (error as? APIError)?.serverMessage ?? String(localized: "The server couldn't be reached.")
+                if !quiet { self.failed = (error as? APIError)?.serverMessage ?? String(localized: "The server couldn't be reached.") }
             }
             self?.progress.stopAnimating()
             self?.render()

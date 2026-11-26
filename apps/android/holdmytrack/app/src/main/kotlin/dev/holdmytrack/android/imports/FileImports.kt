@@ -72,6 +72,12 @@ object FileImports {
 
     /** Running at the last read of the imports, with the uploads accepted since ([ImportWatch]). */
     private var expected = 0
+
+    /** Uploads accepted, counted so a read knows which came while it was out. */
+    private var accepted = 0
+
+    /** Bumped when a watch starts or the account goes, so an old watch's reads change nothing. */
+    private var watch = 0
     private var watching = false
 
     fun addLandedListener(listener: () -> Unit) {
@@ -83,25 +89,33 @@ object FileImports {
     }
 
     /** An upload was accepted: the imports are read every few seconds until none runs, and each
-     *  that ends is heard ([addLandedListener]). A failed read tries again. */
-    private fun watch(context: Context) {
+     *  that ends is heard ([addLandedListener]). Failed reads wait longer each time, and give up
+     *  ([ImportWatch.delay]). */
+    private fun watch() {
         expected++
+        accepted++
         if (watching) return
         watching = true
-        val app = context.applicationContext
-        val asked = Session.generation
+        val mine = ++watch
+        var failures = 0
         fun read() {
+            val acceptedBefore = accepted
             scope.launch {
                 val running = runCatching { HoldMyTrackApi.importsRunning() }.getOrNull()
-                if (!Session.isCurrent(asked)) return@launch run { watching = false; expected = 0 }
-                if (running == null) return@launch run { main.postDelayed(::read, WATCH_MS) }
-                val step = ImportWatch.step(expected, running)
+                if (mine != watch) return@launch
+                if (running == null) {
+                    failures++
+                    val wait = ImportWatch.delay(failures) ?: return@launch run { watching = false }
+                    return@launch run { main.postDelayed(::read, wait * 1000L) }
+                }
+                failures = 0
+                val step = ImportWatch.step(expected, running, accepted - acceptedBefore)
                 expected = step.next
                 if (step.landed) landedListeners.toList().forEach { it() }
-                if (step.again) main.postDelayed(::read, WATCH_MS) else watching = false
+                if (step.again) main.postDelayed(::read, ImportWatch.delay(0)!! * 1000L) else watching = false
             }
         }
-        main.postDelayed(::read, WATCH_MS)
+        main.postDelayed(::read, ImportWatch.delay(0)!! * 1000L)
     }
 
     init {
@@ -178,6 +192,10 @@ object FileImports {
         _transfers.clear()
         _notes.clear()
         sentCount = 0
+        // The next account's imports are none of this one's.
+        watch++
+        watching = false
+        expected = 0
         if (!running) clearCopies(context)
         changed()
     }
@@ -211,7 +229,7 @@ object FileImports {
                 }
                 if (ImportsAccount.reports(sentFor, owner)) {
                     sentCount++
-                    if (outcome.status != "already_processed") watch(context)
+                    if (outcome.status != "already_processed") watch()
                     if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
                 }
             } catch (e: Exception) {
@@ -260,5 +278,4 @@ object FileImports {
         }.getOrNull()
 
     private const val COPIES = "imports"
-    private const val WATCH_MS = 2_000L
 }

@@ -121,6 +121,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
         // The next account's imports are none of this one's.
         watching?.cancel()
         watching = nil
+        watchGeneration += 1
         expected = 0
         session.getAllTasks { [endedTokens] tasks in
             for task in tasks where UploadTasks.ofEndedSession(task.originalRequest?.value(forHTTPHeaderField: "Authorization"), ended: endedTokens) {
@@ -190,25 +191,39 @@ final class Uploads: NSObject, URLSessionDataDelegate {
 
     /// Running at the last read of the imports, with the uploads accepted since (ImportWatch).
     private var expected = 0
+    /// Uploads accepted, counted so a read knows which came while it was out.
+    private var accepted = 0
     private var watching: Task<Void, Never>?
+    /// Bumped when a watch starts or the session ends, so an old watch changes nothing.
+    private var watchGeneration = 0
 
     /// An upload was accepted: the imports are read every few seconds until none runs, and each
-    /// that ends is posted (landed). A failed read tries again; iOS holds the reads while the app
-    /// is away, and they go on as it comes back.
+    /// that ends is posted (landed). Failed reads wait longer each time, and give up
+    /// (ImportWatch.delay); iOS holds the reads while the app is away, and they go on as it comes back.
     private func watch() {
         expected += 1
+        accepted += 1
         guard watching == nil, let api else { return }
+        watchGeneration += 1
+        let mine = watchGeneration
         watching = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(2))
-                guard let running = try? await api.activeImports().count else { continue }
-                guard let self, !Task.isCancelled else { return }
-                let step = ImportWatch.step(expected: self.expected, running: running)
+            var failures = 0
+            while let wait = ImportWatch.delay(failures: failures) {
+                try? await Task.sleep(for: .seconds(wait))
+                guard let before = self?.accepted, !Task.isCancelled else { return }
+                guard let running = try? await api.activeImports().count else {
+                    failures += 1
+                    continue
+                }
+                guard let self, !Task.isCancelled, self.watchGeneration == mine else { return }
+                failures = 0
+                let step = ImportWatch.step(expected: self.expected, running: running, acceptedSince: self.accepted - before)
                 self.expected = step.next
                 if step.landed { NotificationCenter.default.post(name: Self.landed, object: nil) }
                 if !step.again { break }
             }
-            self?.watching = nil
+            // Not a later watch's handle.
+            if let self, self.watchGeneration == mine { self.watching = nil }
         }
     }
 

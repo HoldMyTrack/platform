@@ -1,0 +1,13 @@
+{
+  "rule": "importRetry",
+  "description": "How long the watch of the imports waits after a run of failed reads (docs/SPEC.md FR-3.2), in seconds: 2 while they answer, doubling after each failure up to a minute, and null, giving up, after 8 in a row. The map is read again on every return anyway.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "answering", "input": {"failures": 0}, "expected": 2},
+    { "name": "one failure", "input": {"failures": 1}, "expected": 4},
+    { "name": "three failures", "input": {"failures": 3}, "expected": 16},
+    { "name": "five failures", "input": {"failures": 5}, "expected": 60},
+    { "name": "seven failures", "input": {"failures": 7}, "expected": 60},
+    { "name": "eight failures: given up", "input": {"failures": 8}, "expected": null}
+  ]
+}
