@@ -1,6 +1,6 @@
 {
   "rule": "recordingSendWaiting",
-  "description": "How many recordings Library's badge, its + and the Sync sheet's Retry line count as waiting to be sent (apps/android/docs/SPEC.md FR-2.9, FR-5.2): not sent and not swiped aside, none for the demo account. Retry shows while there are any.",
+  "description": "How many recordings Library's badge, its + and the Sync sheet's Retry line count as waiting to be sent (apps/docs/SPEC.md FR-2.9, FR-5.2): not sent and not swiped aside, none for the demo account. Retry shows while there are any.",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "the unsent", "input": { "recordings": [{ "id": "a", "sent": false }, { "id": "b", "sent": false }, { "id": "c", "sent": true }], "hidden": [], "isDemo": false }, "expected": 2 },

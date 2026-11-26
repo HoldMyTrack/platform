@@ -19,7 +19,7 @@ import dev.holdmytrack.android.panel.PanelFormat
 import dev.holdmytrack.android.photos.PhotoZoom
 
 /**
- * The photo viewer (`apps/android/docs/SPEC.md` FR-2.10), the web's `PhotoViewer.tsx`: a photo
+ * The photo viewer (`apps/docs/SPEC.md` FR-2.10), the web's `PhotoViewer.tsx`: a photo
  * over the whole screen, opened from its popup ([PhotoPopup]), to pinch, double-tap and drag
  * ([ZoomImageView]) or zoom with the bottom bar's buttons. Steps through a group as the popup
  * does, and with it: [onIndex] moves the popup too. Back or Close dismisses it, leaving the popup

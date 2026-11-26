@@ -8,7 +8,7 @@ import dev.holdmytrack.android.net.Track
  * the session. The web keeps the same state in `apps/web/src/map/MapView.tsx`, its rules in
  * `selection.ts`. Plain data and rules, no views, so it's what the unit tests exercise.
  *
- * Selection and the checked group take turns (`apps/android/docs/SPEC.md` FR-2.7):
+ * Selection and the checked group take turns (`apps/docs/SPEC.md` FR-2.7):
  * outside selecting, tapping a row or a track *selects* it — at most one, bold on the map, flown
  * to. Checking a row — its tile, or a long press — starts selecting, the selected one joining
  * the group, and the list is selecting for exactly as long as anything is checked.

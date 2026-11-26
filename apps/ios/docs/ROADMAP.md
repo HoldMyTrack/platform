@@ -5,7 +5,7 @@ The iOS app's plan, from the first commit to the App Store. The shared code is b
 ## How to work this plan
 
 - **Phases run in the order of the graph below**; steps inside a phase run top to bottom. A step is done when its "Done when" holds, not when the code compiles.
-- **Behavior is the Android app's** unless a step says otherwise: each step cites `apps/android/docs/SPEC.md` by FR, and lists only where iOS differs. A difference not listed is a bug, or a change to this plan made first.
+- **Behavior is both apps'** (`apps/docs/SPEC.md`) unless a step says otherwise: each step cites it by FR, and lists only where iOS differs. A difference not listed is a bug, or a change to this plan made first.
 - **One branch per phase, one commit per step**, with its documents in the same commit (`AGENTS.md`). The app's own `SPEC.md` and `IMPLEMENTATION.md` in this folder grow step by step, the way Android's describe Android; they are not written at the end.
 - **Decisions in pure functions with unit tests** (`AGENTS.md`, "Code and tests"); rules shared across clients come from `testdata/client-rules/` (ADR-0049).
 - **The server decides, the app applies** (ADR-0048). A step that seems to need a look, a limit or a data rule in Swift needs it from the server instead.
@@ -119,25 +119,25 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 5 — Sign-in and session
 
-`apps/android/docs/SPEC.md` FR-1.1–FR-1.4 and FR-1.8.
+`apps/docs/SPEC.md` FR-1.1–FR-1.4 and FR-1.8.
 
 - [x] **5.1 API client and session**
-  - `URLSession` with the bearer token sent to the API's own origin only, never to the basemap or imagery origins (`apps/android/docs/SPEC.md` §8). The token in the Keychain, device-only; the Keychain outlives an uninstall, so a first launch with no `UserDefaults` marker deletes what it holds.
-  - Cold start: no signed-in layer until `GET /v2/auth/me` answers; only `401` signs out (`apps/android/docs/SPEC.md` FR-1.2).
+  - `URLSession` with the bearer token sent to the API's own origin only, never to the basemap or imagery origins (`apps/docs/SPEC.md` §8). The token in the Keychain, device-only; the Keychain outlives an uninstall, so a first launch with no `UserDefaults` marker deletes what it holds.
+  - Cold start: no signed-in layer until `GET /v2/auth/me` answers; only `401` signs out (`apps/docs/SPEC.md` FR-1.2).
   - Done when: the session rules are pure functions with tests, and a restart with the server down keeps the session.
 - [ ] **5.2 Sign-in screen**
   - Built: email and password, sign-up through the web's page in `ASWebAuthenticationSession`, the demo, Sign in with Apple through `ASAuthorizationAppleIDButton` and phase 2.2's endpoint, Google and Facebook through `ASWebAuthenticationSession` and the handoff (D7), and Forgot password in `SFSafariViewController`. Apple and Google complete against a dev stack (2026-11-08); left: Facebook, and every way in on a real device against production.
   - Done when: each way in reaches the map on a real device against production.
 - [x] **5.3 Verification, sign-out and Update**
-  - The "check your email" screen (`apps/android/docs/SPEC.md` FR-1.4), sign-out (`apps/android/docs/SPEC.md` FR-1.3), and the Update screen on any `426` (`apps/android/docs/SPEC.md` FR-1.8), which opens the App Store listing.
+  - The "check your email" screen (`apps/docs/SPEC.md` FR-1.4), sign-out (`apps/docs/SPEC.md` FR-1.3), and the Update screen on any `426` (`apps/docs/SPEC.md` FR-1.8), which opens the App Store listing.
   - Done when: a dev stack with `MIN_IOS_BUILD` above the build shows the Update screen once, over any screen.
 - [x] **5.4 Per-account local state**
-  - Everything kept on the phone is keyed by the account's email, the demo account with a key of its own (`apps/android/docs/SPEC.md` FR-5.3). `AccountKey` makes the key; nothing is kept per account until recordings or HealthKit (7c, 7d), so this step is done with the first of them.
+  - Everything kept on the phone is keyed by the account's email, the demo account with a key of its own (`apps/docs/SPEC.md` FR-5.3). `AccountKey` makes the key; nothing is kept per account until recordings or HealthKit (7c, 7d), so this step is done with the first of them.
   - Done when: two accounts on one phone never see each other's recordings, hidden rows or HealthKit switch, under test.
 
 ## Phase 6 — The site's pages
 
-`apps/android/docs/SPEC.md` FR-1.5, FR-1.6 and About (ADR-0042, root `docs/IMPLEMENTATION.md` §4.19).
+`apps/docs/SPEC.md` FR-1.5, FR-1.6 and About (ADR-0042, root `docs/IMPLEMENTATION.md` §4.19).
 
 - [x] **6.1 `WKWebView` signed in**
   - Set the session cookie and `hmt_app=ios` in the web view's `WKHTTPCookieStore` before the first load. Where a link goes is the `webPageRoute` rule (`testdata/client-rules/web-page-route.json`), shared with Android. Read the session again on leaving a page, since a page may change units, the name or the language.
@@ -148,7 +148,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 7a — The map
 
-`apps/android/docs/SPEC.md` FR-2.1–FR-2.6, FR-2.9 and FR-2.12.
+`apps/docs/SPEC.md` FR-2.1–FR-2.6, FR-2.9 and FR-2.12.
 
 - [x] **7a.1 Two documents**
   - Fetch `GET /v2/map/style/{flavor}?lang=` and `GET /v2/map/layers?flavor=` in parallel, keep both with their ETags, draw the kept pair at once on a later launch and revalidate; fetch the style again when the two carry different builds (ADR-0048). Insert the layers by `layer-insertion.json`'s rule, binding `["var", …]` from the app's state.
@@ -156,12 +156,12 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Done when: a server deploy that changes a layer's color changes it on the phone without an app release.
 - [x] **7a.2 Modes, Layers and framing**
   - Normal and Fog of War; the Layers menu; first framing; the empty account's pointer to Sync; attribution kept visible; Find my location; theme and language reloading the style and keeping the camera; the basemap's loading and unreachable notice (root `docs/SPEC.md` FR-4.4).
-  - Done when: `apps/android/docs/SPEC.md` FR-2.2–FR-2.5 hold on iOS, and `ios` is in `testdata/client-rules/basemap-status.json`'s `clients` with its cases passing.
+  - Done when: `apps/docs/SPEC.md` FR-2.2–FR-2.5 hold on iOS, and `ios` is in `testdata/client-rules/basemap-status.json`'s `clients` with its cases passing.
 - [x] **7a.3 Tab bar and date range**
-  - Tracks, Trips, the record button, Sync and You (`apps/android/docs/SPEC.md` FR-2.9), each keeping its state. The date slider (`apps/android/docs/SPEC.md` FR-2.6) from the slider rules.
+  - Tracks, Trips, the record button, Sync and You (`apps/docs/SPEC.md` FR-2.9), each keeping its state. The date slider (`apps/docs/SPEC.md` FR-2.6) from the slider rules.
   - Done when: a picked range survives a trip to every tab and a rotation.
 - [x] **7a.4 Tour**
-  - The first-run tour and its three cards (`apps/android/docs/SPEC.md` FR-2.12), from the `tour-*` rules: which steps show, the camera each one moves to, and what restores after.
+  - The first-run tour and its three cards (`apps/docs/SPEC.md` FR-2.12), from the `tour-*` rules: which steps show, the camera each one moves to, and what restores after.
   - Done when: it runs as Android's on a new account and the demo, and `ios` is in every `testdata/client-rules/tour-*.json`'s `clients` with its cases passing.
 - [x] **7a.5 The area list, as on the web**
   - The web's list of the visible area under a Dates filter in place of the date slider (root `docs/SPEC.md` FR-5.11, FR-5.12, FR-4.4), on the same endpoints and rules as the web's and Android's.
@@ -169,9 +169,9 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 7b — Panel, editors, Spots, photos, export
 
-`apps/android/docs/SPEC.md` FR-2.7, FR-2.8, FR-2.10 and FR-2.11.
+`apps/docs/SPEC.md` FR-2.7, FR-2.8, FR-2.10 and FR-2.11.
 
-- [x] **7b.1 Tracks and Trips panel**: rows, filters, selection, checked group, toolbar, Edit, Delete, Add to trip, Pending polling, the Trips tab with copies to accept or decline. Done when: the panel rules' cases drive it and it behaves as `apps/android/docs/SPEC.md` FR-2.7 describes.
+- [x] **7b.1 Tracks and Trips panel**: rows, filters, selection, checked group, toolbar, Edit, Delete, Add to trip, Pending polling, the Trips tab with copies to accept or decline. Done when: the panel rules' cases drive it and it behaves as `apps/docs/SPEC.md` FR-2.7 describes.
 - [ ] **7b.2 Route editor and Private location editor**. Done when: each operation matches the `edit-route-*` cases on a real route, and a Private location saves and clips. Built, and a Private location is added, saved and deleted against a dev stack; left: its clip checked on a real route.
 - [ ] **7b.3 Spots and capture**: layers per category, the popup, capture by 30 seconds within 25 m in the foreground with precise location, the screen kept awake. Done when: a capture at a real place is accepted by the server.
 - [x] **7b.4 Photos**: `PHPickerViewController`, redrawn upright at most 2,048 px with a 320 px thumbnail, placed by the server's check or by hand. iOS's picker may keep a photo's location, unlike Android's: measure it and say so in this app's `SPEC.md`. Done when: photos added, moved and deleted through Save survive a reload.
@@ -187,16 +187,16 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - The privacy policy, `docs/DPIA.md`, Help and `PrivacyInfo.xcprivacy` name HealthKit and what is read from it.
   - Done when: the readiness rule is a pure function with tests, and no health type beyond the two is in the entitlement or the request.
 - [ ] **7c.2 Load and the list**
-  - Load reads workouts started in the last 90 days with a route of at least 2 points, in the foreground only, with no `HKObserverQuery` or background delivery. External id is the workout's UUID. `POST /v2/sync/known` leaves out what the account has; overlaps are marked as a hint; swiping hides a row (`apps/android/docs/SPEC.md` FR-3.2, FR-3.5).
+  - Load reads workouts started in the last 90 days with a route of at least 2 points, in the foreground only, with no `HKObserverQuery` or background delivery. External id is the workout's UUID. `POST /v2/sync/known` leaves out what the account has; overlaps are marked as a hint; swiping hides a row (`apps/docs/SPEC.md` FR-3.2, FR-3.5).
   - Workout types map onto HoldMyTrack's in one table under test, so the Type filter matches Android's.
   - Done when: phase 1's device lists the same workouts as the probe found.
 - [ ] **7c.3 Sending**
-  - Ticked rows under `healthkit`, in batches of at most 25 tracks or 20,000 points, the route read again by UUID; a route over 50,000 points refused by the app; ingest polled every 2 seconds; refused rows kept ticked with their reason (`apps/android/docs/SPEC.md` FR-3.4).
+  - Ticked rows under `healthkit`, in batches of at most 25 tracks or 20,000 points, the route read again by UUID; a route over 50,000 points refused by the app; ingest polled every 2 seconds; refused rows kept ticked with their reason (`apps/docs/SPEC.md` FR-3.4).
   - Done when: a ticked workout lands on the map, a second send makes no second track, and leaving mid-run loses nothing.
 
 ## Phase 7d — Recording
 
-`apps/android/docs/SPEC.md` FR-5.1–FR-5.2 (root `docs/IMPLEMENTATION.md` §4.0.4).
+`apps/docs/SPEC.md` FR-5.1–FR-5.2 (root `docs/IMPLEMENTATION.md` §4.0.4).
 
 - [ ] **7d.1 Recording**
   - `CLLocationManager` with the `location` background mode, `allowsBackgroundLocationUpdates` and the background indicator, on When In Use access only; precise location required (ask for temporary full accuracy when reduced). Pause and resume by tap, stop by a 2-second hold, the map showing only the recording.
@@ -205,28 +205,28 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Done when: a 30-minute walk with the screen off records every fix.
   - Built, and recorded on the simulator's simulated location: the button, background location, pause, resume, the hold that stops, the map showing only the recording, Stop's save to the phone under the account, and the Live Activity with its Stop asking first. Left: the walk on a device.
 - [ ] **7d.2 Journal and recovery**
-  - Every fix written to SQLite as it arrives; after a crash the map offers Resume, Save or Discard (`apps/android/docs/SPEC.md` FR-5.1).
+  - Every fix written to SQLite as it arrives; after a crash the map offers Resume, Save or Discard (`apps/docs/SPEC.md` FR-5.1).
   - After a swipe, always: post a local notification as the app terminates ("Recording paused: HoldMyTrack was closed"), whose tap resumes the recording.
   - After a swipe, if 1.2 found the app relaunched: on a background relaunch with a recording in the journal, recreate the session and resume by itself, with no prompt.
   - Either way the time the app was dead counts as a pause: no time or distance added, the first fix after it starting afresh. The rule choosing resume, prompt or nothing is a pure function of the journal's state and the launch reason, with tests. This app's `SPEC.md` states which path shipped.
   - Done when: after a swipe mid-walk, the recording carries on by itself, or one tap on the notification brings it back, with every fix before the swipe kept.
   - Built, and a recording killed mid-run is offered back, resumed and saved on the simulator: the journal, Resume, Save and Discard, and the notification as the app closes. Left: the notification's path on a device, and the relaunch path once 1.2 decides it.
 - [x] **7d.3 Recordings on the Sync tab**
-  - Edit, Download GPX through the share sheet, Delete, and sending under `recorded` (`apps/android/docs/SPEC.md` FR-5.2).
+  - Edit, Download GPX through the share sheet, Delete, and sending under `recorded` (`apps/docs/SPEC.md` FR-5.2).
   - Done when: a recording lands on the map and leaves the phone only then.
 - [x] **7d.4 Save sends the recording**
-  - Save sends it with no tick, then every return to the map retries it until the server takes it; on the Sync tab it is listed, never ticked, as sending, not sent yet or refused, with Retry (`apps/android/docs/SPEC.md` FR-5.2, ADR-0039).
+  - Save sends it with no tick, then every return to the map retries it until the server takes it; on the Sync tab it is listed, never ticked, as sending, not sent yet or refused, with Retry (`apps/docs/SPEC.md` FR-5.2, ADR-0039).
   - Done when: a walk saved with no connection is on the map after the app next opens online, without a tick.
 
 ## Phase 7e — You tab, Privacy, upload
 
-`apps/android/docs/SPEC.md` FR-1.7, FR-2.9 and FR-3.6.
+`apps/docs/SPEC.md` FR-1.7, FR-2.9 and FR-3.6.
 
 - [ ] **7e.1 You tab**: account card, theme (kept on the phone), Language (D11), About in the app, Help and Contacts in the browser, the version and commit. No Donate: App Review allows payment links only through Apple's purchase system, with exceptions to recheck before relying on one. Done when: it matches Android's tab apart from Language. Built.
 - [ ] **7e.2 Privacy**: Private locations, Download your data saved through the share sheet or Files, the privacy policy. Done when: an archive downloads and opens in Files. Built; left: an archive saved to Files and opened.
 - [ ] **7e.3 Delete account**: confirmed by typing the email; on success the phone deletes that account's recordings, hidden rows, HealthKit switch and last Load, then signs out. Done when: a deleted account leaves nothing on the phone, and an Apple-linked one is revoked (2.2). Built, and a deleted account signs out against a dev stack; left: an Apple-linked account on production.
-- [ ] **7e.4 Upload**: `.gpx`, `.fit` and `.tcx` declared as document types the app opens, picked in the document picker or shared from Files and other apps, sent one at a time on a background `URLSession` so they carry on when the screen is left. The web's limits apply (`apps/android/docs/SPEC.md` FR-3.6). Done when: a file opened from Files and one shared from another app both import. Built, and an opened file imports against a dev stack; left: from Files and a share sheet on a device.
-- [x] **7e.5 Library**: Library as a tab with Sync in its head, Upload heading Sync, the failed-imports alert in place of Sync history, and Download in Library and the Tracks panel's selection bar (`apps/android/docs/SPEC.md` FR-2.7, FR-2.9, FR-3.5, FR-4.1). Done when: a track found in Library opens focused on the map, and Checked tracks download as a zip.
+- [ ] **7e.4 Upload**: `.gpx`, `.fit` and `.tcx` declared as document types the app opens, picked in the document picker or shared from Files and other apps, sent one at a time on a background `URLSession` so they carry on when the screen is left. The web's limits apply (`apps/docs/SPEC.md` FR-3.6). Done when: a file opened from Files and one shared from another app both import. Built, and an opened file imports against a dev stack; left: from Files and a share sheet on a device.
+- [x] **7e.5 Library**: Library as a tab with Sync in its head, Upload heading Sync, the failed-imports alert in place of Sync history, and Download in Library and the Tracks panel's selection bar (`apps/docs/SPEC.md` FR-2.7, FR-2.9, FR-3.5, FR-4.1). Done when: a track found in Library opens focused on the map, and Checked tracks download as a zip.
 
 ## Phase 8 — App Store preparation
 
@@ -246,4 +246,4 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 ## Phase 10 — Release
 
 - [ ] **10.1 Submit for review**: file the Digital Services Act trader-status declaration, which the EU storefronts need; manual release, phased over 7 days. A rejection is answered in Resolution Center or fixed in a new build, and the reason goes into this plan's phase 8 for next time. Done when: approved.
-- [ ] **10.2 Release**: set `UpdateViewController.listing` to the App Store listing, which gives the Update screen its button; tag the commit `ios/<build>`; `MIN_IOS_BUILD` stays 0 until a contract break needs it (`docs/DEPLOY.md` §10). Root `docs/ROADMAP.md` drops the iOS item; `apps/android/docs/SPEC.md` §9 drops "No iOS app". Done when: the app is on the App Store in every storefront chosen, and this file holds only what remains.
+- [ ] **10.2 Release**: set `UpdateViewController.listing` to the App Store listing, which gives the Update screen its button; tag the commit `ios/<build>`; `MIN_IOS_BUILD` stays 0 until a contract break needs it (`docs/DEPLOY.md` §10). Root `docs/ROADMAP.md` drops the iOS item. Done when: the app is on the App Store in every storefront chosen, and this file holds only what remains.

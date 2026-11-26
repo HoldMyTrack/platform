@@ -1,6 +1,6 @@
 {
   "rule": "recordingSendNote",
-  "description": "What a recording's row on the Sync tab says of its send (apps/android/docs/SPEC.md FR-5.2): processing once the server took it, sending, refused with the reason, or waiting; null for one that goes nowhere, the demo account's or one swiped aside.",
+  "description": "What a recording's row on the Sync tab says of its send (apps/docs/SPEC.md FR-5.2): processing once the server took it, sending, refused with the reason, or waiting; null for one that goes nowhere, the demo account's or one swiped aside.",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "not sent yet", "input": { "sent": false, "sending": false, "hidden": false, "refused": false, "isDemo": false }, "expected": "waiting" },

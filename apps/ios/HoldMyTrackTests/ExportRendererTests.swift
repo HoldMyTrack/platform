@@ -6,7 +6,7 @@ import UIKit
 @testable import HoldMyTrack
 
 /// The map image is made without a basemap or Satellite it can't reach, as Android's leaves out
-/// the tiles it couldn't load (apps/android/docs/SPEC.md FR-2.11).
+/// the tiles it couldn't load (apps/docs/SPEC.md FR-2.11).
 @MainActor
 struct ExportRendererTests {
     /// Both sources at an address that refuses every connection.

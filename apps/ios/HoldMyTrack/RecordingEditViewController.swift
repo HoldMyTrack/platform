@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// A recording's Edit (apps/android/docs/SPEC.md FR-5.2): its name, description and type, sent
+/// A recording's Edit (apps/docs/SPEC.md FR-5.2): its name, description and type, sent
 /// as the screen closes, with its moving time and distance; the type set becomes the account's
 /// for the next recording. The Type picker lists the account's types and this phone's waiting
 /// recordings', most used first, then the presets (TypeSearch.recordingKnown). Download GPX is

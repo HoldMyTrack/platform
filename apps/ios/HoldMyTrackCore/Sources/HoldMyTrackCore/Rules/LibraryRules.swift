@@ -1,4 +1,4 @@
-/// What Library (apps/android/docs/SPEC.md FR-4.1, root docs/SPEC.md FR-17.1) decides, as plain
+/// What Library (apps/docs/SPEC.md FR-4.1, root docs/SPEC.md FR-17.1) decides, as plain
 /// values: the request a state asks for, the pager and why a page is empty. The web's
 /// `apps/web/src/library/libraryState.ts` and Android's `panel/LibraryRules`; all three run
 /// testdata/client-rules/library-*.json.

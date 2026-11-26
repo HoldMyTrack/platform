@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// Photos on the map (apps/android/docs/SPEC.md FR-2.10): the scope's photos (PhotoMarkers.scope)
+/// Photos on the map (apps/docs/SPEC.md FR-2.10): the scope's photos (PhotoMarkers.scope)
 /// as markers on their routes, the popup a marker's tap opens, and the viewer it leads to.
 extension MapViewController {
     /// Whose photos show now: the Edit window's track while it edits one, else the focus,

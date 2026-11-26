@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The sheet's Trips tab (root docs/SPEC.md FR-13.6, apps/android/docs/SPEC.md FR-2.7): every
+/// The sheet's Trips tab (root docs/SPEC.md FR-13.6, apps/docs/SPEC.md FR-2.7): every
 /// Trip as a folder, newest first, one of them open while the tab shows, the newest until another
 /// is tapped. The map screen lists and draws the open Trip's tracks and hands its rows back
 /// (setRows); this tab draws them inside the folder, with × to take one out, and the whole Trip's

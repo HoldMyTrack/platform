@@ -3,223 +3,78 @@
 | | |
 | :-- | :-- |
 | **Status** | Current: the app as built |
-| **Last updated** | 2026-10-16 |
-| **Related documents** | `docs/SPEC.md` (the server and web behavior this app shares), `apps/android/docs/ARCHITECTURE.md` (the app's shape and stack), `apps/android/docs/IMPLEMENTATION.md` (how it's built), `apps/android/docs/ROADMAP.md` (open work) |
+| **Last updated** | 2026-11-26 |
+| **Related documents** | `apps/docs/SPEC.md` (what both apps do), `docs/SPEC.md` (the server and web behavior the apps share), `apps/android/docs/ARCHITECTURE.md` (the app's shape and stack), `apps/android/docs/IMPLEMENTATION.md` (how it's built), `apps/android/docs/ROADMAP.md` (open work) |
 
 ## 1. Introduction
 
 ### 1.1 Purpose
 
-What the Android app does, as a user can rely on it: where it differs from the web, and what only the app does (Health Connect sync, GPS recording, Spot capture). What it shares with the web is in `docs/SPEC.md`, cited by FR. Screen wording and layout live in the code.
-
-### 1.2 Scope
-
-Every built feature of the app; what it won't do is in §9.
+Where the Android app differs from what both apps do (`apps/docs/SPEC.md`), and what only it does: Health Connect sync. Its sections take that document's numbers; a requirement not named here is as written there.
 
 ### 1.4 Definitions
-
-`docs/SPEC.md` §1.3's terms apply.
 
 | Term | Meaning |
 | :-- | :-- |
 | **Session record** | A Health Connect exercise session: start and end time, an exercise type and sometimes a route. Not a sign-in session. |
-| **Candidate** | A Health Connect session with a readable route, or a recording on this phone, that the account doesn't have yet. "Waiting" means exactly this. |
 | **Source** | Where candidates come from: Health Connect, switched on and off in Health Connect access, or Recorded on this phone, always on (FR-3.1). |
 | **Readiness** | Where the user stands in Health Connect's permission sequence, one of six states (FR-3.1). |
-
-## 2. Actors
-
-| Actor | Can |
-| :-- | :-- |
-| **Anonymous visitor** | See the sign-in screen only: sign in, sign up or start a demo (FR-1.1). The map is never shown without a session. |
-| **Demo user** | Read the Demo Customer account (`docs/SPEC.md` FR-2.1) and record on the phone; nothing reaches the server. |
-| **Registered user** | Everything in this document, for their own account. |
 
 ## 3. FR-1 — Authentication & Session
 
 ### FR-1.1 Sign in, sign up, start a demo
 
-One screen signs in, starts a demo or continues with Google or Facebook, against the web's endpoints (`docs/SPEC.md` FR-1.1, FR-1.2, FR-2.1, FR-1.9, FR-1.10), and opens sign-up.
-
-- The app checks only that email and password aren't empty. Every other rule is the server's, and its message is shown as sent, so the two never disagree.
-- The response's session token is kept with the email (empty for the demo account) and whether it's verified.
-- Google and Facebook show only when `GET /v2/auth/providers` reports them configured; when that request fails, neither shows.
-- Google sends the system account picker's ID token with the phone's timezone. Facebook runs the server's own flow in a browser tab, not Meta's SDK, started with the S256 hash of a random verifier the app keeps; the code returned to `holdmytrack://oauth` is redeemed with that verifier at `POST /v2/auth/handoff`.
-- Creating an account opens the web's sign-up page in a browser tab, which passes the new account to the app as Facebook does and leaves the tab's browser signed out (`docs/SPEC.md` FR-1.1).
-- Forgot password opens the web's page (`docs/SPEC.md` FR-1.5) in a browser tab.
-- Without a session this is the first screen. The map is never shown signed out: a base map without the account's layers demonstrates less than the demo does.
-
-### FR-1.2 Session persistence and re-verification
-
-A kept session survives a restart but isn't trusted until the server confirms it (`docs/SPEC.md` FR-1.4).
-
-- On a cold start the map attaches no signed-in layer until `GET /v2/auth/me` answers. A `200` trusts the token for the rest of the process.
-- Only a `401` clears the token and opens the sign-in screen. Any other failure keeps it, says the server couldn't be reached and retries on the next resume. The map never sits blank on refused tiles.
-
-### FR-1.3 Sign out
-
-`POST /v2/auth/logout` ends the session on the server; the phone forgets the token whether or not that request succeeded, and opens the sign-in screen with every other screen cleared. The next account to sign in sees nothing of the last one's: its captures, photos, open Trip and queued files go with the session.
+- Google sends the system account picker's ID token with the phone's timezone.
 
 ### FR-1.4 Email verification
 
-An unverified account (`docs/SPEC.md` FR-1.8) sees a "check your email" screen instead of the map, whose tiles the server would refuse.
-
-- The email's 6-digit code, typed on the screen, verifies the account and opens the map with the app still signed in. The server's refusal of a code is shown as sent.
-- The screen asks `GET /v2/auth/me` again on every resume, and on Confirm with the field empty, and opens the map once the email is verified. A `401` signs out as in FR-1.2.
-- Resend shows the server's answer as sent, its hourly limit included.
 - Health Connect access, which Health Connect can open without the map, shows only a notice for such an account.
-- Changing the address is web-only: the phone keeps recordings and Sync state by email (FR-5.3), which a change would orphan. A demo account is never gated.
 
 ### FR-1.5 Settings
 
-The web's Settings page (`docs/SPEC.md` FR-1.7) shown in the app (`docs/SPEC.md` FR-9.6), in the app's theme and language.
-
-- Theme, Download your data and Delete account are native instead (FR-2.9, FR-1.7).
-- Avatar: Android's photo picker (no storage permission), shrunk to at most 512 px on the long side, uploaded as JPEG at once. An image the phone can't read leaves the avatar as it was.
-- Country sets the app's units, metric until one is saved; a change applies at the next session check, made whenever the You tab or the map shows.
-- Language, set on the You tab, sets the app's per-app language and the account's together; Automatic follows the phone. A sign-in or session check applies the account's language unless it's automatic.
-- First run: a real, verified account with no Country opens on Settings instead of the map, and only saving gets past it. A new email-and-password account starts on the phone's timezone.
-- The demo account's page is read-only. A link to another page opens in a browser tab.
-
-### FR-1.6 Track graph & trends
-
-The web's `/profile` page, the track graph and Trends (`docs/SPEC.md` FR-6, FR-8), shown in the app (`docs/SPEC.md` FR-9.6) and read again each time the screen comes back to the front.
+- Avatar: Android's photo picker, with no storage permission.
+- Language, set on the You tab, sets the app's per-app language and the account's together; Automatic follows the phone. A sign-in or session check applies the account's language unless it's automatic. It does nothing for the demo account.
 
 ### FR-1.7 Privacy
 
-- Private locations (`docs/SPEC.md` FR-7.1) are read again each time the screen shows; a row or Add opens FR-2.7's editor on the map.
-- Download your data (`docs/SPEC.md` FR-1.13), for a real account only: a native screen that checks the request every 10 seconds while it shows and saves each archive to the phone's Downloads through Android's download manager.
-- Privacy policy opens `/privacy` in a browser tab.
-- The demo account sees its Private locations read-only and no download.
+- Download your data saves each archive to the phone's Downloads through Android's download manager.
 
 ### FR-1.8 Update screen
 
-When any `/v2` request answers `426` `app_outdated` (`docs/SPEC.md` §1.4), signed in or not, the Update screen opens over whatever showed.
-
-- Several refusals at once open it once; a refused request's own screen says nothing.
-- A refusal met while the app is in the background opens it when the app next comes to the front.
 - Update opens the app's Play listing.
 - Back closes the app, and it opens on the Update screen for as long as the server refuses the build.
-- Nothing on the phone changes: what waits on the Sync tab stays to be sent from the updated app, and a recording under way carries on.
 
 ## 4. FR-2 — Map Visualization
 
-### FR-2.1 Base map
-
-- The style comes unauthenticated from `GET /v2/map/style/{flavor}?lang=`: `light` or `dark` by the app's theme (the other flavors aren't offered), labels in the app's language (`docs/SPEC.md` FR-12.1).
-- The camera starts on a world view until FR-2.3 frames the account.
-- The map is flat at every zoom: MapLibre Native has no globe (`docs/SPEC.md` FR-4.4).
-
 ### FR-2.2 Two map modes: Normal and Fog of War
 
-The web's two exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.3), from the same tiles, with Fog's coverage drawn under the routes and the labels.
-
-- Normal's routes follow Dates (FR-2.6) through the tile request, and past the list's cap only the listed ones are drawn (`docs/SPEC.md` FR-5.11). The panel's filters, hidden tracks and Pending rows are applied on the phone. Fog is never filtered.
-- The map reads only the server. It never reads Health Connect, and a track appears only once synced and ingested.
-- The mode survives a theme or language change.
-- The mode toggle is the Tracks tab's. Trips and Sync show the map in Normal, since their sheets and routes are Normal mode's, and back on Tracks the mode picked there returns. Unlike the web, whose panel stays beside Fog (`docs/SPEC.md` FR-13.6).
-- While recording (FR-5.1) the mode toggle goes and no mode's layers are drawn, only the recording; the mode comes back when it stops.
-- The Layers menu (`docs/SPEC.md` FR-4.9) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.10), Roads (`docs/SPEC.md` FR-4.13) and the bike, shared and mountain-bike paths; the Places menu holds Show places and the Spot categories (FR-2.8). Each switch hides its own picks and keeps them. Every choice is kept on the phone, not the account, and all picks but Roads start off. Both menus stay while recording.
-- Fog says when coverage is still being updated (`docs/SPEC.md` FR-4.2), checked on every opening of the map, and refresh when the server is done.
-- Fog's button names the level in view, and a tap on it while Fog is on opens the level menu (`docs/SPEC.md` FR-4.2), its counts read on each opening. A picked level holds through a trip out of Fog and until the app restarts. A tap on a place outlines it and names it, as the web's tooltip does, until it's closed or a tap lands off every place.
-
-### FR-2.3 Initial camera framing
-
-- Once per app session the camera opens as the web's does (`docs/SPEC.md` FR-4.4): zoom 12 on the newest five tracks with a route, skipping Pending ones, or fewer when five don't fit the screen. A rotation, theme or language change keeps the camera.
-- An account with nothing on the map stays on the world view with a pointer to Sync, asked again on every return to the map until it is closed, which this phone remembers for the account; the demo account never gets it.
-
-### FR-2.4 Attribution
-
-MapLibre's attribution control stays on and visible above the collapsed sheet: the base map's ODbL credit is required (`docs/IMPLEMENTATION.md` §5.6).
-
-### FR-2.5 Find my location
-
-The web's one-shot locate (`docs/SPEC.md` FR-4.5).
-
-- Nothing is located before the first tap, which asks for location, Precise or Approximate.
-- It flies to at least zoom 14 and follows the position until the map is panned.
-- Hidden while recording, which follows its own fixes.
-
-### FR-2.6 Dates
-
-The Tracks tab lists the visible area under Dates, as the web's does (`docs/SPEC.md` FR-5.11, FR-5.12), in Normal mode only.
-
-- Dates is a chip in the filter row. Each end is picked in a calendar and applies at once; Clear dates clears both.
-- The list doesn't follow the camera while recording, and asks about the view once it stops.
-- Dates survive rotation and a return from another tab.
+- The map never reads Health Connect.
 
 ### FR-2.7 Tracks panel
 
-The web's Tracks panel (`docs/SPEC.md` FR-5) as a sheet over the map, with Tracks and Trips tabs. Normal mode only, not while recording. Every tab's sheet, Sync's too, opens up to the status bar, over the map's top row.
-
-- Rows, badges, the Type and Distance filters and Pending follow `docs/SPEC.md` FR-5.1–FR-5.3 and FR-5.8. The Distance filter is offered only with two or more distinct distances.
-- A tap on a row, or on a route within 14 dp, focuses that track and fits the camera to it; one at a time.
-- A tap on a row's tile or a long press checks it. Unlike the web, focusing unchecks the rest, the first check takes the focused track into the group, and checking a row flies the camera to it; unchecking doesn't. All, None and Invert reach only the listed rows and never move the camera.
-- The toolbar acts on the checked group, else the focused row (`docs/SPEC.md` FR-5.8). Hide lasts for this app session. Delete is disabled while any target is Pending.
-- The list is read for each range and on every return to the map, keeping what of the focus, checked group and hidden set still exists; every 2 seconds while any row is Pending, including one the list no longer shows.
-- Edit (`docs/SPEC.md` FR-5.5) writes only what changed, one track at a time. A group of mixed types starts with Type empty, and leaving it empty keeps each its own.
-- Delete (`docs/SPEC.md` FR-5.6) asks first; on a failure, what was already deleted is reported as gone.
-- Download (`docs/SPEC.md` FR-17.2) acts on the checked tracks. Past 100 tracks, or with a Pending track or one entirely inside Private locations among them, it says why instead. It saves as Library's does (FR-4.1).
-- The focused track is drawn in pace bands (`docs/SPEC.md` FR-4.6), unless hidden, filtered out or Pending.
-- Route editing (`docs/SPEC.md` FR-5.7, FR-5.9), for one track with a finished route, has Chop, Cut, Split, Move point, Delete point, Undo and Reset. A split leaving a part inside a Private location asks first.
-- The Private location editor (`docs/SPEC.md` FR-7.1) switches the map to Normal and draws every circle. A new one is 200 m at the map's centre; the radius moves in 10 m steps. Cancel, Back, a mode change or a recording starting drops the draft.
-- The Trips tab (`docs/SPEC.md` FR-13.6) opens the newest Trip. Taking a track out needs no confirmation; deleting a Trip asks first. Leaving the tab restores the Tracks range. Copies others sent wait at its top to be accepted or declined (`docs/SPEC.md` FR-13.7, FR-13.8).
-- Add to trip (`docs/SPEC.md` FR-13.2, FR-13.3) adds the toolbar's target to a Trip, or a new one, in one request.
-- The demo account can't edit, delete or change a Trip.
+- Back drops the Private location editor's draft too.
 
 ### FR-2.8 Spots
 
-The web's points of interest (`docs/SPEC.md` FR-14.2–FR-14.4) on the same tiles, and, in the app only, capturing a place by going there (`docs/SPEC.md` FR-14.6).
-
-- One Places entry per category, off until ticked, kept on the phone; drawn in every mode and while recording, hidden while a route is edited.
-- From zoom 13 ticked places show with their areas; from 10 to 13 on request. A captured place's badge is filled, and a retired place shows only to an account that captured it.
-- A place's popup offers Capture, except on a captured place or to the demo account.
-- **Capture rule**: 30 seconds inside the place, counting only fixes accurate to 25 m. A fix outside starts the count again. In the background nothing is read and the count waits.
-- Capture asks for precise location first; without it nothing starts. Location is read only while capture runs and only in the foreground, and the screen stays on meanwhile.
-- The server checks the position (`docs/SPEC.md` FR-14.6): refused, the count starts again; unsent, it's retried every 5 seconds. A place retired since the map loaded it ends capture.
-- Capture ends on success, Stop, Back, a route edit starting, unticking the category or leaving the account.
+- Back ends capture too.
 
 ### FR-2.9 The bottom bar
 
-Tracks, Trips, the record button (FR-5.1), Library (FR-4.1) and You.
-
-- Each tab keeps its state: the map's camera, mode, range, focus, checked group and a recording are as they were on coming back. Back from another tab goes to Tracks, from Sync to Library, and from Tracks leaves the app.
-- Trips counts copies waiting to be answered, and Library the recordings waiting to be sent. Starting a recording from another tab moves to the map.
-- The You tab leads to Settings (FR-1.5), Track graph & trends (FR-1.6) and Privacy (FR-1.7), and shows the app's version and commit.
-- Theme belongs to the phone, not the account (`docs/SPEC.md` FR-4.8), so the demo account can change it. Language (FR-1.5) does nothing for the demo account.
-- About opens in the app (`docs/SPEC.md` FR-9.6); Help and Contacts in a browser tab, in the browser's language. The app has no Donate: Play doesn't allow pointing to payment outside its billing.
-- Delete account (`docs/SPEC.md` FR-1.12), for a real account, is confirmed by typing the email. On success the app also deletes that account's unsynced recordings, one under way or interrupted before Stop, its last recording type, hidden Sync rows, Health Connect switch and last read, since a new account could take the same email, then signs out.
+- Back from another tab goes to Tracks, from Sync to Library, and from Tracks leaves the app.
+- Delete account also deletes the account's Health Connect switch and last read.
 
 ### FR-2.10 Photos
 
-The web's photos (`docs/SPEC.md` FR-15, ADR-0024) on the map and in the Edit window's Photos tab, against the same endpoints.
-
-- The map shows, in Normal mode, the photos of the track being edited, else the focused one, else the open Trip's. None in Fog, on a hidden route, on the Route tab or while recording. Smaller below zoom 10, none below 4 (`docs/SPEC.md` FR-4.11).
-- Photos that would overlap share a marker; a tap zooms in to separate them (up to zoom 19) when they lie more than 15 m apart, else steps through them.
-- The Photos tab is for one track with a route. Added photos come from Android's photo picker, are redrawn upright at most 2,048 px with a 320 px thumbnail and placed by the server's placement check. One it can't place waits for the user to place it on the route, and Save is refused while any waits.
-- Nothing is written until Save, which writes the fields, then uploads, changes and deletes one at a time, then a route edit. A failure keeps the window open, and Save again carries on from the first unwritten change. Cancel and Back ask before throwing unsaved changes away.
-- The demo account has no Edit window, so no Photos tab.
+- Added photos come from Android's photo picker, which strips their location (§9).
+- Back asks before throwing unsaved changes away, as Cancel does.
 
 ### FR-2.11 Map image export
 
-The web's export (`docs/SPEC.md` FR-4.7) as a viewfinder over the map, not offered while recording.
-
-- A platform preset keeps its shape when cropped; Custom fixes the long side at 1,920, 2,560 or 3,840 px.
-- The image is exactly the window at the current zoom and rotation, with what `docs/SPEC.md` FR-4.7 draws, paths, Satellite and Roads included, and the map's credit and the HoldMyTrack mark.
-- Its stats card (`docs/SPEC.md` FR-4.7) can be added while tracks are checked, and the choice is kept by the phone.
-- It's saved to Pictures/HoldMyTrack and offered to Android's share sheet. A failure keeps the viewfinder as it was.
-
-### FR-2.12 Tour
-
-The web's tour (`docs/SPEC.md` FR-4.14) over the app's own screens, with its start, offer and card rules (`testdata/client-rules/tour-*.json`).
-
-- Its steps: the Tracks sheet, Dates, Trips, Layers, Places, export, Fog of War, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Fog's last step opens its level menu. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
-- In a demo session Fog takes a step per level, from exact coverage out to countries, with the camera over the demo's history, and the camera comes back when the tour ends.
-- What has been shown is kept by the phone, not the account.
+- The image is saved to Pictures/HoldMyTrack and offered to Android's share sheet.
 
 ## 5. FR-3 — Sync and Imports
 
-Sync needs a verified session; the demo account can't send. **The gate rule** (ADR-0039, `docs/SPEC.md` FR-3.4): nothing is ticked when the list shows, only ticked candidates are sent, and nothing is hidden, merged or changed on the user's behalf.
+Health Connect's sessions are candidates beside the recordings (`apps/docs/SPEC.md` §1.4), each to tick before it goes.
 
 ```mermaid
 sequenceDiagram
@@ -259,127 +114,64 @@ sequenceDiagram
 
 ### FR-3.2 What's waiting — the list
 
-The Sync sheet lists every candidate and draws it on the map.
-
 - Opening Sync shows what was last read and the recordings at once, then reads Health Connect when its last read is a minute old or more. **Refresh** reads it whatever the age; nothing else does, except the first read after switching it on. What a read finds is kept on the phone per account until the next one. A failed read keeps what was kept.
 - Health Connect: sessions started in the last 90 days, read 100 at a time. A session is a candidate when its route is readable with at least 2 points. One with no route isn't listed and isn't an error. One whose route Health Connect withholds is counted with advice to keep the app on screen and check the routes permission.
 - The record ids go to `POST /v2/sync/known`; what the account has, in any state, is left out, so a reinstall or second phone agrees and a deleted track is offered again. One still processing shows as on its way.
-- Every recording on the phone not sent yet is listed, whatever its age, never ticked (FR-5.2).
-- A row's distance is worked out from its route; no distance is read from Health Connect.
-- A row overlapping another candidate or an account track (`docs/SPEC.md` FR-3.5) is marked, as a hint only. Hidden and on-their-way rows aren't compared.
+- No distance is read from Health Connect.
 - **Foreground only**: a read runs only while its screen shows. Leaving the tab, the app going to the background or the You tab covering the map cancels it, since Health Connect withholds routes from a background read whatever was granted. Nothing schedules a read or a session's send.
-- The map draws the candidates from the phone's data, and none of the account's routes.
-- A read sends the server only the record ids; showing the list sends only the spans for the overlap check.
+- A read sends the server only the record ids.
 
-### FR-3.4 Ticking, sending and the run's feedback
+### FR-3.4 Sending and its feedback
 
 - Add sends the ticked sessions shown, and only them, in batches of at most 25 tracks or 20,000 points under `healthconnect`.
 - Health Connect types map onto HoldMyTrack's (`biking` becomes `cycling`, `running_treadmill` becomes `running`), so the Type filter matches across sources.
 - The route sent is the one Health Connect holds, read again by id, never the line drawn. A session gone from Health Connect, or whose route it withholds, is refused with the reason. Elevation goes only where a point has it. A route over 50,000 points is refused by the app.
-- What the server took or already had, a sent recording too, is unticked and stays listed as being added, not tickable, until its ingest ends; the app asks every 2 seconds on any tab. Landed, it leaves the list and the map refreshes; failed on the server's side, it's back on the list to send again.
-- An alert lists the imports that failed on the server's side, files and synced tracks alike, each with the server's reason; closing it dismisses them. It's checked whenever the map comes to the front and when a sent row fails.
+- A sent session is unticked and, while being added, can't be ticked.
 - Each refused row is listed with its reason and stays ticked. A run cut short leaves what wasn't confirmed ticked. Ticked rows that overlap don't stop a send.
 - Leaving the tab or the app cancels a run safely: the server is idempotent on each track's id (`docs/SPEC.md` FR-3.4), and the next read knows what it took.
 
 ### FR-3.5 The Sync sheet — sending what's on the phone
 
-Library › Sync is the map in Normal mode with the sheet on its Sync tab, also while recording, with Library lit in the bar.
-
-- Leaving it takes its lines off the map.
-- The demo account sees its recordings, to edit and delete, with nothing to tick, no read of Health Connect and no upload.
-- Swiping a row hides it from the list, kept on the phone per account and undoable. A hidden row is forgotten once its candidate is gone (synced, deleted or out of the window); a hidden session is forgotten only after a read that withheld nothing, so a route unreadable once keeps its place.
-- Upload (FR-3.6) heads the sheet, apart from Add, which sends the ticked sessions. When Health Connect was last read heads its sessions, with Refresh and the way to Health Connect access (FR-3.1); the recordings not sent yet have Retry. Upload is gone for the demo account.
+- The demo account has nothing to tick and no read of Health Connect.
+- A hidden session is forgotten only after a read that withheld nothing, so a route unreadable once keeps its place.
+- Add, apart from Upload, sends the ticked sessions. When Health Connect was last read heads its sessions, with Refresh and the way to Health Connect access (FR-3.1).
 
 ### FR-3.6 Upload
 
-The web's upload (`docs/SPEC.md` FR-3.1, FR-3.2) as a sheet over the screen it opens from, for a verified, non-demo account.
-
-- Files come from Android's picker, or are opened or shared from another app (§9). Files from another app are listed and sent only on Upload.
-- The web's limits apply: `.gpx`, `.fit` or `.tcx`, up to 16 MiB each, 20 at a time (more are refused whole) and 100 an hour; a `.zip` is refused by name.
-- Files go one at a time and carry on when the sheet is closed. Finished ones are tracks in Library, and the map and Library catch up as each finishes processing, whichever tab shows.
-- Files still queued at a sign-out are dropped, never sent from another account.
+- Files come from Android's picker; most apps can't open a `.gpx` or `.fit` with the app (§9).
 
 ## 6. FR-4 — Library
 
 ### FR-4.1 Library
 
-The web's Library (`docs/SPEC.md` FR-17.1) as the bottom bar's Library: a sheet over the map, as Tracks and Trips are, its page read again each time the tab opens. Sync (FR-3.5) opens from its head, with the recordings waiting.
-
-- The search, the sort and the Type, Dates, Distance and Trip filters, pages of 100, Checked within the page, Download and Delete are the web's (`testdata/client-rules/library-*.json`).
-- Opening a track opens it on the Tracks tab with the track focused. When its day is outside the range, the range becomes that day, as if picked.
-- Download saves through Android's save screen, with no storage permission: one track as GPX, Checked tracks as a zip.
+- Download saves through Android's save screen, with no storage permission.
 
 ## 7. FR-5 — In-App GPS Recording
 
-Recording is separate from Health Connect sync: a finished recording goes straight to `POST /v2/sync/tracks` under `recorded` (`docs/SPEC.md` FR-3.6), so Health Connect's foreground rule doesn't apply. A recording not discarded is sent without a tick: recording it was the choice (ADR-0039).
-
-```mermaid
-stateDiagram-v2
-    [*] --> Idle
-    Idle --> Recording: tap
-    Recording --> Paused: tap
-    Paused --> Recording: tap
-    Recording --> Waiting: stop
-    Paused --> Waiting: stop
-    Recording --> Unfinished: process killed
-    Paused --> Unfinished: process killed
-    Unfinished --> Paused: Resume
-    Unfinished --> Waiting: Save
-    Waiting --> Adding: sent, taken
-    Waiting --> Waiting: no connection, refused
-    Adding --> Waiting: ingest failed
-    Adding --> [*]: on the map
-    Waiting --> [*]: Delete
-    Unfinished --> [*]: Discard
-```
-
-Waiting: saved on the phone, listed on the Sync tab until sent. Adding: taken by the server, gone from the phone once on the map. A stop under 60 seconds of moving time, or with fewer than 2 points, saves nothing.
+Recording is separate from Health Connect sync, so Health Connect's foreground rule doesn't apply.
 
 ### FR-5.1 Record — one button on the map
 
-The record button, on every tab, records a casual GPS-only track in one tap and asks nothing about it.
-
-- Recording needs precise location; notifications are asked for but not required. Denied, nothing starts.
-- Positions come from the GPS provider only; no sensor or health data is read.
+- Notifications are asked for but not required.
+- Positions come from the GPS provider only.
 - A foreground location service keeps recording with the screen off and the app swiped from recents.
-- A tap pauses and resumes. No point is recorded while paused, and the first fix after a pause starts afresh, so a stop adds no distance. There is no automatic pause.
-- Holding the button 2 seconds stops; letting go sooner stops nothing.
-- While recording the map shows only the recording. An unsynced recording is never drawn after it stops.
 - A notification shows while recording, with Pause or Resume and Stop. Its Stop asks first, since a tap in the shade is easy to make by mistake.
-- Stop saves the recording on the phone with no name and the type last set in Edit on this account (`unknown` at first), then opens it for naming; Discard asks and deletes it. Leaving it any other way sends it (FR-5.2).
-- **Crash recovery**: every fix is written to disk as it arrives. If the process dies while recording or paused, everything up to the last fix is kept, and the next time the map opens under that account it asks to Resume (paused, the gap adding no time or distance), Save (as Stop) or Discard. Nothing restarts on its own. Without location access, Resume is refused until the next prompt. A leftover from another account waits for that account; starting a new recording first saves it under its own account.
 
 ### FR-5.2 Recorded tracks — review, edit, send
 
-A saved recording is sent on its own under `recorded`: on Save, then whenever the map comes to the front, until the server takes it. Until then it is listed on the Sync tab (FR-3.2), never ticked, as sending, not sent yet, or refused with the server's reason.
-
-- They never age out of the list: the phone holds the only copy.
-- A recording swiped aside on the Sync tab isn't sent, nor counted as waiting, until it's brought back.
-- A recording the server can't take doesn't hold up the others.
-- Any type syncs, `unknown` included; the overlap hint compares time, not type.
-- Edit sets name, description and type. The type picker lists the account's types, most used first, server's and phone's together, then the common ones not yet used; a new type is kept as typed, up to 50 characters. The type set becomes the account's default for the next recording.
-- Download GPX saves the route as GPX 1.1, with no storage permission.
-- A recording the server takes leaves the list but stays on the phone until it is on the map; if its ingest fails it is listed again, even after a restart.
-- A refused one, or one whose ingest failed, is sent again only on Retry, so the same refusal isn't asked for on every return.
-- Delete asks first, since the copy is the only one.
-- The demo account can record, edit and delete, not send.
+- Download GPX saves with no storage permission.
 
 ### FR-5.3 Local storage is scoped per signed-in account
 
-Recordings belong to the account signed in when they began (the demo account has a key of its own). Hidden Sync rows, the Health Connect switch and the last read are kept the same way. One account never sees, or sends, another's recordings on a shared phone.
-
-Nothing the app keeps on the phone goes into a backup or moves to a new phone: unsent recordings are sent from the phone they were made on, and the new phone signs in again.
+- The Health Connect switch and its last read are kept per account too.
 
 ## 8. Non-Functional Requirements (summary)
 
 | Concern | Behavior |
 | :-- | :-- |
-| **Credentials** | The session token goes as `Authorization: Bearer` to HoldMyTrack's own API origin only, never to a base-map asset origin (FR-1.2). |
-| **Session security** | A kept token is confirmed before any signed-in layer; sign-out ends the session on the server (FR-1.2, FR-1.3). |
 | **Foreground-only Health Connect** | No background service or scheduled job reads Health Connect (FR-3.2). |
 | **Safe interruption** | A cancelled read leaves what was kept; a cancelled run is known to the server at the next read (FR-3.2, FR-3.4). |
-| **Nothing sent unasked** | Only ticked candidates reach the server; none is ticked when the list shows (FR-3.4). |
-| **Idempotency** | Syncing a Health Connect record or a recording twice makes one track, keyed on its own id (`docs/SPEC.md` FR-3.4). |
+| **Idempotency** | Syncing a Health Connect record twice makes one track, keyed on its own id (`docs/SPEC.md` FR-3.4). |
 | **Language** | English or Russian by the per-app language, else the phone's, else English; sent as `Accept-Language` (`docs/SPEC.md` FR-12.1). |
 | **Accessibility** | Every control is labelled for TalkBack and at least 48 dp; at 1.3× font size and up, rows that no longer fit stack. |
 | **Orientation** | Works in landscape with no control under the navigation bar or a cutout; the camera survives rotation (FR-2.3). |
@@ -388,8 +180,6 @@ Nothing the app keeps on the phone goes into a backup or moves to a new phone: u
 
 - **An import in processing isn't shown.** Library lists tracks and Upload shows only queued and uploading files, so a file between the two is in neither.
 - **A `.gpx` or `.fit` can't be opened with the app from most other apps**, which hand them over as generic binary; pick them on Upload. A `.tcx` can.
-- **A touch and hold stands in for hover** where the web reads a value on hover.
 - **A picked photo's position rarely arrives**: Android's photo picker strips location, so photos are placed by capture time or by hand (FR-2.10).
 - **Samsung Galaxy Watch is unsupported**: Samsung gives Health Connect no routes, so its sessions are never candidates.
 - **Background Health Connect sync will never be built**: Health Connect withholds routes from background reads.
-- **No iOS app**, and so no iOS recording; the plan is in `docs/ROADMAP.md`.

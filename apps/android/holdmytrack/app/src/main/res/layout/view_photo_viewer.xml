@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The photo viewer (map/PhotoViewer, apps/android/docs/SPEC.md FR-2.10), the web's
+<!-- The photo viewer (map/PhotoViewer, apps/docs/SPEC.md FR-2.10), the web's
      .photo-viewer: the picture over the whole screen on a dark ground, whatever the theme, with
      its caption, capture time and Close along the top, and along the bottom ‹ "n of m" › for a
      group and Zoom out, Zoom in and Fit to screen. Both bars are inset from the system bars by

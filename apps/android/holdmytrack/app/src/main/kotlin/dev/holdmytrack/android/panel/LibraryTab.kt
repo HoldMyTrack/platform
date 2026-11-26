@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * The Library tab (`apps/android/docs/SPEC.md` FR-4.1, root `docs/SPEC.md` FR-17.1): every track
+ * The Library tab (`apps/docs/SPEC.md` FR-4.1, root `docs/SPEC.md` FR-17.1): every track
  * the account keeps, a page of 100 at a time, not tied to the map's area. The search, the sort
  * and the Type, Dates, Distance and Trip filters ask the server for the page ([LibraryRules]);
  * the rows are the Tracks tab's. A row's tap opens it on the map ([onOpen]); its tile, or a long

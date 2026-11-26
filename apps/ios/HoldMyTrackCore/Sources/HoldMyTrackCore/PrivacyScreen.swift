@@ -1,6 +1,6 @@
 import Foundation
 
-/// What the Privacy screen offers and says (apps/android/docs/SPEC.md FR-1.7). The demo account
+/// What the Privacy screen offers and says (apps/docs/SPEC.md FR-1.7). The demo account
 /// sees its Private locations read-only: no Add, and no download, its data being deleted within
 /// the day.
 public enum PrivacyScreen {

@@ -7,7 +7,7 @@ import UIKit
 /// The sheet's tabs. Library and Sync share the tab bar's Library: Sync opens from Library's head.
 enum PanelTab { case tracks, trips, library, sync }
 
-/// The sheet over the map (apps/android/docs/SPEC.md FR-2.7): the list for the range or the open
+/// The sheet over the map (apps/docs/SPEC.md FR-2.7): the list for the range or the open
 /// Trip, the selection bound into the map's `focused` and `hidden` vars, Pending watched, and the
 /// toolbar's Edit, Delete and Add to trip. How it fits together is
 /// apps/ios/docs/IMPLEMENTATION.md §3.4.
@@ -112,7 +112,7 @@ extension MapViewController {
     }
 
     /// A track opened on the map from Library, or as the one a Sync row overlaps
-    /// (apps/android/docs/SPEC.md FR-4.1): focused once the list has it; one not listed sets Dates
+    /// (apps/docs/SPEC.md FR-4.1): focused once the list has it; one not listed sets Dates
     /// to its day, which flies the camera there.
     func viewOnMap(track: String, day: String) {
         loadViewIfNeeded()
@@ -308,7 +308,7 @@ extension MapViewController {
         syncPanel?.content.isHidden = panelTab != .sync
         let onLibrary = panelTab == .library || panelTab == .sync
         notices.aside = MapChrome.areaNoticesShown(recording: recordingLive, onLibrary: onLibrary) ? [] : [Notice.empty.rawValue, Notice.capped.rawValue]
-        // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
+        // Normal mode only (apps/docs/SPEC.md FR-2.7).
         sheet.isHidden = !MapChrome.sheetShown(normal: state.mode == .normal, recording: recordingLive, onLibrary: onLibrary,
                                                editing: editWindow != nil || privateLocations.open)
         sheet.setNeedsLayout()
@@ -612,7 +612,7 @@ extension MapViewController {
 }
 
 /// The tab bar's Tracks, Trips or Library: all are the one map screen, moved into whichever shows,
-/// so the camera, range and selection are as they were (apps/android/docs/SPEC.md FR-2.9).
+/// so the camera, range and selection are as they were (apps/docs/SPEC.md FR-2.9).
 /// Library's host shows Library or, opened from its head, Sync, and keeps which across a screen
 /// pushed over it.
 final class MapHostViewController: UIViewController {

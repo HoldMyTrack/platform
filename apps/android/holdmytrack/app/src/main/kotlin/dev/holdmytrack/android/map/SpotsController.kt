@@ -17,7 +17,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 
 /**
- * Points of interest on the map (`apps/android/docs/SPEC.md` FR-2.8): the shown categories, the
+ * Points of interest on the map (`apps/docs/SPEC.md` FR-2.8): the shown categories, the
  * captured badges, the popup a spot's tap opens, Show in this area, and capture mode, which needs
  * precise location (a capture counts only fixes accurate to 25 m).
  *

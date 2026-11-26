@@ -4,7 +4,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * The photo viewer's zoom and pan (`map/PhotoViewer`, `apps/android/docs/SPEC.md` FR-2.10): the
+ * The photo viewer's zoom and pan (`map/PhotoViewer`, `apps/docs/SPEC.md` FR-2.10): the
  * picture fitted to the screen and centered is scale 1 at (0, 0); [View.scale] multiplies that and
  * [View.x]/[View.y] move its center, in pixels from the screen's center. The web's `photoZoom.ts`;
  * both run `testdata/client-rules/photo-fit.json`, `photo-zoom.json`, `photo-pan.json` and

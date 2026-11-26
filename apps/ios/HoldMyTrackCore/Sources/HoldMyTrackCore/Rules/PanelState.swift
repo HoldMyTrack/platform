@@ -1,7 +1,7 @@
 /// What the Tracks panel and the map agree on: the date range's tracks, the two filters,
 /// the checked group, the one selected (focused) track, and the tracks hidden for the session.
 ///
-/// Selection and the checked group take turns (apps/android/docs/SPEC.md FR-2.7): outside
+/// Selection and the checked group take turns (apps/docs/SPEC.md FR-2.7): outside
 /// selecting, tapping a row or a track selects it (at most one, bold on the map, flown to).
 /// Checking a row starts selecting, the selected one joining the group, and the list is selecting
 /// for exactly as long as anything is checked.

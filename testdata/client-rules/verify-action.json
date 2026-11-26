@@ -1,6 +1,6 @@
 {
   "rule": "verifyAction",
-  "description": "What the apps' check-your-email screen does on Confirm with what's in its code field (apps/android/docs/SPEC.md FR-1.4): nothing but whitespace asks the server whether the code, typed on the web, confirmed the address (\"check\"); anything else is sent trimmed for the server to judge ({ submit }).",
+  "description": "What the apps' check-your-email screen does on Confirm with what's in its code field (apps/docs/SPEC.md FR-1.4): nothing but whitespace asks the server whether the code, typed on the web, confirmed the address (\"check\"); anything else is sent trimmed for the server to judge ({ submit }).",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "a code is sent", "input": { "typed": "123456" }, "expected": { "submit": "123456" } },

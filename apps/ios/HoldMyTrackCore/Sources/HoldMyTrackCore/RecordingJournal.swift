@@ -130,7 +130,7 @@ public final class RecordingJournal: @unchecked Sendable {
     }
 }
 
-/// What the app does about a leftover when the signed-in screen opens (apps/android/docs/SPEC.md
+/// What the app does about a leftover when the signed-in screen opens (apps/docs/SPEC.md
 /// FR-5.1): nothing while a recording runs; a leftover from another account waits for it; the
 /// notification posted as the app was swiped away resumes it with no prompt; otherwise the map
 /// asks to Resume, Save or Discard. Nothing restarts on its own.

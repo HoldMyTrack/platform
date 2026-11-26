@@ -85,7 +85,7 @@ final class AppFlow {
     }
 
     /// Asks the server about the kept token. Only a 401 ends the session; any other failure keeps
-    /// it and says so, for Try again or the next return to the app (apps/android/docs/SPEC.md
+    /// it and says so, for Try again or the next return to the app (apps/docs/SPEC.md
     /// FR-1.2).
     func check() {
         Task { await recheck() }
@@ -175,7 +175,7 @@ final class AppFlow {
     }
 
     /// Ends the session on the server and forgets it on the phone at once, whether or not the
-    /// server heard (apps/android/docs/SPEC.md FR-1.3).
+    /// server heard (apps/docs/SPEC.md FR-1.3).
     func signOut() {
         if let token = store.stored?.token {
             let api = api!
@@ -186,7 +186,7 @@ final class AppFlow {
     }
 
     /// The server turned this build away: the Update screen over whatever shows, once, and over
-    /// every screen after it for the rest of the run (apps/android/docs/SPEC.md FR-1.8).
+    /// every screen after it for the rest of the run (apps/docs/SPEC.md FR-1.8).
     func showUpdate() {
         guard !updateShown else { return }
         updateShown = true

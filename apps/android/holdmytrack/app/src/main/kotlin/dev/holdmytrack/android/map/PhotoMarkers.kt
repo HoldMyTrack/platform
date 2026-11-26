@@ -38,7 +38,7 @@ data class PhotoMarkerOverlay(
 )
 
 /**
- * Photo markers (`apps/android/docs/SPEC.md` FR-2.10), the web's `apps/web/src/map/photos.ts`: each photo of
+ * Photo markers (`apps/docs/SPEC.md` FR-2.10), the web's `apps/web/src/map/photos.ts`: each photo of
  * the selected track or the open Trip as its own thumbnail in a round frame, at its point on
  * the track — or, where several would overlap on screen, one marker for the group: its first
  * photo, stacked, with a count ([PhotoClusters]). The groups are worked out again whenever the

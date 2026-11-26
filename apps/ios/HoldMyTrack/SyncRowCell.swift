@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// One Sync row (apps/android/docs/SPEC.md FR-3.2), as Android draws it: the type's tile, a
+/// One Sync row (apps/docs/SPEC.md FR-3.2), as Android draws it: the type's tile, a
 /// spinner while being sent or on its way; the title, the meta line and a note; Edit
 /// and Delete for a recording still on the phone; ⓘ while other tracks cover the same time;
 /// dimmed with an eye while hidden.

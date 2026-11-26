@@ -167,7 +167,7 @@ public enum DraftRow: Equatable, Sendable {
     }
 }
 
-/// The Photos tab's unsaved changes (apps/android/docs/SPEC.md FR-2.10), Android's PhotoDraft and
+/// The Photos tab's unsaved changes (apps/docs/SPEC.md FR-2.10), Android's PhotoDraft and
 /// the web's photoDraft.ts: what the Edit window's Save writes after the track's fields, and
 /// what its Cancel throws away. A new photo is prepared on the phone and placed by the placement
 /// check or by the user, and goes up only on Save.

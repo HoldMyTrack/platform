@@ -4,7 +4,7 @@ import SafariServices
 import UIKit
 
 /// Sign in, the demo, and Google and Facebook, against the web's endpoints
-/// (apps/android/docs/SPEC.md FR-1.1). The app checks only that both fields are filled; every
+/// (apps/docs/SPEC.md FR-1.1). The app checks only that both fields are filled; every
 /// other rule is the server's, and its message is shown as sent. Apple, Google and Facebook show
 /// only when the server reports them configured. Apple is the platform's own sheet, its
 /// authorization code exchanged by the server; Google and Facebook run the server's own flow in
@@ -198,7 +198,7 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
 
     private func loadProviders() {
         Task {
-            // A failed request shows neither provider (apps/android/docs/SPEC.md FR-1.1).
+            // A failed request shows neither provider (apps/docs/SPEC.md FR-1.1).
             let providers = (try? await flow.api.providers()) ?? .none
             apple.isHidden = !providers.apple
             google.isHidden = !providers.google

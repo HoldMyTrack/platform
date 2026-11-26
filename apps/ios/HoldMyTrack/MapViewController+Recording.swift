@@ -3,7 +3,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The recording on the map (apps/android/docs/SPEC.md FR-5.1): while one runs the map shows it and
+/// The recording on the map (apps/docs/SPEC.md FR-5.1): while one runs the map shows it and
 /// nothing else, Normal with the tracks hidden and the sheet, the toggle, Find my location and the
 /// export put away;
 /// its line and a dot at its latest fix are the app's own source and layers, drawn from the fixes

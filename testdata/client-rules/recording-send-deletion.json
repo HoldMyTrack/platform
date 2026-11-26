@@ -1,6 +1,6 @@
 {
   "rule": "recordingSendDeletion",
-  "description": "What Delete or Discard does with a recording, as the phone has it when the question is answered (apps/android/docs/SPEC.md FR-5.2): one being sent or on its way (going) lands whatever the phone keeps, so it's left. landed is whether the app saw it land, since a missing copy may be one deleted already.",
+  "description": "What Delete or Discard does with a recording, as the phone has it when the question is answered (apps/docs/SPEC.md FR-5.2): one being sent or on its way (going) lands whatever the phone keeps, so it's left. landed is whether the app saw it land, since a missing copy may be one deleted already.",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "one waiting", "input": { "stored": true, "going": false, "landed": false }, "expected": "deleted" },

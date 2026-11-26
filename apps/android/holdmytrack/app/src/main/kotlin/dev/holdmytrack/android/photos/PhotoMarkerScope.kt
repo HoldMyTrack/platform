@@ -7,7 +7,7 @@ import dev.holdmytrack.android.map.PhotoMarkerOverlay
 import dev.holdmytrack.android.net.Photo
 
 /**
- * Which photos the map shows and what a marker's tap does (`apps/android/docs/SPEC.md` FR-2.10).
+ * Which photos the map shows and what a marker's tap does (`apps/docs/SPEC.md` FR-2.10).
  * The web's `photoMarkerItems.ts`; both run `testdata/client-rules`.
  */
 object PhotoMarkerScope {

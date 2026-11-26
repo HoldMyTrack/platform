@@ -4,7 +4,7 @@ import Testing
 @testable import HoldMyTrackCore
 
 /// The capture rule, 30 seconds inside counting fixes accurate to 25 m, and its geometry
-/// (apps/android/docs/SPEC.md FR-2.8): Android's SpotCaptureTest and SpotGeometryTest.
+/// (apps/docs/SPEC.md FR-2.8): Android's SpotCaptureTest and SpotGeometryTest.
 struct SpotCaptureTests {
     // About 111 m on a side at the equator, with a 22 m hole in the middle.
     private let outer = [GeoPoint(lat: 0, lon: 0), GeoPoint(lat: 0, lon: 0.001), GeoPoint(lat: 0.001, lon: 0.001), GeoPoint(lat: 0.001, lon: 0), GeoPoint(lat: 0, lon: 0)]

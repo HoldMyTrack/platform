@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import SafariServices
 import UIKit
 
-/// Privacy (apps/android/docs/SPEC.md FR-1.7), in Android's order: what a Private location does;
+/// Privacy (apps/docs/SPEC.md FR-1.7), in Android's order: what a Private location does;
 /// the account's locations, each a row with its circle drawn small (CirclePreviewView) that opens
 /// the editor on the map (MapViewController+PrivateLocations), and Add a location on the map, with
 /// how many tracks they hide entirely and that a change reprocesses; what HoldMyTrack keeps; then

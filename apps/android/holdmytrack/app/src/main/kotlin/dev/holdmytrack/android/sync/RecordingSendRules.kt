@@ -5,7 +5,7 @@ import java.io.IOException
 import java.time.Instant
 
 /**
- * What [RecordingSends] decides, as values (`apps/android/docs/SPEC.md` FR-5.2): a saved
+ * What [RecordingSends] decides, as values (`apps/docs/SPEC.md` FR-5.2): a saved
  * recording is sent without a tick, since Save was the choice (ADR-0039). The cases are
  * `testdata/client-rules/recording-send-*.json`, which iOS's `RecordingSends` runs too.
  */

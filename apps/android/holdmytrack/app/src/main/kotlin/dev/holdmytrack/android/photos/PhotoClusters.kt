@@ -13,7 +13,7 @@ data class ScreenPoint(val id: String, val x: Float, val y: Float)
 data class PhotoCluster(val ids: List<String>, val x: Float, val y: Float)
 
 /**
- * Grouping photo markers that would overlap on screen (`apps/android/docs/SPEC.md` FR-2.10) — the
+ * Grouping photo markers that would overlap on screen (`apps/docs/SPEC.md` FR-2.10) — the
  * photos of a whole trip seen zoomed out, or several taken at one spot. Done in screen pixels after
  * each move of the map, since what overlaps depends on the zoom; tens of photos per route make that
  * cheap. The web's `photoClusters.ts`; both run `testdata/client-rules/photo-clusters.json` and

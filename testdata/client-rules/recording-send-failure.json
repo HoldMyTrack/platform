@@ -1,6 +1,6 @@
 {
   "rule": "recordingSendFailure",
-  "description": "What a failed request for one recording means (apps/android/docs/SPEC.md FR-5.2). outcome: stop, every recording would meet it, and the rest waits; next, this one waits and the rest goes on; refuse, the answer is about the recording, which waits for Retry. answer is a status, \"none\" for no answer, or \"unreadable\". unanswered says the server said nothing: the recording's fault, too long to upload or to handle, or the connection's, so two in a row (afterUnanswered) stop the send.",
+  "description": "What a failed request for one recording means (apps/docs/SPEC.md FR-5.2). outcome: stop, every recording would meet it, and the rest waits; next, this one waits and the rest goes on; refuse, the answer is about the recording, which waits for Retry. answer is a status, \"none\" for no answer, or \"unreadable\". unanswered says the server said nothing: the recording's fault, too long to upload or to handle, or the connection's, so two in a row (afterUnanswered) stop the send.",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "no answer may be the recording's", "input": { "answer": "none", "afterUnanswered": false }, "expected": { "outcome": "next", "unanswered": true } },

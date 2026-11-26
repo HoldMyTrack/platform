@@ -49,7 +49,7 @@ public struct StoredSession: Codable, Equatable, Sendable {
     }
 }
 
-/// Where a session sends the user, as a value (apps/android/docs/SPEC.md FR-1.2, FR-1.4).
+/// Where a session sends the user, as a value (apps/docs/SPEC.md FR-1.2, FR-1.4).
 public enum SessionRoute: Equatable, Sendable {
     /// No session: Sign in.
     case signIn
@@ -73,7 +73,7 @@ public enum SessionRoute: Equatable, Sendable {
     }
 }
 
-/// What a failed session check means for the kept token (apps/android/docs/SPEC.md FR-1.2): only
+/// What a failed session check means for the kept token (apps/docs/SPEC.md FR-1.2): only
 /// a 401 says the session is over; anything else, the server down included, keeps it for the
 /// next try.
 public enum SessionCheck {
@@ -83,7 +83,7 @@ public enum SessionCheck {
     }
 }
 
-/// The notice the map shows while a kept session is checked (apps/android/docs/SPEC.md FR-1.2):
+/// The notice the map shows while a kept session is checked (apps/docs/SPEC.md FR-1.2):
 /// none while a check is young, "Checking your session…" once it runs past checkingDelay, and
 /// the unreachable notice, with Try again and Sign out, when it fails short of a 401 or the
 /// Update screen.
@@ -113,7 +113,7 @@ public enum SessionCheckNotice: Equatable, Sendable {
     }
 }
 
-/// The key everything the phone keeps per account goes under (apps/android/docs/SPEC.md FR-5.3):
+/// The key everything the phone keeps per account goes under (apps/docs/SPEC.md FR-5.3):
 /// the account's email as the server spells it, lowercased, with the demo account's own key.
 public enum AccountKey {
     public static let demo = "demo"

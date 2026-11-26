@@ -36,7 +36,7 @@ import org.maplibre.android.maps.Style
 import kotlin.math.roundToInt
 
 /**
- * Capture mode (`apps/android/docs/SPEC.md` FR-2.8): started from a spot's popup, it
+ * Capture mode (`apps/docs/SPEC.md` FR-2.8): started from a spot's popup, it
  * reads the phone's GPS and guides the user to that spot — an arrow turned towards it, the
  * distance, a dashed line on the map and every spot area shaded darker ([MapSpots.setCapturing])
  * — then counts 30 s inside it ([SpotCapture]) and captures it on the server.

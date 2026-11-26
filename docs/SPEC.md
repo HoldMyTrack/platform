@@ -3,7 +3,7 @@
 | | |
 | :-- | :-- |
 | **Status** | Current: as built |
-| **Related documents** | `VISION.md` (what ships and why), `IMPLEMENTATION.md` (how it's built), `services/server/api/` (the JSON contract), `apps/android/docs/SPEC.md` (the Android app) |
+| **Related documents** | `VISION.md` (what ships and why), `IMPLEMENTATION.md` (how it's built), `services/server/api/` (the JSON contract), `apps/docs/SPEC.md` (the apps) |
 
 ## 1. Introduction
 
@@ -13,7 +13,7 @@ What HoldMyTrack does, as a user or an API client can rely on it: limits, privac
 
 ### 1.2 Scope
 
-Every built feature of the server and the web app; the Android app's own behavior is in `apps/android/docs/SPEC.md`. What won't be built is in §22; what isn't built yet is in `ROADMAP.md`.
+Every built feature of the server and the web app; the apps' own behavior is in `apps/docs/SPEC.md`, with each app's differences beside it. What won't be built is in §22; what isn't built yet is in `ROADMAP.md`.
 
 ### 1.3 Definitions
 
@@ -29,7 +29,7 @@ Every built feature of the server and the web app; the Android app's own behavio
 
 ### 1.4 API errors
 
-Every error from `/v1`, `/v2` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-12.1); `services/server/api/` lists the codes. An app build older than the deployment's minimum for that app is refused on every `/v1` request before anything else is checked, and asked to update (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
+Every error from `/v1`, `/v2` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-12.1); `services/server/api/` lists the codes. An app build older than the deployment's minimum for that app is refused on every `/v1` request before anything else is checked, and asked to update (`apps/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
 
 ## 2. Actors
 
@@ -195,7 +195,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 ### FR-3.2 Import status
 
 - Files come in through the header's Upload menu, which shows each one queued, uploading or processing, and a phone sync's tracks still processing. What came in is Library sorted by date added (FR-17.1); no list of imports is shown on the web or Android.
-- A failed import is listed in the Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened. The apps show it in an alert, which dismisses it (`apps/android/docs/SPEC.md` FR-3.4).
+- A failed import is listed in the Upload menu with its reason, marking the menu, until it is dismissed there, each on its own, or `/sync` is opened. The apps show it in an alert, which dismisses it (`apps/docs/SPEC.md` FR-3.4).
 - A finished import is kept 90 days, for the Upload menu's failures and `/sync` (FR-3.7).
 - A phone sync of several tracks is one import. The web can't start a phone sync.
 
@@ -226,7 +226,7 @@ A candidate on the phone covering the same time as an account track, or another 
 
 ### FR-3.6 In-app GPS recording
 
-The apps record tracks on the phone and send each one the user saves; a discarded one never reaches the server (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5 and `apps/ios/docs/SPEC.md` FR-5).
+The apps record tracks on the phone and send each one the user saves; a discarded one never reaches the server (`IMPLEMENTATION.md` §4.0.4; app side `apps/docs/SPEC.md` FR-5).
 
 - Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. It is refused or taken by the rules of FR-3.4.
 - It is the only path that sets a name and description at ingest.
@@ -431,7 +431,7 @@ stateDiagram-v2
 | Checked | Bold | Counted | Ticked | No |
 
 - At most one track is Focused, by clicking its row or route; any number are Checked. Bold is either, on the map and in its image (FR-4.7). The toolbar acts on the Checked ones when any are, else the Focused one. A Type or Distance filter that hides a Checked track unchecks it.
-- On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/android/docs/SPEC.md` FR-2.7).
+- On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/docs/SPEC.md` FR-2.7).
 - Hiding keeps Focused and Checked; camera fits skip Hidden. A fit over several tracks (the opening view, Dates, a Trip's, the toolbar's over Checked ones) skips Pending and Private ones too, so only a Private row framed alone frames its location's circle (FR-5.11). Opening or closing a Trip clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on tracks still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden track stays hidden after Pending clears.
 - Leaving Pending brings the route back at once, and Fog once redrawn.
@@ -667,7 +667,7 @@ Accepting puts a Trip and tracks in the recipient's account that are theirs from
 
 ## 16. FR-14 — Spots
 
-Outdoor places from OpenStreetMap in six categories, with what OSM says about each (`VISION.md` §4.2), on the web and Android (`apps/android/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
+Outdoor places from OpenStreetMap in six categories, with what OSM says about each (`VISION.md` §4.2), on the web and Android (`apps/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
 
 ### FR-14.1 Places
 
@@ -697,7 +697,7 @@ The same places for every account, behind the session and cached like every map 
 
 ### FR-14.6 Captures
 
-A place is captured by staying inside it for 30 seconds with the Android app's capture mode on (`apps/android/docs/SPEC.md` FR-2.8). Only the app captures; both clients show captures.
+A place is captured by staying inside it for 30 seconds with an app's capture mode on (`apps/docs/SPEC.md` FR-2.8). Only the apps capture; the web and the apps show captures.
 
 - The position sent must be inside the area or within 10 m of it. It is checked and not stored: a capture is the place and the time.
 - The first capture is kept and never changed or removed, except with the account.
@@ -706,7 +706,7 @@ A place is captured by staying inside it for 30 seconds with the Android app's c
 
 ## 17. FR-15 — Track photos
 
-The user's own photos on a track, each at a moment on its route, so a track or Trip shows its pictures on the map (`VISION.md` §4.2, ADR-0024). Each is stored as a resized copy and thumbnail without EXIF, visible only to the account. The web and Android add and show them (`apps/android/docs/SPEC.md` FR-2.10).
+The user's own photos on a track, each at a moment on its route, so a track or Trip shows its pictures on the map (`VISION.md` §4.2, ADR-0024). Each is stored as a resized copy and thumbnail without EXIF, visible only to the account. The web and Android add and show them (`apps/docs/SPEC.md` FR-2.10).
 
 ### FR-15.1 Upload
 

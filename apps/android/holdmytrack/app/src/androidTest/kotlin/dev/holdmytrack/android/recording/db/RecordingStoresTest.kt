@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
 /**
  * The phone's copy of a recording: the journal that outlives a process death, and the store
  * that holds a stopped recording until the server has it (`apps/android/docs/IMPLEMENTATION.md`
- * §5, `apps/android/docs/SPEC.md` FR-5.1 and FR-5.3). On a device, since both are SQLite
+ * §5, `apps/docs/SPEC.md` FR-5.1 and FR-5.3). On a device, since both are SQLite
  * through Android's API; each test opens a throwaway file, never the app's own.
  */
 @RunWith(AndroidJUnit4::class)

@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The map while a restored token waits for the server's word (apps/android/docs/SPEC.md
+/// The map while a restored token waits for the server's word (apps/docs/SPEC.md
 /// FR-1.2): the basemap alone, since the account's layers would be refused tiles were the token
 /// revoked. Which notice shows is SessionCheckNotice's; the unreachable one offers Sign out
 /// beside Try again, since the tab bar and its You tab wait for the check. A confirmed account
