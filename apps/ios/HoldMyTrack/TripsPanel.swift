@@ -145,14 +145,14 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 trips = read.map(\.trip)
                 ready = true
                 self.error = nil
-                if quiet, let openID, !trips.contains(where: { $0.id == openID }) {
+                if TripsList.openGone(quiet: quiet, open: openID, listed: Set(trips.map(\.id)), failed: false) {
                     openGone()
                 } else if openID == nil, let newest = trips.first {
                     onEvent?(.open(newest.id, collapse: false))
                 }
             } catch {
                 guard !Task.isCancelled else { return }
-                if !quiet || !ready { self.error = Self.message(error, String(localized: "Could not load your trips")) }
+                if TripsList.showsError(quiet: quiet, ready: ready, failed: true) { self.error = Self.message(error, String(localized: "Could not load your trips")) }
             }
             render()
         }

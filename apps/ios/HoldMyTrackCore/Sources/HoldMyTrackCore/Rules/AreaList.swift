@@ -33,6 +33,21 @@ public enum AreaLoad {
 /// when even the newest alone doesn't fit, still centred on it.
 public enum OpeningView {
     public static let zoom = 12.0
+
+    /// What the answer does with the camera (testdata/client-rules/opening-move.json).
+    public enum Move: String, Sendable { case move, hold, stay }
+
+    /// Decided as the answer lands: found tracks to frame, moved since the read went out.
+    public static func move(found: Bool, recording: Bool, tripOpen: Bool, flightAsked: Bool, moved: Bool) -> Move {
+        if !found || recording || flightAsked || moved { return .stay }
+        return tripOpen ? .hold : .move
+    }
+
+    /// How often a failed read for an empty map is made again.
+    public static let retries = 5
+
+    /// Whether a failed read is made again: while the empty map's pointer shows.
+    public static func retries(emptyShown: Bool, left: Int) -> Bool { emptyShown && left > 0 }
     /// How many of the newest tracks it tries to show.
     public static let tracks = 5
     /// The share of the screen a flight's box may fill.

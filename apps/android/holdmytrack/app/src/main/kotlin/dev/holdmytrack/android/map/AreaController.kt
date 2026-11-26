@@ -280,7 +280,7 @@ class AreaController(
     }
 
     /** Closes the open Trip: back to the area and Dates, asked about wherever the map is now.
-     *  The camera stays. */
+     *  The camera stays, unless the Trip held the opening view back ([CameraFramer.tripClosed]). */
     fun exitTrip() {
         session.exitTrip()
         panel.tripsTab.setOpen(null)

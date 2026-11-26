@@ -157,8 +157,8 @@ class TripsTab(
                 trips = next
                 ready = true
                 error = null
-                if (quiet && openId != null && next.none { it.id == openId }) openGone() else openNewest()
-            }.onFailure { if (!quiet || !ready) error = FailureText.of(it, res.getString(R.string.trip_load_failed)) }
+                if (TripsList.openGone(quiet, openId, next.mapTo(HashSet()) { it.id }, failed = false)) openGone() else openNewest()
+            }.onFailure { if (TripsList.showsError(quiet, ready, failed = true)) error = FailureText.of(it, res.getString(R.string.trip_load_failed)) }
             render()
         }
     }
@@ -211,6 +211,8 @@ class TripsTab(
 
     /** [id] is the open Trip now (or none): its own copy is read for the footer. */
     fun setOpen(id: String?) {
+        // One made here meanwhile: a list asked for before it doesn't name it.
+        if (id != null && trips.none { it.id == id }) changes++
         if (id != openId) {
             openId = id
             openTrip = null

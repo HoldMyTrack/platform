@@ -138,8 +138,10 @@ class YouFragment : Fragment(R.layout.fragment_you) {
                     profile = loaded
                     Session.update(loaded)
                     if (view != null) renderAccount()
+                }.onFailure {
                     // A failed read is made again on the next show.
-                }.onFailure { if (accountReadAtMs == now.atMs) accountReadAtMs = null }
+                    if (accountReadAtMs == now.atMs) accountReadAtMs = null
+                }
             }
         }
         HoldMyTrackApi.privateLocations { result ->

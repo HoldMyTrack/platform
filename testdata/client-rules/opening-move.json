@@ -1,0 +1,16 @@
+{
+  "rule": "openingMove",
+  "description": "What the opening view's answer does with the camera (apps/android/docs/SPEC.md FR-2.3), decided when it lands: moves it onto the newest tracks found, holds the move for an open Trip, whose own flight frames it, to take when the Trip closes if the camera hasn't moved by then, or leaves it: nothing found, a live recording's camera, a flight already asked for, or a camera moved since the read went out, by the user or the app.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "tracks found, nothing else going on", "input": {"found": true, "recording": false, "tripOpen": false, "flightAsked": false, "moved": false}, "expected": "move"},
+    { "name": "nothing found", "input": {"found": false, "recording": false, "tripOpen": false, "flightAsked": false, "moved": false}, "expected": "stay"},
+    { "name": "nothing found with a Trip open", "input": {"found": false, "recording": false, "tripOpen": true, "flightAsked": false, "moved": false}, "expected": "stay"},
+    { "name": "a recording has the camera", "input": {"found": true, "recording": true, "tripOpen": false, "flightAsked": false, "moved": false}, "expected": "stay"},
+    { "name": "a flight was asked for", "input": {"found": true, "recording": false, "tripOpen": false, "flightAsked": true, "moved": false}, "expected": "stay"},
+    { "name": "the camera moved since the read went out", "input": {"found": true, "recording": false, "tripOpen": false, "flightAsked": false, "moved": true}, "expected": "stay"},
+    { "name": "a Trip is open", "input": {"found": true, "recording": false, "tripOpen": true, "flightAsked": false, "moved": false}, "expected": "hold"},
+    { "name": "a Trip is open and the camera moved", "input": {"found": true, "recording": false, "tripOpen": true, "flightAsked": false, "moved": true}, "expected": "stay"},
+    { "name": "a Trip is open while recording", "input": {"found": true, "recording": true, "tripOpen": true, "flightAsked": false, "moved": false}, "expected": "stay"}
+  ]
+}

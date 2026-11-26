@@ -174,11 +174,13 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// The opening view's read is out, and was asked for again meanwhile.
     var opening = false
     var openAgain = false
-    /// How often a failed read for an empty map is made again.
-    var openRetries = 0
-    /// An open Trip held the opening view's move back; and whether any flight has framed anything.
-    var openingHeld = false
-    var flew = false
+    /// How many more times a failed read for an empty map is made.
+    var openRetriesLeft = 0
+    /// Counts the camera's moves by the user or the app's fits, so an opening view's answer that
+    /// lands after one leaves the camera where it went.
+    var cameraMoves = 0
+    /// The moves count when an open Trip held the opening view's move back.
+    var openingHeldAt: Int?
 
     var format: PanelFormat { PanelFormat(account: account) }
 
@@ -251,7 +253,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         if loadedFlavor != flavor { load() }
         checkCoverage()
         loadCaptures()
-        openOnce()
+        openOnce(asked: true)
         loadHistory()
         loadList()
         tripsPanel.reloadOpen()
@@ -351,6 +353,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         styleLoaded = false
         startBasemapClock()
         mapView.styleJSON = json
+    }
+
+    /// A move the app's own fits didn't make: the user's.
+    func mapView(_ mapView: MLNMapView, regionWillChangeWith reason: MLNCameraChangeReason, animated: Bool) {
+        let gestures: MLNCameraChangeReason = [.gesturePan, .gesturePinch, .gestureRotate, .gestureZoomIn, .gestureZoomOut, .gestureOneFingerZoom, .gestureTilt]
+        if !reason.isDisjoint(with: gestures) { cameraMoves += 1 }
     }
 
     func mapView(_ mapView: MLNMapView, regionDidChangeAnimated animated: Bool) {
@@ -454,7 +462,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                                          ne: CLLocationCoordinate2D(latitude: lat + halfLat, longitude: lon + halfLon))
         }
         appFlying = true
-        flew = true
+        cameraMoves += 1
         mapView.setVisibleCoordinateBounds(target, edgePadding: padding, animated: animated) { [weak self] in
             DispatchQueue.main.async {
                 self?.appFlying = false
@@ -495,6 +503,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             return
         }
         locating = false
+        cameraMoves += 1
         // Following sets its own zoom as it starts; zooming after keeps following.
         mapView.setUserTrackingMode(.follow, animated: true) { [weak self] in
             MainActor.assumeIsolated {

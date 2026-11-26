@@ -448,7 +448,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             libraryTab = libraryTab,
             download = trackDownload,
         )
-        val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, tripOpen = { tripId != null }, sheetTop = { views?.area?.datesSheetTop() }, onEmpty = ::onEmptyChecked)
+        val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, tripOpen = { tripId != null }, emptyShown = { views?.notices?.shown == MapNotice.EMPTY }, sheetTop = { views?.area?.datesSheetTop() }, onEmpty = ::onEmptyChecked)
         val area = AreaController(
             this,
             sheet,
@@ -571,6 +571,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             instance.addOnCameraIdleListener { spots.onCameraIdle() }
             // The list follows the map (AreaController).
             instance.addOnCameraIdleListener { area.onCameraIdle() }
+            // A move the app's own fits didn't make: the user's, or Find my location's.
+            instance.addOnCameraMoveStartedListener { reason ->
+                if (reason != MapLibreMap.OnCameraMoveStartedListener.REASON_DEVELOPER_ANIMATION) camera.moved()
+            }
             // Fog's button names the level in view as the zoom changes; a picked place's popup follows.
             instance.addOnCameraMoveListener {
                 modes.renderFogLevel()
@@ -1043,6 +1047,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         recording.dismissDialogs()
         // A search waiting to be read, or a Delete finishing, would read in the scope going now.
         v?.panel?.libraryTab?.destroy()
+        v?.camera?.release()
         v?.panel?.syncTab?.destroy()
         layers.dismiss()
         v?.modes?.dismissFogLevel()

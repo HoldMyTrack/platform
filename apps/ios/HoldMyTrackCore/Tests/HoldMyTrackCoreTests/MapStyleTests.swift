@@ -193,10 +193,6 @@ struct MapStyleTests {
         #expect(MapChrome.flies(asked: true, recording: false))
         #expect(!MapChrome.flies(asked: true, recording: true))
         #expect(!MapChrome.flies(asked: false, recording: false))
-        #expect(MapChrome.opens(flightAsked: false, recording: false, tripOpen: false))
-        #expect(!MapChrome.opens(flightAsked: true, recording: false, tripOpen: false))
-        #expect(!MapChrome.opens(flightAsked: false, recording: true, tripOpen: false))
-        #expect(!MapChrome.opens(flightAsked: false, recording: false, tripOpen: true), "an open Trip frames itself")
         #expect(MapChrome.listFollows(appFlight: false, recording: false))
         #expect(!MapChrome.listFollows(appFlight: true, recording: false))
         #expect(!MapChrome.listFollows(appFlight: false, recording: true))
@@ -460,6 +456,9 @@ struct MapStyleTests {
 /// Where the map first frames an account (apps/android/docs/SPEC.md FR-2.3).
 struct MapFramingTests {
 
-
-
+    @Test func aFailedReadForAnEmptyMapIsMadeAgainOnlyWhileItsPointerShows() {
+        #expect(OpeningView.retries(emptyShown: true, left: 1))
+        #expect(!OpeningView.retries(emptyShown: false, left: 5))
+        #expect(!OpeningView.retries(emptyShown: true, left: 0))
+    }
 }

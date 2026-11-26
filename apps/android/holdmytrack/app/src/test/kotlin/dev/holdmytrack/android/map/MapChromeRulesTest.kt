@@ -137,9 +137,9 @@ class MapChromeRulesTest {
     }
 
     @Test
-    fun `the opening view leaves the camera to a recording or an open Trip`() {
-        assertTrue(MapChromeRules.opens(recording = false, tripOpen = false))
-        assertFalse(MapChromeRules.opens(recording = true, tripOpen = false))
-        assertFalse(MapChromeRules.opens(recording = false, tripOpen = true))
+    fun `a failed read for an empty map is made again only while its pointer shows`() {
+        assertTrue(OpeningView.retries(emptyShown = true, left = 1))
+        assertFalse(OpeningView.retries(emptyShown = false, left = 5))
+        assertFalse(OpeningView.retries(emptyShown = true, left = 0))
     }
 }

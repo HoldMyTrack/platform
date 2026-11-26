@@ -58,6 +58,8 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `passesFilters` | `track`, `excludedTypes`, `distanceFilter` | boolean |
 | `fitBoxes` | `tracks` (`{ bbox, pending, private }`) | the boxes, in order |
 | `selectionBoxes` | `tracks` (`{ bbox, pending, private }`) | the boxes, in order |
+| `openingMove` (Android and iOS) | `found`, `recording`, `tripOpen`, `flightAsked`, `moved` | `"move"`, `"hold"` or `"stay"` |
+| `tripListAnswer` (Android and iOS) | `quiet`, `ready`, `open` (an id or null), `listed` (ids), `failed` | `{ openGone, showsError }` |
 | `openingView` | `boxes` (`[west, south, east, north]`, newest first), `viewport` (`{ width, height }`) | `{ center: [lon, lat], zoom }` or `null` |
 | `areaLoad` | `zoom`, `listed`, `total` | `{ load, capped }`, `load` `auto` or `none` |
 | `fogLevelInView` | `levels` (`{ level, from, below }`), `zoom`, `locked` | a level |

@@ -55,10 +55,6 @@ public enum MapChrome {
     /// so Stop doesn't fly to it later.
     public static func flies(asked: Bool, recording: Bool) -> Bool { asked && !recording }
 
-    /// The opening view, taken unless a flight was asked for, which frames instead, a recording
-    /// is live, whose camera is on the live track, or a Trip is open, whose own flight frames it.
-    public static func opens(flightAsked: Bool, recording: Bool, tripOpen: Bool) -> Bool { !flightAsked && !recording && !tripOpen }
-
     /// The list follows a settled camera unless the app moved it (a focused row, a Trip) or a
     /// recording is live, whose camera moves with every fix.
     public static func listFollows(appFlight: Bool, recording: Bool) -> Bool { !appFlight && !recording }
