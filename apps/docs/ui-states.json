@@ -39,7 +39,7 @@
      "expect": "The map in Normal with the open Trip's tracks and photos. The closed sheet shows only its grip."},
     {"id": "trips-half", "setup": "default", "title": "Trips, sheet half open",
      "expect": "The newest Trip open: its folder (name, Edit, Send, Delete), the description, the Trip's totals with each type's share, then its rows with × set in under the folder.",
-     "open": ["Folder names are serif on Android and sans bold on iOS; iOS tints the open folder.", "Android's list opens scrolled past the open Trip's folder, description and totals; iOS's starts at the folder. Likely an Android bug."]},
+     "open": ["Folder names are serif on Android and sans bold on iOS; iOS tints the open folder."]},
     {"id": "trips-expanded", "setup": "default", "title": "Trips, sheet open all the way",
      "expect": "As half open, with more rows, and the other Trips' folders below the open one."},
     {"id": "trips-folded", "setup": "default", "title": "Trips, the open Trip folded",
