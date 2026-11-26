@@ -6,7 +6,7 @@ import UIKit
 /// sort and the Type, Dates, Distance and Trip filters ask the server for the page
 /// (LibraryRules); the rows are the Tracks tab's. A row's tap opens it on the map; its tile checks
 /// it, and the Checked tracks, which stay within the page, can be downloaded or deleted. The +
-/// beside the title opens Sync, how more tracks come in.
+/// beside the search opens Sync, how more tracks come in.
 @MainActor
 final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
@@ -111,8 +111,6 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     // MARK: Building
 
     private func buildHead() {
-        let title = Controls.label(String(localized: "library.title", defaultValue: "Library", comment: "Library: the tab's title."),
-                                   font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
         var config = UIButton.Configuration.plain()
         config.image = UIImage(resource: .plus)
         config.baseForegroundColor = UIColor(resource: .accent)
@@ -123,18 +121,18 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         addButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
         addButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.sync) }, for: .primaryActionTriggered)
         setSyncWaiting(0)
-        let titleRow = UIStackView(arrangedSubviews: [title, UIView(), addButton])
-        titleRow.alignment = .center
         search.placeholder = String(localized: "library.search", defaultValue: "Search names and descriptions", comment: "Library: the search field's hint.")
         search.accessibilityIdentifier = "librarySearch"
         search.returnKeyType = .search
         search.addAction(UIAction { [weak self] _ in self?.searchChanged() }, for: .editingChanged)
         search.addAction(UIAction { [weak self] _ in self?.onEvent?(.searching) }, for: .editingDidBegin)
         search.addAction(UIAction { [weak self] _ in self?.search.resignFirstResponder() }, for: .editingDidEndOnExit)
+        // No title, as on Android: the tab bar names the tab. The search, and + beside it.
+        let row = UIStackView(arrangedSubviews: [search, addButton])
+        row.alignment = .center
+        row.spacing = DesignTokens.Space.s8
         head.axis = .vertical
-        head.spacing = DesignTokens.Space.s8
-        head.addArrangedSubview(titleRow)
-        head.addArrangedSubview(search)
+        head.addArrangedSubview(row)
     }
 
     private func buildContent() {
