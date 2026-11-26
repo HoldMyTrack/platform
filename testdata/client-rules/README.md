@@ -28,6 +28,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `libraryPager` | `page`, `total`, `pageSize` | `{ from, to, prev, next }` or null |
 | `downloadBlock` | `tracks` (`{ id, pending, private }`) or `plainTracks` (a count of ordinary ones), `max` (the client's own, 100, when missing) | `{ kind: "too_many", count }`, `{ kind: "pending" \| "private", track }` (an id) or null |
 | `tripFormAction` (Android and iOS) | `text` (a field as typed), `busy` | boolean |
+| `largeText` (Android and iOS) | `scale` (the text size over its default) | boolean |
 | `tripFold` | `foldedId`, `openId`, `clicked` (Trip ids, or null) | `{ foldedId, open, folded }` |
 | `verifyAction` | `typed` (the code field's text) | `"check"` or `{ submit }` |
 | `similarSpans` | `a`, `b` (`{ start, end }`, epoch ms, maybe fractional) | boolean |

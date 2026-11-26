@@ -97,6 +97,8 @@ final class YouViewController: UITableViewController {
         title.accessibilityTraits = .header
         tableView.tableHeaderView = wrap(title, top: DesignTokens.Space.s8)
         tableView.tableFooterView = footer()
+        // The numbers stack two by two past a text size (statsView).
+        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (self: Self, _) in self.tableView.reloadData() }
         loadAvatar()
         // A return to the app while You shows is a return, read as one.
         NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
@@ -259,14 +261,24 @@ final class YouViewController: UITableViewController {
             return column
         }
         let t = totals
+        func pair(_ first: UIView, _ second: UIView) -> UIStackView {
+            let row = UIStackView(arrangedSubviews: [first, second])
+            row.alignment = .top
+            row.distribution = .fillEqually
+            row.spacing = DesignTokens.Space.s8
+            return row
+        }
+        // Four across, or two rows of two when the text is large, as Android's.
         let numbers = UIStackView(arrangedSubviews: [
-            stat(String(localized: "you.tracks", defaultValue: "Tracks", comment: "The You tab's numbers: how many tracks."), t.map { format.count($0.count) }),
-            stat(String(localized: "you.distance", defaultValue: "Distance", comment: "The You tab's numbers: the distance of them all."), t.map { format.totalDistance($0.distanceMeters) }),
-            stat(String(localized: "you.activeDays", defaultValue: "Active days", comment: "The You tab's numbers: days with a track."), t.map { format.count($0.activeDays) }),
-            stat(String(localized: "you.longestStreak", defaultValue: "Longest streak", comment: "The You tab's numbers: the most days in a row with a track."), t.map { format.count($0.longestStreakDays) }),
+            pair(stat(String(localized: "you.tracks", defaultValue: "Tracks", comment: "The You tab's numbers: how many tracks."), t.map { format.count($0.count) }),
+                 stat(String(localized: "you.distance", defaultValue: "Distance", comment: "The You tab's numbers: the distance of them all."), t.map { format.totalDistance($0.distanceMeters) })),
+            pair(stat(String(localized: "you.activeDays", defaultValue: "Active days", comment: "The You tab's numbers: days with a track."), t.map { format.count($0.activeDays) }),
+                 stat(String(localized: "you.longestStreak", defaultValue: "Longest streak", comment: "The You tab's numbers: the most days in a row with a track."), t.map { format.count($0.longestStreakDays) })),
         ])
-        numbers.distribution = .fillEqually
-        numbers.spacing = DesignTokens.Space.s8
+        numbers.axis = LargeText.isOn(scale: Double(UIFontMetrics(forTextStyle: .body).scaledValue(for: 100, compatibleWith: traitCollection) / 100)) ? .vertical : .horizontal
+        let stacked = numbers.axis == .vertical
+        numbers.distribution = stacked ? .fill : .fillEqually
+        numbers.spacing = stacked ? DesignTokens.Space.s12 : DesignTokens.Space.s8
         numbers.accessibilityIdentifier = "youNumbers"
         let link = Controls.label(String(localized: "you.graphLink", defaultValue: "Track graph & trends", comment: "The You tab: the link to the track graph."),
                                   font: Typeface.sans(DesignTokens.Text.md, weight: DesignTokens.Weight.semibold, relativeTo: .body), color: UIColor(resource: .accent))

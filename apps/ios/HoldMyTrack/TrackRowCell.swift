@@ -45,10 +45,7 @@ final class TrackRowCell: UITableViewCell {
         badges.axis = .vertical
         badges.spacing = DesignTokens.Space.s4
         badges.alignment = .trailing
-        // The badges keep their width over the meta line, but the title over them.
-        badges.setContentHuggingPriority(.required, for: .horizontal)
-        badges.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        title.setContentCompressionResistancePriority(.defaultHigh + 1, for: .horizontal)
+        // The badges keep their width (badge), and the title and meta truncate beside them.
 
         var removeConfig = UIButton.Configuration.plain()
         removeConfig.image = UIImage(resource: .x)
@@ -156,6 +153,7 @@ final class TrackRowCell: UITableViewCell {
         config.image = icon.map { Controls.icon($0, size: 11) }
         config.imagePadding = 3
         config.cornerStyle = .capsule
+        config.titleLineBreakMode = .byTruncatingTail
         config.contentInsets = .init(top: 2, leading: 6, bottom: 2, trailing: 6)
         config.baseBackgroundColor = accent ? UIColor(resource: .surfaceTintStrong) : UIColor(resource: .surfaceTint)
         config.baseForegroundColor = accent ? UIColor(resource: .accentStrong) : UIColor(resource: .inkSecondary)
@@ -165,6 +163,10 @@ final class TrackRowCell: UITableViewCell {
             return attributes
         }
         let button = UIButton(configuration: config)
+        // Its width over the title's, which broke its words a letter a line at a large text
+        // size; just under required, so a row too narrow for both still fits its cell.
+        button.setContentHuggingPriority(.required - 1, for: .horizontal)
+        button.setContentCompressionResistancePriority(.required - 1, for: .horizontal)
         button.accessibilityIdentifier = id
         button.isUserInteractionEnabled = accent
         return button

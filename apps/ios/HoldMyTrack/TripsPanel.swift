@@ -75,6 +75,9 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         table.register(UITableViewCell.self, forCellReuseIdentifier: "plain")
         table.backgroundColor = .clear
         table.accessibilityIdentifier = "tripsList"
+        // A folder's name carries its font in its attributed text (folderCell), which a text-size
+        // change doesn't rescale on its own.
+        table.registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (table: UITableView, _) in table.reloadData() }
         let tapEmpty = UITapGestureRecognizer(target: self, action: #selector(tappedList(_:)))
         tapEmpty.cancelsTouchesInView = false
         table.addGestureRecognizer(tapEmpty)
@@ -406,11 +409,16 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private func folderCell(_ trip: Trip, open: Bool, expanded: Bool) -> UITableViewCell {
         let cell = table.dequeueReusableCell(withIdentifier: "plain")!
         var config = UIListContentConfiguration.cell()
-        config.text = trip.name
+        // Whole words: at a large text size iOS hyphenates a list cell's text by default.
+        let unbroken = NSMutableParagraphStyle()
+        unbroken.usesDefaultHyphenation = false
+        config.attributedText = NSAttributedString(string: trip.name, attributes: [
+            .font: Typeface.sans(DesignTokens.Text.lg, weight: DesignTokens.Weight.semibold),
+            .foregroundColor: UIColor(resource: .ink),
+            .paragraphStyle: unbroken,
+        ])
         config.image = Controls.icon(UIImage(resource: expanded ? .chevronDown : .chevronRight), size: 16)
         config.imageProperties.tintColor = UIColor(resource: open ? .accentStrong : .inkSecondary)
-        config.textProperties.font = Typeface.sans(DesignTokens.Text.lg, weight: DesignTokens.Weight.semibold)
-        config.textProperties.color = UIColor(resource: .ink)
         cell.contentConfiguration = config
         cell.backgroundColor = open ? UIColor(resource: .surfaceTint) : .clear
         cell.selectionStyle = .none

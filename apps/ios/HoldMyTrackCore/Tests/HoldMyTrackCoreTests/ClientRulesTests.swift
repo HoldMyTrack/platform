@@ -231,6 +231,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         }
         return ["send": .array(plan.send.map { .number(Double($0)) }), "refusals": .array(refusals)]
     },
+    "largeText": { input in .bool(LargeText.isOn(scale: input.number("scale"))) },
     "basemapStatus": { input in
         .string(BasemapStatus.of(loaded: input["loaded"].bool!, failed: input["failed"].bool!, waitedMs: input.int("waitedMs")).rawValue)
     },
