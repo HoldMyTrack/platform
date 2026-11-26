@@ -215,12 +215,7 @@ final class TourController {
     /// Where the tour is from now on, said once after Not now.
     private func tip() {
         let text = String(localized: "tour.tip", defaultValue: "The tour is always on the You tab.", comment: "After the tour's offer is declined.")
-        host.map.notice(.tour, text, onClose: {})
-        UIAccessibility.post(notification: .announcement, argument: text)
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(5))
-            self?.host.map.hideNotice(.tour)
-        }
+        host.map.say(text)
     }
 
     /// A mode or tab the user picked, which may earn its card. The offer stays until it's answered,

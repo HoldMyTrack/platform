@@ -364,8 +364,7 @@ extension MapViewController {
         guard export.capture == capture else { return }
         closeExport()
         if saved {
-            notice(.exported, String(localized: "export.saved", defaultValue: "Saved to Photos", comment: "Map image export: the image is in the Photos library."))
-            hideNoticeSoon(.exported)
+            say(String(localized: "export.saved", defaultValue: "Saved to Photos", comment: "Map image export: the image is in the Photos library."))
         }
         let share = UIActivityViewController(activityItems: [file], applicationActivities: nil)
         share.popoverPresentationController?.sourceView = export.button
@@ -385,13 +384,6 @@ extension MapViewController {
         setExportBusy(false)
         export.failed = true
         renderExportLines()
-    }
-
-    private func hideNoticeSoon(_ kind: Notice) {
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(4))
-            self?.hideNotice(kind)
-        }
     }
 }
 

@@ -52,22 +52,12 @@ extension MapViewController {
         }
     }
 
-    /// A message over the map for a few seconds, with an action such as Undo: the last one
-    /// replaces the one before.
+    /// Something that just happened, in a Toast over the tabs, with an action such as Undo: the
+    /// last one replaces the one before.
     func say(_ text: String, action: (title: String, run: () -> Void)? = nil) {
         loadViewIfNeeded()
-        hideNotice(.recording)
-        notice(.recording, text, action: action.map { action in (action.title, { [weak self] in
-            self?.hideNotice(.recording)
-            action.run()
-        }) })
-        recordingNoticeShown += 1
-        let shown = recordingNoticeShown
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(5))
-            guard let self, self.recordingNoticeShown == shown else { return }
-            self.hideNotice(.recording)
-        }
+        let tabs = tabBarController
+        Toast.show(text, action: action, over: tabs?.view ?? view, above: tabs?.tabBar)
     }
 
     /// The source and layers, added on every style load and drawn from the fixes held.

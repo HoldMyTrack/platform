@@ -24,7 +24,7 @@ final class CaptureController: NSObject, @preconcurrency CLLocationManagerDelega
         let bearing: () -> Double
         /// A capture saved.
         let captured: (Int, Date) -> Void
-        /// Shows an explanation over the map.
+        /// Shows what capture needs, on the map until closed or given.
         let notice: (String) -> Void
     }
 

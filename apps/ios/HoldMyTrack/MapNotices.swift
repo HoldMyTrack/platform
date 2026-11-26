@@ -1,7 +1,7 @@
 import UIKit
 
-/// The map's notices under its top row, one per id: its text, then, as on Android, an optional
-/// line of small print and action buttons in a row, and × when onClose is given.
+/// The map's notices at its top, beside the rail, one per id: its text, then, as on Android, an
+/// optional line of small print and action buttons in a row, and × when onClose is given.
 final class MapNotices: UIStackView {
     struct Action {
         let title: String

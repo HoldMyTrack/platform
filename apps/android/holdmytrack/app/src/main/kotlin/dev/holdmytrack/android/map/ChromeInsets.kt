@@ -26,7 +26,6 @@ class ChromeInsets(
     private val root: View,
     private val topBar: View,
     private val topChrome: View,
-    private val notice: View,
     private val sheet: View,
     private val panel: TracksPanel,
     private val map: () -> MapLibreMap?,
@@ -87,9 +86,8 @@ class ChromeInsets(
                 if (bottom - top != oldBottom - oldTop) placeEditorsAfterLayout()
             }
         }
-        // The compass sits below the top row and any notice under it, whose heights are only
-        // known once they're laid out. The attribution follows the sheet's head
-        // (`MapFragment.onSheetChanged`).
+        // The compass sits below the top row, whose height is only known once it's laid out. The
+        // attribution follows the sheet's head (`MapFragment.onSheetChanged`).
         topChrome.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             applyCompassMargin()
             if (bottom - top != oldBottom - oldTop) placeEditorsAfterLayout()
@@ -118,8 +116,8 @@ class ChromeInsets(
             compassBaseMarginTop = settings.compassMarginTop
             compassBaseMarginCaptured = true
         }
-        // Below the top row and any notice; before the row is laid out, below the status bar.
-        val belowTopBar = maxOf(topBar.bottom, if (notice.isVisible) notice.bottom else 0)
+        // Below the top row, the notice in it; before the row is laid out, below the status bar.
+        val belowTopBar = topBar.bottom
         settings.setCompassMargins(
             settings.compassMarginLeft,
             compassBaseMarginTop + maxOf(systemBarInsetTop, belowTopBar),

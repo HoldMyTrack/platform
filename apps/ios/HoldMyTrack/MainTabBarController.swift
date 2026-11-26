@@ -274,9 +274,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         map.showRecordingStatus(clock: status.clock, detail: status.detail, paused: status.paused)
     }
 
-    /// Over the map while it shows, else over the tab that does.
     private func say(_ text: String) {
-        if map.viewIfLoaded?.window != nil { return map.say(text) }
         Toast.show(text, over: view, above: tabBar)
     }
 

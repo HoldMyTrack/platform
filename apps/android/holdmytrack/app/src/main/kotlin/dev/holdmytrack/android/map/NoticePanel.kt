@@ -7,12 +7,12 @@ import androidx.core.view.isVisible
 import dev.holdmytrack.android.R
 
 /**
- * The map's one notice, under the top row: a sentence, an optional smaller detail, at most one
+ * The map's one notice, beside the rail: a sentence, an optional smaller detail, at most one
  * action, and a close button for a notice that can be closed. When two apply the more important
  * stays up ([MapNotice], [MapChromeRules.noticeReplaces]).
  */
 class NoticePanel(
-    /** The panel itself, which the compass also clears. */
+    /** The panel itself. */
     val view: View,
     /** Whether a recording has the map, and whether the Sync tab shows: the empty notice steps aside for both. */
     private val recording: () -> Boolean,
