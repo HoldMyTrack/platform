@@ -266,7 +266,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         let guide = view.safeAreaLayoutGuide.layoutFrame
         // Open all the way, the sheet reaches the status bar, over the map's top row, as on Android
         // (apps/android/docs/SPEC.md FR-2.7).
-        sheet.setRoom(container: guide.height, topInset: 0)
+        sheet.setRoom(container: guide.height)
         layersMenu.place()
         placesMenu.place()
         fogLevelMenu.place()
@@ -392,7 +392,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     }
 
     /// How far down the controls over the map reach, the camera under the selection bar included:
-    /// the sheet stops under them, and a popup goes under its place above it.
+    /// popups and the editors' framing stay below them.
     var chromeBottom: CGFloat {
         let lowest = underBar.isHidden ? topRow : underBar
         return lowest.convert(lowest.bounds, to: view).maxY + DesignTokens.Space.s8
@@ -450,8 +450,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         let bounds = MLNCoordinateBounds(sw: CLLocationCoordinate2D(latitude: box[1], longitude: box[0]),
                                          ne: CLLocationCoordinate2D(latitude: box[3], longitude: box[2]))
         // The Edit sheet stands where the Tracks sheet was while it's up.
-        let bottom = (editWindow?.coveredHeight ?? (sheet.isHidden ? 0 : sheet.restingHeight)) + 48
-        let padding = UIEdgeInsets(top: 120, left: 48, bottom: bottom, right: 48)
+        let covered = editWindow?.coveredHeight ?? (sheet.isHidden ? 0 : sheet.restingHeight)
+        let fit = MapFraming.padding(height: Double(mapView.bounds.height), top: 120, coveredBelow: Double(covered))
+        let padding = UIEdgeInsets(top: fit.top, left: 48, bottom: fit.bottom, right: 48)
         // One move, so the list knows when the app's flight is over (cameraSettled): a box that
         // would zoom in past maxZoom is widened about its centre to what maxZoom shows instead.
         let camera = mapView.cameraThatFitsCoordinateBounds(bounds, edgePadding: padding)

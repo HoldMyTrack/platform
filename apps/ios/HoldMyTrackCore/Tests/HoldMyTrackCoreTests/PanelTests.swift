@@ -93,15 +93,15 @@ struct PanelTests {
 
     // MARK: The sheet
 
-    @Test func theSheetsHeightsKeepItsHeadAndTheTopRow() {
-        let h = SheetRules.heights(container: 800, topInset: 100, head: 150)
-        #expect(h == [.collapsed: 150, .half: 400, .expanded: 700])
-        let short = SheetRules.heights(container: 300, topInset: 250, head: 180)
-        #expect(short[.expanded] == 180 && short[.half] == 180)
+    @Test func theSheetsHeightsKeepItsHeadAndOpenToTheTop() {
+        let h = SheetRules.heights(container: 800, head: 150)
+        #expect(h == [.collapsed: 150, .half: 400, .expanded: 800])
+        let short = SheetRules.heights(container: 300, head: 180)
+        #expect(short[.expanded] == 300 && short[.half] == 180)
     }
 
     @Test func aReleaseSettlesOnTheNearestDetentAndAFlickMovesOn() {
-        let h = SheetRules.heights(container: 800, topInset: 100, head: 150)
+        let h = SheetRules.heights(container: 800, head: 150)
         #expect(SheetRules.resting(height: 380, velocity: 0, heights: h) == .half)
         #expect(SheetRules.resting(height: 380, velocity: 1600, heights: h) == .expanded)
         #expect(SheetRules.resting(height: 380, velocity: -1400, heights: h) == .collapsed)

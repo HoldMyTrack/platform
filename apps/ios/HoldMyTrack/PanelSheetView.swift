@@ -21,7 +21,6 @@ final class PanelSheetView: UIView, UIGestureRecognizerDelegate {
     /// they lay out.
     private var collapsedConstraint: NSLayoutConstraint!
     private var container: CGFloat = 0
-    private var topInset: CGFloat = 0
     private var dragStart: CGFloat?
     private var lastHeadHeight: CGFloat = 0
 
@@ -99,12 +98,10 @@ final class PanelSheetView: UIView, UIGestureRecognizerDelegate {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    /// The room the sheet has: its parent's height above the tab bar, and the top row to keep
-    /// clear when it's open all the way.
-    func setRoom(container: CGFloat, topInset: CGFloat) {
-        guard container != self.container || topInset != self.topInset else { return }
+    /// The room the sheet has: its parent's height between the status bar and the tab bar.
+    func setRoom(container: CGFloat) {
+        guard container != self.container else { return }
         self.container = container
-        self.topInset = topInset
         apply(animated: false)
     }
 
@@ -141,7 +138,7 @@ final class PanelSheetView: UIView, UIGestureRecognizerDelegate {
     }
 
     private func heights() -> [SheetDetent: Double] {
-        SheetRules.heights(container: Double(container), topInset: Double(topInset), head: Double(measuredHead()))
+        SheetRules.heights(container: Double(container), head: Double(measuredHead()))
     }
 
     private func apply(animated: Bool) {

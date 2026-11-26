@@ -5,11 +5,11 @@ public enum SheetDetent: Int, Equatable, Sendable, CaseIterable {
 }
 
 public enum SheetRules {
-    /// The sheet's height at each detent, in a container height tall whose top topInset is kept
-    /// clear (the map's top row), with a head of headHeight: never shorter than its head, never
-    /// taller than the room below the top row, half in between.
-    public static func heights(container: Double, topInset: Double, head: Double) -> [SheetDetent: Double] {
-        let expanded = max(head, container - topInset)
+    /// The sheet's height at each detent, in a container height tall, with a head of head: never
+    /// shorter than its head; open all the way, the whole container, over the map's top row as on
+    /// Android; half in between.
+    public static func heights(container: Double, head: Double) -> [SheetDetent: Double] {
+        let expanded = max(head, container)
         let half = min(expanded, max(head, container / 2))
         return [.collapsed: head, .half: half, .expanded: expanded]
     }

@@ -155,9 +155,10 @@ final class PanelTests: XCTestCase {
 
         app.tabBars.buttons["tabTrips"].tap()
         underTheGrip("opened")
+        let topRow = app.buttons["layers"].frame.minY
         drag(toY: 0.05)
         underTheGrip("open all the way")
-        XCTAssertLessThan(handle.frame.minY, app.frame.height * 0.25, "open all the way, up to the top row")
+        XCTAssertLessThan(handle.frame.minY, topRow, "open all the way, over the map's top row")
         app.tabBars.buttons["tabLibrary"].tap()
         XCTAssertTrue(app.textFields["librarySearch"].waitForExistence(timeout: 10))
         app.tabBars.buttons["tabTrips"].tap()
