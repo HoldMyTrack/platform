@@ -118,6 +118,11 @@ final class Uploads: NSObject, URLSessionDataDelegate {
     /// later, by when the next account may have queued its own.
     func drop(token: String) {
         endedTokens.insert(token)
+        // The next account's imports are none of this one's.
+        watching?.cancel()
+        watching = nil
+        watchGeneration += 1
+        processing = []
         session.getAllTasks { [endedTokens] tasks in
             for task in tasks where UploadTasks.ofEndedSession(task.originalRequest?.value(forHTTPHeaderField: "Authorization"), ended: endedTokens) {
                 task.cancel()
@@ -164,7 +169,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             }
             sentCount += 1
             switch APIClient.uploadOutcome(error: error, status: status, body: body) {
-            case .sent: break
+            case .sent(let id): if !id.isEmpty { watch(id) }
             case .unreachable: notes.append(Note(text: String(localized: "\(name): the server couldn't be reached"), error: true))
             case .already: notes.append(Note(text: String(localized: "\(name) was already uploaded before."), error: false))
             case .refused(let reason):
@@ -178,6 +183,56 @@ final class Uploads: NSObject, URLSessionDataDelegate {
         MainActor.assumeIsolated {
             backgroundCompletion?()
             backgroundCompletion = nil
+        }
+    }
+
+    /// An import this phone uploaded has ended: its track is in the account.
+    static let landed = Notification.Name("Uploads.landed")
+
+    /// The uploaded files still processing, by the id their upload answered with.
+    private var processing: Set<String> = []
+    private var watching: Task<Void, Never>?
+    /// Bumped when a watch starts or the session ends, so an old watch changes nothing.
+    private var watchGeneration = 0
+
+    /// An upload was accepted: each file still processing is asked about every few seconds
+    /// (`GET /v2/uploads/{external_id}`) until none is, and each that lands is posted (landed).
+    /// Failed reads wait longer each time, and the watch gives up after those or after a while
+    /// (ImportWatch.delay); iOS holds the reads while the app is away, and they go on as it comes back.
+    private func watch(_ externalID: String) {
+        // Not set yet when iOS relaunches the app for its uploads alone: that file isn't followed,
+        // and the map catches up as the app is opened (MapViewController.returned).
+        guard let api else { return }
+        processing.insert(externalID)
+        guard watching == nil else { return }
+        watchGeneration += 1
+        let mine = watchGeneration
+        watching = Task { [weak self] in
+            var failures = 0
+            let started = ContinuousClock.now
+            while let wait = ImportWatch.delay(failures: failures, watched: Int((ContinuousClock.now - started).components.seconds)) {
+                try? await Task.sleep(for: .seconds(wait))
+                guard let ids = self?.processing, !Task.isCancelled else { return }
+                var landed = false, failed = false
+                for id in ids {
+                    guard let status = try? await api.uploadStatus(id) else {
+                        failed = true
+                        break
+                    }
+                    guard let self, !Task.isCancelled, self.watchGeneration == mine else { return }
+                    let step = ImportWatch.step(status: status)
+                    if step.done { self.processing.remove(id) }
+                    if step.landed { landed = true }
+                }
+                if landed { NotificationCenter.default.post(name: Self.landed, object: nil) }
+                failures = failed ? failures + 1 : 0
+                guard let self, !(self.processing.isEmpty) else { break }
+            }
+            // Not a later watch's handle; given up, the map catches up on the next return anyway.
+            if let self, self.watchGeneration == mine {
+                self.watching = nil
+                self.processing = []
+            }
         }
     }
 

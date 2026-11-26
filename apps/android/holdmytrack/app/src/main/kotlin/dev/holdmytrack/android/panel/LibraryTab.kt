@@ -139,6 +139,13 @@ class LibraryTab(
         HoldMyTrackApi.trips { result -> result.onSuccess { trips = it; render() } }
     }
 
+    /** Tracks came: the page is read again while it shows, unless rows are checked, which a read
+     *  would clear. A failed read leaves the page as it was. */
+    fun refresh() {
+        // Nor while a read the user asked for is out: it would be cancelled, and its failure lost.
+        if (showing && checked.isEmpty() && reading?.isActive != true) read(quiet = true)
+    }
+
     fun stop() {
         showing = false
         dates.dismiss()
@@ -181,7 +188,7 @@ class LibraryTab(
     }
 
     /** Reads the page [state] asks for; a newer read replaces one under way. */
-    private fun read() {
+    private fun read(quiet: Boolean = false) {
         if (destroyed) return
         reading?.cancel()
         // Checked stays within the page: changing page, sort or filter clears it.
@@ -205,7 +212,7 @@ class LibraryTab(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                failed = FailureText.of(e, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))
+                if (!quiet) failed = FailureText.of(e, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))
             }
             progress.visibility = View.GONE
             render()

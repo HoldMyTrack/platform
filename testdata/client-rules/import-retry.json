@@ -1,0 +1,15 @@
+{
+  "rule": "importRetry",
+  "description": "How long the watch of the uploaded files waits before its next round (docs/SPEC.md FR-3.2), in seconds, from the rounds in a row with a failed read and the seconds since the watch started: 2 after a round where every read answered, doubling after each round with a failure up to a minute, and null, giving up, after 8 such rounds in a row or once the watch has run 10 minutes, so a file the server holds in processing isn't read for hours. A round that fails partway counts as one, whatever the reads before the failure answered. The map is read again on every return anyway.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "answering", "input": {"failures": 0, "watched": 0}, "expected": 2},
+    { "name": "one failure", "input": {"failures": 1, "watched": 30}, "expected": 4},
+    { "name": "three failures", "input": {"failures": 3, "watched": 30}, "expected": 16},
+    { "name": "five failures", "input": {"failures": 5, "watched": 120}, "expected": 60},
+    { "name": "seven failures", "input": {"failures": 7, "watched": 300}, "expected": 60},
+    { "name": "eight failures: given up", "input": {"failures": 8, "watched": 300}, "expected": null},
+    { "name": "still processing near the limit", "input": {"failures": 0, "watched": 599}, "expected": 2},
+    { "name": "processing for 10 minutes: given up", "input": {"failures": 0, "watched": 600}, "expected": null}
+  ]
+}

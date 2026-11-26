@@ -32,6 +32,33 @@ final class YouTests: XCTestCase {
         XCTAssertFalse(app.staticTexts["uploadNote"].exists, "nothing refused")
     }
 
+    /// A file's track reaches Library once the server has processed it, with Library showing and
+    /// nothing touched meanwhile: the upload's own watch, not a return, reads it again.
+    @MainActor
+    func testAnUploadThatFinishesProcessingReachesLibrary() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: [])
+        defer { account.delete() }
+        let file = FileManager.default.temporaryDirectory.appending(path: "evening-loop.tcx")
+        try account.sample("evening-loop.tcx").write(to: file)
+
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtUpload", file.path, "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.buttons["uploadShared"].waitForExistence(timeout: 15))
+        app.buttons["uploadShared"].tap()
+        app.buttons["uploadClose"].tap()
+        // Back to Library at once, which reads its page before the file is processed.
+        app.tabBars.buttons["tabLibrary"].tap()
+        let count = app.staticTexts["libraryCount"]
+        XCTAssertTrue(count.waitForExistence(timeout: 10))
+        // Processed before Library read it, the test can't tell the watch from Library's own read.
+        try XCTSkipUnless(count.label.hasPrefix("0"), "processed before Library read its page (\(count.label)): run with the worker paused")
+        let one = NSPredicate(format: "label BEGINSWITH '1 '")
+        XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: one, object: count)], timeout: 90), .completed, "Library caught up by itself")
+    }
+
     @MainActor
     func testTheYouTabListsItsRowsAndPrivacy() throws {
         let base = try LaunchTests.requireDevStack(self)
