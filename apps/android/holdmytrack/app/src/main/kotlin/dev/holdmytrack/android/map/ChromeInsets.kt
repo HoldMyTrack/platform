@@ -26,6 +26,8 @@ class ChromeInsets(
     private val root: View,
     private val topBar: View,
     private val topChrome: View,
+    /** The map's notice, over the top row and under the status bar like it. */
+    private val notice: View,
     private val sheet: View,
     private val panel: TracksPanel,
     private val map: () -> MapLibreMap?,
@@ -63,10 +65,13 @@ class ChromeInsets(
     /** Starts following the insets and the layout of what the chrome must clear. */
     fun install() {
         val barTopMargin = (topBar.layoutParams as MarginLayoutParams).topMargin
+        val noticeTopMargin = (notice.layoutParams as MarginLayoutParams).topMargin
         root.setOnApplyWindowInsetsListener { _, insets ->
             val bars = insets.getInsets(WindowInsets.Type.systemBars())
             (topBar.layoutParams as MarginLayoutParams).topMargin = barTopMargin + bars.top
             topBar.requestLayout()
+            (notice.layoutParams as MarginLayoutParams).topMargin = noticeTopMargin + bars.top
+            notice.requestLayout()
             systemBarInsetTop = bars.top
             fitSheet(root.height)
             applyCompassMargin()
@@ -185,6 +190,7 @@ class ChromeInsets(
         // The top row holds only its notices and banners while editing: drawn over the sheet,
         // so a sheet held at its scroll floor reaching under the row doesn't hide them.
         topChrome.translationZ = if (open != null) open.window.elevation + root.resources.displayMetrics.density else 0f
+        notice.translationZ = topChrome.translationZ
         if (open == null) return
         val res = root.resources
         val space = res.getDimensionPixelSize(R.dimen.hmt_space_10)

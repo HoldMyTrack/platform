@@ -96,7 +96,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private class Views(
         val mapView: MapView,
         val topChrome: View,
-        /** The notice beside the rail. */
+        /** The notice over the top row. */
         val notices: NoticePanel,
         /** Whether the session lets the map show the user's layers. */
         val gate: SessionGate,
@@ -515,7 +515,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onPrivacyChanged = ::onPrivacyEditorChanged,
             onWindowClosed = ::onEditClosed,
         )
-        val chrome = ChromeInsets(findViewById(R.id.map_root), findViewById(R.id.top_bar), topChrome, sheet, panel) { map }
+        val chrome = ChromeInsets(findViewById(R.id.map_root), findViewById(R.id.top_bar), topChrome, notices.view, sheet, panel) { map }
         // Failures are reported here rather than only in logcat: a style or tile fetch that
         // 404s leaves a plausible-looking blank map behind, with nothing on screen to say so.
         val basemap = BasemapWatch(mapView, ::onBasemap)

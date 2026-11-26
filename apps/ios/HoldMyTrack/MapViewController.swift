@@ -42,7 +42,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     lazy var fogLevelMenu = MapMenuPopup(host: view, anchor: modes, alignStart: true, canOpen: { [unowned self] in
         self.state.mode == .fog && !self.levels.isEmpty && !self.modes.isHidden
     }) { [unowned self] in self.fogLevelContent() }
-    /// The controls along the top: the toggle and the notices beside the rail.
+    /// The controls along the top: the toggle beside the rail, then what comes under them.
     let chromeColumn = PassThroughStackView()
     /// The toggle beside the rail.
     let topRow = PassThroughStackView()
@@ -607,7 +607,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, capped, capture }
 
-    /// Shows kind's notice beside the rail, or changes its words (MapNotices.show).
+    /// Shows kind's notice over the top row, or changes its words (MapNotices.show).
     func notice(_ kind: Notice, _ text: String, detail: String? = nil, action: (title: String, run: () -> Void)? = nil, onClose: (() -> Void)? = nil) {
         notices.show(kind.rawValue, text, detail: detail, actions: action.map { [MapNotices.Action(title: $0.title, id: "noticeAction", run: $0.run)] } ?? [], onClose: onClose)
     }
@@ -662,8 +662,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             self?.closeFogPlace()
             self?.capturing.start(spot)
         }
-        // The toggle, Show in this area and the notices at the start, the rail at the end.
-        let start = PassThroughStackView(arrangedSubviews: [modesRow, inArea, notices])
+        // The toggle and Show in this area at the start, the rail at the end.
+        let start = PassThroughStackView(arrangedSubviews: [modesRow, inArea])
         start.axis = .vertical
         start.spacing = DesignTokens.Space.s8
         rail.layOut(landscape: view.bounds.width > view.bounds.height)
@@ -686,7 +686,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         view.insertSubview(photoViews.markers, aboveSubview: mapView)
         view.insertSubview(spotViews.popup, aboveSubview: photoViews.markers)
         bindPhotos()
-        for v in [column, sheet] {
+        // The notices over the top row, full width.
+        for v in [column, notices, sheet] {
             v.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(v)
         }
@@ -701,6 +702,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             column.topAnchor.constraint(equalTo: guide.topAnchor, constant: DesignTokens.Space.s8),
             column.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: DesignTokens.Space.s12),
             column.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -DesignTokens.Space.s12),
+            notices.topAnchor.constraint(equalTo: column.topAnchor),
+            notices.leadingAnchor.constraint(equalTo: column.leadingAnchor),
+            notices.trailingAnchor.constraint(equalTo: column.trailingAnchor),
             sheet.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
             sheet.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
             sheet.bottomAnchor.constraint(equalTo: guide.bottomAnchor),

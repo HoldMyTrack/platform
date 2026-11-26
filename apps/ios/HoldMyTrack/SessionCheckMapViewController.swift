@@ -11,7 +11,7 @@ final class SessionCheckMapViewController: UIViewController, SessionCheckScreen 
     private unowned let flow: AppFlow
     private let documents: MapDocuments
     private var mapView: MLNMapView!
-    private let notices = MapNotices()
+    private let notices = MapNotices(closable: false)
     private var shown: SessionCheckNotice?
     private var slowTimer: Task<Void, Never>?
     private var basemapTask: Task<Void, Never>?

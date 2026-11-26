@@ -100,7 +100,7 @@ extension MapViewController {
                 self.spots.captured[id] = date
                 self.applySpots()
             },
-            notice: { [weak self] text in self?.notice(.capture, text, onClose: {}) }
+            notice: { [weak self] text in self?.notice(.capture, text) }
         )
     }
 

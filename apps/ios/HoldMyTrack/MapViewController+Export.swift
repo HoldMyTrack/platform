@@ -29,7 +29,7 @@ extension MapViewController {
         // The chrome would sit inside the picture. Faded out and left alone rather than hidden: the
         // map's renders set isHidden as they go (the top row's controls, the sheet on a panel
         // change) and would bring it back over the viewfinder.
-        let covers: [UIView] = [chromeColumn, sheet, mapView.logoView, mapView.attributionButton]
+        let covers: [UIView] = [chromeColumn, notices, sheet, mapView.logoView, mapView.attributionButton]
         export.covered = covers
         for cover in covers {
             cover.alpha = 0
