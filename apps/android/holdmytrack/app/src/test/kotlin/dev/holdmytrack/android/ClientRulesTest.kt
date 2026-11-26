@@ -23,6 +23,7 @@ import dev.holdmytrack.android.net.RoutePoint
 import dev.holdmytrack.android.panel.DownloadRules
 import dev.holdmytrack.android.panel.LibraryRules
 import dev.holdmytrack.android.panel.TripFold
+import dev.holdmytrack.android.panel.TripsList
 import dev.holdmytrack.android.panel.TripForms
 import dev.holdmytrack.android.panel.TrackFacets
 import dev.holdmytrack.android.recording.RecordingTypes
@@ -311,6 +312,16 @@ class ClientRulesTest {
             JsonArray(EditPlan.writes(tracks, input.string("type")!!, input.string("name")!!, input.string("description")!!, written, input.strings("unsure").toSet()).map {
                 buildJsonObject { put("id", it.id); put("trackType", it.trackType); put("name", it.name); put("description", it.description) }
             })
+        },
+        "openingMove" to { input ->
+            JsonPrimitive(OpeningView.move(input.bool("found"), input.bool("recording"), input.bool("tripOpen"), input.bool("flightAsked"), input.bool("moved")).name.lowercase())
+        },
+        "tripListAnswer" to { input ->
+            val failed = input.bool("failed")
+            buildJsonObject {
+                put("openGone", TripsList.openGone(input.bool("quiet"), input.string("open"), input.strings("listed").toSet(), failed))
+                put("showsError", TripsList.showsError(input.bool("quiet"), input.bool("ready"), failed))
+            }
         },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
         "privateDrawOrder" to { input ->

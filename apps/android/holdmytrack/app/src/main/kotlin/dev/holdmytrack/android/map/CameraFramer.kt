@@ -21,6 +21,9 @@ class CameraFramer(
     private val panel: TracksPanel,
     private val map: () -> MapLibreMap?,
     private val recording: () -> Boolean,
+    private val tripOpen: () -> Boolean,
+    /** Whether the empty map's pointer shows. */
+    private val emptyShown: () -> Boolean,
     /** The top on screen of a sheet over the map in a window of its own (`panel/MapSheet`), or
      *  null when none is open. */
     private val sheetTop: () -> Int?,
@@ -40,6 +43,22 @@ class CameraFramer(
      *  fight the user for the camera. */
     var framed = false
 
+    /** A read for the opening view is out; asked again meanwhile, it reads once more. */
+    private var opening = false
+    private var askedAgain = false
+
+    /** Counts the camera's moves by the user or the app's flights, so an answer that lands after
+     *  one leaves the camera where it went. */
+    private var moves = 0
+
+    /** The moves count when an open Trip held the opening view's move back ([OpeningView.Move.HOLD]). */
+    private var heldAt: Int? = null
+
+    /** How many more times a failed read for an empty map is made. */
+    private var retriesLeft = 0
+    private val retry = Runnable { pendingRetry?.let { again(it) } }
+    private var pendingRetry: (() -> Unit)? = null
+
     /** The camera is on the app's own flight, which the list doesn't follow ([consumeAppFlight]). */
     private var appFlight = false
 
@@ -51,26 +70,85 @@ class CameraFramer(
     fun open(onOpened: () -> Unit) {
         if (framed) return onOpened()
         framed = true
+        opening = true
+        val asked = moves
         HoldMyTrackApi.areaTracks(null, from = null, to = null, limit = OpeningView.TRACKS) { result ->
+            opening = false
             val page = result.getOrNull()
-            if (page == null) return@areaTracks onOpened()
+            if (page == null) {
+                // Asked again meanwhile: that ask reads now, with its retries.
+                if (askedAgain) {
+                    askedAgain = false
+                    retriesLeft = OpeningView.RETRIES
+                    return@areaTracks again(onOpened)
+                }
+                if (OpeningView.retries(emptyShown(), retriesLeft)) {
+                    retriesLeft--
+                    pendingRetry = onOpened
+                    // One retry waits at a time.
+                    root.removeCallbacks(retry)
+                    root.postDelayed(retry, RETRY_MS)
+                }
+                return@areaTracks onOpened()
+            }
             val boxes = FitBoxes.of(page.tracks)
             val instance = map()
             val view = OpeningView.of(boxes, root.width / density.toDouble(), root.height / density.toDouble())
             onEmpty(view == null)
-            // Reopening the app mid-recording: the camera belongs to the live track.
-            if (view != null && instance != null && !recording()) {
-                appFlight = true
-                instance.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(view.lat, view.lon), view.zoom))
+            // Asked while this one read an empty account: something may have come since.
+            if (askedAgain && view == null) {
+                askedAgain = false
+                return@areaTracks again(onOpened)
+            }
+            askedAgain = false
+            when (OpeningView.move(view != null, recording(), tripOpen(), flightAsked = false, moved = moves != asked)) {
+                OpeningView.Move.MOVE -> if (view != null && instance != null) {
+                    appFlight = true
+                    instance.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(view.lat, view.lon), view.zoom))
+                }
+                OpeningView.Move.HOLD -> heldAt = moves
+                OpeningView.Move.STAY -> Unit
             }
             onOpened()
         }
     }
 
-    /** [open] again, for an account that had nothing to frame. */
+    /** [open] again, for an account that had nothing to frame: one read at a time, or a later
+     *  answer would pull the camera back from the user, and a failed one is made again while the
+     *  empty map's pointer shows. */
     fun openAgain(onOpened: () -> Unit) {
+        if (opening) {
+            askedAgain = true
+            return
+        }
+        retriesLeft = OpeningView.RETRIES
+        root.removeCallbacks(retry)
+        again(onOpened)
+    }
+
+    private fun again(onOpened: () -> Unit) {
+        if (opening) return
         framed = false
         open(onOpened)
+    }
+
+    /** A Trip closed: an opening view it held back is taken, unless the camera has moved since, the
+     *  Trip's own flight included, which has framed its tracks. */
+    fun tripClosed(onOpened: () -> Unit) {
+        val held = heldAt ?: return
+        heldAt = null
+        if (held == moves) again(onOpened)
+    }
+
+    /** The user moved the camera, or something other than the app's own fits did. */
+    fun moved() {
+        moves++
+    }
+
+    /** The map's view is going: a retry waiting would read for the next one's. */
+    fun release() {
+        root.removeCallbacks(retry)
+        pendingRetry = null
     }
 
     /** Whether the camera just settled from the app's own flight, which this answer uses up. */
@@ -112,6 +190,7 @@ class CameraFramer(
             .zoom(minOf(fitted.zoom, maxZoom))
             .build()
         appFlight = true
+        moves++
         instance.animateCamera(CameraUpdateFactory.newCameraPosition(target), DURATION_MS, object : MapLibreMap.CancelableCallback {
             override fun onFinish() {
                 onLanded?.invoke()
@@ -130,5 +209,6 @@ class CameraFramer(
         /** The least height of map a fit keeps between the top row and the sheet. */
         private const val MIN_SPAN_DP = 96
         private const val DURATION_MS = 900
+        private const val RETRY_MS = 5_000L
     }
 }

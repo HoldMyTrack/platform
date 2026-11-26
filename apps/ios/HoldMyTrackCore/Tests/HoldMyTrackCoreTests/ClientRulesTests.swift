@@ -136,6 +136,15 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
                                      written: Dictionary(uniqueKeysWithValues: written.map { ($0.id, $0) }), unsure: Set(input.strings("unsure")))
         return .array(writes.map { ["id": .string($0.id), "trackType": .string($0.trackType), "name": .string($0.name), "description": .string($0.description)] })
     },
+    "openingMove": { input in
+        .string(OpeningView.move(found: input["found"].bool!, recording: input["recording"].bool!, tripOpen: input["tripOpen"].bool!,
+                                 flightAsked: input["flightAsked"].bool!, moved: input["moved"].bool!).rawValue)
+    },
+    "tripListAnswer": { input in
+        let failed = input["failed"].bool!
+        return ["openGone": .bool(TripsList.openGone(quiet: input["quiet"].bool!, open: input["open"].string, listed: Set(input.strings("listed")), failed: failed)),
+                "showsError": .bool(TripsList.showsError(quiet: input["quiet"].bool!, ready: input["ready"].bool!, failed: failed))]
+    },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
     "attachmentName": { input in .string(AttachmentName.of(input["header"].string)) },
     "libraryPageQuery": { input in

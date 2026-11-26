@@ -1,0 +1,14 @@
+{
+  "rule": "tripListAnswer",
+  "description": "What a Trips list answer means on the Trips tab (docs/SPEC.md FR-13.6): on a return (quiet), an open Trip missing from it was deleted elsewhere and gives way to the next; a failed read says so only when nothing is shown yet, or when the tab asked itself.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "the open Trip is listed", "input": {"quiet": true, "ready": true, "open": "a", "listed": ["a", "b"], "failed": false}, "expected": {"openGone": false, "showsError": false}},
+    { "name": "the open Trip is gone", "input": {"quiet": true, "ready": true, "open": "a", "listed": ["b"], "failed": false}, "expected": {"openGone": true, "showsError": false}},
+    { "name": "none open", "input": {"quiet": true, "ready": true, "open": null, "listed": ["b"], "failed": false}, "expected": {"openGone": false, "showsError": false}},
+    { "name": "not on a return: the tab's own read opens what it lists", "input": {"quiet": false, "ready": true, "open": "a", "listed": ["b"], "failed": false}, "expected": {"openGone": false, "showsError": false}},
+    { "name": "a return's read failed over a list", "input": {"quiet": true, "ready": true, "open": "a", "listed": [], "failed": true}, "expected": {"openGone": false, "showsError": false}},
+    { "name": "a return's read failed before any list", "input": {"quiet": true, "ready": false, "open": "a", "listed": [], "failed": true}, "expected": {"openGone": false, "showsError": true}},
+    { "name": "the tab's own read failed", "input": {"quiet": false, "ready": true, "open": "a", "listed": [], "failed": true}, "expected": {"openGone": false, "showsError": true}}
+  ]
+}

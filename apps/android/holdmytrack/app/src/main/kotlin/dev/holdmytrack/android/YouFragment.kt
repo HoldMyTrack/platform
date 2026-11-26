@@ -138,6 +138,9 @@ class YouFragment : Fragment(R.layout.fragment_you) {
                     profile = loaded
                     Session.update(loaded)
                     if (view != null) renderAccount()
+                }.onFailure {
+                    // A failed read is made again on the next show.
+                    if (accountReadAtMs == now.atMs) accountReadAtMs = null
                 }
             }
         }

@@ -135,4 +135,11 @@ class MapChromeRulesTest {
         // Only the last ask is kept, and it meets the panel as it's built.
         assertNull(MapChromeRules.tabRequest(PanelTab.TRACKS, PanelTab.TRACKS))
     }
+
+    @Test
+    fun `a failed read for an empty map is made again only while its pointer shows`() {
+        assertTrue(OpeningView.retries(emptyShown = true, left = 1))
+        assertFalse(OpeningView.retries(emptyShown = false, left = 5))
+        assertFalse(OpeningView.retries(emptyShown = true, left = 0))
+    }
 }

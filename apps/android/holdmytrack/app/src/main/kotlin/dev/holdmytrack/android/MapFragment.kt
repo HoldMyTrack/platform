@@ -219,7 +219,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     )
 
     /** Find my location's dot and tracking camera. */
-    private val locate = LocateController(this, map = { map }, style = { style })
+    private val locate = LocateController(this, map = { map }, style = { style }, onMoved = { views?.camera?.moved() })
 
     /** Points of interest: the shown places, their badges and popup, and capture mode. */
     private val spots = SpotsController(this, map = { map }, style = { style?.takeIf { overlaysAttached } }, frame = { views?.camera?.flyTo(it) })
@@ -437,9 +437,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 photos.refresh(force = true)
             },
             onRemovedFromTrip = { views?.refresh?.afterRemovedFromTrip(it) },
-            // The map has history now, so the empty notice goes.
+            // A copy can add nothing, so whether the map has history is asked again.
             onTripCopyArrived = {
-                notices.hide(MapNotice.EMPTY)
+                if (notices.shown == MapNotice.EMPTY) views?.let { v -> v.camera.openAgain { v.area.followArea() } }
                 views?.refresh?.afterTripCopy()
             },
             onTripsWaiting = { host?.setTripsWaiting(it) },
@@ -448,7 +448,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             libraryTab = libraryTab,
             download = trackDownload,
         )
-        val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, sheetTop = { views?.area?.datesSheetTop() }, onEmpty = ::onEmptyChecked)
+        val camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, tripOpen = { tripId != null }, emptyShown = { views?.notices?.shown == MapNotice.EMPTY }, sheetTop = { views?.area?.datesSheetTop() }, onEmpty = ::onEmptyChecked)
         val area = AreaController(
             this,
             sheet,
@@ -571,6 +571,11 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             instance.addOnCameraIdleListener { spots.onCameraIdle() }
             // The list follows the map (AreaController).
             instance.addOnCameraIdleListener { area.onCameraIdle() }
+            // The user's moves; MapLibre reports Find my location's as the app's, so it counts them
+            // itself (LocateController.onMoved).
+            instance.addOnCameraMoveStartedListener { reason ->
+                if (reason != MapLibreMap.OnCameraMoveStartedListener.REASON_DEVELOPER_ANIMATION) camera.moved()
+            }
             // Fog's button names the level in view as the zoom changes; a picked place's popup follows.
             instance.addOnCameraMoveListener {
                 modes.renderFogLevel()
@@ -663,6 +668,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             // Sync or a recording may have changed the area's tracks and an open Trip too.
             v.area.reloadList()
             v.panel.tripsTab.reloadOpen()
+            v.panel.tripsTab.refresh()
         }
         renderSheet()
         viewOnMapRequest?.let { (id, day) ->
@@ -1042,6 +1048,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         recording.dismissDialogs()
         // A search waiting to be read, or a Delete finishing, would read in the scope going now.
         v?.panel?.libraryTab?.destroy()
+        v?.camera?.release()
         v?.panel?.syncTab?.destroy()
         layers.dismiss()
         v?.modes?.dismissFogLevel()

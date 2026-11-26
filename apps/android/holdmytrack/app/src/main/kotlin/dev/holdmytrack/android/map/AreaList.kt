@@ -59,6 +59,22 @@ object OpeningView {
 
     data class View(val lon: Double, val lat: Double, val zoom: Double)
 
+    /** What the answer does with the camera (`testdata/client-rules/opening-move.json`). */
+    enum class Move { MOVE, HOLD, STAY }
+
+    /** Decided as the answer lands: [found] tracks to frame, [moved] since the read went out. */
+    fun move(found: Boolean, recording: Boolean, tripOpen: Boolean, flightAsked: Boolean, moved: Boolean): Move = when {
+        !found || recording || flightAsked || moved -> Move.STAY
+        tripOpen -> Move.HOLD
+        else -> Move.MOVE
+    }
+
+    /** How often a failed read for an empty map is made again. */
+    const val RETRIES = 5
+
+    /** Whether a failed read is made again: while the empty map's pointer shows. */
+    fun retries(emptyShown: Boolean, left: Int): Boolean = emptyShown && left > 0
+
     /** [boxes] are the tracks' bounds, newest first; null when there are none. [width] and
      *  [height] are the map's, in the pixels its zoom counts in (dp on Android). */
     fun of(boxes: List<List<Double>>, width: Double, height: Double): View? {

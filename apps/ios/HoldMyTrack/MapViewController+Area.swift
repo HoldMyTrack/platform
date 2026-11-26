@@ -13,7 +13,13 @@ extension MapViewController {
     /// then the list asked about wherever the camera is. An account with nothing on the map gets a
     /// pointer, the demo never, and is asked again on every return to the map while it shows, as
     /// on Android; a flight already asked for (View on map) keeps its camera.
-    func openOnce() {
+    /// asked: a new ask, a return or something arriving, which a failed read is made again for
+    /// while the empty map's pointer shows.
+    func openOnce(asked: Bool = false) {
+        if asked {
+            openRetriesLeft = OpeningView.retries
+            openRetry?.cancel()
+        }
         guard !framed || noticeShown(.empty) else {
             if let known = hasTracks { onHistoryKnown?(known) }
             return
@@ -24,6 +30,7 @@ extension MapViewController {
             return
         }
         opening = true
+        let movesAsked = cameraMoves
         Task {
             defer {
                 opening = false
@@ -34,6 +41,16 @@ extension MapViewController {
             }
             guard let newest = try? await flow.api.areaList(box: nil, dates: .allTime, limit: OpeningView.tracks) else {
                 followArea()
+                // Asked again meanwhile: the defer reads now. Else one retry waits at a time.
+                if !openAgain, OpeningView.retries(emptyShown: noticeShown(.empty), left: openRetriesLeft) {
+                    openRetriesLeft -= 1
+                    openRetry?.cancel()
+                    openRetry = Task { [weak self] in
+                        try? await Task.sleep(for: .seconds(5))
+                        guard !Task.isCancelled, let self, self.noticeShown(.empty) else { return }
+                        self.openOnce()
+                    }
+                }
                 return
             }
             framed = true
@@ -42,10 +59,14 @@ extension MapViewController {
             let boxes = FitBoxes.of(newest.tracks)
             if let view = OpeningView.of(boxes, width: mapView.bounds.width, height: mapView.bounds.height) {
                 hideNotice(.empty)
-                if MapChrome.opens(flightAsked: session.flyRequest, recording: recordingLive) {
+                switch OpeningView.move(found: true, recording: recordingLive, tripOpen: session.tripID != nil,
+                                        flightAsked: session.flyRequest, moved: cameraMoves != movesAsked) {
+                case .move:
                     appFlying = true
                     mapView.setCenter(CLLocationCoordinate2D(latitude: view.lat, longitude: view.lon), zoomLevel: view.zoom, animated: false)
                     DispatchQueue.main.async { [weak self] in self?.appFlying = false }
+                case .hold: openingHeldAt = cameraMoves
+                case .stay: break
                 }
             } else if MapChrome.emptyNoticeShown(empty: true, demo: account.isDemo, closed: EmptyNoticeDismissal.closed(account: accountKey)) {
                 let account = accountKey
@@ -55,6 +76,16 @@ extension MapViewController {
             }
             followArea()
         }
+    }
+
+    /// A Trip closed: an opening view it held back is taken, unless the camera has moved since, the
+    /// Trip's own flight included, which has framed its tracks.
+    func tripClosed() {
+        guard let held = openingHeldAt else { return }
+        openingHeldAt = nil
+        guard held == cameraMoves else { return }
+        framed = false
+        openOnce()
     }
 
     // MARK: Following the map

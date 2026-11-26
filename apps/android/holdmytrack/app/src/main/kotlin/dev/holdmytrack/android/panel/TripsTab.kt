@@ -134,14 +134,31 @@ class TripsTab(
         loadInbox()
     }
 
-    private fun loadTrips() {
+    /** The app came back with the tab showing: the list and the copies waiting are read again. A
+     *  failed read leaves the last one shown. */
+    fun refresh() {
+        if (!showing) return
+        loadTrips(quiet = true)
+        loadInbox()
+    }
+
+    /** Counts the list's reads, so only the latest one's answer lands, and the changes made here,
+     *  so an answer asked for before one doesn't undo it. */
+    private var reads = 0
+    private var changes = 0
+
+    private fun loadTrips(quiet: Boolean = false) {
+        val read = ++reads
+        val asked = changes
         HoldMyTrackApi.trips { result ->
-            if (!showing) return@trips
+            if (!showing || read != reads) return@trips
+            if (asked != changes) return@trips loadTrips(quiet)
             result.onSuccess { next ->
                 trips = next
                 ready = true
-                openNewest()
-            }.onFailure { error = FailureText.of(it, res.getString(R.string.trip_load_failed)) }
+                error = null
+                if (TripsList.openGone(quiet, openId, next.mapTo(HashSet()) { it.id }, failed = false)) openGone() else openNewest()
+            }.onFailure { if (TripsList.showsError(quiet, ready, failed = true)) error = FailureText.of(it, res.getString(R.string.trip_load_failed)) }
             render()
         }
     }
@@ -154,12 +171,20 @@ class TripsTab(
 
     /** The inbox read again; while a copy is arriving, again a few seconds later. A copy that
      *  has arrived since the last read brings the list and the map up to date. */
+    /** Counts the inbox's reads, so only the latest one's answer polls again. */
+    private var inboxReads = 0
+
     private fun loadInbox() {
         handler.removeCallbacks(pollInbox)
+        val read = ++inboxReads
         HoldMyTrackApi.tripSends { result ->
-            if (!showing) return@tripSends
+            if (!showing || read != inboxReads) return@tripSends
             // The inbox is an extra on the tab: a failed read leaves the last one shown.
-            val inbox = result.getOrNull() ?: return@tripSends
+            val inbox = result.getOrNull()
+            if (inbox == null) {
+                if (copying.isNotEmpty()) handler.postDelayed(pollInbox, COPYING_POLL_MS)
+                return@tripSends
+            }
             val arrived = inbox.copying.size < copying.size
             sends = inbox.sends
             copying = inbox.copying
@@ -190,6 +215,8 @@ class TripsTab(
 
     /** [id] is the open Trip now (or none): its own copy is read for the footer. */
     fun setOpen(id: String?) {
+        // One made here meanwhile: a list asked for before it doesn't name it.
+        if (id != null && trips.none { it.id == id }) changes++
         if (id != openId) {
             openId = id
             openTrip = null
@@ -211,8 +238,11 @@ class TripsTab(
                 openError = null
                 trips = trips.map { if (it.id == trip.id) trip else it }
             }.onFailure { failure ->
+                val gone = failure is ApiException && failure.code == 404
+                // A failed read keeps the numbers shown, unless the Trip is gone.
+                if (openTrip?.id == id && !gone) return@trip
                 openTrip = null
-                openError = if (failure is ApiException && failure.code == 404) {
+                openError = if (gone) {
                     res.getString(R.string.trip_not_found)
                 } else {
                     FailureText.of(failure, res.getString(R.string.trip_load_failed))
@@ -245,6 +275,12 @@ class TripsTab(
     private fun openNewest() {
         if (!showing || openId != null) return
         trips.firstOrNull()?.let { onOpen(it.id, false) }
+    }
+
+    /** The open Trip is gone, deleted here or elsewhere: the next newest opens in its place, or none. */
+    private fun openGone() {
+        val next = trips.firstOrNull()
+        if (next != null) onOpen(next.id, false) else onClose()
     }
 
     private fun render() {
@@ -355,14 +391,14 @@ class TripsTab(
     /** Dropped from the list in hand rather than read again. Deleting the open Trip opens the
      *  next newest in its place; deleting the last leaves none open. */
     private fun deleted(id: String) {
+        changes++
         trips = trips.filter { it.id != id }
         onBadgesChanged()
         if (id != openId) {
             render()
             return
         }
-        val next = trips.firstOrNull()
-        if (next != null) onOpen(next.id, false) else onClose()
+        openGone()
         render()
     }
 
@@ -372,6 +408,7 @@ class TripsTab(
         HoldMyTrackApi.changeTripTracks(tripId, listOf(trackId), add = false) { result ->
             result.onSuccess { trip ->
                 removeError = null
+                changes++
                 trips = trips.map { if (it.id == trip.id) trip else it }
                 if (trip.id == openId) openTrip = trip
                 onTrackRemoved(trackId)
@@ -383,6 +420,7 @@ class TripsTab(
     }
 
     private fun edited(trip: Trip) {
+        changes++
         trips = trips.map { if (it.id == trip.id) trip else it }
         if (trip.id == openId) openTrip = trip
         onBadgesChanged()
