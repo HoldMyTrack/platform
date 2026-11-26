@@ -17,7 +17,6 @@ import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.TooltipCompat
-import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
@@ -40,14 +39,14 @@ import dev.holdmytrack.android.recording.RecordingTypes
  * exactly one of them open while the tab shows — the newest, until another is tapped. Opening
  * one is viewing it: `MapFragment` shows the tracks and the list of all its tracks,
  * whatever the date range ([onOpen]), and this tab lists those rows inside the folder — tap to
- * select, × to take one out of the Trip — with the whole Trip's statistics in the footer. A tap
+ * select, × to take one out of the Trip — under its description and the whole Trip's statistics. A tap
  * on the open Trip's folder folds its list away or back ([TripFold]); the Trip stays open. A
  * folder's pencil and bin rename and delete it, and its send button sends someone a copy
  * ([SendCopySheet], FR-13.7).
  *
  * The list is read each time the tab opens ([start]), so a Trip made or changed since —
- * Add to trip's included — is there; the open Trip is read on its own ([setOpen]) for the
- * footer's numbers. Above the Trips, the copies others sent wait to be accepted or declined,
+ * Add to trip's included — is there; the open Trip is read on its own ([setOpen]) for its
+ * numbers. Above the Trips, the copies others sent wait to be accepted or declined,
  * read with the list and every few seconds while an accepted one is arriving.
  */
 class TripsTab(
@@ -71,9 +70,6 @@ class TripsTab(
     private val context = content.context
     private val res = context.resources
     private val list: RecyclerView = content.findViewById(R.id.trips_list)
-    private val stats: View = content.findViewById(R.id.trips_stats)
-    private val statsLine: TextView = content.findViewById(R.id.trips_stats_line)
-    private val types: TableLayout = content.findViewById(R.id.trips_types)
     private val adapter = ItemAdapter()
 
     private var showing = false
@@ -111,14 +107,7 @@ class TripsTab(
 
     init {
         list.layoutManager = LinearLayoutManager(context)
-        // In landscape the statistics are the list's last item, scrolling with the rows: pinned
-        // under them, they left the rows a sliver of the sheet.
-        list.adapter = if (res.getBoolean(R.bool.trips_stats_scroll)) {
-            (stats.parent as ViewGroup).removeView(stats)
-            ConcatAdapter(adapter, FooterAdapter(stats))
-        } else {
-            adapter
-        }
+        list.adapter = adapter
         list.itemAnimator = null
         clearFocusOnEmptyTap()
     }
@@ -299,6 +288,7 @@ class TripsTab(
             if (!expanded) continue
             trip.from?.let { items += Item.From(trip.id, res.getString(R.string.trip_from, it)) }
             if (trip.description.isNotEmpty()) items += Item.Description(trip.id, trip.description)
+            items += Item.Stats(trip)
             removeError?.let { items += Item.Note(it, failed = true) }
             rows.forEach { items += Item.Row(it, trip.id) }
             when {
@@ -316,20 +306,18 @@ class TripsTab(
             ready && trips.isEmpty() -> items += Item.Note(res.getString(R.string.trip_empty), failed = false)
         }
         adapter.submitList(items)
-        renderStats()
     }
 
-    /** The whole Trip, whatever the date range selects (FR-13.1). */
-    private fun renderStats() {
-        val trip = openTrip?.takeIf { it.id == openId }
-        stats.visibility = if (trip == null) View.GONE else View.VISIBLE
+    /** The whole Trip, whatever the date range selects (FR-13.1), into an [Item.Stats] view. */
+    private fun bindStats(view: View, trip: Trip) {
+        val line: TextView = view.findViewById(R.id.trips_stats_line)
+        val types: TableLayout = view.findViewById(R.id.trips_types)
         types.removeAllViews()
-        if (trip == null) return
         if (trip.stats.count == 0) {
-            statsLine.setText(R.string.trip_no_tracks)
+            line.setText(R.string.trip_no_tracks)
             return
         }
-        statsLine.text = statsLine(trip.stats)
+        line.text = statsLine(trip.stats)
         val gap = res.getDimensionPixelSize(R.dimen.hmt_space_12)
         for (type in trip.byType) {
             val row = TableRow(context)
@@ -444,11 +432,12 @@ class TripsTab(
         }
     }
 
-    /** What the list draws, in order: folders, the open one's description and rows, notes. */
+    /** What the list draws, in order: folders, the open one's description, statistics and rows, notes. */
     private sealed class Item(val key: String) {
         data class Folder(val trip: Trip, val open: Boolean, val expanded: Boolean) : Item("folder:" + trip.id)
         data class Description(val tripId: String, val text: String) : Item("description:$tripId")
         data class From(val tripId: String, val text: String) : Item("from:$tripId")
+        data class Stats(val trip: Trip) : Item("stats:" + trip.id)
         data class Inbox(val send: TripSend, val answering: Boolean) : Item("inbox:" + send.id)
         data class Copying(val copy: TripCopying, val index: Int) : Item("copying:$index")
         data class Row(val row: TrackRowItem, val tripId: String) : Item("row:" + row.track.id)
@@ -467,6 +456,7 @@ class TripsTab(
             is Item.Inbox, is Item.Copying -> TYPE_INBOX
             is Item.Row -> TYPE_ROW
             is Item.Note -> TYPE_NOTE
+            is Item.Stats -> TYPE_STATS
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -475,6 +465,7 @@ class TripsTab(
                 TYPE_FOLDER -> FolderHolder(inflater.inflate(R.layout.item_trip_folder, parent, false))
                 TYPE_DESCRIPTION -> object : RecyclerView.ViewHolder(inflater.inflate(R.layout.item_trip_description, parent, false)) {}
                 TYPE_INBOX -> InboxHolder(inflater.inflate(R.layout.item_trip_inbox, parent, false))
+                TYPE_STATS -> object : RecyclerView.ViewHolder(inflater.inflate(R.layout.item_trip_stats, parent, false)) {}
                 TYPE_ROW -> {
                     val view = inflater.inflate(R.layout.item_track_row, parent, false)
                     // Set in under the folder's name, which is what makes them its contents.
@@ -498,6 +489,7 @@ class TripsTab(
                     text = item.text
                     setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.hmt_text_sm))
                 }
+                is Item.Stats -> bindStats(holder.itemView, item.trip)
                 is Item.Inbox -> (holder as InboxHolder).bind(item)
                 is Item.Copying -> (holder as InboxHolder).bind(item)
                 // Badged only for the row's other Trips: every row here is in this one.
@@ -601,6 +593,7 @@ class TripsTab(
         const val TYPE_ROW = 2
         const val TYPE_NOTE = 3
         const val TYPE_INBOX = 4
+        const val TYPE_STATS = 5
 
         /** How often the inbox is read again while an accepted copy is arriving. */
         const val COPYING_POLL_MS = 3000L
@@ -608,16 +601,4 @@ class TripsTab(
         /** The web's 36px `.trips-tab__rows` indent. */
         const val ROW_INDENT_DP = 36
     }
-}
-
-/** One view, always the list's last item: the open Trip's statistics in landscape ([TripsTab]). */
-private class FooterAdapter(private val view: View) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    override fun getItemCount() = 1
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        view.layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        return object : RecyclerView.ViewHolder(view) {}
-    }
-
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = Unit
 }

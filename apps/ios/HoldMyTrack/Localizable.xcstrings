@@ -12999,24 +12999,6 @@
         }
       }
     },
-    "trips.byType" : {
-      "comment" : "A Trip's numbers: the heading over each type's.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "By track type"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "По типам треков"
-          }
-        }
-      }
-    },
     "trips.delete" : {
       "comment" : "A Trip's folder: delete it.",
       "extractionState" : "manual",

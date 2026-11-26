@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The open Trip's statistics, under its description and set in with the rows
+     (.trips-tab__stats): folded away with them. Filled by panel/TripsTab. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/trips_stats"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="36dp"
+    android:paddingTop="@dimen/hmt_space_8"
+    android:paddingEnd="@dimen/hmt_space_16"
+    android:paddingBottom="@dimen/hmt_space_8">
+
+    <TextView
+        android:id="@+id/trips_stats_line"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/hmt_ink"
+        android:textFontWeight="600"
+        android:textSize="@dimen/hmt_text_md"
+        tools:text="3 tracks · 58 km · 3h 26m moving" />
+
+    <!-- Per track type (.trips-tab__types): its name, then its own line. -->
+    <TableLayout
+        android:id="@+id/trips_types"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/hmt_space_4"
+        android:contentDescription="@string/trip_by_type"
+        android:shrinkColumns="1" />
+</LinearLayout>

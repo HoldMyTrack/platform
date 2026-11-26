@@ -188,22 +188,25 @@ final class PanelTests: XCTestCase {
         app.tabBars.buttons["tabTrips"].tap()
         XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
         XCTAssertFalse(modes.exists, "no mode toggle on Trips")
-        XCTAssertTrue(app.staticTexts["tripStats"].waitForExistence(timeout: 10), "the open Trip's numbers under the list")
-        let pinnedAt = app.staticTexts["tripStats"].frame.minY
-        XCTAssertGreaterThan(pinnedAt, app.cells.matching(identifier: "trackRow").allElementsBoundByIndex.map(\.frame.maxY).max() ?? 0, "under the Trip's rows")
+        let stats = app.staticTexts["tripStats"]
+        XCTAssertTrue(stats.waitForExistence(timeout: 10), "the open Trip's numbers")
+        let firstRow = app.cells.matching(identifier: "trackRow").firstMatch
+        XCTAssertTrue(firstRow.waitForExistence(timeout: 10))
+        XCTAssertGreaterThan(stats.frame.minY, app.cells["tripFolder"].firstMatch.frame.maxY, "under its folder")
+        XCTAssertLessThan(stats.frame.maxY, firstRow.frame.minY, "above its rows")
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = "Trips"
         shot.lifetime = .keepAlways
         add(shot)
 
-        // A tap on the open Trip folds its rows away and back; its numbers stay.
+        // A tap on the open Trip folds its numbers and rows away, and back.
         let folder = app.cells["tripFolder"].firstMatch
         folder.tap()
         XCTAssertEqual(folder.value as? String, "Folded")
-        XCTAssertTrue(app.staticTexts["tripStats"].exists, "the numbers stay while the Trip is folded")
-        XCTAssertEqual(app.staticTexts["tripStats"].frame.minY, pinnedAt, "pinned under the list, not following its folder")
+        XCTAssertTrue(stats.waitForNonExistence(timeout: 5), "the numbers fold away with the rows")
         folder.tap()
         XCTAssertEqual(folder.value as? String, "Open")
+        XCTAssertTrue(stats.waitForExistence(timeout: 5), "and come back with them")
 
         app.tabBars.buttons["tabTracks"].tap()
         XCTAssertTrue(modes.waitForExistence(timeout: 5))

@@ -4,9 +4,9 @@ import UIKit
 /// The sheet's Trips tab (root docs/SPEC.md FR-13.6, apps/docs/SPEC.md FR-2.7): every
 /// Trip as a folder, newest first, one of them open while the tab shows, the newest until another
 /// is tapped. The map screen lists and draws the open Trip's tracks and hands its rows back
-/// (setRows); this tab draws them inside the folder, with × to take one out, and the whole Trip's
-/// numbers under the list. A tap on the open Trip's folder folds its list away or back (TripFold);
-/// the Trip stays open with its numbers. Above the folders, copies others sent wait to be accepted or declined
+/// (setRows); this tab draws them inside the folder, with × to take one out, under its description
+/// and the whole Trip's numbers. A tap on the open Trip's folder folds all of that away or back
+/// (TripFold); the Trip stays open. Above the folders, copies others sent wait to be accepted or declined
 /// (FR-13.7), read with the list and every 3 seconds while an accepted one is arriving.
 final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
@@ -25,7 +25,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     var onEvent: ((Event) -> Void)?
-    let content = LaidOutView()
+    let content = UIView()
     let head = UIStackView()
 
     private let api: APIClient
@@ -59,7 +59,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     private enum Item {
         case send(TripSend), copying(TripCopying), folder(Trip, open: Bool, expanded: Bool), text(String, small: Bool)
-        case row(TrackRowCell.Row, tripID: String), note(String, failed: Bool)
+        case row(TrackRowCell.Row, tripID: String), note(String, failed: Bool), stats(Trip)
     }
     private var items: [Item] = []
 
@@ -78,35 +78,15 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let tapEmpty = UITapGestureRecognizer(target: self, action: #selector(tappedList(_:)))
         tapEmpty.cancelsTouchesInView = false
         table.addGestureRecognizer(tapEmpty)
-        // The list fills the tab; pinned, the numbers lie over its bottom, which is inset by their
-        // height so no row hides behind them (placeStats).
-        stats.backgroundColor = UIColor(resource: .surface)
-        stats.isHidden = true
-        for v in [table, stats] as [UIView] {
-            v.translatesAutoresizingMaskIntoConstraints = false
-            content.addSubview(v)
-        }
+        table.translatesAutoresizingMaskIntoConstraints = false
+        content.addSubview(table)
         NSLayoutConstraint.activate([
             table.topAnchor.constraint(equalTo: content.topAnchor),
             table.leadingAnchor.constraint(equalTo: content.leadingAnchor),
             table.trailingAnchor.constraint(equalTo: content.trailingAnchor),
             table.bottomAnchor.constraint(equalTo: content.bottomAnchor),
-            stats.leadingAnchor.constraint(equalTo: content.leadingAnchor),
-            stats.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            stats.bottomAnchor.constraint(equalTo: content.bottomAnchor),
         ])
-        // Measured again whenever the tab's size, the sheet's height or the text size changes.
-        content.onLayout = { [weak self] in self?.placeStats() }
-        content.registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (view: UIView, _) in view.setNeedsLayout() }
     }
-
-    /// Holds the open Trip's numbers while they're pinned under the list.
-    private let stats = UIView()
-    /// The open Trip's numbers, with their rule and margins, or nil with no Trip open.
-    private var statsBox: UIView?
-    private struct Placed: Equatable { let pinned: Bool, width: CGFloat, height: CGFloat }
-    /// How statsBox was last placed, so a layout that changes nothing moves nothing.
-    private var placed: Placed?
 
     // MARK: Showing
 
@@ -270,6 +250,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             guard expanded else { continue }
             if let from = trip.from { next.append(.text(String(localized: "From \(from)"), small: true)) }
             if !trip.description.isEmpty { next.append(.text(trip.description, small: false)) }
+            next.append(.stats(trip))
             if let removeError { next.append(.note(removeError, failed: true)) }
             next += rows.map { .row($0, tripID: trip.id) }
             if let rowsNote {
@@ -287,69 +268,6 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         }
         items = next
         table.reloadData()
-        renderStats()
-    }
-
-    /// The whole open Trip's numbers, whatever the dates select, and each type's share: shown while
-    /// a Trip is open, its list folded or not.
-    private func renderStats() {
-        statsBox?.removeFromSuperview()
-        statsBox = nil
-        placed = nil
-        table.tableFooterView = nil
-        stats.isHidden = true
-        insetFor(nil)
-        guard let trip = openTrip, trip.id == openID else { return }
-        let box = UIView()
-        let body = statsView(trip)
-        let rule = UIView()
-        rule.backgroundColor = UIColor(resource: .border)
-        for v in [rule, body] {
-            v.translatesAutoresizingMaskIntoConstraints = false
-            box.addSubview(v)
-        }
-        NSLayoutConstraint.activate([
-            rule.topAnchor.constraint(equalTo: box.topAnchor), rule.heightAnchor.constraint(equalToConstant: 1),
-            rule.leadingAnchor.constraint(equalTo: box.leadingAnchor), rule.trailingAnchor.constraint(equalTo: box.trailingAnchor),
-            body.topAnchor.constraint(equalTo: box.topAnchor, constant: DesignTokens.Space.s12),
-            body.bottomAnchor.constraint(equalTo: box.bottomAnchor, constant: -DesignTokens.Space.s12),
-            body.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: DesignTokens.Space.s16),
-            body.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -DesignTokens.Space.s16),
-        ])
-        statsBox = box
-        placeStats()
-    }
-
-    /// Puts statsBox where TripStatsPlace says, measured at the tab's width. Collapsed, the tab has
-    /// no height to measure against, and the numbers stay where they were.
-    private func placeStats() {
-        guard let box = statsBox, content.bounds.width > 0, content.bounds.height > 0 else { return }
-        let width = content.bounds.width
-        let height = box.systemLayoutSizeFitting(CGSize(width: width, height: 0), withHorizontalFittingPriority: .required,
-                                                 verticalFittingPriority: .fittingSizeLevel).height
-        let pinned = TripStatsPlace.pinned(compactHeight: content.traitCollection.verticalSizeClass == .compact,
-                                           height: Double(height), available: Double(content.bounds.height))
-        let place = Placed(pinned: pinned, width: width, height: height)
-        guard place != placed else { return }
-        placed = place
-        box.removeFromSuperview()
-        table.tableFooterView = nil
-        box.translatesAutoresizingMaskIntoConstraints = false
-        let host = pinned ? stats : UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        host.addSubview(box)
-        NSLayoutConstraint.activate([
-            box.topAnchor.constraint(equalTo: host.topAnchor), box.bottomAnchor.constraint(equalTo: host.bottomAnchor),
-            box.leadingAnchor.constraint(equalTo: host.leadingAnchor), box.trailingAnchor.constraint(equalTo: host.trailingAnchor),
-        ])
-        stats.isHidden = !pinned
-        if !pinned { table.tableFooterView = host }
-        insetFor(pinned ? height : nil)
-    }
-
-    /// The list's bottom kept clear of the pinned numbers, or not.
-    private func insetFor(_ height: CGFloat?) {
-        table.contentInset.bottom = height ?? 0
-        table.verticalScrollIndicatorInsets.bottom = height ?? 0
     }
 
     /// "3 tracks · 58 km · 3h 26m moving": the Trip's, or one type's share of it.
@@ -358,8 +276,26 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                comment: "A Trip's numbers: its tracks, distance and moving time.")
     }
 
-    /// The open Trip's line, then By track type: each type's label beside its share; with no
-    /// tracks, only that it has none.
+    /// The whole Trip's numbers, whatever the dates select, under its description and set in as
+    /// its rows are: its line, then each type's label beside its share; with no tracks, only that
+    /// it has none.
+    private func statsCell(_ trip: Trip) -> UITableViewCell {
+        let cell = table.dequeueReusableCell(withIdentifier: "stats") ?? UITableViewCell(style: .default, reuseIdentifier: "stats")
+        cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+        cell.backgroundColor = .clear
+        cell.selectionStyle = .none
+        let column = statsView(trip)
+        column.translatesAutoresizingMaskIntoConstraints = false
+        cell.contentView.addSubview(column)
+        NSLayoutConstraint.activate([
+            column.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: DesignTokens.Space.s8),
+            column.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -DesignTokens.Space.s8),
+            column.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 36),
+            column.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -DesignTokens.Space.s16),
+        ])
+        return cell
+    }
+
     private func statsView(_ trip: Trip) -> UIView {
         let small = Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote)
         let whole = Controls.label(trip.stats.count == 0 ? String(localized: "trips.noTracks", defaultValue: "No tracks in this trip.", comment: "An open Trip with no tracks.") : line(trip.stats), font: Typeface.sans(DesignTokens.Text.md, weight: DesignTokens.Weight.semibold, relativeTo: .subheadline), color: UIColor(resource: .ink))
@@ -368,7 +304,6 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         var views: [UIView] = [whole]
         var typeLabels: [UILabel] = []
         if trip.stats.count > 0, !trip.byType.isEmpty {
-            views.append(Controls.label(String(localized: "trips.byType", defaultValue: "By track type", comment: "A Trip's numbers: the heading over each type's."), font: small, color: UIColor(resource: .inkSecondary)))
             // The types as one column, as Android's table has them: every label as wide as the widest.
             for type in trip.byType {
                 let label = Controls.label(TrackTypes.shared.label(type.trackType), font: small, color: UIColor(resource: .inkSecondary))
@@ -420,6 +355,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             return textCell(text, color: UIColor(resource: .inkSecondary), size: small ? DesignTokens.Text.sm : DesignTokens.Text.md)
         case .note(let text, let failed):
             return textCell(text, color: UIColor(resource: failed ? .danger : .inkSecondary), size: DesignTokens.Text.md)
+        case .stats(let trip):
+            return statsCell(trip)
         }
     }
 
@@ -618,15 +555,5 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     static func message(_ error: Error, _ fallback: String) -> String {
         (error as? APIError)?.serverMessage ?? fallback
-    }
-}
-
-/// A view that says when it's laid out, so what it holds can be measured at its new size.
-final class LaidOutView: UIView {
-    var onLayout: (() -> Void)?
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        onLayout?()
     }
 }
