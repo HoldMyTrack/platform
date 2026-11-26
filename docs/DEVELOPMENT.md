@@ -121,6 +121,10 @@ Each client's flows run against the dev stack, which `make e2e-stack` rebuilds f
 - `make e2e-ios` passes `HMT_API_BASE_URL` on the command line, which outranks `Config/Local.xcconfig`. Run from Xcode, the UI tests use the xcconfig's origin and skip when it doesn't answer. `IOS_UI_TESTS=HoldMyTrackUITests/LaunchTests` runs one class.
 - The iOS demo tests sign in as the demo, which the dev stack allows a few times an hour from one address; one refused with "Too many demo sessions" passes again once the hour is up. `CaptureTests` skips while the dev stack has no Spots ("Seeding a fresh database").
 
+### Comparing the apps
+
+`make ui-compare` runs Android's `UiShotsTest` on the emulator and iOS's `UIShotsTests` on `IOS_DESTINATION`, each capturing every `apps/docs/ui-states.json` entry it can reach on the demo account, then writes `ui-compare/index.html`: one page with both apps side by side per entry, what to expect, what may differ and why, and what is decided or open. It needs what `make e2e-android` and `make e2e-ios` need, and takes about ten minutes. An entry either app didn't capture is listed at the top. Both shot tests skip in the end-to-end suites.
+
 ### CI
 
 `.github/workflows/ci.yml` runs on each push to `main` and each pull request; on a pull request its `changes` job skips the Go, web, Android, map verification and ops-config jobs when nothing they read changed, Markdown excluded, and a push to `main` runs every job, so a read outside a job's folder that its filter misses fails on merge; add that read to the filter. Run workflow on a branch (Actions, CI or iOS) runs every job before merging; its results count toward the pull request's required checks. Its basemap extract is cached on `apps/web/scripts/build-basemap.sh` and cut on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script. A `govulncheck` failure on a pull request that changes no dependency means a new advisory: bump the module or Go itself.

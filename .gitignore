@@ -19,6 +19,9 @@ dist/
 # Playwright output from `npm run verify:map` and `npm run verify:build`.
 **/tests/screenshots/
 
+# `make ui-compare`'s screenshots and page.
+/ui-compare/
+
 # Compose variable interpolation only, never VITE_* — see .env.example for the three-tier
 # env-file convention. The example file is committed; the real one is not.
 /.env
