@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built in the Android app: Settings, Track graph & trends and About are the site's pages in a WebView (`SPEC.md` FR-9.6, `apps/docs/SPEC.md` FR-1.5, FR-1.6). The iOS app is a skeleton so far; its pages come in `apps/ios/docs/ROADMAP.md` phase 6.
+Accepted. Built in both apps: Settings, Track graph & trends and About are the site's pages in a web view (`SPEC.md` FR-9.6, `apps/docs/SPEC.md` FR-1.5, FR-1.6).
 
 ## Context
 
