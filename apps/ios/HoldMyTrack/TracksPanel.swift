@@ -396,7 +396,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                      anyHidden ? String(localized: "Show \(name ?? "") on the map") : String(localized: "Hide \(name ?? "") from the map"))
             describe(actions.edit, use.edit, demo: String(localized: "Not available for demo accounts — create an account to edit tracks"), targets.count == 1 ? String(localized: "Edit \(name ?? ""): type, name, description and route") : String(localized: "Edit type for \(name ?? "")"))
             describe(actions.addToTrip, use.addToTrip, demo: String(localized: "Not available for demo accounts — create an account to change trips"), String(localized: "Add \(name ?? "") to a trip"))
-            if let delete = actions.delete { describe(delete, use.delete, demo: deleteDemo, String(localized: "Delete \(name ?? "")")) }
+            if let delete = actions.delete { describe(delete, use.delete, demo: deleteDemo, String(localized: "Delete \(name ?? "")", comment: "Delete's label; the placeholder names its target: a Tracks panel track or Trip, or a Photos tab photo.")) }
             describe(actions.focus, use.focus, String(localized: "Zoom to \(name ?? "")"))
         }
         renderMore(targets, name: name, delete: use.delete, deleteDemo: deleteDemo)

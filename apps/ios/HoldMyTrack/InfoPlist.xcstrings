@@ -1,6 +1,64 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack"
+          }
+        }
+      }
+    },
+    "FIT track" : {
+      "comment" : "A file type the app opens, as Files and the share sheet name it.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Трек FIT"
+          }
+        }
+      }
+    },
+    "GPX track" : {
+      "comment" : "A file type the app opens, as Files and the share sheet name it.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Трек GPX"
+          }
+        }
+      }
+    },
     "NSCameraUsageDescription" : {
       "comment" : "The camera permission prompt, shown when Settings' avatar takes a photo.",
       "extractionState" : "manual",
@@ -87,6 +145,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Для захвата места учитывается только точное местоположение, чтобы не захватить место, мимо которого вы проходите."
+          }
+        }
+      }
+    },
+    "TCX track" : {
+      "comment" : "A file type the app opens, as Files and the share sheet name it.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Трек TCX"
           }
         }
       }

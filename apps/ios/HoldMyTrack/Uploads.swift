@@ -173,7 +173,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             case .unreachable: notes.append(Note(text: String(localized: "\(name): the server couldn't be reached"), error: true))
             case .already: notes.append(Note(text: String(localized: "\(name) was already uploaded before."), error: false))
             case .refused(let reason):
-                notes.append(Note(text: String(localized: "\(name): \(reason.isEmpty ? String(localized: "the server refused it") : reason)"), error: true))
+                notes.append(Note(text: String(localized: "\(name): \(reason.isEmpty ? String(localized: "the server refused it") : reason)", comment: "A file that couldn't be added, and why: a picked photo on the Photos tab, or an upload."), error: true))
             }
             changed()
         }
