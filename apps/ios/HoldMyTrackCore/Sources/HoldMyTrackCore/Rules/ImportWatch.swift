@@ -7,6 +7,9 @@ public enum ImportWatch {
         (status == "done", status != "processing")
     }
 
-    /// Seconds to wait after failures failed reads in a row, or nil to give up.
-    public static func delay(failures: Int) -> Int? { failures >= 8 ? nil : min(2 << failures, 60) }
+    /// Seconds to wait after failures rounds in a row with a failed read, watched seconds after the
+    /// watch started, or nil to give up.
+    public static func delay(failures: Int, watched: Int) -> Int? {
+        failures >= 8 || watched >= 600 ? nil : min(2 << failures, 60)
+    }
 }

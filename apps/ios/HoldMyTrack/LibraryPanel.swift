@@ -275,6 +275,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     /// the page, so a read clears it.
     private func read(quiet: Bool = false) {
         reading?.cancel()
+        // A cancelled read never clears its handle, and refresh reads only while none is held.
+        reading = nil
         checked = []
         guard let query = LibraryRules.pageQuery(state, allTypes: page?.typeCounts.map(\.type) ?? []) else {
             // Every type left out matches nothing: no need to ask.

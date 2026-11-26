@@ -197,8 +197,8 @@ final class Uploads: NSObject, URLSessionDataDelegate {
 
     /// An upload was accepted: each file still processing is asked about every few seconds
     /// (`GET /v2/uploads/{external_id}`) until none is, and each that lands is posted (landed).
-    /// Failed reads wait longer each time, and give up (ImportWatch.delay); iOS holds the reads
-    /// while the app is away, and they go on as it comes back.
+    /// Failed reads wait longer each time, and the watch gives up after those or after a while
+    /// (ImportWatch.delay); iOS holds the reads while the app is away, and they go on as it comes back.
     private func watch(_ externalID: String) {
         // Not set yet when iOS relaunches the app for its uploads alone: that file isn't followed,
         // and the map catches up as the app is opened (MapViewController.returned).
@@ -209,7 +209,8 @@ final class Uploads: NSObject, URLSessionDataDelegate {
         let mine = watchGeneration
         watching = Task { [weak self] in
             var failures = 0
-            while let wait = ImportWatch.delay(failures: failures) {
+            let started = ContinuousClock.now
+            while let wait = ImportWatch.delay(failures: failures, watched: Int((ContinuousClock.now - started).components.seconds)) {
                 try? await Task.sleep(for: .seconds(wait))
                 guard let ids = self?.processing, !Task.isCancelled else { return }
                 var landed = false, failed = false

@@ -9,9 +9,12 @@ object ImportWatch {
     /** [status]: `GET /v2/uploads/{external_id}`'s; only processing is watched on. */
     fun step(status: String): Step = Step(landed = status == "done", done = status != "processing")
 
-    /** Seconds to wait after [failures] failed reads in a row, or null to give up. */
-    fun delay(failures: Int): Int? = if (failures >= GIVE_UP) null else minOf(2 shl failures, MAX_DELAY)
+    /** Seconds to wait after [failures] rounds in a row with a failed read, [watched] seconds
+     *  after the watch started, or null to give up. */
+    fun delay(failures: Int, watched: Long): Int? =
+        if (failures >= GIVE_UP || watched >= MAX_WATCH) null else minOf(2 shl failures, MAX_DELAY)
 
     private const val GIVE_UP = 8
     private const val MAX_DELAY = 60
+    private const val MAX_WATCH = 600L
 }

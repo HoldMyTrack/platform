@@ -328,7 +328,7 @@ class ClientRulesTest {
             val step = ImportWatch.step(input.string("status")!!)
             buildJsonObject { put("landed", step.landed); put("done", step.done) }
         },
-        "importRetry" to { input -> ImportWatch.delay(input.int("failures"))?.let { JsonPrimitive(it) } ?: JsonNull },
+        "importRetry" to { input -> ImportWatch.delay(input.int("failures"), input.int("watched").toLong())?.let { JsonPrimitive(it) } ?: JsonNull },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
         "privateDrawOrder" to { input ->
             val circle = { id: String -> Circle(id, 0.0, 0.0, 200) }
