@@ -144,7 +144,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'filters.any_distance': 'любое расстояние',
   'filters.distance': 'Расстояние',
   'filters.clear_distance': 'Сбросить расстояние',
-  'filters.distance_between': '{min}–{max} {unit}',
+  'filters.distance_between': '{min} – {max} {unit}',
   'filters.max_distance': 'Максимальное расстояние',
   'filters.min_distance': 'Минимальное расстояние',
   'edit.description': 'Описание',

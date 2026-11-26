@@ -177,13 +177,13 @@
         }
       }
     },
-    "%@–%@ %@" : {
+    "%@ – %@ %@" : {
       "comment" : "Tracks panel: the Distance filter's band: the shortest, the longest, and the unit.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@–%@ %@"
+            "value" : "%@ – %@ %@"
           }
         }
       }

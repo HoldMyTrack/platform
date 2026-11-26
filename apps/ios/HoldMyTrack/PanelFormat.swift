@@ -37,6 +37,15 @@ struct PanelFormat {
     /// The number alone, as the Distance filter's readout writes it.
     func distanceValue(_ meters: Double) -> String { written(FormatParts.distance(meters: meters, imperial: imperial)) }
 
+    /// An end of the Distance filter's band, the number alone (FormatParts.distanceBand).
+    func distanceBandValue(_ meters: Double) -> String { written(FormatParts.distanceBand(meters: meters, imperial: imperial)) }
+
+    /// An end of the Distance slider, with its unit.
+    func distanceBand(_ meters: Double) -> String {
+        let parts = FormatParts.distanceBand(meters: meters, imperial: imperial)
+        return "\(written(parts)) \(unit(parts.unit))"
+    }
+
     func distance(_ meters: Double?) -> String {
         guard let meters else { return Self.dash }
         let parts = FormatParts.distance(meters: meters, imperial: imperial)

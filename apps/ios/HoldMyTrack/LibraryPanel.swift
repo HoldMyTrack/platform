@@ -359,8 +359,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
         distanceButton.isHidden = page?.distance.map { $0.lowerBound >= $0.upperBound } ?? true
         if let band = state.distance {
-            let top = band.max.map(format.distanceValue) ?? "∞"
-            distanceButton.configuration?.title = String(localized: "\(format.distanceValue(band.min))–\(top) \(format.unit)")
+            let top = band.max.map(format.distanceBandValue) ?? "∞"
+            distanceButton.configuration?.title = String(localized: "\(format.distanceBandValue(band.min)) – \(top) \(format.unit)")
         } else {
             distanceButton.configuration?.title = String(localized: "Any distance")
         }
@@ -459,7 +459,10 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private func showDistance() {
         guard let span = page?.distance, span.lowerBound < span.upperBound else { return }
         let bounds = DistanceRange(min: span.lowerBound, max: span.upperBound)
-        let current = state.distance.map { LibraryRules.sliderRange($0, bounds: bounds) }
+        // Clamped to the slider's whole-unit ends, or a held knob would sit off them and both
+        // knobs at the ends would still read as a filter.
+        let ends = TrackFacets.wholeDistanceBounds(bounds, imperial: format.imperial) ?? bounds
+        let current = state.distance.map { LibraryRules.sliderRange($0, bounds: ends) }
         let picker = DistanceFilterViewController(bounds: bounds, current: current, format: format) { [weak self] next in
             guard let self else { return }
             // The slider moves in steps: read once it rests, not at every step.

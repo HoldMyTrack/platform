@@ -3,19 +3,23 @@ package dev.holdmytrack.android.panel
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+/** The DISTANCE slider's positions: whole kilometers or miles, one a step. */
 class TrackFiltersTest {
-    private val bounds = DistanceRange(1234.567, 98765.4321)
-
     @Test
-    fun `a knob within a metre of an end lands on that end's track`() {
-        assertEquals(bounds.min, TrackFilters.snap(bounds.min.toFloat(), bounds), 0.0)
-        assertEquals(bounds.max, TrackFilters.snap(bounds.max.toFloat(), bounds), 0.0)
-        assertEquals(bounds.min, TrackFilters.snap(1235.0f, bounds), 0.0)
+    fun `a whole number of units is that many steps`() {
+        assertEquals(12f, TrackFacets.sliderUnits(12000.0, imperial = false))
+        assertEquals(10f, TrackFacets.sliderUnits(16093.44, imperial = true))
     }
 
     @Test
-    fun `a knob between the ends stays where it is`() {
-        assertEquals(50000.0, TrackFilters.snap(50000f, bounds), 0.0)
-        assertEquals(1236.0, TrackFilters.snap(1236f, bounds), 0.0)
+    fun `an end that isn't whole draws at the nearest step`() {
+        assertEquals(3f, TrackFacets.sliderUnits(5000.0, imperial = true))
+    }
+
+    @Test
+    fun `a step back in meters is the whole-unit end exactly`() {
+        val ends = TrackFacets.wholeDistanceBounds(DistanceRange(1700.0, 16093.44), imperial = true)!!
+        assertEquals(ends.max, TrackFacets.sliderMeters(TrackFacets.sliderUnits(ends.max, true), true), 0.0)
+        assertEquals(ends.min, TrackFacets.sliderMeters(TrackFacets.sliderUnits(ends.min, true), true), 0.0)
     }
 }

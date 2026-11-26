@@ -45,7 +45,8 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `photoGroup` | `photos` (`{ lat, lon }`) | `"open"` or `{ fit: [west, south, east, north] }` |
 | `webSession` | `state` (`dates`, `area`, `tripId`, `checked`, `hidden`, `excludedTypes`), `event` | the state after it, with `flyRequest` |
 | `distanceBounds` | `tracks` (`{ trackType, distanceMeters, private }`) | `{ min, max }` or `null` |
-| `distanceFilter` | `bounds`, `current` (`{ min, max }`), `knob` (`min`, `max`), `value` | `{ min, max }` or `null` |
+| `distanceWholeBounds` | `bounds` (`{ min, max }` or `null`), `system` (`metric`, `imperial`) | `{ min, max }` or `null` |
+| `distanceFilter` | `bounds`, `current` (`{ min, max }`), `knob` (`min`, `max`), `value`, `system` | `{ min, max }` or `null` |
 | `typeFacets` | `tracks`, `distanceFilter` | `[{ type, count }]` |
 | `typeSearch` | `options` (`{ value, label, count }`), `query`, `maxLength` | `{ shown, add }`: values, and the text offered as a new type or `null` |
 | `typeOptions` | `current`, `known` (`{ type, count }`) | `[{ type, count }]` |
@@ -82,7 +83,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `photoZoom` | `view` (`{ scale, x, y }`), `factor`, `point`, `fitted`, `stage` | a view |
 | `photoPan` | `view`, `dx`, `dy`, `fitted`, `stage` | a view |
 | `photoClamp` | `view`, `fitted`, `stage` | a view |
-| `distanceParts`, `totalDistanceParts` | `meters`, `system` (`metric`, `imperial`) | `{ value, minDecimals, maxDecimals, grouping, unit }` |
+| `distanceParts`, `totalDistanceParts`, `distanceBandParts` | `meters`, `system` (`metric`, `imperial`) | `{ value, minDecimals, maxDecimals, grouping, unit }` |
 | `durationParts` | `seconds` | `{ key, args }` |
 | `editWrites` | `tracks`, `written` (`{ id, trackType, name, description }`), `type`, `name`, `description` (the form's), `unsure` (ids) | `[{ id, trackType, name, description }]` |
 | `editRouteFold` | `base` (an edit or `null`), `ops` | an edit `{ keep, remove, drop, move }` |

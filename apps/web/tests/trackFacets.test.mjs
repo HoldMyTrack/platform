@@ -18,7 +18,7 @@ test('a band wholly outside the bounds is drawn at the nearer end', () => {
 
 test('a knob dragged from a drawn band stays where it was dragged', () => {
   const drawn = bandWithin(bounds, { min: 5000, max: 20000 });
-  assert.deepEqual(nextDistanceFilter(bounds, drawn, 'max', 45000), { min: 30000, max: 45000 });
+  assert.deepEqual(nextDistanceFilter(bounds, drawn, 'max', 45000, 'metric'), { min: 30000, max: 45000 });
 });
 
 test('an empty list blames the filters only when one is set', () => {

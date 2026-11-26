@@ -1,7 +1,7 @@
 import type { UnitSystem } from './units.ts';
 import { lang, t } from '../i18n/index.ts';
 import { typeLabel } from './trackTypes.ts';
-import { distanceParts, durationParts, totalDistanceParts, type DistanceParts } from './formatParts.ts';
+import { distanceBandParts, distanceParts, durationParts, totalDistanceParts, type DistanceParts } from './formatParts.ts';
 import { trackTimeZone } from './timeZone.ts';
 
 /**
@@ -90,6 +90,11 @@ export function formatClockTime(ms: number, timeZone: string): string {
  *  `formatDistance`, which includes its own suffix. */
 export function distanceValue(meters: number, system: UnitSystem): string {
   return written(distanceParts(meters, system));
+}
+
+/** An end of the Distance filter's band, the number alone (distanceBandParts). */
+export function distanceBandValue(meters: number, system: UnitSystem): string {
+  return written(distanceBandParts(meters, system));
 }
 
 function written(parts: DistanceParts): string {

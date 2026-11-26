@@ -1,0 +1,12 @@
+{
+  "rule": "distanceBandParts",
+  "description": "An end of the Distance filter's band in the account's units (system), as its chip or readout writes it: whole kilometers or miles as the filter moves in them, and one decimal for an end that isn't whole (a band set in the other units, or before the filter moved in whole ones), never grouped. Expected: { value, minDecimals, maxDecimals, grouping, unit }, as distanceParts.",
+  "tolerance": 1e-6,
+  "cases": [
+    { "name": "whole kilometers", "input": { "meters": 12000, "system": "metric" }, "expected": { "value": 12, "minDecimals": 0, "maxDecimals": 1, "grouping": false, "unit": "km" } },
+    { "name": "whole miles", "input": { "meters": 16093.44, "system": "imperial" }, "expected": { "value": 10, "minDecimals": 0, "maxDecimals": 1, "grouping": false, "unit": "mi" } },
+    { "name": "kilometers shown in miles keep a decimal", "input": { "meters": 5000, "system": "imperial" }, "expected": { "value": 3.106856, "minDecimals": 0, "maxDecimals": 1, "grouping": false, "unit": "mi" } },
+    { "name": "zero", "input": { "meters": 0, "system": "metric" }, "expected": { "value": 0, "minDecimals": 0, "maxDecimals": 1, "grouping": false, "unit": "km" } },
+    { "name": "a long one is not grouped", "input": { "meters": 1234000, "system": "metric" }, "expected": { "value": 1234, "minDecimals": 0, "maxDecimals": 1, "grouping": false, "unit": "km" } }
+  ]
+}
