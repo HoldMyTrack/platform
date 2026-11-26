@@ -171,10 +171,14 @@ class TripsTab(
 
     /** The inbox read again; while a copy is arriving, again a few seconds later. A copy that
      *  has arrived since the last read brings the list and the map up to date. */
+    /** Counts the inbox's reads, so only the latest one's answer polls again. */
+    private var inboxReads = 0
+
     private fun loadInbox() {
         handler.removeCallbacks(pollInbox)
+        val read = ++inboxReads
         HoldMyTrackApi.tripSends { result ->
-            if (!showing) return@tripSends
+            if (!showing || read != inboxReads) return@tripSends
             // The inbox is an extra on the tab: a failed read leaves the last one shown.
             val inbox = result.getOrNull()
             if (inbox == null) {
