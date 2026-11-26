@@ -61,14 +61,54 @@ def untranslated(catalog):
     return out
 
 
-def used(objects_dir):
-    """{key: (source file, line)} for every string the compiler found for the table."""
-    out = {}
-    for path in sorted(glob.glob(os.path.join(objects_dir, '*', '*.stringsdata'))):
+def current(source, compiled):
+    """Whether a .stringsdata file's strings are this build's. The objects directory keeps files
+    from earlier builds: a source since deleted or renamed has one there still, and its strings
+    would count as used. A Swift source counts only if this build compiled it (compiled, the
+    architecture's SwiftFileList, or None without one); generated metadata such as
+    ExtractedAppShortcutsMetadata has no Swift source and always counts."""
+    return not source.endswith('.swift') or compiled is None or source in compiled
+
+
+def compiled_sources(directory):
+    """The Swift sources an architecture's build compiled, from its *.SwiftFileList files (one
+    path a line, a space possibly escaped), or None without one."""
+    lists = sorted(glob.glob(os.path.join(directory, '*.SwiftFileList')))
+    if not lists:
+        return None
+    out = set()
+    for path in lists:
         with open(path) as f:
-            data = json.load(f)
-        for s in data.get('tables', {}).get(TABLE, []):
-            out.setdefault(s['key'], (data.get('source', path), s.get('location', {}).get('startingLine', 1)))
+            out.update(line.strip().replace('\\ ', ' ') for line in f if line.strip())
+    return out
+
+
+def used(objects_dir, archs=None):
+    """{key: (source file, line)} for every string the compiler found for the table, in this
+    build's architectures (archs, else every one there): an architecture built before keeps its
+    directory, with the strings the code had then."""
+    out = {}
+    if not os.path.isdir(objects_dir):
+        return out
+    names = archs if archs else sorted(n for n in os.listdir(objects_dir) if os.path.isdir(os.path.join(objects_dir, n)))
+    for arch in names:
+        directory = os.path.join(objects_dir, arch)
+        compiled = compiled_sources(directory)
+        for path in sorted(glob.glob(os.path.join(directory, '*.stringsdata'))):
+            with open(path) as f:
+                data = json.load(f)
+            # A file naming no source can't be matched to this build: it counts only without a list.
+            if 'source' not in data:
+                if compiled is None:
+                    source = path
+                else:
+                    continue
+            else:
+                source = data['source']
+            if not current(source, compiled):
+                continue
+            for s in data.get('tables', {}).get(TABLE, []):
+                out.setdefault(s['key'], (source, s.get('location', {}).get('startingLine', 1)))
     return out
 
 
@@ -78,7 +118,9 @@ def main():
         catalog = json.load(f)
     keys = catalog.get('strings', {})
     errors = []
-    for key, (source, line) in sorted(used(objects_dir).items()):
+    # Xcode sets ARCHS for the build phase: the architectures this build compiles.
+    archs = os.environ.get('ARCHS', '').split() or None
+    for key, (source, line) in sorted(used(objects_dir, archs).items()):
         if key not in keys:
             errors.append(f'{source}:{line}: error: "{key}" isn\'t in {os.path.basename(catalog_path)}; add it with its ru translation')
     for path in [catalog_path, *more]:

@@ -70,6 +70,10 @@ jobs:
       # The palette, scales, fonts and icons are written from the web's and Android's files.
       - name: Design files up to date
         run: scripts/make-design.py --check
+      # Which compiled strings the translation check counts (scripts/check-strings.py).
+      - name: Script tests
+        working-directory: apps/ios/scripts
+        run: python3 -m unittest test_check_strings
       # The package needs no simulator, so a broken rule fails here in seconds.
       - name: Package tests
         working-directory: apps/ios/HoldMyTrackCore
