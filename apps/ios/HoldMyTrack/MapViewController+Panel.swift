@@ -4,7 +4,7 @@ import UIKit
 
 /// The sheet's tabs: the tab bar's Tracks shows Tracks, its Trips the Trips tab, its Sync the
 /// Sync tab.
-/// The sheet's tabs. Library and Sync share the tab bar's Library: Sync opens from Library's head.
+/// The sheet's tabs. Library and Sync share the tab bar's Library: Sync opens from Library's +.
 enum PanelTab { case tracks, trips, library, sync }
 
 /// The sheet over the map (apps/docs/SPEC.md FR-2.7): the list for the range or the open
@@ -28,7 +28,8 @@ extension MapViewController {
         libraryPanel.onEvent = { [weak self] in self?.handle($0) }
         libraryPanel.setSyncWaiting(syncWaiting)
 
-        for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head, libraryPanel.head, syncPanel?.head].compactMap({ $0 }) as [UIView] { sheet.head.addArrangedSubview(v) }
+        for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
+        for v in [libraryPanel.head, syncPanel?.head].compactMap({ $0 }) as [UIView] { sheet.dragsSheet(v) }
         // In the mode toggle's place while rows are checked (MapViewController+TopRow).
         modesRow.insertArrangedSubview(tracksPanel.selectionBar, at: 1)
         for v in [tracksPanel.content, tripsPanel.content, libraryPanel.content, syncPanel?.content].compactMap({ $0 }) {
@@ -62,7 +63,7 @@ extension MapViewController {
 
     // MARK: Tabs
 
-    /// The tab bar's Tracks, Trips or Library brought the map forward, or Library's head opened
+    /// The tab bar's Tracks, Trips or Library brought the map forward, or Library's + opened
     /// Sync. fresh is false for a return from a screen pushed over the map, such as Upload, which
     /// keeps Library's page.
     func show(_ next: PanelTab, trip: String? = nil, fresh: Bool = true) {
@@ -302,9 +303,7 @@ extension MapViewController {
         tripsPanel.head.isHidden = panelTab != .trips
         tracksPanel.content.isHidden = !tracksTab
         tripsPanel.content.isHidden = panelTab != .trips
-        libraryPanel.head.isHidden = panelTab != .library
         libraryPanel.content.isHidden = panelTab != .library
-        syncPanel?.head.isHidden = panelTab != .sync
         syncPanel?.content.isHidden = panelTab != .sync
         let onLibrary = panelTab == .library || panelTab == .sync
         notices.aside = MapChrome.areaNoticesShown(recording: recordingLive, onLibrary: onLibrary) ? [] : [Notice.empty.rawValue, Notice.capped.rawValue]

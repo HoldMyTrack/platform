@@ -22,6 +22,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     var onEvent: ((Event) -> Void)?
+    /// The search and +, at the top of the content, so the closed sheet is its grip alone, as
+    /// Android's. A drag on it moves the sheet (PanelSheetView.dragsSheet).
     let head = UIStackView()
     let content = UIView()
 
@@ -142,6 +144,8 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         row.alignment = .center
         row.spacing = DesignTokens.Space.s8
         head.axis = .vertical
+        head.isLayoutMarginsRelativeArrangement = true
+        head.directionalLayoutMargins = .init(top: 0, leading: DesignTokens.Space.s12, bottom: DesignTokens.Space.s4, trailing: DesignTokens.Space.s12)
         head.addArrangedSubview(row)
     }
 
@@ -226,7 +230,7 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         emptyRow = inset(emptyBox)
         checkedRow.isHidden = true
         emptyRow.isHidden = true
-        let column = UIStackView(arrangedSubviews: [scroller, inset(countRow), checkedRow, emptyRow, table, pagerRow])
+        let column = UIStackView(arrangedSubviews: [head, scroller, inset(countRow), checkedRow, emptyRow, table, pagerRow])
         column.axis = .vertical
         column.spacing = DesignTokens.Space.s4
         column.translatesAutoresizingMaskIntoConstraints = false

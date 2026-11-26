@@ -1,11 +1,11 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The sheet's Sync tab, opened from Library's head (apps/docs/SPEC.md FR-3.5): every
+/// The sheet's Sync tab, opened from Library's + (apps/docs/SPEC.md FR-3.5): every
 /// recording on this phone not on the map yet, newest first. Recordings send themselves
 /// (RecordingsSync); each row says how far it got, with Retry over them. Type chips narrow the
 /// list; a row swiped aside is hidden, with Undo, and Show hidden brings it back. One sent stays
-/// listed, on its way, until it lands. Upload heads it, across from ‹. What a row offers is SyncList's. The rows are drawn dashed on the map (SyncLines), the first
+/// listed, on its way, until it lands. Upload heads it, across from ‹ Library. What a row offers is SyncList's. The rows are drawn dashed on the map (SyncLines), the first
 /// showing framed; a tap on a row or its line picks it out, and ⓘ says what else covers its time
 /// (SyncSimilar, and the server for the account's tracks).
 @MainActor
@@ -28,6 +28,8 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     var onEvent: ((Event) -> Void)?
+    /// ‹ Library, Upload and the unsent recordings' bar, at the top of the content, so the closed
+    /// sheet is its grip alone, as Android's. A drag on it moves the sheet (PanelSheetView.dragsSheet).
     let head = UIStackView()
     let content = UIView()
 
@@ -87,14 +89,27 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         super.init()
         head.axis = .vertical
         head.spacing = DesignTokens.Space.s8
-        // Sync opens from Library's head (apps/docs/SPEC.md FR-4.1); ‹ goes back to it.
-        let back = Controls.iconButton(UIImage(resource: .chevronLeft), label: String(localized: "sync.back", defaultValue: "Back to Library", comment: "Sync: the ‹ that goes back to Library."), id: "syncBack")
+        head.isLayoutMarginsRelativeArrangement = true
+        head.directionalLayoutMargins = .init(top: 0, leading: DesignTokens.Space.s12, bottom: DesignTokens.Space.s8, trailing: DesignTokens.Space.s12)
+        // Sync opens from Library's + (apps/docs/SPEC.md FR-4.1); "‹ Library" goes back to it,
+        // as iOS's own back buttons name where they lead.
+        var backConfig = UIButton.Configuration.plain()
+        backConfig.image = Controls.icon(UIImage(resource: .chevronLeft), size: 20)
+        backConfig.imagePadding = DesignTokens.Space.s4
+        backConfig.title = String(localized: "library.title", defaultValue: "Library", comment: "Library: the tab's title.")
+        backConfig.baseForegroundColor = UIColor(resource: .accent)
+        backConfig.contentInsets.leading = 0
+        backConfig.titleTextAttributesTransformer = Controls.font(Typeface.sans(DesignTokens.Text.lg))
+        let back = UIButton(configuration: backConfig)
+        back.accessibilityLabel = String(localized: "sync.back", defaultValue: "Back to Library", comment: "Sync: the ‹ that goes back to Library.")
+        back.accessibilityIdentifier = "syncBack"
+        back.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
         back.addAction(UIAction { [weak self] _ in self?.onEvent?(.library) }, for: .primaryActionTriggered)
         // Upload heads the sheet, apart from the recordings' Retry (apps/docs/SPEC.md FR-3.5).
         let upload = Controls.secondaryButton(String(localized: "Upload"), id: "syncUpload", icon: UIImage(resource: .upload))
         upload.addAction(UIAction { [weak self] _ in self?.onEvent?(.upload) }, for: .primaryActionTriggered)
         upload.isHidden = account.isDemo
-        // No title, as on Android: ‹ and the rows say where this is.
+        // No title, as on Android: ‹ Library and the rows say where this is.
         let title = UIStackView(arrangedSubviews: [back, UIView(), upload])
         title.alignment = .center
         head.addArrangedSubview(title)
@@ -108,10 +123,15 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         table.register(UITableViewCell.self, forCellReuseIdentifier: "filters")
         table.backgroundColor = .clear
         table.accessibilityIdentifier = "sync"
-        table.translatesAutoresizingMaskIntoConstraints = false
-        content.addSubview(table)
+        for v in [head, table] as [UIView] {
+            v.translatesAutoresizingMaskIntoConstraints = false
+            content.addSubview(v)
+        }
         NSLayoutConstraint.activate([
-            table.topAnchor.constraint(equalTo: content.topAnchor),
+            head.topAnchor.constraint(equalTo: content.topAnchor),
+            head.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+            head.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+            table.topAnchor.constraint(equalTo: head.bottomAnchor),
             table.bottomAnchor.constraint(equalTo: content.bottomAnchor),
             table.leadingAnchor.constraint(equalTo: content.leadingAnchor),
             table.trailingAnchor.constraint(equalTo: content.trailingAnchor),

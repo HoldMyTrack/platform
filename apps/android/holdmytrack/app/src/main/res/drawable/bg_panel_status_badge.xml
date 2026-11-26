@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A row's Pending / Hidden badge, the web's .tracks-panel__hidden-badge: ink at 8%, the
-     extra-small radius. -->
+<!-- A row's Pending / Hidden badge: ink at 8%, round ends, as iOS's and the Trip badge. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="@color/hmt_ink_tint_8" />
-    <corners android:radius="@dimen/hmt_radius_xs" />
+    <corners android:radius="999dp" />
 </shape>
