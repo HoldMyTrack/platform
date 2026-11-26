@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- How far an open Trip's description, statistics and rows are set in under its folder, which
+         is what makes them its contents: the web's 36px (.trips-tab__rows). -->
+    <dimen name="trip_indent">36dp</dimen>
+</resources>

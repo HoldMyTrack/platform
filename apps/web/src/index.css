@@ -235,7 +235,7 @@ body {
 }
 
 /* The Trips tab (TripsTab.tsx, FR-13.6): one scrolling list of folders, one of them open
-   with its tracks inside, and the open Trip's numbers pinned below in the footer. */
+   with its description, numbers and tracks inside. */
 .trips-tab {
   flex: 1;
   min-height: 0;

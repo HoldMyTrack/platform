@@ -1,7 +1,7 @@
 /**
  * Folding the open Trip on the Trips tab: a click on its folder hides or shows its list of
- * tracks and changes nothing else, so it stays open (FR-13.6) with the map, footer, URL and
- * exports narrowed to it. A click on another folder opens that one unfolded.
+ * tracks, with its description and statistics, and changes nothing else, so it stays open
+ * (FR-13.6) with the map, URL and exports narrowed to it. A click on another folder opens that one unfolded.
  */
 interface FolderClick {
   /** The Trip whose list is folded, or null when none is. */

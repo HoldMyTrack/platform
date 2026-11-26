@@ -202,7 +202,7 @@ class TripsTab(
         }
     }
 
-    /** [id] is the open Trip now (or none): its own copy is read for the footer. */
+    /** [id] is the open Trip now (or none): its own copy is read for its statistics. */
     fun setOpen(id: String?) {
         // One made here meanwhile: a list asked for before it doesn't name it.
         if (id != null && trips.none { it.id == id }) changes++
@@ -294,10 +294,8 @@ class TripsTab(
             when {
                 rowsLoading -> items += Item.Note(res.getString(R.string.panel_loading), failed = false)
                 rowsError != null -> items += Item.Note(rowsError!!, failed = true)
-                rows.isEmpty() -> items += Item.Note(
-                    res.getString(if (trip.stats.count == 0) R.string.trip_no_tracks else R.string.panel_none_match),
-                    failed = false,
-                )
+                // An empty Trip's statistics already say it has no tracks.
+                rows.isEmpty() && trip.stats.count > 0 -> items += Item.Note(res.getString(R.string.panel_none_match), failed = false)
             }
         }
         when {
@@ -469,7 +467,7 @@ class TripsTab(
                 TYPE_ROW -> {
                     val view = inflater.inflate(R.layout.item_track_row, parent, false)
                     // Set in under the folder's name, which is what makes them its contents.
-                    val indent = (ROW_INDENT_DP * res.displayMetrics.density).toInt()
+                    val indent = res.getDimensionPixelSize(R.dimen.trip_indent)
                     view.setPaddingRelative(indent, view.paddingTop, view.paddingEnd, view.paddingBottom)
                     TrackRowHolder(view)
                 }
@@ -597,8 +595,5 @@ class TripsTab(
 
         /** How often the inbox is read again while an accepted copy is arriving. */
         const val COPYING_POLL_MS = 3000L
-
-        /** The web's 36px `.trips-tab__rows` indent. */
-        const val ROW_INDENT_DP = 36
     }
 }

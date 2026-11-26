@@ -13,8 +13,6 @@ import { formatTrackType, formatDuration, formatTotalDistance } from './format.t
 import { useUnitSystem, type UnitSystem } from './units.ts';
 import { t, tn } from '../i18n/index.ts';
 
-/** A Trip's numbers, or one type's share of them, in one line — "3 tracks · 58 km · 3h 26m
- *  moving". */
 /** The whole Trip's statistics (FR-13.1), whatever the dates select, inside its folder under the
  *  description: they fold away with its rows. */
 function TripStats({ trip, system }: { trip: Trip; system: UnitSystem }) {
@@ -41,6 +39,8 @@ function TripStats({ trip, system }: { trip: Trip; system: UnitSystem }) {
   );
 }
 
+/** A Trip's numbers, or one type's share of them, in one line — "3 tracks · 58 km · 3h 26m
+ *  moving". */
 function tripStatsLine(totals: TripTotals, system: UnitSystem): string {
   return t('trips.stats', {
     tracks: tn('tracks.count', totals.count),
@@ -227,7 +227,7 @@ export function TripsTab({
                 >
                   {trip.from !== null && <p className="trips-tab__from">{t('trips.from', { from: trip.from })}</p>}
                   {trip.description !== '' && <p className="trips-tab__description">{trip.description}</p>}
-                  <TripStats trip={openTrip && openTrip.id === trip.id ? openTrip : trip} system={system} />
+                  <TripStats trip={trip} system={system} />
                   {removeError && <p className="tracks-panel__note tracks-panel__note--error">{removeError}</p>}
                   <ul className="trips-tab__rows" ref={rowsRef}>
                     {start > 0 && <li className="tracks-panel__spacer" style={{ height: start * rowHeight }} aria-hidden="true" />}
@@ -261,10 +261,9 @@ export function TripsTab({
                     {tracksError && !tracksLoading && (
                       <li className="tracks-panel__note tracks-panel__note--error">{tracksError}</li>
                     )}
-                    {!tracksLoading && !tracksError && tracks.length === 0 && (
-                      <li className="tracks-panel__note">
-                        {trip.stats.count === 0 ? t('trips.no_tracks') : t('tracks.none_match')}
-                      </li>
+                    {/* An empty Trip's statistics already say it has no tracks. */}
+                    {!tracksLoading && !tracksError && tracks.length === 0 && trip.stats.count > 0 && (
+                      <li className="tracks-panel__note">{t('tracks.none_match')}</li>
                     )}
                   </ul>
                 </div>

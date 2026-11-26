@@ -255,8 +255,9 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             next += rows.map { .row($0, tripID: trip.id) }
             if let rowsNote {
                 next.append(.note(rowsNote.text, failed: rowsNote.failed))
-            } else if rows.isEmpty {
-                next.append(.note(trip.stats.count == 0 ? String(localized: "trips.noTracks", defaultValue: "No tracks in this trip.", comment: "An open Trip with no tracks.") : String(localized: "No tracks here match the current filters."), failed: false))
+            } else if rows.isEmpty, trip.stats.count > 0 {
+                // An empty Trip's numbers already say it has no tracks.
+                next.append(.note(String(localized: "No tracks here match the current filters."), failed: false))
             }
         }
         if let error {
@@ -305,6 +306,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         var typeLabels: [UILabel] = []
         if trip.stats.count > 0, !trip.byType.isEmpty {
             // The types as one column, as Android's table has them: every label as wide as the widest.
+            var typeRows: [UIView] = []
+            var spoken: [String] = []
             for type in trip.byType {
                 let label = Controls.label(TrackTypes.shared.label(type.trackType), font: small, color: UIColor(resource: .inkSecondary))
                 let value = Controls.label(line(type), font: small, color: UIColor(resource: .inkSecondary))
@@ -316,8 +319,15 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 let row = UIStackView(arrangedSubviews: [label, value])
                 row.spacing = DesignTokens.Space.s12
                 row.alignment = .firstBaseline
-                views.append(row)
+                typeRows.append(row)
+                spoken.append("\(TrackTypes.shared.label(type.trackType)): \(line(type))")
             }
+            // One element for VoiceOver, named as Android's table and the web's are.
+            let types = Controls.column(typeRows, spacing: DesignTokens.Space.s4)
+            types.isAccessibilityElement = true
+            types.accessibilityLabel = String(localized: "trips.byType", defaultValue: "By track type", comment: "A Trip's numbers: what VoiceOver calls each type's share of them.")
+            types.accessibilityValue = spoken.joined(separator: ", ")
+            views.append(types)
         }
         let column = Controls.column(views, spacing: DesignTokens.Space.s4)
         column.accessibilityIdentifier = "tripStatsBox"
