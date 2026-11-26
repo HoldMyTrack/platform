@@ -96,7 +96,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private class Views(
         val mapView: MapView,
         val topChrome: View,
-        /** The notice under the top row. */
+        /** The notice over the top row. */
         val notices: NoticePanel,
         /** Whether the session lets the map show the user's layers. */
         val gate: SessionGate,

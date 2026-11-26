@@ -1,7 +1,9 @@
 import UIKit
 
-/// The map's notices under its top row, one per id: its text, then, as on Android, an optional
-/// line of small print and action buttons in a row, and × when onClose is given.
+/// The map's notices, full width over its top row, one per id: its text, then, as on Android, an
+/// optional line of small print and action buttons in a row, and ×. A closed notice stays down
+/// until its condition ends (hide), so the toggle and the rail under it can be reached. A screen
+/// whose notice is its only way on (SessionCheckMapViewController) leaves × out.
 final class MapNotices: UIStackView {
     struct Action {
         let title: String
@@ -9,7 +11,10 @@ final class MapNotices: UIStackView {
         let run: () -> Void
     }
 
-    init() {
+    private let closable: Bool
+
+    init(closable: Bool = true) {
+        self.closable = closable
         super.init(frame: .zero)
         axis = .vertical
         spacing = DesignTokens.Space.s8
@@ -18,8 +23,12 @@ final class MapNotices: UIStackView {
     @available(*, unavailable)
     required init(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    /// Shows id's notice, or changes its words; × takes it down and then calls onClose.
+    /// Notices closed while their condition lasts.
+    private var closed: Set<Int> = []
+
+    /// Shows id's notice, or changes its words; × takes it down until hide and then calls onClose.
     func show(_ id: Int, _ text: String, detail: String? = nil, actions: [Action] = [], onClose: (() -> Void)? = nil) {
+        if closed.contains(id) { return }
         // Shown again, it keeps its place, its buttons and VoiceOver's quiet; only the words change.
         if let shown = box(id) {
             Self.labels(in: shown).first { $0.accessibilityIdentifier == "notice" }?.text = text
@@ -27,12 +36,10 @@ final class MapNotices: UIStackView {
             return
         }
         let label = Controls.body(text, color: UIColor(resource: .ink))
-        label.textAlignment = .center
         label.accessibilityIdentifier = "notice"
         var column: [UIView] = [label]
         if let detail {
             let small = Controls.label(detail, font: Typeface.sans(DesignTokens.Text.xs, relativeTo: .caption2), color: UIColor(resource: .inkSecondary))
-            small.textAlignment = .center
             small.accessibilityIdentifier = "noticeDetail"
             column.append(small)
         }
@@ -52,30 +59,22 @@ final class MapNotices: UIStackView {
             column.append(centered)
         }
         let content: UIView = column.count == 1 ? label : Controls.column(column, spacing: DesignTokens.Space.s4)
-        let box: UIView
-        if let onClose {
-            let close = Controls.iconButton(Controls.icon(UIImage(resource: .x), size: 18), label: String(localized: "Close"), id: "noticeClose")
-            close.addAction(UIAction { [weak self] _ in
-                self?.hide(id)
-                onClose()
-            }, for: .primaryActionTriggered)
-            let row = UIStackView(arrangedSubviews: [content, close])
-            row.alignment = .center
-            row.spacing = DesignTokens.Space.s8
-            row.isLayoutMarginsRelativeArrangement = true
-            row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: DesignTokens.Space.s12, bottom: 0, trailing: DesignTokens.Space.s4)
-            box = row
-        } else if column.count > 1 {
-            let wrap = UIStackView(arrangedSubviews: [content])
-            wrap.isLayoutMarginsRelativeArrangement = true
-            wrap.directionalLayoutMargins = NSDirectionalEdgeInsets(top: DesignTokens.Space.s8, leading: DesignTokens.Space.s12, bottom: DesignTokens.Space.s4, trailing: DesignTokens.Space.s12)
-            box = wrap
-        } else {
-            box = label
-        }
+        let close = Controls.iconButton(Controls.icon(UIImage(resource: .x), size: 18), label: String(localized: "Close"), id: "noticeClose")
+        close.addAction(UIAction { [weak self] _ in
+            self?.box(id)?.removeFromSuperview()
+            self?.closed.insert(id)
+            onClose?()
+        }, for: .primaryActionTriggered)
+        close.isHidden = !closable
+        let box = UIStackView(arrangedSubviews: [content, close])
+        box.alignment = .center
+        box.spacing = DesignTokens.Space.s8
+        box.isLayoutMarginsRelativeArrangement = true
+        box.directionalLayoutMargins = NSDirectionalEdgeInsets(top: DesignTokens.Space.s8, leading: DesignTokens.Space.s12, bottom: DesignTokens.Space.s8, trailing: DesignTokens.Space.s4)
         box.tag = id + 1
         box.isHidden = aside.contains(id)
-        box.backgroundColor = UIColor(resource: .noticeBg)
+        // Opaque, as Android's: it lies over the toggle and the rail.
+        box.backgroundColor = UIColor(resource: .surface)
         box.layer.cornerRadius = DesignTokens.Radius.md
         box.layer.masksToBounds = true
         addArrangedSubview(box)
@@ -89,7 +88,9 @@ final class MapNotices: UIStackView {
         didSet { for view in arrangedSubviews { view.isHidden = aside.contains(view.tag - 1) } }
     }
 
+    /// id's condition ended: down if it's up, and shown again when it comes back.
     func hide(_ id: Int) {
+        closed.remove(id)
         box(id)?.removeFromSuperview()
     }
 

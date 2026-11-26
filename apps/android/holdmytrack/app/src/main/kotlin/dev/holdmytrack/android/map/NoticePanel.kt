@@ -7,12 +7,13 @@ import androidx.core.view.isVisible
 import dev.holdmytrack.android.R
 
 /**
- * The map's one notice, under the top row: a sentence, an optional smaller detail, at most one
- * action, and a close button for a notice that can be closed. When two apply the more important
- * stays up ([MapNotice], [MapChromeRules.noticeReplaces]).
+ * The map's one notice, full width over the top row: a sentence, an optional smaller detail, at
+ * most one action, and a close button. A closed notice stays down until its condition ends
+ * ([hide]), so the toggle and the rail under it can be reached. When two apply the more
+ * important stays up ([MapNotice], [MapChromeRules.noticeReplaces]).
  */
 class NoticePanel(
-    /** The panel itself, which the compass also clears. */
+    /** The panel itself. */
     val view: View,
     /** Whether a recording has the map, and whether the Sync tab shows: the empty notice steps aside for both. */
     private val recording: () -> Boolean,
@@ -27,6 +28,9 @@ class NoticePanel(
     var shown: MapNotice? = null
         private set
 
+    /** Notices closed while their condition lasts. */
+    private val closed = mutableSetOf<MapNotice>()
+
     fun show(
         kind: MapNotice,
         text: String,
@@ -36,7 +40,7 @@ class NoticePanel(
         onAction: (() -> Unit)? = null,
         onClose: (() -> Unit)? = null,
     ) {
-        if (!MapChromeRules.noticeReplaces(shown, kind)) return
+        if (kind in closed || !MapChromeRules.noticeReplaces(shown, kind)) return
         shown = kind
         this.text.text = text
         this.text.setTextColor(view.context.getColor(if (failed) R.color.hmt_danger else R.color.hmt_ink))
@@ -45,16 +49,17 @@ class NoticePanel(
         this.action.visibility = if (action == null) View.GONE else View.VISIBLE
         if (action != null) this.action.setText(action)
         this.action.setOnClickListener { onAction?.invoke() }
-        close.visibility = if (onClose == null) View.GONE else View.VISIBLE
         close.setOnClickListener {
             hide(kind)
+            closed += kind
             onClose?.invoke()
         }
         render()
     }
 
-    /** Takes [kind] down if it's the one up; any other notice stays. */
+    /** [kind]'s condition ended: down if it's the one up, and shown again when it comes back. */
     fun hide(kind: MapNotice) {
+        closed -= kind
         if (shown != kind) return
         shown = null
         render()

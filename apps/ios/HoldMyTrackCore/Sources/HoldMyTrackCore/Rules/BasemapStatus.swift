@@ -12,4 +12,11 @@ public enum BasemapStatus: String, Equatable, Sendable {
         if failed || waitedMs >= waitMs { return .unreachable }
         return .loading
     }
+
+    /// Whether a new style's basemap source differs from the one being watched, so the clock
+    /// starts again. A reload that keeps the source keeps its tiles and reports no tile action
+    /// that would mark them loaded again.
+    public static func sourceChanged(from old: JSONValue?, to new: JSONValue) -> Bool {
+        old?["sources"]?[ExportStyle.basemapSource] != new["sources"]?[ExportStyle.basemapSource]
+    }
 }

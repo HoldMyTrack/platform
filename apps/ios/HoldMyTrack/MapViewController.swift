@@ -42,7 +42,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     lazy var fogLevelMenu = MapMenuPopup(host: view, anchor: modes, alignStart: true, canOpen: { [unowned self] in
         self.state.mode == .fog && !self.levels.isEmpty && !self.modes.isHidden
     }) { [unowned self] in self.fogLevelContent() }
-    /// The controls along the top: the mode toggle and the rail, then the notices under them.
+    /// The controls along the top: the toggle beside the rail, then what comes under them.
     let chromeColumn = PassThroughStackView()
     /// The toggle beside the rail.
     let topRow = PassThroughStackView()
@@ -150,7 +150,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Whether the camera has flown to this recording's first fix; later fixes only pan.
     var recordingFollowed = false
     var lastRecordingPoints: [RecordedPoint] = []
-    var recordingNoticeShown = 0
     /// Counts the tour's camera moves, so a move's end only continues the latest (MapViewController+Tour).
     var tourMoves = 0
 
@@ -352,9 +351,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             return
         }
         guard next != loaded, let json = String(data: next.data, encoding: .utf8) else { return }
+        let basemapChanged = BasemapStatus.sourceChanged(from: loaded, to: next)
         loaded = next
         styleLoaded = false
-        startBasemapClock()
+        if basemapChanged { startBasemapClock() }
         mapView.styleJSON = json
     }
 
@@ -482,7 +482,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         case .notDetermined:
             locating = true
             location.requestWhenInUseAuthorization()
-        case .denied, .restricted: notice(.location, String(localized: "HoldMyTrack needs location access to show where you are. Turn it on in Settings."))
+        case .denied, .restricted: say(String(localized: "HoldMyTrack needs location access to show where you are. Turn it on in Settings."))
         default: followUser()
         }
     }
@@ -491,7 +491,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            hideNotice(.location)
+            // Capture's notice asks for precise location, which can come back from Settings.
+            if manager.accuracyAuthorization == .fullAccuracy { hideNotice(.capture) }
             if locating { followUser() }
         case .denied, .restricted: locating = false
         default: break
@@ -553,6 +554,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: The basemap's reachability
 
+    /// Started by a style whose basemap source is new (BasemapStatus.sourceChanged).
     private func startBasemapClock() {
         basemapLoaded = false
         basemapFailed = false
@@ -603,9 +605,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Notices
 
-    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, capped, tour, exported, recording }
+    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, capped, capture }
 
-    /// Shows kind's notice under the top row, or changes its words (MapNotices.show).
+    /// Shows kind's notice over the top row, or changes its words (MapNotices.show).
     func notice(_ kind: Notice, _ text: String, detail: String? = nil, action: (title: String, run: () -> Void)? = nil, onClose: (() -> Void)? = nil) {
         notices.show(kind.rawValue, text, detail: detail, actions: action.map { [MapNotices.Action(title: $0.title, id: "noticeAction", run: $0.run)] } ?? [], onClose: onClose)
     }
@@ -660,7 +662,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             self?.closeFogPlace()
             self?.capturing.start(spot)
         }
-        // The toggle and Show in this area at the start, the rail at the end; the notices under both.
+        // The toggle and Show in this area at the start, the rail at the end.
         let start = PassThroughStackView(arrangedSubviews: [modesRow, inArea])
         start.axis = .vertical
         start.spacing = DesignTokens.Space.s8
@@ -673,7 +675,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         gap.isUserInteractionEnabled = false
         for v in [gap, checkedExport] { underBar.addArrangedSubview(v) }
         underBar.isHidden = true
-        for v in [topRow, underBar, capturing.banner, notices] { chromeColumn.addArrangedSubview(v) }
+        for v in [topRow, underBar, capturing.banner] { chromeColumn.addArrangedSubview(v) }
         chromeColumn.axis = .vertical
         chromeColumn.spacing = DesignTokens.Space.s8
         let column = chromeColumn
@@ -684,7 +686,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         view.insertSubview(photoViews.markers, aboveSubview: mapView)
         view.insertSubview(spotViews.popup, aboveSubview: photoViews.markers)
         bindPhotos()
-        for v in [column, sheet] {
+        // The notices over the top row, full width.
+        for v in [column, notices, sheet] {
             v.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(v)
         }
@@ -699,6 +702,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             column.topAnchor.constraint(equalTo: guide.topAnchor, constant: DesignTokens.Space.s8),
             column.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: DesignTokens.Space.s12),
             column.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -DesignTokens.Space.s12),
+            notices.topAnchor.constraint(equalTo: column.topAnchor),
+            notices.leadingAnchor.constraint(equalTo: column.leadingAnchor),
+            notices.trailingAnchor.constraint(equalTo: column.trailingAnchor),
             sheet.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
             sheet.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
             sheet.bottomAnchor.constraint(equalTo: guide.bottomAnchor),

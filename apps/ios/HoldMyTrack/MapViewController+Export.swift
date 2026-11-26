@@ -29,7 +29,7 @@ extension MapViewController {
         // The chrome would sit inside the picture. Faded out and left alone rather than hidden: the
         // map's renders set isHidden as they go (the top row's controls, the sheet on a panel
         // change) and would bring it back over the viewfinder.
-        let covers: [UIView] = [chromeColumn, sheet, mapView.logoView, mapView.attributionButton]
+        let covers: [UIView] = [chromeColumn, notices, sheet, mapView.logoView, mapView.attributionButton]
         export.covered = covers
         for cover in covers {
             cover.alpha = 0
@@ -364,8 +364,7 @@ extension MapViewController {
         guard export.capture == capture else { return }
         closeExport()
         if saved {
-            notice(.exported, String(localized: "export.saved", defaultValue: "Saved to Photos", comment: "Map image export: the image is in the Photos library."))
-            hideNoticeSoon(.exported)
+            say(String(localized: "export.saved", defaultValue: "Saved to Photos", comment: "Map image export: the image is in the Photos library."))
         }
         let share = UIActivityViewController(activityItems: [file], applicationActivities: nil)
         share.popoverPresentationController?.sourceView = export.button
@@ -385,13 +384,6 @@ extension MapViewController {
         setExportBusy(false)
         export.failed = true
         renderExportLines()
-    }
-
-    private func hideNoticeSoon(_ kind: Notice) {
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(4))
-            self?.hideNotice(kind)
-        }
     }
 }
 
