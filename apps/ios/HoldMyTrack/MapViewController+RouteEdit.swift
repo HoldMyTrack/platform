@@ -38,8 +38,14 @@ extension MapViewController {
 
     /// The tracks the map hides: the panel's, and while the Route tab shows, every one.
     var hiddenTracks: [String] {
-        routeEdit.shape == nil ? session.panel.mapHidden.sorted() : tracks.map(\.id)
+        routeEdit.shape == nil ? mapHidden.sorted() : tracks.map(\.id)
     }
+
+    /// Whether the map draws through the Tracks tab's filters on the tab showing.
+    var mapFiltersApply: Bool { MapChrome.tracksFiltersApply(onLibrary: panelTab == .library || panelTab == .sync) }
+
+    /// What the map leaves out on the tab showing: on Library, only Pending and hidden tracks.
+    var mapHidden: Set<String> { session.panel.mapHidden(filtered: mapFiltersApply) }
 
     /// The overlay's source and layers onto a style just loaded.
     func addRouteEdit(to style: MLNStyle) {

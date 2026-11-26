@@ -58,6 +58,14 @@ object MapOverlays {
     /** The open Trip the tracks are narrowed to, or null — kept for every new tracks URL. */
     private var trackTrip: String? = null
 
+    /** Whether the routes go through the Tracks tab's Dates and cap: not under Library or its Sync
+     *  (MapChromeRules.tracksFiltersApply), where the map draws every track. Kept here, where the
+     *  tracks query and cap are made, so every caller that passes the Dates is answered alike. */
+    private var tracksFiltered = true
+
+    /** The cap the area list last asked for, drawn only while [tracksFiltered]. */
+    private var cap: Pair<Boolean, List<String>> = false to emptyList()
+
     /**
      * Bumped by [refreshTracks] and sent as `v` (the server ignores it), the web's
      * `tracksVersion`: every tile URL also carries the account's tile version as `cv`, under
@@ -178,8 +186,22 @@ object MapOverlays {
     /** Past the area list's cap the map draws only the [listed] tracks (`docs/SPEC.md` FR-5.11),
      *  the document's `capped` and `listed` vars. */
     fun setTrackCap(style: Style?, capped: Boolean, listed: List<String>) {
+        cap = capped to listed
+        applyCap(style)
+    }
+
+    /** Whether the routes follow the Tracks tab's Dates and cap ([tracksFiltered]); with a
+     *  [style], its tracks query and cap follow at once. */
+    fun setTracksFiltered(style: Style?, filtered: Boolean, dates: DateFilter) {
+        tracksFiltered = filtered
+        applyCap(style)
+        style?.let { setTrackDates(it, dates) }
+    }
+
+    private fun applyCap(style: Style?) {
+        val capped = cap.first && tracksFiltered
         MapLayers.update(style) {
-            it.copy(vars = it.vars + mapOf("capped" to JsonPrimitive(capped), "listed" to JsonArray(listed.map(::JsonPrimitive))))
+            it.copy(vars = it.vars + mapOf("capped" to JsonPrimitive(capped), "listed" to JsonArray((if (capped) cap.second else emptyList()).map(::JsonPrimitive))))
         }
     }
 
@@ -274,7 +296,7 @@ object MapOverlays {
         val trip = trackTrip
         if (trip != null) {
             add("trip=${Uri.encode(trip)}")
-        } else {
+        } else if (tracksFiltered) {
             dates.after?.let { add("from=$it") }
             dates.before?.let { add("to=$it") }
         }

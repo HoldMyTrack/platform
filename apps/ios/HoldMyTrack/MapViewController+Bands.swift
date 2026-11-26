@@ -28,7 +28,7 @@ extension MapViewController {
 
     private func drawBands() {
         // The Route tab's overlay stands in for the track and its bands while it shows.
-        let drawn = routeEdit.shape == nil ? PaceBands.drawn(bands.metrics, focused: session.panel.focused, mapHidden: session.panel.mapHidden) : nil
+        let drawn = routeEdit.shape == nil ? PaceBands.drawn(bands.metrics, focused: session.panel.focused, mapHidden: mapHidden) : nil
         state.geojson[PaceBands.group] = PaceBands.features(drawn)
         tracksPanel.setBands(drawn == nil ? nil : pair.map { PaceBands.colors($0.layers) })
     }

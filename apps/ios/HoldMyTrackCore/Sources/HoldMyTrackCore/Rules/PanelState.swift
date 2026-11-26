@@ -38,9 +38,13 @@ public struct PanelState: Equatable, Sendable {
     /// Every track the map shouldn't paint: filtered out, hidden, or Pending, all the same answer
     /// for the map (don't draw it, don't fly to it). Pending isn't folded into hidden, so the
     /// user's own Show/Hide survives the reprocess.
-    public var mapHidden: Set<String> {
+    public var mapHidden: Set<String> { mapHidden(filtered: true) }
+
+    /// What the map leaves out: Pending and hidden tracks, and with filtered those the Type and
+    /// Distance filters take out (MapChrome.tracksFiltersApply).
+    public func mapHidden(filtered: Bool) -> Set<String> {
         Set(tracks.filter {
-            $0.isPending || hidden.contains($0.id) || !TrackFacets.passesFilters($0, excludedTypes: excludedTypes, distanceFilter: distanceFilter)
+            $0.isPending || hidden.contains($0.id) || (filtered && !TrackFacets.passesFilters($0, excludedTypes: excludedTypes, distanceFilter: distanceFilter))
         }.map(\.id))
     }
 

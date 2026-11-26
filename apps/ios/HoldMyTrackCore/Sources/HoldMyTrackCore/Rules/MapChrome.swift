@@ -21,6 +21,10 @@ public enum MapChrome {
         empty && !demo && !closed
     }
 
+    /// Whether the map draws the routes through the Tracks tab's filters: not on Library or its
+    /// Sync, where it shows every track (testdata/client-rules/map-tracks-filters.json).
+    public static func tracksFiltersApply(onLibrary: Bool) -> Bool { !onLibrary }
+
     /// Whether the empty and capped notices show: they step aside while recording and on Library
     /// and its Sync, whose lists aren't the area's; failures stay up.
     public static func areaNoticesShown(recording: Bool, onLibrary: Bool) -> Bool { !recording && !onLibrary }

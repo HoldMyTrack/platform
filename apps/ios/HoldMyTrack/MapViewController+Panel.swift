@@ -97,6 +97,9 @@ extension MapViewController {
             sheet.setDetent(next == .tracks ? .collapsed : .half, animated: false)
         }
         applyTabMode()
+        // Library's map shows every track; the Tracks tab's filters and cap come back with it.
+        renderCap()
+        updateTracksQuery()
         panelChanged()
         // Once the sheet is up at half height, so the first framing clears it.
         if next == .sync { syncPanel?.start() }
@@ -426,7 +429,8 @@ extension MapViewController {
 
     // MARK: The map
 
-    /// The camera onto ids' tracks, leaving out what the map doesn't draw.
+    /// The camera onto ids' tracks, leaving out what the map doesn't draw. It starts from the
+    /// Tracks tab's rows or list (View on map moves there first), so the Tracks filters apply.
     func fly(_ ids: [String]) {
         let hidden = session.panel.mapHidden
         let wanted = Set(ids)
