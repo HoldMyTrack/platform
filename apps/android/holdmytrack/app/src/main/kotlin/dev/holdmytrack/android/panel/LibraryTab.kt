@@ -21,6 +21,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.slider.RangeSlider
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.recording.RecordingFormat
 import dev.holdmytrack.android.map.DateFilter
 import dev.holdmytrack.android.map.DatesSheet
 import dev.holdmytrack.android.net.FailureText
@@ -229,8 +230,8 @@ class LibraryTab(
         distanceChip.text = state.distance?.let { band ->
             res.getString(
                 R.string.panel_distance_range,
-                PanelFormat.distanceValue(res, band.min),
-                band.max?.let { PanelFormat.distanceValue(res, it) } ?: "∞",
+                PanelFormat.distanceBandValue(res, band.min),
+                band.max?.let { PanelFormat.distanceBandValue(res, it) } ?: "∞",
                 PanelFormat.unit(res),
             )
         } ?: res.getString(R.string.panel_any_distance_chip)
@@ -330,23 +331,27 @@ class LibraryTab(
     @SuppressLint("InflateParams") // A dialog's content has no parent to inflate against.
     private fun showDistance() {
         val (min, max) = page?.distance ?: return
-        val bounds = DistanceRange(min, max)
+        // The server's bounds rounded outward to whole units, which the slider moves in.
+        val imperial = RecordingFormat.imperial()
+        val bounds = TrackFacets.wholeDistanceBounds(DistanceRange(min, max), imperial)!!
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_library_distance, null)
         val slider: RangeSlider = view.findViewById(R.id.library_distance_slider)
         val readout: TextView = view.findViewById(R.id.library_distance_readout)
         val current = state.distance?.let { sliderRange(it, bounds) } ?: bounds
-        slider.valueFrom = min.toFloat()
-        slider.valueTo = max.toFloat()
-        slider.values = listOf(current.min.toFloat(), current.max.toFloat())
+        // In whole units, one a step, so a key press or TalkBack moves a knob a whole unit.
+        slider.valueFrom = TrackFacets.sliderUnits(bounds.min, imperial)
+        slider.valueTo = TrackFacets.sliderUnits(bounds.max, imperial)
+        slider.stepSize = 1f
+        slider.values = listOf(TrackFacets.sliderUnits(current.min, imperial), TrackFacets.sliderUnits(current.max, imperial))
         var chosen: DistanceRange? = state.distance?.let { current }
         fun show() {
             val band = chosen ?: bounds
-            readout.text = res.getString(R.string.library_distance_band, PanelFormat.distance(res, band.min), PanelFormat.distance(res, band.max))
+            readout.text = res.getString(R.string.panel_distance_range, PanelFormat.distanceBandValue(res, band.min), PanelFormat.distanceBandValue(res, band.max), PanelFormat.unit(res))
         }
         slider.addOnChangeListener { s, _, fromUser ->
             if (!fromUser) return@addOnChangeListener
-            val lower = TrackFacets.nextDistanceFilter(bounds, chosen ?: bounds, DistanceKnob.MIN, s.values[0].toDouble())
-            chosen = TrackFacets.nextDistanceFilter(bounds, lower ?: bounds, DistanceKnob.MAX, s.values[1].toDouble())
+            val lower = TrackFacets.nextDistanceFilter(bounds, chosen ?: bounds, DistanceKnob.MIN, TrackFacets.sliderMeters(s.values[0], imperial), imperial)
+            chosen = TrackFacets.nextDistanceFilter(bounds, lower ?: bounds, DistanceKnob.MAX, TrackFacets.sliderMeters(s.values[1], imperial), imperial)
             show()
         }
         show()

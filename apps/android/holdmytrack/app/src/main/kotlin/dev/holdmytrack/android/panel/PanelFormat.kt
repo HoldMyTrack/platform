@@ -62,6 +62,12 @@ object PanelFormat {
     /** The web's `distanceValue`: the number alone. */
     fun distanceValue(res: Resources, meters: Double): String = written(res, FormatParts.distance(meters, RecordingFormat.imperial()))
 
+    /** The web's `distanceBandValue`: an end of the DISTANCE filter's band, the number alone. */
+    fun distanceBandValue(res: Resources, meters: Double): String = written(res, FormatParts.distanceBand(meters, RecordingFormat.imperial()))
+
+    /** An end of the DISTANCE slider, with its unit. */
+    fun distanceBand(res: Resources, meters: Double): String = withUnit(res, FormatParts.distanceBand(meters, RecordingFormat.imperial()))
+
     fun distance(res: Resources, meters: Double?): String =
         if (meters == null) EM_DASH else withUnit(res, FormatParts.distance(meters, RecordingFormat.imperial()))
 

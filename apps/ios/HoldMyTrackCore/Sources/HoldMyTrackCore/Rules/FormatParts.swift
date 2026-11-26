@@ -31,6 +31,12 @@ public enum FormatParts {
         DistanceParts(value: converted(meters, imperial: imperial), minDecimals: 1, maxDecimals: 1, grouping: false, unit: imperial ? .mi : .km)
     }
 
+    /// An end of the DISTANCE filter's band: whole units as the filter moves in them, and one
+    /// decimal for an end that isn't whole (a band set in the other units).
+    public static func distanceBand(meters: Double, imperial: Bool) -> DistanceParts {
+        DistanceParts(value: converted(meters, imperial: imperial), minDecimals: 0, maxDecimals: 1, grouping: false, unit: imperial ? .mi : .km)
+    }
+
     /// A range's total: one decimal below 10 (km or mi), so a short history never reads as a
     /// flat "0 km", and whole units from 10 up.
     public static func totalDistance(meters: Double, imperial: Bool) -> DistanceParts {

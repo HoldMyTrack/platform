@@ -9,7 +9,7 @@ import { areaLoad } from '../src/map/areaLoad.ts';
 import { fogLevelInView, fogLevelPick } from '../src/map/fogLevels.ts';
 import { placeLabel } from '../src/map/fogPlaceLabel.ts';
 import { dateFilterBounds, dateFilterLabel, setDateFilter } from '../src/ui/dateFilter.ts';
-import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/trackFacets.ts';
+import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets, wholeDistanceBounds } from '../src/ui/trackFacets.ts';
 import { typeOptions, typeSearch } from '../src/ui/pickerSearch.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editRouteOps.ts';
 import { insertionPoint, needsLift } from '../src/map/mapLayers.ts';
@@ -23,7 +23,7 @@ import { folderClick, isFolded } from '../src/ui/tripFold.ts';
 import { drawOrder } from '../src/ui/privateLocationPick.ts';
 import { clusterPoints, photoMarkerLayout, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
-import { distanceParts, durationParts, totalDistanceParts } from '../src/ui/formatParts.ts';
+import { distanceBandParts, distanceParts, durationParts, totalDistanceParts } from '../src/ui/formatParts.ts';
 import { fractionAt, photoRoute, pointAt, startFraction } from '../src/ui/photoRoute.ts';
 import { clampView, fitSize, panBy, zoomAt } from '../src/ui/photoZoom.ts';
 import { trackTimeZone } from '../src/ui/timeZone.ts';
@@ -104,7 +104,8 @@ export const rules = {
   photoScope: ({ mode, editWindowIds, focused, tripId }) => photoScopeFor(mode, editWindowIds ?? null, focused ?? null, tripId ?? null),
   photoGroup: ({ photos }) => photoGroupAction(photos),
   distanceBounds: ({ tracks }) => distanceBounds(tracks),
-  distanceFilter: ({ bounds, current, knob, value }) => nextDistanceFilter(bounds, current, knob, value),
+  distanceFilter: ({ bounds, current, knob, value, system }) => nextDistanceFilter(bounds, current, knob, value, system),
+  distanceWholeBounds: ({ bounds, system }) => wholeDistanceBounds(bounds, system),
   typeFacets: ({ tracks, distanceFilter }) => typeFacets(tracks, distanceFilter ?? null),
   typeSearch: ({ options, query, maxLength }) => typeSearch(options, query, maxLength),
   typeOptions: ({ current, known }) => typeOptions(current, known),
@@ -124,6 +125,7 @@ export const rules = {
   photoPan: ({ view, dx, dy, fitted, stage }) => panBy(view, dx, dy, fitted, stage),
   photoClamp: ({ view, fitted, stage }) => clampView(view, fitted, stage),
   distanceParts: ({ meters, system }) => distanceParts(meters, system),
+  distanceBandParts: ({ meters, system }) => distanceBandParts(meters, system),
   totalDistanceParts: ({ meters, system }) => totalDistanceParts(meters, system),
   durationParts: ({ seconds }) => durationParts(seconds),
   editRouteFold: ({ base, ops }) => foldEdit(base ?? null, ops),

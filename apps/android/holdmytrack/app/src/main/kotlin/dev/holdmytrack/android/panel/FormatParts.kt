@@ -30,6 +30,10 @@ object FormatParts {
     /** A track's distance: always one decimal, never grouped. */
     fun distance(meters: Double, imperial: Boolean) = DistanceParts(converted(meters, imperial), 1, 1, false, unit(imperial))
 
+    /** An end of the DISTANCE filter's band: whole units as the filter moves in them, and one
+     *  decimal for an end that isn't whole (a band set in the other units). */
+    fun distanceBand(meters: Double, imperial: Boolean) = DistanceParts(converted(meters, imperial), 0, 1, false, unit(imperial))
+
     /** A range's total: one decimal below 10 (km or mi), so a short history never reads as a flat
      *  "0 km", and whole units from 10 up. */
     fun totalDistance(meters: Double, imperial: Boolean): DistanceParts {

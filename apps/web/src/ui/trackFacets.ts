@@ -44,19 +44,44 @@ export function bandWithin(bounds: DistanceRange, band: DistanceRange): Distance
   return { min: clamp(band.min), max: clamp(band.max) };
 }
 
+/** One kilometer or mile, in meters: the Distance filter moves in whole ones. */
+export function unitMeters(system: 'metric' | 'imperial'): number {
+  return system === 'imperial' ? 1609.344 : 1000;
+}
+
+/** meters in units, the floating-point noise of the division taken off, so 10 miles is 10 and
+ *  not a hair over, which would round up to 11. */
+function inUnits(meters: number, unit: number): number {
+  return Math.round((meters / unit) * 1e6) / 1e6;
+}
+
 /**
- * The Distance slider's filter after one knob moved to `value`: the other knob held, the two
- * never crossing, and null — no filter, "any distance" — once both are back at the bounds, so
- * a knob dragged away and back leaves nothing filtered out.
+ * The Distance slider's ends (`testdata/client-rules/distance-whole-bounds.json`): `bounds`
+ * rounded outward to whole kilometers or miles, so every track lies within them.
+ */
+export function wholeDistanceBounds(bounds: DistanceRange | null, system: 'metric' | 'imperial'): DistanceRange | null {
+  if (!bounds) return null;
+  const unit = unitMeters(system);
+  return { min: Math.floor(inUnits(bounds.min, unit)) * unit, max: Math.ceil(inUnits(bounds.max, unit)) * unit };
+}
+
+/**
+ * The Distance slider's filter after one knob moved to `value`, snapped to a whole kilometer or
+ * mile within `bounds`: the other knob held, the two never crossing, and null — no filter, "any
+ * distance" — once both are back at the bounds, so a knob dragged away and back leaves nothing
+ * filtered out.
  */
 export function nextDistanceFilter(
   bounds: DistanceRange,
   current: DistanceRange,
   knob: 'min' | 'max',
   value: number,
+  system: 'metric' | 'imperial',
 ): DistanceRange | null {
+  const unit = unitMeters(system);
+  const snapped = Math.min(Math.max(Math.round(inUnits(value, unit)) * unit, bounds.min), bounds.max);
   const next =
-    knob === 'min' ? { min: Math.min(value, current.max), max: current.max } : { min: current.min, max: Math.max(value, current.min) };
+    knob === 'min' ? { min: Math.min(snapped, current.max), max: current.max } : { min: current.min, max: Math.max(snapped, current.min) };
   return next.min <= bounds.min && next.max >= bounds.max ? null : next;
 }
 

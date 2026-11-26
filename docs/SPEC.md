@@ -367,7 +367,8 @@ Lists the types present among the tracks FR-5.1 starts from; types are free text
 
 ### FR-5.3 DISTANCE filter
 
-- Bounded by the shortest and longest of the tracks FR-5.1 starts from; both knobs at the ends means no filter.
+- Bounded by the shortest and longest of the tracks FR-5.1 starts from, rounded outward to whole kilometers or miles; both knobs at the ends means no filter.
+- Its knobs move in whole kilometers or miles, in the account's units.
 - Not offered while they don't span distances, and a filter set before is cleared.
 - A Private track sets no bound and is left out once a filter is on.
 

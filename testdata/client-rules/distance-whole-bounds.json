@@ -1,0 +1,13 @@
+{
+  "rule": "distanceWholeBounds",
+  "description": "The Distance slider's ends (docs/SPEC.md FR-5.3): the tracks' bounds (distanceBounds, or the server's for Library) rounded outward to whole kilometers or miles in the account's units (system), so every track lies within them. Null bounds stay null.",
+  "tolerance": 1e-6,
+  "cases": [
+    { "name": "kilometers, rounded outward", "input": { "bounds": { "min": 1200.35, "max": 16093.44 }, "system": "metric" }, "expected": { "min": 1000, "max": 17000 } },
+    { "name": "miles, rounded outward", "input": { "bounds": { "min": 3540.5, "max": 33314 }, "system": "imperial" }, "expected": { "min": 3218.688, "max": 33796.224 } },
+    { "name": "whole ends stay", "input": { "bounds": { "min": 5000, "max": 20000 }, "system": "metric" }, "expected": { "min": 5000, "max": 20000 } },
+    { "name": "a whole number of miles stays, despite the floating-point division", "input": { "bounds": { "min": 1609.344, "max": 16093.44 }, "system": "imperial" }, "expected": { "min": 1609.344, "max": 16093.44 } },
+    { "name": "under one unit starts at zero", "input": { "bounds": { "min": 300, "max": 800 }, "system": "metric" }, "expected": { "min": 0, "max": 1000 } },
+    { "name": "no bounds", "input": { "bounds": null, "system": "metric" }, "expected": null }
+  ]
+}

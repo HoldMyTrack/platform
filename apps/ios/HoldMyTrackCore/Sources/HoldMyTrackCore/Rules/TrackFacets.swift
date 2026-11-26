@@ -49,13 +49,30 @@ public enum TrackFacets {
         return DistanceRange(min: low, max: high)
     }
 
-    /// The DISTANCE filter after knob moved to value: the other knob held, the two never
-    /// crossing, and nil (no filter) once both are back at bounds, so a knob dragged away and
-    /// back leaves nothing filtered out.
-    public static func nextDistanceFilter(bounds: DistanceRange, current: DistanceRange, knob: DistanceKnob, value: Double) -> DistanceRange? {
+    /// One kilometer or mile, in meters: the DISTANCE filter moves in whole ones.
+    static func unitMeters(imperial: Bool) -> Double { imperial ? 1609.344 : 1000 }
+
+    /// meters in units, the floating-point noise of the division taken off, so 10 miles is 10
+    /// and not a hair over, which would round up to 11.
+    static func inUnits(_ meters: Double, unit: Double) -> Double { (meters / unit * 1e6).rounded() / 1e6 }
+
+    /// The DISTANCE slider's ends (testdata/client-rules/distance-whole-bounds.json): bounds
+    /// rounded outward to whole kilometers or miles, so every track lies within them.
+    public static func wholeDistanceBounds(_ bounds: DistanceRange?, imperial: Bool) -> DistanceRange? {
+        guard let bounds else { return nil }
+        let unit = unitMeters(imperial: imperial)
+        return DistanceRange(min: inUnits(bounds.min, unit: unit).rounded(.down) * unit, max: inUnits(bounds.max, unit: unit).rounded(.up) * unit)
+    }
+
+    /// The DISTANCE filter after knob moved to value, snapped to a whole kilometer or mile
+    /// within bounds: the other knob held, the two never crossing, and nil (no filter) once both
+    /// are back at bounds, so a knob dragged away and back leaves nothing filtered out.
+    public static func nextDistanceFilter(bounds: DistanceRange, current: DistanceRange, knob: DistanceKnob, value: Double, imperial: Bool) -> DistanceRange? {
+        let unit = unitMeters(imperial: imperial)
+        let snapped = Swift.min(Swift.max(inUnits(value, unit: unit).rounded() * unit, bounds.min), bounds.max)
         let next = switch knob {
-        case .min: DistanceRange(min: Swift.min(value, current.max), max: current.max)
-        case .max: DistanceRange(min: current.min, max: Swift.max(value, current.min))
+        case .min: DistanceRange(min: Swift.min(snapped, current.max), max: current.max)
+        case .max: DistanceRange(min: current.min, max: Swift.max(snapped, current.min))
         }
         return next.min <= bounds.min && next.max >= bounds.max ? nil : next
     }
@@ -113,20 +130,25 @@ public enum TrackZone {
     }
 }
 
-/// The Distance slider's whole steps between the list's shortest and longest track. An end step
-/// is that end exactly, so both knobs at the ends read as no filter (nextDistanceFilter).
+/// The Distance slider's steps: one per whole kilometer or mile between its ends
+/// (TrackFacets.wholeDistanceBounds).
 public enum DistanceSteps {
-    public static let count = 1000
-
-    public static func meters(_ step: Int, bounds: DistanceRange) -> Double {
-        if step <= 0 { return bounds.min }
-        if step >= count { return bounds.max }
-        return bounds.min + (bounds.max - bounds.min) * Double(step) / Double(count)
+    /// How many steps span ends: at least one, so equal ends still draw a slider.
+    public static func count(_ ends: DistanceRange, imperial: Bool) -> Int {
+        let unit = TrackFacets.unitMeters(imperial: imperial)
+        return Swift.max(Int(TrackFacets.inUnits(ends.max - ends.min, unit: unit).rounded()), 1)
     }
 
-    public static func step(_ meters: Double, bounds: DistanceRange) -> Int {
-        guard bounds.max > bounds.min else { return 0 }
-        let f = (meters - bounds.min) / (bounds.max - bounds.min)
-        return Swift.min(Swift.max(Int((f * Double(count)).rounded()), 0), count)
+    public static func meters(_ step: Int, ends: DistanceRange, imperial: Bool) -> Double {
+        let n = count(ends, imperial: imperial)
+        if step <= 0 { return ends.min }
+        if step >= n { return ends.max }
+        return ends.min + Double(step) * TrackFacets.unitMeters(imperial: imperial)
+    }
+
+    public static func step(_ meters: Double, ends: DistanceRange, imperial: Bool) -> Int {
+        let unit = TrackFacets.unitMeters(imperial: imperial)
+        let step = Int(TrackFacets.inUnits(meters - ends.min, unit: unit).rounded())
+        return Swift.min(Swift.max(step, 0), count(ends, imperial: imperial))
     }
 }

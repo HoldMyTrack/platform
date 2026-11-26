@@ -38,6 +38,12 @@ export function distanceParts(meters: number, system: UnitSystem): DistanceParts
   return { value: converted(meters, system), minDecimals: 1, maxDecimals: 1, grouping: false, unit: unitOf(system) };
 }
 
+/** An end of the Distance filter's band: whole units as the filter moves in them, and one
+ *  decimal for an end that isn't whole (a band set in the other units). */
+export function distanceBandParts(meters: number, system: UnitSystem): DistanceParts {
+  return { value: converted(meters, system), minDecimals: 0, maxDecimals: 1, grouping: false, unit: unitOf(system) };
+}
+
 /** A range's total: one decimal below 10 (km or mi), so a short history never reads as a flat
  *  "0 km", and whole units from 10 up. */
 export function totalDistanceParts(meters: number, system: UnitSystem): DistanceParts {
