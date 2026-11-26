@@ -93,9 +93,9 @@ class TripsTab(
     private var rowsLoading = false
     private var rowsError: String? = null
 
-    /** The last × that failed, with the server's reason — shown above the rows until the next
-     *  one, or another Trip opening. */
-    private var removeError: String? = null
+    /** The last × that failed, with its Trip and the server's reason: shown under that Trip,
+     *  folded or not, until the next × or another Trip opening. */
+    private var removeError: RemoveError? = null
 
     /** The inbox (FR-13.7): copies waiting, and accepted ones arriving. */
     private var sends: List<TripSend> = emptyList()
@@ -283,7 +283,11 @@ class TripsTab(
             empty = res.getString(R.string.trip_empty),
             from = { res.getString(R.string.trip_from, it) },
         )
-        adapter.submitList(TripsItems.of(state, words))
+        val atTop = !list.canScrollVertically(-1)
+        val firstBefore = adapter.currentList.firstOrNull()?.key
+        adapter.submitList(TripsItems.of(state, words)) {
+            if (TripsItems.backToTop(atTop, firstBefore, adapter.currentList.firstOrNull()?.key)) list.scrollToPosition(0)
+        }
     }
 
     /** The whole Trip, whatever the date range selects (FR-13.1), into a [TripsItem.Stats] view. */
@@ -379,7 +383,7 @@ class TripsTab(
                 if (trip.id == openId) openTrip = trip
                 onTrackRemoved(trackId)
             }.onFailure { failure ->
-                removeError = FailureText.of(failure, res.getString(R.string.trip_save_failed))
+                removeError = RemoveError(tripId, FailureText.of(failure, res.getString(R.string.trip_save_failed)))
             }
             render()
         }
