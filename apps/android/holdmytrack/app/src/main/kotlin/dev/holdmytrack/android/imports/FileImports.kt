@@ -97,7 +97,7 @@ object FileImports {
         schedule(++watch, ImportWatch.delay(0)!!)
     }
 
-    /** Failed reads in a row. */
+    /** Rounds in a row with a failed read. */
     private var failures = 0
 
     private fun schedule(mine: Int, seconds: Int) {
@@ -118,12 +118,13 @@ object FileImports {
                     wait = ImportWatch.delay(++failures)
                     break
                 }
-                failures = 0
                 val step = ImportWatch.step(status)
                 if (step.done) processing -= id
                 if (step.landed) landed = true
             }
             if (landed) landedListeners.toList().forEach { it() }
+            // A round with no failed read starts the count again ([ImportWatch.delay]).
+            if (wait == ImportWatch.delay(0)) failures = 0
             when {
                 wait == null -> giveUp()
                 processing.isEmpty() -> watching = false

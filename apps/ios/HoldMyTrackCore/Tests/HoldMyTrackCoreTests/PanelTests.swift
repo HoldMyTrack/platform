@@ -131,6 +131,8 @@ struct AccountTests {
     @Test func anUploadsAnswerSaysWhetherItWent() {
         #expect(APIClient.uploadOutcome(status: 202, body: Data(#"{"status":"enqueued","external_id":"abc","filename":"a.gpx"}"#.utf8)) == .sent("abc"))
         #expect(APIClient.uploadOutcome(status: 200, body: Data(#"{"status":"already_processed","external_id":"abc","filename":"a.gpx"}"#.utf8)) == .already)
+        #expect(APIClient.uploadOutcome(status: 200, body: Data(#"{"status":"already_processed"}"#.utf8)) == .already, "an answer without its ids")
+        #expect(APIClient.uploadOutcome(status: 202, body: Data(#"{"status":"enqueued"}"#.utf8)) == .sent(""))
         #expect(APIClient.uploadOutcome(status: 413, body: Data(#"{"error":"too_large","message":"Too big."}"#.utf8)) == .refused("Too big."))
         #expect(APIClient.uploadOutcome(status: 500, body: Data()) == .refused(""))
     }

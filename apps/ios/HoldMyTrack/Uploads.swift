@@ -200,6 +200,8 @@ final class Uploads: NSObject, URLSessionDataDelegate {
     /// Failed reads wait longer each time, and give up (ImportWatch.delay); iOS holds the reads
     /// while the app is away, and they go on as it comes back.
     private func watch(_ externalID: String) {
+        // Not set yet when iOS relaunches the app for its uploads alone: that file isn't followed,
+        // and the map catches up as the app is opened (MapViewController.returned).
         guard let api else { return }
         processing.insert(externalID)
         guard watching == nil else { return }

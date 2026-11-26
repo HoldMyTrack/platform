@@ -417,8 +417,9 @@ struct OverlapsJSON: Codable, Sendable, Equatable {
 
 struct UploadResultJSON: Codable, Sendable, Equatable {
     let status: String
-    let externalID: String
-    let filename: String
+    /// Optional, as on Android: an answer without it still says whether the file went.
+    let externalID: String?
+    let filename: String?
 
     enum CodingKeys: String, CodingKey {
         case status, filename
