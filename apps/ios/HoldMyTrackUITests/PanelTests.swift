@@ -146,7 +146,8 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
         XCTAssertFalse(modes.exists, "no mode toggle on Trips")
         XCTAssertTrue(app.staticTexts["tripStats"].waitForExistence(timeout: 10), "the open Trip's numbers under the list")
-        XCTAssertGreaterThan(app.staticTexts["tripStats"].frame.minY, app.cells["tripFolder"].firstMatch.frame.maxY, "under the list, not its folder")
+        let pinnedAt = app.staticTexts["tripStats"].frame.minY
+        XCTAssertGreaterThan(pinnedAt, app.cells.matching(identifier: "trackRow").allElementsBoundByIndex.map(\.frame.maxY).max() ?? 0, "under the Trip's rows")
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = "Trips"
         shot.lifetime = .keepAlways
@@ -157,6 +158,7 @@ final class PanelTests: XCTestCase {
         folder.tap()
         XCTAssertEqual(folder.value as? String, "Folded")
         XCTAssertTrue(app.staticTexts["tripStats"].exists, "the numbers stay while the Trip is folded")
+        XCTAssertEqual(app.staticTexts["tripStats"].frame.minY, pinnedAt, "pinned under the list, not following its folder")
         folder.tap()
         XCTAssertEqual(folder.value as? String, "Open")
 

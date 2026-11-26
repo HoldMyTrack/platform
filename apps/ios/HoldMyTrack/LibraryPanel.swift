@@ -119,6 +119,9 @@ final class LibraryPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         addButton.accessibilityIdentifier = "librarySync"
         addButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
         addButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        // The search takes the row's width; + keeps its own, its waiting count too.
+        addButton.setContentHuggingPriority(.required, for: .horizontal)
+        addButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         addButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.sync) }, for: .primaryActionTriggered)
         setSyncWaiting(0)
         search.placeholder = String(localized: "library.search", defaultValue: "Search names and descriptions", comment: "Library: the search field's hint.")

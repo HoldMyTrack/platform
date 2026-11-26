@@ -25,7 +25,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     var onEvent: ((Event) -> Void)?
-    let content = UIView()
+    let content = LaidOutView()
     let head = UIStackView()
 
     private let api: APIClient
@@ -78,12 +78,10 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let tapEmpty = UITapGestureRecognizer(target: self, action: #selector(tappedList(_:)))
         tapEmpty.cancelsTouchesInView = false
         table.addGestureRecognizer(tapEmpty)
-        // The open Trip's numbers under the list, as Android's footer; in landscape, where pinned
-        // they'd leave the rows a sliver, the list's last item instead (placeStats).
+        // The list fills the tab; pinned, the numbers lie over its bottom, which is inset by their
+        // height so no row hides behind them (placeStats).
         stats.backgroundColor = UIColor(resource: .surface)
         stats.isHidden = true
-        // The list fills the tab as before; the numbers lie over its bottom, which is inset by their
-        // height so no row hides behind them.
         for v in [table, stats] as [UIView] {
             v.translatesAutoresizingMaskIntoConstraints = false
             content.addSubview(v)
@@ -97,11 +95,18 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             stats.trailingAnchor.constraint(equalTo: content.trailingAnchor),
             stats.bottomAnchor.constraint(equalTo: content.bottomAnchor),
         ])
-        content.registerForTraitChanges([UITraitVerticalSizeClass.self]) { [weak self] (_: UIView, _) in self?.renderStats() }
+        // Measured again whenever the tab's size, the sheet's height or the text size changes.
+        content.onLayout = { [weak self] in self?.placeStats() }
+        content.registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (view: UIView, _) in view.setNeedsLayout() }
     }
 
-    /// The open Trip's numbers, under the list or, in landscape, as its footer.
+    /// Holds the open Trip's numbers while they're pinned under the list.
     private let stats = UIView()
+    /// The open Trip's numbers, with their rule and margins, or nil with no Trip open.
+    private var statsBox: UIView?
+    private struct Placed: Equatable { let pinned: Bool, width: CGFloat, height: CGFloat }
+    /// How statsBox was last placed, so a layout that changes nothing moves nothing.
+    private var placed: Placed?
 
     // MARK: Showing
 
@@ -288,41 +293,57 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     /// The whole open Trip's numbers, whatever the dates select, and each type's share: shown while
     /// a Trip is open, its list folded or not.
     private func renderStats() {
-        stats.subviews.forEach { $0.removeFromSuperview() }
+        statsBox?.removeFromSuperview()
+        statsBox = nil
+        placed = nil
         table.tableFooterView = nil
-        guard let trip = openTrip, trip.id == openID else {
-            stats.isHidden = true
-            insetFor(nil)
-            return
-        }
+        stats.isHidden = true
+        insetFor(nil)
+        guard let trip = openTrip, trip.id == openID else { return }
+        let box = UIView()
         let body = statsView(trip)
-        let landscape = content.traitCollection.verticalSizeClass == .compact
-        let host = landscape ? UIView(frame: CGRect(x: 0, y: 0, width: table.bounds.width, height: 1)) : stats
-        body.translatesAutoresizingMaskIntoConstraints = false
-        host.addSubview(body)
         let rule = UIView()
         rule.backgroundColor = UIColor(resource: .border)
-        rule.translatesAutoresizingMaskIntoConstraints = false
-        host.addSubview(rule)
-        NSLayoutConstraint.activate([
-            rule.topAnchor.constraint(equalTo: host.topAnchor), rule.heightAnchor.constraint(equalToConstant: 1),
-            rule.leadingAnchor.constraint(equalTo: host.leadingAnchor), rule.trailingAnchor.constraint(equalTo: host.trailingAnchor),
-            body.topAnchor.constraint(equalTo: host.topAnchor, constant: DesignTokens.Space.s12),
-            body.bottomAnchor.constraint(equalTo: host.bottomAnchor, constant: -DesignTokens.Space.s12),
-            body.leadingAnchor.constraint(equalTo: host.leadingAnchor, constant: DesignTokens.Space.s16),
-            body.trailingAnchor.constraint(equalTo: host.trailingAnchor, constant: -DesignTokens.Space.s16),
-        ])
-        stats.isHidden = landscape
-        if landscape {
-            let size = host.systemLayoutSizeFitting(CGSize(width: table.bounds.width, height: 0), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
-            host.frame.size.height = size.height
-            table.tableFooterView = host
-            insetFor(nil)
-        } else {
-            let size = stats.systemLayoutSizeFitting(CGSize(width: content.bounds.width > 0 ? content.bounds.width : table.bounds.width, height: 0),
-                                                     withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
-            insetFor(size.height)
+        for v in [rule, body] {
+            v.translatesAutoresizingMaskIntoConstraints = false
+            box.addSubview(v)
         }
+        NSLayoutConstraint.activate([
+            rule.topAnchor.constraint(equalTo: box.topAnchor), rule.heightAnchor.constraint(equalToConstant: 1),
+            rule.leadingAnchor.constraint(equalTo: box.leadingAnchor), rule.trailingAnchor.constraint(equalTo: box.trailingAnchor),
+            body.topAnchor.constraint(equalTo: box.topAnchor, constant: DesignTokens.Space.s12),
+            body.bottomAnchor.constraint(equalTo: box.bottomAnchor, constant: -DesignTokens.Space.s12),
+            body.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: DesignTokens.Space.s16),
+            body.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -DesignTokens.Space.s16),
+        ])
+        statsBox = box
+        placeStats()
+    }
+
+    /// Puts statsBox where TripStatsPlace says, measured at the tab's width. Collapsed, the tab has
+    /// no height to measure against, and the numbers stay where they were.
+    private func placeStats() {
+        guard let box = statsBox, content.bounds.width > 0, content.bounds.height > 0 else { return }
+        let width = content.bounds.width
+        let height = box.systemLayoutSizeFitting(CGSize(width: width, height: 0), withHorizontalFittingPriority: .required,
+                                                 verticalFittingPriority: .fittingSizeLevel).height
+        let pinned = TripStatsPlace.pinned(compactHeight: content.traitCollection.verticalSizeClass == .compact,
+                                           height: Double(height), available: Double(content.bounds.height))
+        let place = Placed(pinned: pinned, width: width, height: height)
+        guard place != placed else { return }
+        placed = place
+        box.removeFromSuperview()
+        table.tableFooterView = nil
+        box.translatesAutoresizingMaskIntoConstraints = false
+        let host = pinned ? stats : UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
+        host.addSubview(box)
+        NSLayoutConstraint.activate([
+            box.topAnchor.constraint(equalTo: host.topAnchor), box.bottomAnchor.constraint(equalTo: host.bottomAnchor),
+            box.leadingAnchor.constraint(equalTo: host.leadingAnchor), box.trailingAnchor.constraint(equalTo: host.trailingAnchor),
+        ])
+        stats.isHidden = !pinned
+        if !pinned { table.tableFooterView = host }
+        insetFor(pinned ? height : nil)
     }
 
     /// The list's bottom kept clear of the pinned numbers, or not.
@@ -597,5 +618,15 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     static func message(_ error: Error, _ fallback: String) -> String {
         (error as? APIError)?.serverMessage ?? fallback
+    }
+}
+
+/// A view that says when it's laid out, so what it holds can be measured at its new size.
+final class LaidOutView: UIView {
+    var onLayout: (() -> Void)?
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        onLayout?()
     }
 }
