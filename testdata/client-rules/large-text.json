@@ -1,0 +1,13 @@
+{
+  "rule": "largeText",
+  "clients": ["android", "ios"],
+  "description": "Whether the phone's text is large enough that rows laid out for the default size stack instead (You's four numbers two by two): the text's scale over its default, Android's font scale or iOS's body size over 17, at 1.3 or more.",
+  "cases": [
+    { "name": "the default size", "input": { "scale": 1 }, "expected": false },
+    { "name": "iOS XXL, about 1.24", "input": { "scale": 1.2353 }, "expected": false },
+    { "name": "just under the threshold", "input": { "scale": 1.29 }, "expected": false },
+    { "name": "at the threshold, Android's 1.3", "input": { "scale": 1.3 }, "expected": true },
+    { "name": "iOS XXXL, about 1.35", "input": { "scale": 1.3529 }, "expected": true },
+    { "name": "an accessibility size", "input": { "scale": 2.35 }, "expected": true }
+  ]
+}

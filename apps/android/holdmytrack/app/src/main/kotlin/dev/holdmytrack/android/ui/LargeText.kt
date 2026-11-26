@@ -14,7 +14,10 @@ object LargeText {
     /** 1.3× — where the You tab's labels first broke on a 412dp phone. */
     private const val THRESHOLD = 1.3f
 
-    fun isOn(res: Resources): Boolean = res.configuration.fontScale >= THRESHOLD
+    fun isOn(res: Resources): Boolean = isOn(res.configuration.fontScale)
+
+    /** [scale]: the font scale. Cases in `testdata/client-rules/large-text.json`. */
+    fun isOn(scale: Float): Boolean = scale >= THRESHOLD
 
     /**
      * [row] as a column when the text is large: each child that shared the row's width by
