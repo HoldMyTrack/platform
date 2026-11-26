@@ -215,7 +215,7 @@ final class PhotosTabView: UIView {
     }
 
     private func fail(_ name: String, _ message: String) {
-        failures.append(String(localized: "\(name): \(message)", comment: "Photos tab: a picked file that couldn't be added, and why."))
+        failures.append(String(localized: "\(name): \(message)", comment: "A file that couldn't be added, and why: a picked photo on the Photos tab, or an upload."))
         render()
     }
 

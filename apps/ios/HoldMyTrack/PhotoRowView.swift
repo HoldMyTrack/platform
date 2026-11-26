@@ -155,7 +155,7 @@ final class PhotoRowView: UIView, UITextFieldDelegate {
         delete.isEnabled = !look.busy
         keep.isEnabled = !look.busy
         edit.accessibilityLabel = String(localized: "Edit \(look.label)", comment: "Photos tab: edits the named photo.")
-        delete.accessibilityLabel = String(localized: "Delete \(look.label)", comment: "Photos tab: deletes the named photo.")
+        delete.accessibilityLabel = String(localized: "Delete \(look.label)", comment: "Delete's label; the placeholder names its target: a Tracks panel track or Trip, or a Photos tab photo.")
         backgroundColor = look.open ? UIColor(resource: .surfaceTint) : .clear
         editor.isHidden = !look.open
         if look.open {
