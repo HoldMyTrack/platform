@@ -44,7 +44,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var foldedID: String?
     private var rows: [TrackRowCell.Row] = []
     private var rowsNote: (text: String, failed: Bool)?
-    private var removeError: String?
+    /// A track's removal that failed: the Trip it was from, and why, said under that Trip.
+    private var removeError: (tripID: String, text: String)?
     private var sends: [TripSend] = []
     private var copying: [TripCopying] = []
     private var answering = false
@@ -250,11 +251,16 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             let trip = open && openTrip?.id == listed.id ? openTrip! : listed
             let expanded = open && !TripFold.isFolded(foldedID: foldedID, openID: openID)
             next.append(.folder(trip, open: open, expanded: expanded))
-            guard expanded else { continue }
+            let notePlace = TripRemoveNote.place(tripID: trip.id, expanded: expanded, failedTripID: removeError?.tripID)
+            let removeNote: Item? = removeError.map { .note($0.text, failed: true) }
+            guard expanded else {
+                if notePlace == .afterFolder, let removeNote { next.append(removeNote) }
+                continue
+            }
             if let from = trip.from { next.append(.text(String(localized: "From \(from)"), small: true)) }
             if !trip.description.isEmpty { next.append(.text(trip.description, small: false)) }
             next.append(.stats(trip))
-            if let removeError { next.append(.note(removeError, failed: true)) }
+            if notePlace == .afterStats, let removeNote { next.append(removeNote) }
             next += rows.map { .row($0, tripID: trip.id) }
             if let rowsNote {
                 next.append(.note(rowsNote.text, failed: rowsNote.failed))
@@ -512,7 +518,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 if read.trip.id == openID { openTrip = read.trip }
                 onEvent?(.removed(trackID))
             } catch {
-                removeError = Self.message(error, String(localized: "Could not save the trip"))
+                removeError = (tripID, Self.message(error, String(localized: "Could not save the trip")))
             }
             render()
         }
