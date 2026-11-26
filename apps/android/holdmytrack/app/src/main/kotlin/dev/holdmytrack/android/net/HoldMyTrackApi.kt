@@ -286,6 +286,16 @@ object HoldMyTrackApi {
         decode<UploadsActiveJson>(text).failures.map { ImportFailure(it.id, it.title, it.reason) }
     }
 
+    /** `GET /v2/uploads/{external_id}`: an uploaded file's state, processing, done, failed or
+     *  unknown. */
+    suspend fun uploadStatus(externalId: String): String = withContext(Dispatchers.IO) {
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/uploads/" + Uri.encode(externalId)).build()
+        val response = waitingClient.newCall(request).await()
+        val text = response.use { it.body.string() }
+        if (!response.isSuccessful) throw ApiException.from(response.code, text)
+        decode<UploadStatusJson>(text).status
+    }
+
     /** `POST /v2/uploads/seen`: the failure [id] has been shown and dismissed. */
     suspend fun dismissImportFailure(id: Long): Unit = withContext(Dispatchers.IO) {
         val request = Request.Builder()
@@ -386,7 +396,7 @@ object HoldMyTrackApi {
         val response = uploadClient.newCall(request).await()
         val text = response.use { it.body.string() }
         if (!response.isSuccessful) throw ApiException.from(response.code, text)
-        UploadOutcome(status = decode<UploadResultJson>(text).status)
+        decode<UploadResultJson>(text).let { UploadOutcome(status = it.status, externalId = it.externalId) }
     }
 
     /** A picked file as a request body, read as it's sent. Opened afresh on every [writeTo], so

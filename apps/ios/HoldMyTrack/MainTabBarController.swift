@@ -94,6 +94,9 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
             MainActor.assumeIsolated { self?.countWaiting() }
         }
         countWaiting()
+        NotificationCenter.default.addObserver(forName: Uploads.landed, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.map.importLanded() }
+        }
         map.onWantsSync = { [weak self] in self?.openSync() }
         map.onOpenTrack = { [weak self, weak map] track, day in
             guard let self, let map, let mapHost = self.viewControllers?.first else { return }

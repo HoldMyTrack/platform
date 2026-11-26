@@ -9,6 +9,7 @@ import android.graphics.RectF
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import dev.holdmytrack.android.imports.FileImports
 import dev.holdmytrack.android.export.ExportController
 import dev.holdmytrack.android.map.FogPlaces
 import dev.holdmytrack.android.map.BasemapStatus
@@ -151,6 +152,16 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** Something the Sync tab sent has landed, whichever tab shows: the list, its days and the
      *  tiles catch up. Until then its job is only queued, with no row to show Pending. */
     private val syncProgressListener = SyncProgress.Listener(onChange = {}, onLanded = { onSyncedFromPhone() })
+
+    /** An uploaded file became a track, whichever tab shows: the map and Library catch up, and an
+     *  empty map frames it. */
+    private val importLanded: () -> Unit = {
+        views?.let { v ->
+            v.refresh.afterUpload()
+            v.panel.libraryTab.refresh()
+            if (v.notices.shown == MapNotice.EMPTY) v.camera.openAgain { v.area.followArea() }
+        }
+    }
     /** The area and Dates or the Trip the list and tracks show, and whether the camera moves next. */
     private val session = MapSession(panelState)
     private var imageryStatus = SatelliteStatus.LOADING
@@ -971,6 +982,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         v?.basemap?.start()
         v?.imagery?.start()
         SyncProgress.addListener(syncProgressListener)
+        FileImports.addLandedListener(importLanded)
         SyncProgress.resume(requireContext())
         v?.area?.pending?.start()
         coverage.resume()
@@ -1019,6 +1031,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         v?.area?.pending?.stop()
         coverage.stop()
         SyncProgress.removeListener(syncProgressListener)
+        FileImports.removeLandedListener(importLanded)
         recording.stop()
         v?.basemap?.stop()
         v?.imagery?.stop()

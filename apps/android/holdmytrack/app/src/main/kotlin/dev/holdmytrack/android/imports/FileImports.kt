@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.OpenableColumns
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.FailureText
@@ -28,9 +29,9 @@ import kotlinx.coroutines.withContext
  * another app; `UploadActivity` only draws [transfers] and [notes] and listens for changes. Each
  * file is copied into the app's cache as it's queued, off the main thread: the read grant on a
  * picked or shared file ends with the screen that received it, and the queue outlives the
- * screen. The queue belongs to the account that filled it ([ImportsAccount]). The server takes
- * it from there: once a file has gone, its jobs are in Sync's history, which polls while they
- * process.
+ * screen. The queue belongs to the account that filled it ([ImportsAccount]). Each file the
+ * server accepts is followed until it's processed ([watch]), and its landing heard by
+ * [addLandedListener]'s listeners.
  */
 object FileImports {
 
@@ -66,6 +67,96 @@ object FileImports {
         private set
 
     private val listeners = mutableSetOf<() -> Unit>()
+
+    /** Heard when an import this phone uploaded has ended: its track is in the account. */
+    private val landedListeners = mutableSetOf<() -> Unit>()
+
+    /** The uploaded files still processing, by the id their upload answered with. */
+    private val processing = mutableSetOf<String>()
+
+    /** Bumped when a watch starts or the account goes, so an old watch's reads change nothing. */
+    private var watch = 0
+    private var watching = false
+    private var watchRead: Runnable? = null
+
+    /** Also starts the watch again if it paused with files still processing. */
+    fun addLandedListener(listener: () -> Unit) {
+        landedListeners += listener
+        if (processing.isNotEmpty() && !watching) start()
+    }
+
+    fun removeLandedListener(listener: () -> Unit) {
+        landedListeners -= listener
+    }
+
+    /** An upload was accepted: each file still processing is asked about every few seconds
+     *  (`GET /v2/uploads/{external_id}`) until none is, and each that lands is heard
+     *  ([addLandedListener]). Failed reads wait longer each time, and the watch gives up after
+     *  those or after a while ([ImportWatch.delay]). With no listener, the map stopped, it pauses
+     *  until one is added. */
+    private fun watch(externalId: String) {
+        processing += externalId
+        if (!watching) start()
+    }
+
+    private fun start() {
+        watching = true
+        failures = 0
+        startedAt = SystemClock.elapsedRealtime()
+        schedule(++watch, ImportWatch.delay(0, 0)!!)
+    }
+
+    /** Rounds in a row with a failed read. */
+    private var failures = 0
+
+    /** When the watch started or started again, in [SystemClock.elapsedRealtime]'s milliseconds. */
+    private var startedAt = 0L
+
+    private fun schedule(mine: Int, seconds: Int) {
+        val read = Runnable { if (mine == watch) round(mine) }
+        watchRead = read
+        main.postDelayed(read, seconds * 1000L)
+    }
+
+    /** One round over the files processing; a failed read ends it and waits longer. */
+    private fun round(mine: Int) {
+        if (landedListeners.isEmpty()) {
+            // Paused, the files kept: addLandedListener starts it again.
+            watching = false
+            return
+        }
+        scope.launch {
+            var landed = false
+            var failed = false
+            for (id in processing.toList()) {
+                val status = runCatching { HoldMyTrackApi.uploadStatus(id) }.getOrNull()
+                if (mine != watch) return@launch
+                if (status == null) {
+                    failed = true
+                    break
+                }
+                val step = ImportWatch.step(status)
+                if (step.done) processing -= id
+                if (step.landed) landed = true
+            }
+            if (landed) landedListeners.toList().forEach { it() }
+            failures = if (failed) failures + 1 else 0
+            val wait = ImportWatch.delay(failures, (SystemClock.elapsedRealtime() - startedAt) / 1000)
+            when {
+                processing.isEmpty() -> watching = false
+                wait == null -> giveUp()
+                else -> schedule(mine, wait)
+            }
+        }
+    }
+
+    /** The reads failed too often, or the files stayed processing too long: the map catches up
+     *  on the next return anyway. */
+    private fun giveUp() {
+        processing.clear()
+        watching = false
+        failures = 0
+    }
 
     init {
         // The copies of the account's files go as it signs out, not when the next one queues.
@@ -141,6 +232,11 @@ object FileImports {
         _transfers.clear()
         _notes.clear()
         sentCount = 0
+        // The next account's files are none of this one's, and a read waiting doesn't go.
+        watch++
+        watchRead?.let(main::removeCallbacks)
+        watchRead = null
+        giveUp()
         if (!running) clearCopies(context)
         changed()
     }
@@ -174,6 +270,7 @@ object FileImports {
                 }
                 if (ImportsAccount.reports(sentFor, owner)) {
                     sentCount++
+                    if (outcome.status != "already_processed" && outcome.externalId.isNotEmpty()) watch(outcome.externalId)
                     if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
                 }
             } catch (e: Exception) {

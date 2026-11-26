@@ -298,7 +298,7 @@ internal data class OverlapJson(
 internal data class OverlapsJson(val overlaps: List<OverlapJson>)
 
 @Serializable
-internal data class UploadResultJson(val status: String)
+internal data class UploadResultJson(val status: String, @SerialName("external_id") val externalId: String = "")
 
 // Sync
 
@@ -518,6 +518,10 @@ internal data class ImportFailureJson(val id: Long, val title: String, val reaso
 /** `GET /v2/uploads/active`, read for its failures only: what's still processing is the web's. */
 @Serializable
 internal data class UploadsActiveJson(val failures: List<ImportFailureJson> = emptyList())
+
+/** `GET /v2/uploads/{external_id}`: an uploaded file's state. */
+@Serializable
+internal data class UploadStatusJson(val status: String, val error: String? = null)
 
 /** `POST /v2/uploads/seen`: the failure dismissed. */
 @Serializable
