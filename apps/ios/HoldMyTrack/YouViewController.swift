@@ -226,7 +226,7 @@ final class YouViewController: UITableViewController {
         }
         face.widthAnchor.constraint(equalToConstant: 56).isActive = true
         face.heightAnchor.constraint(equalToConstant: 56).isActive = true
-        let name = Controls.label(account.isDemo ? String(localized: "The demo account") : (account.displayName.isEmpty ? account.email : account.displayName),
+        let name = Controls.label(account.displayName.isEmpty ? account.email : account.displayName,
                                   font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
         name.accessibilityIdentifier = "account"
         var lines: [UIView] = [name]
@@ -344,6 +344,20 @@ final class YouViewController: UITableViewController {
         case .web: "HoldMyTrack"
         default: nil
         }
+    }
+
+    /// Small bold capitals, spaced, as Android's section labels.
+    override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+        guard let header = view as? UITableViewHeaderFooterView, let title = self.tableView(tableView, titleForHeaderInSection: section) else { return }
+        var config = UIListContentConfiguration.groupedHeader()
+        config.attributedText = NSAttributedString(string: title.localizedUppercase, attributes: [
+            .font: Typeface.sans(DesignTokens.Text.xs, weight: DesignTokens.Weight.bold, relativeTo: .caption2),
+            .foregroundColor: UIColor(resource: .inkSecondary),
+            .kern: 0.7,
+        ])
+        header.contentConfiguration = config
+        // Read as the word, not spelled out as capitals.
+        header.accessibilityLabel = title
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

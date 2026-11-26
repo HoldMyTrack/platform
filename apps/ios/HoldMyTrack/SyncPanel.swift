@@ -440,7 +440,10 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             return cell
         }
         let cell = tableView.dequeueReusableCell(withIdentifier: "plain", for: indexPath)
+        // The configuration first: clearing it afterwards would drop the clear color.
+        cell.backgroundConfiguration = nil
         cell.backgroundColor = .clear
+        cell.separatorInset = tableView.separatorInset
         cell.selectionStyle = .none
         cell.accessoryType = .none
         var config = UIListContentConfiguration.subtitleCell()
@@ -451,6 +454,14 @@ final class SyncPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             config.text = text
             config.textProperties.color = UIColor(resource: failed ? .danger : .ink)
             cell.accessibilityIdentifier = id
+            // In a tinted box with no rule under it, as Android's.
+            var box = UIBackgroundConfiguration.clear()
+            box.backgroundColor = UIColor(resource: .noticeBg)
+            box.cornerRadius = DesignTokens.Radius.sm
+            box.backgroundInsets = .init(top: DesignTokens.Space.s4, leading: DesignTokens.Space.s16, bottom: DesignTokens.Space.s4, trailing: DesignTokens.Space.s16)
+            cell.backgroundConfiguration = box
+            cell.separatorInset = .init(top: 0, left: 0, bottom: 0, right: .greatestFiniteMagnitude)
+            config.directionalLayoutMargins = .init(top: DesignTokens.Space.s12, leading: DesignTokens.Space.s24, bottom: DesignTokens.Space.s12, trailing: DesignTokens.Space.s24)
         case .note(let text):
             config.text = text
             config.textProperties.color = UIColor(resource: .inkSecondary)

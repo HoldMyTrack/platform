@@ -11859,17 +11859,6 @@
         }
       }
     },
-    "The demo account" : {
-      "comment" : "Home screen: who is signed in, for the shared demo account.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Демо-аккаунт"
-          }
-        }
-      }
-    },
     "The download couldn't be prepared." : {
       "comment" : "Download your data: the request failed and the server gave no reason.",
       "localizations" : {

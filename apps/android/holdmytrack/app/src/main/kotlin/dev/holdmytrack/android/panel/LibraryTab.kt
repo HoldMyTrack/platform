@@ -225,6 +225,16 @@ class LibraryTab(
         mark(typeChip, state.exclude.isNotEmpty())
         mark(datesChip, state.after != null || state.before != null)
         mark(distanceChip, state.distance != null)
+        // The band picked, or "Any distance", as the Tracks tab's filter and iOS's chip.
+        distanceChip.text = state.distance?.let { band ->
+            res.getString(
+                R.string.panel_distance_range,
+                PanelFormat.distanceValue(res, band.min),
+                band.max?.let { PanelFormat.distanceValue(res, it) } ?: "∞",
+                PanelFormat.unit(res),
+            )
+        } ?: res.getString(R.string.panel_any_distance_chip)
+        distanceChip.contentDescription = "${res.getString(R.string.panel_distance)}, ${distanceChip.text}"
         mark(tripChip, state.trip != null)
         tripChip.text = state.trip?.let { id -> trips.firstOrNull { it.id == id }?.name } ?: res.getString(R.string.library_trip)
         distanceChip.visibility = if (page?.distance?.let { it.first < it.second } == true) View.VISIBLE else View.GONE
