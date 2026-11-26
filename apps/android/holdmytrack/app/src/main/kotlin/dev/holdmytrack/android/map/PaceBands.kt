@@ -20,6 +20,8 @@ class PaceBands(
     /** The style once the user layers are on it. */
     private val style: () -> Style?,
     private val onSyncTab: () -> Boolean,
+    /** What the map leaves out on the tab showing (PanelState.mapHidden). */
+    private val mapHidden: () -> Set<String>,
     /** The bands' colors, slowest first, while they're drawn, else null: the panel's legend follows. */
     private val onShown: (List<String>?) -> Unit,
     /** A refetch after a reprocess: the photos may have moved along the new track too. */
@@ -55,7 +57,7 @@ class PaceBands(
 
     /** The bands the map draws, or null: the export's hidden map draws the same. */
     val drawn: RouteMetrics?
-        get() = metrics?.takeIf { val focused = panelState.focused; focused == it.trackId && focused !in panelState.mapHidden && !onSyncTab() }
+        get() = metrics?.takeIf { val focused = panelState.focused; focused == it.trackId && focused !in mapHidden() && !onSyncTab() }
 
     fun render() {
         val loaded = style() ?: return

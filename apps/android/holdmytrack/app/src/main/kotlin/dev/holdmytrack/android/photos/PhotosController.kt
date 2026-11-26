@@ -33,6 +33,8 @@ class PhotosController(
     private val mode: () -> MapMode,
     private val tripId: () -> String?,
     private val recording: () -> Boolean,
+    /** What the map leaves out on the tab showing (PanelState.mapHidden). */
+    private val mapHidden: () -> Set<String>,
     /** Flies to a group's bounds, at most to the zoom given. */
     private val frame: (DoubleArray, Double) -> Unit,
     /** A popup is opening: the spot's goes. */
@@ -152,9 +154,9 @@ class PhotosController(
      *  merged in. Not while recording, while the Route tab has the map, nor for a hidden route. */
     fun render() {
         if (!::markers.isInitialized) return
-        val shown = PhotoMarkerScope.shown(scope, recording(), editWindow()?.showingRoute == true, panelState.mapHidden)
+        val shown = PhotoMarkerScope.shown(scope, recording(), editWindow()?.showingRoute == true, mapHidden())
         val overlay = overlay
-        val items = if (shown) PhotoMarkerScope.markers(photos, panelState.mapHidden, overlay) else emptyList()
+        val items = if (shown) PhotoMarkerScope.markers(photos, mapHidden(), overlay) else emptyList()
         if (!shown) popup.close()
         markers.set(map(), items, overlay?.activeId ?: popup.showingId, overlay?.activeId)
     }

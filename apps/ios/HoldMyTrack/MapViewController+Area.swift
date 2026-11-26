@@ -120,8 +120,10 @@ extension MapViewController {
     /// Past the cap the map draws only the listed tracks and says how many the area holds.
     func renderCap() {
         let capped = session.tripID == nil && AreaLoad.of(zoom: mapView.zoomLevel, listed: tracks.count, total: areaTotal).capped
-        state.vars["capped"] = .bool(capped)
-        state.vars["listed"] = .array(capped ? tracks.map { .string($0.id) } : [])
+        // The cap narrows the map to the Tracks list, which Library's map doesn't follow.
+        let mapCapped = capped && mapFiltersApply
+        state.vars["capped"] = .bool(mapCapped)
+        state.vars["listed"] = .array(mapCapped ? tracks.map { .string($0.id) } : [])
         if capped, let total = areaTotal {
             let count = { (n: Int) in NumberFormatter.localizedString(from: NSNumber(value: n), number: .decimal) }
             notice(.capped, String(localized: "Showing the newest \(count(tracks.count)) of \(count(total)) tracks here. Zoom in or set Dates to see the rest."))
@@ -202,7 +204,8 @@ extension MapViewController {
         var parts: [String] = []
         if let trip = session.tripID {
             parts.append("trip=\(trip.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trip)")
-        } else {
+        } else if mapFiltersApply {
+            // Library's map shows every track, of all time.
             parts += session.dates.query.map { "\($0.name)=\($0.value ?? "")" }
         }
         if tracksVersion > 0 { parts.append("v=\(tracksVersion)") }

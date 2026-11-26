@@ -188,6 +188,26 @@ struct TourCheckedTests {
     }
 }
 
+/// The map under Library leaves the Tracks tab's filters out, not Hidden or Pending.
+struct MapHiddenTests {
+    @Test func unfilteredTheMapKeepsWhatTypeAndDistanceTakeOut() {
+        var panel = PanelState()
+        panel.setTracks([
+            TrackSummary(id: "a", trackType: "walking", distanceMeters: 1200, isPrivate: false),
+            TrackSummary(id: "b", trackType: "running", distanceMeters: 10400, isPrivate: false),
+            TrackSummary(id: "c", trackType: "cycling", distanceMeters: 21000, isPrivate: false),
+            TrackSummary(id: "d", trackType: "walking", distanceMeters: 1000, isPrivate: false, isPending: true),
+        ])
+        panel.toggleType("running")
+        panel.distanceFilter = DistanceRange(min: 0, max: 15000)
+        panel.focus("a")
+        panel.toggleTargetVisibility()
+        #expect(panel.mapHidden(filtered: true) == ["a", "b", "c", "d"])
+        #expect(panel.mapHidden(filtered: false) == ["a", "d"])
+        #expect(panel.mapHidden == panel.mapHidden(filtered: true))
+    }
+}
+
 struct TabModeTests {
     @Test func tripsShowNormalWithNoToggleAndTheTracksTabGetsItsPickBack() {
         #expect(TabMode.shown(picked: .fog, onTracksTab: false) == .normal)

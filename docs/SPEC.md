@@ -251,7 +251,7 @@ Every map and export choice is kept by the browser or phone, never by the accoun
 
 ### FR-4.1 Track rendering (Normal mode)
 
-- Normal mode draws every track passing the filters that isn't Hidden or Pending (FR-5.8): Dates (FR-5.12), Type and Distance, and past the list's cap only the listed ones (FR-5.11). With a Trip open, its tracks (FR-13.6).
+- Normal mode draws every track passing the filters that isn't Hidden or Pending (FR-5.8): Dates (FR-5.12), Type and Distance, and past the list's cap only the listed ones (FR-5.11). With a Trip open, its tracks (FR-13.6). The apps' map under Library draws every track that isn't Hidden or Pending (`apps/docs/SPEC.md` FR-4.1).
 - Routes are drawn from zoom 4 in.
 - A route across the 180° meridian is drawn the short way and counts in Fog on both sides.
 

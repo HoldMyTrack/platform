@@ -76,6 +76,10 @@ object MapChromeRules {
      *  closes it for the account. The demo account has history and can't sync. */
     fun emptyNoticeShown(empty: Boolean, demo: Boolean, closed: Boolean): Boolean = empty && !demo && !closed
 
+    /** Whether the map draws the routes through the Tracks tab's filters on [tab]: not on
+     *  Library or its Sync, where it shows every track (`testdata/client-rules/map-tracks-filters.json`). */
+    fun tracksFiltersApply(tab: PanelTab): Boolean = tab != PanelTab.LIBRARY && tab != PanelTab.SYNC
+
     /** The empty and capped notices step aside while recording and on the Sync tab, whose lists
      *  aren't the area's; failures stay up. */
     fun noticeShown(kind: MapNotice?, recording: Boolean, onSync: Boolean): Boolean =

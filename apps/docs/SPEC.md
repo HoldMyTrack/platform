@@ -252,11 +252,12 @@ The web's upload (`docs/SPEC.md` FR-3.1, FR-3.2) as a sheet over the screen it o
 
 ### FR-4.1 Library
 
-The web's Library (`docs/SPEC.md` FR-17.1) as the bottom bar's Library: a sheet over the map, as Tracks and Trips are, its page read again each time the tab opens. Sync (FR-3.5) opens from its head, with the recordings waiting.
+The web's Library (`docs/SPEC.md` FR-17.1) as the bottom bar's Library: a sheet over the map, as Tracks and Trips are, its page read again each time the tab opens. Sync (FR-3.5) opens from Library, with the recordings waiting.
 
 - The search, the sort and the Type, Dates, Distance and Trip filters, pages of 100, Checked within the page, Download and Delete are the web's (`testdata/client-rules/library-*.json`).
 - Opening a track opens it on the Tracks tab with the track focused. When its day is outside the range, the range becomes that day, as if picked.
 - Download gives one track as GPX and Checked tracks as a zip.
+- The map under Library and Sync draws every track that isn't Hidden or Pending: the Tracks tab's Type, Distance and Dates (`docs/SPEC.md` FR-5.2, FR-5.3, FR-5.12) apply on that tab only and stay set for it. Library's own filters narrow its list, not the map.
 
 ## 7. FR-5 — In-App GPS Recording
 

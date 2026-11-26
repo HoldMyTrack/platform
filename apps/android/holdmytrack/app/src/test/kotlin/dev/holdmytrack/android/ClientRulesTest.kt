@@ -1,6 +1,7 @@
 package dev.holdmytrack.android
 
 import dev.holdmytrack.android.ui.LargeText
+import dev.holdmytrack.android.map.MapChromeRules
 import dev.holdmytrack.android.export.ExportStatsRules
 import dev.holdmytrack.android.imports.ImportWatch
 import dev.holdmytrack.android.imports.UploadPlan
@@ -499,6 +500,7 @@ class ClientRulesTest {
         },
         "basemapStatus" to { input -> JsonPrimitive(BasemapStatus.of(input.bool("loaded"), input.bool("failed"), input.number("waitedMs").toLong()).name.lowercase()) },
         "largeText" to { input -> JsonPrimitive(LargeText.isOn(input.number("scale").toFloat())) },
+        "mapTracksFilters" to { input -> JsonPrimitive(MapChromeRules.tracksFiltersApply(PanelTab.valueOf(input.string("tab")!!.uppercase()))) },
         "photoMarkerSize" to { input -> JsonPrimitive(PhotoClusters.markerSize(input.number("zoom")).name.lowercase()) },
         "photoMarkerLayout" to { input ->
             val points = input["points"]!!.jsonArray.map { it.jsonObject }.map { ScreenPoint(it.string("id")!!, it.number("x").toFloat(), it.number("y").toFloat()) }

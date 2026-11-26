@@ -232,6 +232,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["send": .array(plan.send.map { .number(Double($0)) }), "refusals": .array(refusals)]
     },
     "largeText": { input in .bool(LargeText.isOn(scale: input.number("scale"))) },
+    "mapTracksFilters": { input in .bool(MapChrome.tracksFiltersApply(onLibrary: ["library", "sync"].contains(input["tab"].string ?? ""))) },
     "basemapStatus": { input in
         .string(BasemapStatus.of(loaded: input["loaded"].bool!, failed: input["failed"].bool!, waitedMs: input.int("waitedMs")).rawValue)
     },

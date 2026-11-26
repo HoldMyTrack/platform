@@ -140,6 +140,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         panelState,
         style = { style?.takeIf { overlaysAttached } },
         onSyncTab = { views?.panel?.tab == PanelTab.SYNC },
+        mapHidden = { panelState.mapHidden(filtersApply) },
         onShown = { views?.panel?.setBands(it) },
         // A reprocess can move a photo along its track, or take its stretch away.
         onRefetch = { photos.refresh(force = true) },
@@ -222,6 +223,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         mode = { mode },
         tripId = { tripId },
         recording = ::isRecording,
+        mapHidden = { panelState.mapHidden(filtersApply) },
         frame = { box, maxZoom -> views?.camera?.flyTo(box, maxZoom) },
         onPopupOpening = {
             spots.closePopup()
@@ -295,6 +297,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /** The tab showing, Tracks without the view. */
     private val tab: PanelTab get() = panelTab ?: PanelTab.TRACKS
+
+    /** Whether the map draws through the Tracks tab's filters on the tab showing. */
+    private val filtersApply: Boolean get() = MapChromeRules.tracksFiltersApply(tab)
 
     // What the tour (tour/TourController, through MainActivity) reads and holds on the map.
     val tourMode: MapMode? get() = if (modeBarReady) pickedMode else null
@@ -429,6 +434,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 if (tab != PanelTab.TRIPS && tripId != null) views?.area?.exitTrip()
                 // Trips and Sync are Normal mode's; the Tracks tab gets its pick back.
                 applyTabMode()
+                // Library's map shows every track; the Tracks tab's filters come back with it.
+                MapOverlays.setTracksFiltered(style?.takeIf { overlaysAttached }, filtersApply, session.dates)
+                applyTrackFilter()
                 // The summary is the Tracks tab's; renderSheet renders Privacy too.
                 renderSheet()
                 // The empty map's notice points to Sync, so it steps aside there.
@@ -690,10 +698,11 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val loaded = style ?: return
         val doc = layersDoc?.takeIf { it.styleBuild == StyleMetadata.build(loaded) } ?: return
         if (!overlaysAttached) {
+            MapOverlays.setTracksFiltered(null, filtersApply, session.dates)
             MapOverlays.attach(loaded, doc, mode, session.dates, layers.satelliteDrawn(loaded), tripId)
             // The bike-path layers attach just added start hidden.
             layers.applyPaths(loaded)
-            MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
+            MapOverlays.setTrackFilter(loaded, panelState.mapHidden(filtersApply), panelState.highlighted)
             spots.attach(loaded, layers.shownSpots())
             overlaysAttached = true
             // The document's levels name Fog's button.
@@ -786,7 +795,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** Applies the panel's hidden set, filters, Pending rows and selection to the track layers,
      *  the bands, the sheet's head and the selection bar. */
     private fun applyTrackFilter() {
-        style?.takeIf { overlaysAttached }?.let { MapOverlays.setTrackFilter(it, panelState.mapHidden, panelState.highlighted) }
+        style?.takeIf { overlaysAttached }?.let { MapOverlays.setTrackFilter(it, panelState.mapHidden(filtersApply), panelState.highlighted) }
         bands.update(refetch = false)
         photos.refresh(force = false)
         renderSheet()
@@ -904,7 +913,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val doc = layersDoc ?: return
         MapOverlays.attach(loaded, doc, mode, session.dates, layers.satelliteDrawn(loaded), tripId, EXPORT_EXCLUDED)
         layers.applyPaths(loaded)
-        MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
+        MapOverlays.setTrackFilter(loaded, panelState.mapHidden(filtersApply), panelState.highlighted)
         bands.drawn?.let { MapOverlays.setRouteBands(loaded, it) }
     }
 

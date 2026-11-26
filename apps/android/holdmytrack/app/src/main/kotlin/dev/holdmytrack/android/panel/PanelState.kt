@@ -72,10 +72,16 @@ class PanelState {
     /** Every track the map shouldn't paint: filtered out, hidden, or Pending — all the same
      *  answer for the map (don't draw it, don't fly to it). Pending isn't folded into [hidden],
      *  so the user's own Show/Hide survives the reprocess. */
+    /** What the map leaves out on the Tracks tab, whose rows and list the camera moves start
+     *  from; the map itself asks [mapHidden] with the tab's answer. */
     val mapHidden: Set<String>
-        get() = tracks.filter {
-            it.pending || it.id in hidden || !TrackFacets.passesFilters(it, excludedTypes, distanceFilter)
-        }.mapTo(HashSet()) { it.id }
+        get() = mapHidden(filtered = true)
+
+    /** What the map leaves out: Pending and Hidden tracks, and with [filtered] those the Type and
+     *  Distance filters take out (MapChromeRules.tracksFiltersApply). */
+    fun mapHidden(filtered: Boolean): Set<String> = tracks.filter {
+        it.pending || it.id in hidden || (filtered && !TrackFacets.passesFilters(it, excludedTypes, distanceFilter))
+    }.mapTo(HashSet()) { it.id }
 
     /** What the toolbar acts on ([PanelRules.targetIds]). */
     val targetIds: Set<String>

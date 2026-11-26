@@ -31,6 +31,19 @@ class PanelStateTest {
     private fun state(vararg tracks: Track) = PanelState().apply { setTracks(tracks.toList()) }
 
     @Test
+    fun `unfiltered, the map keeps what Type and Distance take out, not Hidden or Pending`() {
+        val pending = track("d", pending = true)
+        val s = state(walk, run, ride, pending)
+        s.toggleType("running")
+        s.setDistanceFilter(DistanceRange(0.0, 15000.0))
+        s.focus("a")
+        s.toggleTargetVisibility()
+        assertEquals(setOf("a", "b", "c", "d"), s.mapHidden(filtered = true))
+        assertEquals(setOf("a", "d"), s.mapHidden(filtered = false))
+        assertEquals(s.mapHidden(filtered = true), s.mapHidden)
+    }
+
+    @Test
     fun `the toolbar acts on the checked group, else the selected row`() {
         val s = state(walk, run, ride)
         assertEquals(emptySet<String>(), s.targetIds)

@@ -44,10 +44,10 @@ extension MapViewController {
     /// merged in, unless its route is hidden.
     func renderPhotos() {
         // The Route tab has the map to itself.
-        let shown = routeEdit.shape == nil && PhotoMarkers.shown(photos.scope, mapHidden: session.panel.mapHidden)
+        let shown = routeEdit.shape == nil && PhotoMarkers.shown(photos.scope, mapHidden: mapHidden)
         if !shown { photoViews.popup.close() }
         let overlay = photos.overlay
-        let items = shown ? PhotoMarkers.items(photos.items, mapHidden: session.panel.mapHidden, overlay: overlay) : []
+        let items = shown ? PhotoMarkers.items(photos.items, mapHidden: mapHidden, overlay: overlay) : []
         photoViews.markers.set(items, activeID: overlay?.activeID ?? photoViews.popup.showingID, loneID: overlay?.activeID, on: mapView)
     }
 

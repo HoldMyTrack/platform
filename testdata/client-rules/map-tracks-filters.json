@@ -1,0 +1,11 @@
+{
+  "rule": "mapTracksFilters",
+  "clients": ["android", "ios"],
+  "description": "Whether the map draws the routes through the Tracks tab's filters (Type, Distance, Dates) on the tab showing: not on Library or its Sync, where the map shows every track; the filters stay set for the Tracks tab. Hidden and Pending tracks stay off the map on every tab (docs/SPEC.md FR-5.8).",
+  "cases": [
+    { "name": "on Tracks", "input": { "tab": "tracks" }, "expected": true },
+    { "name": "on Trips", "input": { "tab": "trips" }, "expected": true },
+    { "name": "not on Library", "input": { "tab": "library" }, "expected": false },
+    { "name": "not on Sync", "input": { "tab": "sync" }, "expected": false }
+  ]
+}
