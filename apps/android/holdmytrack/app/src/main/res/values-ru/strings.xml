@@ -198,7 +198,6 @@
 
     <string name="recording_name_hint">Название</string>
     <!-- A picker sheet's ✕ (panel/PickerSheet.kt). -->
-    <string name="picker_close">Закрыть</string>
     <string name="recording_type_hint">Тип трека</string>
     <string name="recording_description_hint">Описание (необязательно)</string>
     <string name="recording_pause">Пауза</string>

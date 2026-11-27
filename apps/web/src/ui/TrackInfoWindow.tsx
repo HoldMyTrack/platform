@@ -3,6 +3,9 @@ import { getTrackInfo, type TrackInfo } from '../api.ts';
 import { t } from '../i18n/index.ts';
 import { useWindowFocus } from './useWindowFocus.ts';
 
+/** How long a changed target waits, with no further change, before Info reads it. */
+const FOLLOW_DELAY_MS = 400;
+
 interface TrackInfoWindowProps {
   /** The toolbar's target: Info follows it while open. */
   trackIds: readonly string[];
@@ -25,15 +28,28 @@ export function TrackInfoWindow({ trackIds, bandColors, onClose }: TrackInfoWind
   const key = trackIds.join(',');
   useWindowFocus(windowRef);
 
+  // The first read goes at once. A target that changes while Info is open waits for the clicks to
+  // pause, so checking rows one by one doesn't spend the account's hourly Info limit
+  // (services/server/internal/httpapi/rate_limits.go): a request the client drops still counts.
+  const opened = useRef(false);
   useEffect(() => {
     const abort = new AbortController();
-    getTrackInfo(key.split(','), abort.signal).then(
-      (info) => setLoaded({ key, info }),
-      (err: unknown) => {
-        if (!abort.signal.aborted) setFailed({ key, message: err instanceof Error ? err.message : String(err) });
+    const timer = setTimeout(
+      () => {
+        getTrackInfo(key.split(','), abort.signal).then(
+          (info) => setLoaded({ key, info }),
+          (err: unknown) => {
+            if (!abort.signal.aborted) setFailed({ key, message: err instanceof Error ? err.message : String(err) });
+          },
+        );
       },
+      opened.current ? FOLLOW_DELAY_MS : 0,
     );
-    return () => abort.abort();
+    opened.current = true;
+    return () => {
+      clearTimeout(timer);
+      abort.abort();
+    };
   }, [key]);
 
   useEffect(() => {
