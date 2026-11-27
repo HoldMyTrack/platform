@@ -323,8 +323,9 @@ extension MapViewController {
         switch event {
         case .tapRow(let id):
             session.panel.focus(id)
+            // Before the camera, which frames the track above where the sheet comes to rest.
+            sheet.setDetent(SheetRules.afterRowTap(sheet.detent), animated: true)
             fly([id])
-            sheet.setDetent(.collapsed, animated: true)
         case .toggleChecked(let id):
             if session.panel.toggleChecked(id) { fly([id]) }
         case .clearFocus: session.panel.clearFocus()

@@ -17,7 +17,7 @@
     {"id": "tracks-expanded", "setup": "default", "title": "Tracks, sheet open all the way",
      "expect": "The sheet up to the status bar, over the mode toggle and the rail, with the list's rows below the chips."},
     {"id": "track-focused", "setup": "default", "title": "A track focused",
-     "expect": "A row tapped: the toolbar takes the summary's place, the track's name, then Hide (the crossed eye), Info, Edit (dimmed for the demo), Add to trip, ⋯ and Zoom in the accent. The mode toggle and the rail stay. The map draws the track in pace bands."},
+     "expect": "A row tapped: the toolbar takes the summary's place, the track's name, then Hide (the crossed eye), Info, Edit (dimmed for the demo), Add to trip, ⋯ and Zoom in the accent. The sheet stays at half, the list under the toolbar. The mode toggle and the rail stay. The map draws the track in pace bands, above the sheet."},
     {"id": "track-info", "setup": "default", "title": "A track's Info",
      "expect": "Info tapped on the focused track: a sheet titled Info with the server's lines (Type, Start, End, Distance, Moving time, Elapsed time, Pace or Speed, Elevation gain), the pace bands' legend from Slower to Faster, and the note on what moving time leaves out.",
      "differences": [{"what": "A bottom sheet with ✕ on Android, a page sheet with a grabber and Close on iOS.", "why": "Each platform's sheet."}]},

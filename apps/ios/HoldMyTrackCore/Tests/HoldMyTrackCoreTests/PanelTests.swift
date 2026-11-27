@@ -99,6 +99,12 @@ struct PanelTests {
         #expect(SheetRules.toggled(.collapsed) == .half && SheetRules.toggled(.expanded) == .collapsed)
     }
 
+    @Test func aRowTapBringsAnOpenSheetDownToHalfAndLeavesTheRest() {
+        #expect(SheetRules.afterRowTap(.expanded) == .half)
+        #expect(SheetRules.afterRowTap(.half) == .half)
+        #expect(SheetRules.afterRowTap(.collapsed) == .collapsed)
+    }
+
     // MARK: A tap on the map
 
     @Test func aTapPicksTheTopmostListedTrack() {

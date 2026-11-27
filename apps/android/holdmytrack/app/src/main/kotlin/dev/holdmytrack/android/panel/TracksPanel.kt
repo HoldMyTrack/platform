@@ -805,10 +805,16 @@ class TracksPanel(
         changed()
     }
 
-    /** A row's tap: focused, and the sheet down to its head, the toolbar in it, so the track shows. */
+    /** A row's tap: focused, the sheet where [SheetRules.afterRowTap] puts it, and then the
+     *  camera, which frames the track above where the sheet comes to rest. */
     private fun selectRow(id: String) {
+        val now = when (resting) {
+            BottomSheetBehavior.STATE_EXPANDED -> SheetRules.Detent.EXPANDED
+            BottomSheetBehavior.STATE_HALF_EXPANDED -> SheetRules.Detent.HALF
+            else -> SheetRules.Detent.COLLAPSED
+        }
+        if (SheetRules.afterRowTap(now) == SheetRules.Detent.HALF && now != SheetRules.Detent.HALF) setExpanded(true)
         select(id)
-        setExpanded(false)
     }
 
     /** A row's Trip badge: that Trip, on the Trips tab, the sheet down so its tracks show. */
