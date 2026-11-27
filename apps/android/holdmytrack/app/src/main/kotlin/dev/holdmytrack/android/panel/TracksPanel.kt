@@ -107,8 +107,8 @@ class TracksPanel(
     /** TYPE, DISTANCE and Reset. */
     private val filters = TrackFilters(sheet, state, onChanged = ::changed)
 
-    /** The toolbar (`include_track_actions`): what it acts on, then the actions over it, Download
-     *  and Delete in its ⋯ menu ([SelectionMoreMenu]). */
+    /** The toolbar (`include_track_actions`): the actions over its target, Download and Delete in
+     *  its ⋯ menu ([SelectionMoreMenu]). */
     private val actions: View = sheet.findViewById(R.id.track_actions)
     private val checkAll: MaterialCheckBox = sheet.findViewById(R.id.panel_check_all)
     private val selectMenu: ImageButton = sheet.findViewById(R.id.panel_select_menu)
@@ -543,11 +543,11 @@ class TracksPanel(
         describeActions(targets, targetName, noTarget, anyHidden)
     }
 
-    /** Each action says what it would do, or why it can't (as the web's do): disabled actions
-     *  stay visible. */
     /** The target [describeActions] last named its actions for. */
     private var describedTargets: List<String> = emptyList()
 
+    /** Each action says what it would do, or why it can't (as the web's do): disabled actions
+     *  stay visible. */
     private fun describeActions(targets: List<Track>, targetName: String?, noTarget: String, anyHidden: Boolean) {
         val use = ToolbarRules.actions(targets.size, targets.any { it.pending }, Session.isDemo)
         fun text(of: ToolbarRules.Use, demo: Int, ready: () -> String) = when (of) {
@@ -622,7 +622,7 @@ class TracksPanel(
         val targets = state.targets
         if (targets.isEmpty()) return
         infoSheet?.dismiss()
-        infoSheet = TrackInfoSheet(context, targets.map { it.id }, bandColors.takeIf { state.checked.isEmpty() }).also { it.show() }
+        infoSheet = TrackInfoSheet(context, targets.map { it.id }, bandColors.takeIf { PanelRules.infoShowsBands(state.checked, state.focused, it != null) }).also { it.show() }
     }
 
     /** The Info open, if any, which goes with the fragment's views ([dismissDialogs]). */

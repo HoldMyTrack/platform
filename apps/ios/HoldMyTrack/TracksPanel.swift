@@ -18,8 +18,8 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     /// The tab's content, under the sheet's head.
     let content = UIView()
-    /// The toolbar, at the head in the summary's place while it has a target: what it acts on,
-    /// then Show/Hide, Info, Edit, Add to trip, ⋯ with Download and Delete, and Zoom in the accent.
+    /// The toolbar, at the head in the summary's place while it has a target: Show/Hide, Info,
+    /// Edit, Add to trip, ⋯ with Download and Delete, and Zoom in the accent.
     let actions = UIView()
     /// "Tracks: 6 · 74.8 km · 9h 6m", under the range.
     let summary = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
@@ -150,7 +150,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         ])
     }
 
-    /// The toolbar, Android's order: what it acts on, Show/Hide, Info, Edit, Add to trip, ⋯, Zoom.
+    /// The toolbar, Android's order: Show/Hide, Info, Edit, Add to trip, ⋯, Zoom.
     private func buildActions() {
         visibilityButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.toggleVisibility) }, for: .primaryActionTriggered)
         editButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.edit) }, for: .primaryActionTriggered)

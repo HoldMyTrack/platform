@@ -1,0 +1,12 @@
+{
+  "rule": "infoShowsBands",
+  "description": "Whether Info shows the pace bands' legend: the map draws the focused track's bands, and the toolbar's target is that track alone, checked or only focused.",
+  "cases": [
+    { "name": "the focused track alone", "input": { "checked": [], "focused": "a", "bandsDrawn": true }, "expected": true },
+    { "name": "the focused track, also the only one checked", "input": { "checked": ["a"], "focused": "a", "bandsDrawn": true }, "expected": true },
+    { "name": "the focused track among others checked", "input": { "checked": ["a", "b"], "focused": "a", "bandsDrawn": true }, "expected": false },
+    { "name": "another track checked", "input": { "checked": ["b"], "focused": "a", "bandsDrawn": true }, "expected": false },
+    { "name": "no bands drawn yet", "input": { "checked": [], "focused": "a", "bandsDrawn": false }, "expected": false },
+    { "name": "nothing focused", "input": { "checked": ["a"], "bandsDrawn": false }, "expected": false }
+  ]
+}

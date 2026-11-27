@@ -6,6 +6,13 @@ public enum PanelRules {
         focused.map { checked.union([$0]) } ?? checked
     }
 
+    /// Whether Info shows the pace bands' legend: the map draws focused's bands (bandsDrawn), and
+    /// the toolbar's target is that track alone, checked or only focused.
+    public static func infoShowsBands(checked: Set<String>, focused: String?, bandsDrawn: Bool) -> Bool {
+        guard bandsDrawn, let focused else { return false }
+        return targetIDs(checked: checked, focused: focused) == [focused]
+    }
+
     /// What the toolbar acts on: the checked group whenever anything is checked, else the
     /// selected row alone, else nothing. Checked wins so an action never reaches past what was
     /// ticked.

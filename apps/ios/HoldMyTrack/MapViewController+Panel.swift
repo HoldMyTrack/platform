@@ -581,7 +581,7 @@ extension MapViewController {
     private func showInfo() {
         let ids = session.panel.targets.map(\.id)
         guard !ids.isEmpty else { return }
-        let info = TrackInfoViewController(api: flow.api, trackIDs: ids, bandColors: session.panel.checked.isEmpty ? tracksPanel.bandColors : nil)
+        let info = TrackInfoViewController(api: flow.api, trackIDs: ids, bandColors: PanelRules.infoShowsBands(checked: session.panel.checked, focused: session.panel.focused, bandsDrawn: tracksPanel.bandColors != nil) ? tracksPanel.bandColors : nil)
         let nav = UINavigationController(rootViewController: info)
         nav.modalPresentationStyle = .pageSheet
         nav.sheetPresentationController?.detents = [.medium(), .large()]

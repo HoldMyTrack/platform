@@ -6,6 +6,11 @@ object PanelRules {
      *  selected one. */
     fun boldIds(checked: Set<String>, focused: String?): Set<String> = checked + setOfNotNull(focused)
 
+    /** Whether Info shows the pace bands' legend: the map draws [focused]'s bands ([bandsDrawn]),
+     *  and the toolbar's target is that track alone, checked or only focused. */
+    fun infoShowsBands(checked: Set<String>, focused: String?, bandsDrawn: Boolean): Boolean =
+        bandsDrawn && focused != null && targetIds(checked, focused) == setOf(focused)
+
     /** What the toolbar acts on: the checked group whenever anything is checked, else the
      *  selected row alone, else nothing. Checked wins so an action never reaches past what was ticked. */
     fun targetIds(checked: Set<String>, focused: String?): Set<String> = when {
