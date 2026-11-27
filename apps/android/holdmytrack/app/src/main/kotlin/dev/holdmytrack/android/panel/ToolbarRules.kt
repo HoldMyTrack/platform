@@ -1,5 +1,7 @@
 package dev.holdmytrack.android.panel
 
+import dev.holdmytrack.android.net.Track
+
 /** Which of the Tracks toolbar's actions apply, and the master checkbox's state. */
 object ToolbarRules {
 
@@ -23,6 +25,18 @@ object ToolbarRules {
         val delete = if (change == Use.READY && anyPending) Use.PENDING else change
         return Actions(visibility = look, edit = change, addToTrip = change, info = look, delete = delete, focus = look)
     }
+
+    /** What names the target at the head, where a title has no room: one track's [type] and
+     *  distance, or a Checked group's [count] and total distance ([type] null). [meters] is null
+     *  when unknown, a Private track's. */
+    data class Head(val type: String?, val count: Int, val meters: Double?)
+
+    fun head(targets: List<Track>, checked: Boolean): Head =
+        if (checked || targets.size != 1) {
+            Head(type = null, count = targets.size, meters = targets.sumOf { it.distanceMeters ?: 0.0 })
+        } else {
+            Head(type = targets.first().trackType, count = 1, meters = targets.first().distanceMeters)
+        }
 
     enum class CheckAll { NONE, SOME, ALL }
 

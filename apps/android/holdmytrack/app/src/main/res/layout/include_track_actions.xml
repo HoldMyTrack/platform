@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The toolbar (panel/TracksPanel.renderToolbar), at the Tracks sheet's head in the summary's
      place while a track is focused or checked, so it stays in view with the sheet collapsed:
-     what it acts on, then Show/Hide, Info, Edit, Add to trip, ⋯ with Download and Delete, and
+     what it acts on (its tile and distance), then Show/Hide, Info, Edit, Add to trip, ⋯ with Download and Delete, and
      Zoom in the accent. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/track_actions"
     android:layout_width="match_parent"
@@ -14,18 +15,45 @@
     android:paddingEnd="@dimen/hmt_space_8"
     android:visibility="gone">
 
-    <TextView
+    <!-- What the toolbar acts on, where a title has no room: the row's tile (its type, or the
+         checked ✓) and the distance (ToolbarRules.head). Not a control: the full label is its
+         tooltip and what a screen reader says. A compound drawable can't draw the tile's tinted
+         square behind its icon. -->
+    <LinearLayout
         android:id="@+id/actions_target"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/hmt_space_4"
         android:layout_weight="1"
         android:accessibilityLiveRegion="polite"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="@color/hmt_ink_meta"
-        android:textSize="@dimen/hmt_text_sm"
-        tools:text="3 checked" />
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:minHeight="48dp"
+        android:orientation="horizontal"
+        tools:ignore="UseCompoundDrawables">
+
+        <ImageView
+            android:id="@+id/actions_tile"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_type_tile"
+            android:importantForAccessibility="no"
+            android:padding="7dp"
+            android:src="@drawable/ic_route"
+            app:tint="@color/hmt_ink_secondary" />
+
+        <TextView
+            android:id="@+id/actions_target_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/hmt_space_8"
+            android:ellipsize="end"
+            android:importantForAccessibility="no"
+            android:maxLines="1"
+            android:textColor="@color/hmt_ink_meta"
+            android:textSize="@dimen/hmt_text_sm"
+            tools:text="6.4 mi" />
+    </LinearLayout>
 
     <ImageButton
         android:id="@+id/panel_visibility"

@@ -39,7 +39,11 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private let checkAllButton = UIButton(type: .system)
     private let selectMenuButton = Controls.iconButton(Controls.icon(UIImage(resource: .chevronDown), size: 14), label: String(localized: "Check"), id: "selectMenu")
 
-    private let actionsTarget = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
+    /// What the toolbar acts on, where a title has no room (ToolbarRules.head): the row's tile, its
+    /// type or the checked ✓, and the distance. Not a control: VoiceOver reads the full name.
+    private let actionsTarget = UIStackView()
+    private let actionsTile = UIImageView()
+    private let actionsTargetText = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     private let visibilityButton = Controls.iconButton(UIImage(resource: .eyeOff), label: String(localized: "Hide"), id: "barVisibility")
     private let editButton = Controls.iconButton(UIImage(resource: .pencil), label: String(localized: "Edit"), id: "barEdit")
     /// Add to trip, whose menu the map screen builds from the account's Trips.
@@ -160,9 +164,23 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         focusButton.configuration?.baseForegroundColor = UIColor(resource: .accent)
         addToTripButton.showsMenuAsPrimaryAction = true
         moreButton.showsMenuAsPrimaryAction = true
-        actionsTarget.numberOfLines = 1
-        actionsTarget.lineBreakMode = .byTruncatingTail
+        actionsTile.contentMode = .center
+        actionsTile.layer.cornerRadius = DesignTokens.Radius.sm
+        actionsTile.clipsToBounds = true
+        NSLayoutConstraint.activate([
+            actionsTile.widthAnchor.constraint(equalToConstant: 32),
+            actionsTile.heightAnchor.constraint(equalToConstant: 32),
+        ])
+        actionsTargetText.numberOfLines = 1
+        actionsTargetText.lineBreakMode = .byTruncatingTail
+        actionsTargetText.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        actionsTarget.addArrangedSubview(actionsTile)
+        actionsTarget.addArrangedSubview(actionsTargetText)
+        actionsTarget.alignment = .center
+        actionsTarget.spacing = DesignTokens.Space.s8
         actionsTarget.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        actionsTarget.isAccessibilityElement = true
+        actionsTarget.accessibilityTraits = .staticText
         actionsTarget.accessibilityIdentifier = "actionsTarget"
         let buttons = [visibilityButton, infoButton, editButton, addToTripButton, moreButton, focusButton]
         for v in buttons { Self.shrinkable(v) }
@@ -307,8 +325,21 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         describe(infoButton, use.info, String(localized: "panel.infoTarget", defaultValue: "Info for \(name ?? "")", comment: "Tracks tab: Info's label; the placeholder names its target."))
         describe(focusButton, use.focus, String(localized: "Zoom to \(name ?? "")"))
         renderMore(targets, name: name, delete: use.delete, deleteDemo: deleteDemo)
-        actionsTarget.text = targets.isEmpty ? nil : state.checked.isEmpty ? format.label(targets[0])
-            : String(localized: "panel.checkedCount", defaultValue: "\(targets.count) checked tracks", comment: "Tracks tab: the checked tracks an action applies to.")
+        renderHead(targets, name: name)
+    }
+
+    /// The head's tile and distance for targets, as their row shows them, and the full name for VoiceOver.
+    private func renderHead(_ targets: [Track], name: String?) {
+        let head = ToolbarRules.head(targets, checked: !state.checked.isEmpty)
+        let checked = head.type == nil
+        let icon = head.type.map { TrackTypes.icon(TrackTypes.shared.kind($0)) } ?? UIImage(resource: .check)
+        actionsTile.image = Controls.icon(icon, size: 18)
+        actionsTile.backgroundColor = UIColor(resource: checked ? .accent : .surfaceTint)
+        actionsTile.tintColor = UIColor(resource: checked ? .onAccent : .inkSecondary)
+        actionsTargetText.text = checked
+            ? ([String(head.count)] + (head.meters.map { [format.totalDistance($0)] } ?? [])).joined(separator: " · ")
+            : head.meters.map { format.distance($0) } ?? ""
+        actionsTarget.accessibilityLabel = name
     }
 
     /// The ⋯ menu over targets, named name: Download unless DownloadRules blocks it, then Delete

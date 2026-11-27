@@ -27,6 +27,22 @@ public enum ToolbarRules {
         return Actions(visibility: look, edit: change, addToTrip: change, info: look, delete: delete, focus: look)
     }
 
+    /// What names the target at the head, where a title has no room: one track's type and
+    /// distance, or a Checked group's count and total distance (type nil). meters is nil when
+    /// unknown, a Private track's.
+    public struct Head: Equatable, Sendable {
+        public let type: String?
+        public let count: Int
+        public let meters: Double?
+    }
+
+    public static func head(_ targets: [Track], checked: Bool) -> Head {
+        if checked || targets.count != 1 {
+            return Head(type: nil, count: targets.count, meters: targets.reduce(0) { $0 + ($1.distanceMeters ?? 0) })
+        }
+        return Head(type: targets[0].trackType, count: 1, meters: targets[0].distanceMeters)
+    }
+
     public enum CheckAll: Equatable, Sendable { case none, some, all }
 
     /// The master checkbox over listed rows, checked of them checked.
