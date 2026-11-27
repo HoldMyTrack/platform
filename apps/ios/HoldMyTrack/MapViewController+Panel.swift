@@ -410,8 +410,6 @@ extension MapViewController {
         }
     }
 
-    /// A Trip made or added to from the toolbar: the badges, and a new one opened on the
-    /// Trips tab.
     /// Add to trip over the toolbar's target: a Trip picked, or New trip… once the picker closes.
     private func showAddToTrip() {
         let ids = session.panel.targets.map(\.id)
@@ -422,6 +420,8 @@ extension MapViewController {
         }, added: { [weak self] trip in self?.addedToTrip(trip, created: false) })
     }
 
+    /// A Trip made or added to from the toolbar: the badges, and a new one opened on the
+    /// Trips tab.
     private func addedToTrip(_ trip: Trip, created: Bool) {
         loadList()
         if created {

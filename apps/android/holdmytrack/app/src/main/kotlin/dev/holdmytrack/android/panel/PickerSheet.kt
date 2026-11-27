@@ -26,7 +26,8 @@ import dev.holdmytrack.android.R
  * A list to pick one entry from as a bottom sheet (`sheet_picker`), the app's one picker: the Type
  * field's ([dev.holdmytrack.android.recording.TrackTypePicker]), the You tab's Language and Add to
  * trip ([AddToTripSheet]). A pick applies at once and closes it, so it has no Save, or with
- * [Sending] closes once its request lands; ✕, Back, a swipe or a tap outside close it with nothing
+ * [Sending] closes once its request lands; a [lead] row heads the list outside the search, and
+ * its pick always closes at once; ✕, Back, a swipe or a tap outside close it with nothing
  * picked. With a [Search] it has a search field over the list, which decides the rows
  * shown for what's typed (the Type picker's adds an Add "…" row); the field isn't focused at first,
  * so the keyboard doesn't hide the list, and its Done picks the top row ([doneValue]). The current
@@ -78,6 +79,7 @@ object PickerSheet {
         items: List<Item>,
         search: Search?,
         sending: Sending? = null,
+        lead: Item? = null,
         onClose: () -> Unit = {},
         onPick: (String) -> Unit,
     ): Handle {
@@ -93,14 +95,15 @@ object PickerSheet {
 
         var pick: (String) -> Unit = {}
         val adapter = Rows(current) { pick(it) }
-        adapter.shown = items
+        adapter.shown = listOfNotNull(lead) + items
         var rows = items
         var searching = search
         var note: Pair<String, Boolean>? = null
         fun render() {
             val typed = field.text.toString().trim()
             val active = searching
-            adapter.shown = active?.rows(typed) ?: rows
+            val found = active?.rows(typed) ?: rows
+            adapter.shown = listOfNotNull(lead) + found
             val shownNote = note
             when {
                 shownNote != null -> {
@@ -112,7 +115,7 @@ object PickerSheet {
                     empty.setTextColor(context.getColor(R.color.hmt_ink_meta))
                 }
             }
-            empty.isVisible = shownNote != null || (active != null && adapter.shown.isEmpty())
+            empty.isVisible = shownNote != null || (active != null && found.isEmpty())
         }
 
         // A second tap while the sheet closes, or while a pick is being sent, is ignored: one
@@ -122,7 +125,7 @@ object PickerSheet {
             if (picked) return@pick
             picked = true
             val send = sending
-            if (send == null) {
+            if (send == null || value == lead?.value) {
                 dialog.dismiss()
                 if (value != current) onPick(value)
                 return@pick
@@ -148,10 +151,14 @@ object PickerSheet {
         if (search != null) {
             searchLayout.isVisible = true
             searchLayout.hint = search.hint
-            field.doAfterTextChanged { render() }
+            field.doAfterTextChanged {
+                // A failed pick's note gives way to what's typed now.
+                if (note?.second == true) note = null
+                render()
+            }
             field.setOnEditorActionListener { _, actionId, _ ->
                 if (actionId != EditorInfo.IME_ACTION_DONE) return@setOnEditorActionListener false
-                doneValue(field.text.toString(), adapter.shown)?.let { pick(it) }
+                doneValue(field.text.toString(), adapter.shown.filter { it.value != lead?.value })?.let { pick(it) }
                 true
             }
         }

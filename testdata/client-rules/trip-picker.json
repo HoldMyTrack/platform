@@ -1,6 +1,6 @@
 {
   "rule": "tripPicker",
-  "description": "Add to trip's picker sheet in the apps: the account's Trips in the order the server sends them (newest first), each marked holdsAll when it already has every target track, so it can't be picked; the search field shows once there are more than 8 Trips, and what's typed keeps the Trips whose name holds it, ignoring case and the spaces around it.",
+  "description": "Add to trip's picker sheet in the apps: the account's Trips in the order the server sends them (newest first), each marked holdsAll when it already has every target track, so it can't be picked; the search field shows once there are more than 8 Trips, and what's typed keeps the Trips whose name holds it, ignoring case and the whitespace around it.",
   "clients": [
     "android",
     "ios"
@@ -331,6 +331,50 @@
           "a"
         ],
         "query": "  ALP "
+      },
+      "expected": {
+        "search": false,
+        "rows": [
+          {
+            "id": "t1",
+            "holdsAll": true
+          },
+          {
+            "id": "t3",
+            "holdsAll": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "a tab or newline around what's typed is ignored too",
+      "input": {
+        "trips": [
+          {
+            "id": "t1",
+            "name": "Alps 2026",
+            "trackIds": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "id": "t2",
+            "name": "Weekend rides",
+            "trackIds": [
+              "a"
+            ]
+          },
+          {
+            "id": "t3",
+            "name": "alpine lakes",
+            "trackIds": []
+          }
+        ],
+        "target": [
+          "a"
+        ],
+        "query": "\talp\n"
       },
       "expected": {
         "search": false,

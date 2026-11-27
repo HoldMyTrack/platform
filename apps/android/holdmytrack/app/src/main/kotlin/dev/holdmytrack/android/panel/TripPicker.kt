@@ -1,6 +1,6 @@
 package dev.holdmytrack.android.panel
 
-/** What Add to trip's picker sheet shows ([AddToTripMenu]). */
+/** What Add to trip's picker sheet shows ([AddToTripSheet]). */
 object TripPicker {
     /** From this many Trips, the sheet has a search field. */
     const val SEARCH_FROM = 9
@@ -14,7 +14,7 @@ object TripPicker {
     data class Shown(val search: Boolean, val rows: List<Row>)
 
     /** The rows for [trips], newest first as the server sends them, over [target], keeping those
-     *  whose name holds [query], ignoring case and the spaces around it. */
+     *  whose name holds [query], ignoring case and the whitespace around it. */
     fun shown(trips: List<Entry>, target: List<String>, query: String): Shown {
         val typed = query.trim()
         val rows = trips.filter { typed.isEmpty() || it.name.contains(typed, ignoreCase = true) }

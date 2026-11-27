@@ -28,9 +28,9 @@ public enum TripPicker {
     }
 
     /// The rows for trips, newest first as the server sends them, over target, keeping those whose
-    /// name holds query, ignoring case and the spaces around it.
+    /// name holds query, ignoring case and the whitespace around it.
     public static func shown(_ trips: [Entry], target: [String], query: String) -> Shown {
-        let typed = query.trimmingCharacters(in: .whitespaces)
+        let typed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         let rows = trips.filter { typed.isEmpty || $0.name.range(of: typed, options: .caseInsensitive) != nil }
             .map { Row(id: $0.id, holdsAll: Set(target).isSubset(of: $0.trackIDs)) }
         return Shown(search: trips.count >= searchFrom, rows: rows)

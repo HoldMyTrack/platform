@@ -165,6 +165,9 @@ final class TripPickerViewController: UIViewController, UITableViewDataSource, U
         }
         guard let row = shown?.rows[indexPath.row], !row.holdsAll else { return }
         sending = row.id
+        // Not swiped away mid-request: added runs once the sheet closes on success.
+        isModalInPresentation = true
+        navigationController?.isModalInPresentation = true
         show(note: nil, failed: false)
         table.reloadData()
         Task {
@@ -173,6 +176,8 @@ final class TripPickerViewController: UIViewController, UITableViewDataSource, U
                 dismiss(animated: true) { [added] in added(changed.trip) }
             } catch {
                 sending = nil
+                isModalInPresentation = false
+                navigationController?.isModalInPresentation = false
                 show(note: TripsPanel.message(error, String(localized: "Could not save the trip")), failed: true)
                 table.reloadData()
             }

@@ -30,13 +30,15 @@ class AddToTripSheet(
 
     /** Opens the sheet for [ids]; [summary] names them in New trip's dialog. */
     fun show(ids: List<String>, summary: String) {
+        // A second tap while one is open, or still opening, leaves that one be.
+        if (sheet != null) return
         val newTrip = PickerSheet.Item(NEW_TRIP, res.getString(R.string.trip_new))
         var trips: List<Trip> = emptyList()
         fun entries() = trips.map { TripPicker.Entry(it.id, it.name, it.trackIds) }
         fun items(query: String): List<PickerSheet.Item> {
             val byId = trips.associateBy { it.id }
             val shown = TripPicker.shown(entries(), ids, query)
-            return listOf(newTrip) + shown.rows.map { row ->
+            return shown.rows.map { row ->
                 val trip = byId.getValue(row.id)
                 PickerSheet.Item(
                     value = row.id,
@@ -47,11 +49,6 @@ class AddToTripSheet(
             }
         }
         val sending = PickerSheet.Sending(res.getString(R.string.trip_adding)) { value, done ->
-            if (value == NEW_TRIP) {
-                done(null)
-                TripSheet.create(context, summary, ids, onTripCreated)
-                return@Sending
-            }
             HoldMyTrackApi.changeTripTracks(value, ids, add = true) { added ->
                 added.onSuccess {
                     done(null)
@@ -59,14 +56,20 @@ class AddToTripSheet(
                 }.onFailure { failure -> done(FailureText.of(failure, res.getString(R.string.trip_save_failed))) }
             }
         }
+        var opened: PickerSheet.Handle? = null
         val handle = PickerSheet.show(
-            context, res.getString(R.string.trip_add_title), current = "", items = listOf(newTrip), search = null,
+            context, res.getString(R.string.trip_add_title), current = "", items = emptyList(), search = null,
             sending = sending,
+            lead = newTrip,
             onClose = {
-                sheet = null
-                target = null
+                // Only this sheet's own fields: a later one may be open by now.
+                if (sheet === opened) {
+                    sheet = null
+                    target = null
+                }
             },
-        ) {}
+        ) { value -> if (value == NEW_TRIP) TripSheet.create(context, summary, ids, onTripCreated) }
+        opened = handle
         handle.note(res.getString(R.string.panel_loading), failed = false)
         sheet = handle
         target = ids
