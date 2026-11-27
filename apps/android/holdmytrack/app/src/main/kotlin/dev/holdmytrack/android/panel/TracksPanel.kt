@@ -167,9 +167,9 @@ class TracksPanel(
      *  over the map; the sheet comes back as it was. */
     private var held = false
 
-    /** Add to trip's menu while it's open, and the target it was opened over — a different
-     *  target closes it, as on the web. */
-    private val tripMenu = AddToTripMenu(context, onTripCreated, onTripsChanged)
+    /** Add to trip while it's open, and the target it was opened over: a different target
+     *  closes it. */
+    private val tripSheet = AddToTripSheet(context, onTripCreated, onTripsChanged)
 
     init {
         list.layoutManager = LinearLayoutManager(context)
@@ -240,7 +240,7 @@ class TracksPanel(
             onFly(state.targets.filter { it.id !in hidden })
         }
         edit.setOnClickListener { state.targets.takeIf { it.isNotEmpty() }?.let(onEdit) }
-        addToTrip.setOnClickListener { anchor -> if (tripMenu.target == null) showAddToTrip(anchor) else tripMenu.dismiss() }
+        addToTrip.setOnClickListener { showAddToTrip() }
         info.setOnClickListener { showInfo() }
         render()
     }
@@ -431,7 +431,7 @@ class TracksPanel(
 
     fun dismissPopups() {
         filters.dismiss()
-        tripMenu.dismiss()
+        tripSheet.dismiss()
     }
 
     /** Whether the rows are being checked. */
@@ -501,7 +501,7 @@ class TracksPanel(
             PanelRules.SummaryKind.FOCUSED -> res.getString(R.string.panel_footer_focused, PanelFormat.rowLabel(res, targets.first()), distance)
             PanelRules.SummaryKind.CHECKED -> res.getString(R.string.panel_footer, targets.size, distance)
         }
-        if (tripMenu.target.let { it != null && it != targets.map { t -> t.id } }) tripMenu.dismiss()
+        if (tripSheet.target.let { it != null && it != targets.map { t -> t.id } }) tripSheet.dismiss()
     }
 
     /** "6 tracks · 74.8 km · 9h 6m", what's listed in the area. */
@@ -579,7 +579,7 @@ class TracksPanel(
         // A menu opened over another target, or none, would act on rows the toolbar no longer names.
         val ids = targets.map { it.id }
         if (ids != describedTargets) {
-            tripMenu.dismiss()
+            tripSheet.dismiss()
             more.dismiss()
             describedTargets = ids
         }
@@ -639,11 +639,11 @@ class TracksPanel(
         more.dismiss()
     }
 
-    /** Opens Add to trip's menu ([AddToTripMenu]) over the toolbar's target. */
-    private fun showAddToTrip(anchor: View) {
+    /** Opens Add to trip ([AddToTripSheet]) over the toolbar's target. */
+    private fun showAddToTrip() {
         val targets = state.targets
         if (targets.isEmpty() || Session.isDemo) return
-        tripMenu.show(anchor, targets.map { it.id }, targetSummary(targets))
+        tripSheet.show(targets.map { it.id }, targetSummary(targets))
     }
 
     /**
@@ -821,7 +821,7 @@ class TracksPanel(
         /** How long a list load runs before the progress bar shows. */
         const val PROGRESS_DELAY_MS = 300L
 
-        /** About twelve rows, then a dropdown's list scrolls ([TrackFilters], [AddToTripMenu]). */
+        /** About twelve rows, then a dropdown's list scrolls ([TrackFilters]). */
         const val TYPE_LIST_MAX_DP = 192
 
         val RESTING_STATES = setOf(

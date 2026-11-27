@@ -692,6 +692,9 @@
     <string name="trip_new">Новое путешествие…</string>
     <string name="trip_holds_all">Уже в этом путешествии</string>
     <string name="trip_adding">Добавление…</string>
+    <string name="trip_add_title">Добавить в путешествие</string>
+    <string name="trip_search_hint">Найдите путешествие</string>
+    <string name="trip_search_none">Нет путешествия, подходящего под «%1$s»</string>
     <string name="trip_remove">Убрать из путешествия</string>
     <string name="trip_demo_remove">Недоступно в демо-аккаунте — создайте аккаунт, чтобы изменять путешествия</string>
     <string name="panel_open_trip">Открыть «%1$s»</string>

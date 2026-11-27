@@ -9,7 +9,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
         case tapRow(String), toggleChecked(String), clearFocus
         case checkAll, checkNone, invert
-        case toggleVisibility, fly, edit, info, delete, download
+        case toggleVisibility, fly, edit, addToTrip, info, delete, download
         case toggleType(String), allTypes, distance(DistanceRange?), resetFilters, dates
         case openTrip(String)
     }
@@ -41,7 +41,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     private let visibilityButton = Controls.iconButton(UIImage(resource: .eyeOff), label: String(localized: "Hide"), id: "barVisibility")
     private let editButton = Controls.iconButton(UIImage(resource: .pencil), label: String(localized: "Edit"), id: "barEdit")
-    /// Add to trip, whose menu the map screen builds from the account's Trips.
+    /// Add to trip, which opens TripPickerViewController.
     let addToTripButton = Controls.iconButton(UIImage(resource: .bookPlus), label: String(localized: "Add to trip"), id: "barAddToTrip")
     private let infoButton = Controls.iconButton(UIImage(resource: .info), label: String(localized: "Info"), id: "barInfo")
     /// Download (root docs/SPEC.md FR-17.2) and Delete, which don't fit across a phone beside the
@@ -157,7 +157,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         infoButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.info) }, for: .primaryActionTriggered)
         focusButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.fly) }, for: .primaryActionTriggered)
         focusButton.configuration?.baseForegroundColor = UIColor(resource: .accent)
-        addToTripButton.showsMenuAsPrimaryAction = true
+        addToTripButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.addToTrip) }, for: .primaryActionTriggered)
         moreButton.showsMenuAsPrimaryAction = true
         let buttons = [visibilityButton, infoButton, editButton, addToTripButton, moreButton, focusButton]
         for v in buttons { Self.shrinkable(v) }

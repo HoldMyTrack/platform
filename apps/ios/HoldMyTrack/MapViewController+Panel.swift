@@ -17,12 +17,6 @@ extension MapViewController {
         tripsPanel = TripsPanel(api: flow.api, format: format, demo: account.isDemo)
         tracksPanel.onEvent = { [weak self] in self?.handle($0) }
         tripsPanel.onEvent = { [weak self] in self?.handle($0) }
-        for button in [tracksPanel.addToTripButton] {
-            button.menu = TripDialogs.addToTripMenu(api: flow.api, over: view, targets: { [weak self] in
-                guard let self else { return [] }
-                return self.session.panel.targets.map(\.id)
-            }, added: { [weak self] trip, created in self?.addedToTrip(trip, created: created) })
-        }
 
         libraryPanel = LibraryPanel(api: flow.api, account: { [unowned self] in self.account }, downloads: downloads)
         libraryPanel.onEvent = { [weak self] in self?.handle($0) }
@@ -337,6 +331,7 @@ extension MapViewController {
         case .edit: edit()
         case .delete: confirmDelete()
         case .info: showInfo()
+        case .addToTrip: showAddToTrip()
         case .download: downloads.start(targets.map(\.id), from: self) { [weak self] in self?.say($0) }
         case .toggleType(let type): session.panel.toggleType(type)
         case .allTypes: session.panel.includeAllTypes()
@@ -417,6 +412,16 @@ extension MapViewController {
 
     /// A Trip made or added to from the toolbar: the badges, and a new one opened on the
     /// Trips tab.
+    /// Add to trip over the toolbar's target: a Trip picked, or New trip… once the picker closes.
+    private func showAddToTrip() {
+        let ids = session.panel.targets.map(\.id)
+        guard !ids.isEmpty, !account.isDemo else { return }
+        TripPickerViewController.present(over: self, api: flow.api, targets: ids, format: format, onNewTrip: { [weak self] in
+            guard let self else { return }
+            TripDialogs.newTrip(api: self.flow.api, over: self.view, targets: ids) { [weak self] trip in self?.addedToTrip(trip, created: true) }
+        }, added: { [weak self] trip in self?.addedToTrip(trip, created: false) })
+    }
+
     private func addedToTrip(_ trip: Trip, created: Bool) {
         loadList()
         if created {

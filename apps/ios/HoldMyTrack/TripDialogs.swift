@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The panel's small dialogs: a confirmation, a notice, and Add to trip's menu. A confirmation
+/// The panel's small dialogs: a confirmation, a notice, and New trip… from Add to trip. A confirmation
 /// runs its request after the alert closes and, when it fails, opens again with the server's
 /// reason. A Trip's name and Send a copy are sheets (TripSheets).
 @MainActor
@@ -34,43 +34,18 @@ enum TripDialogs {
         top(view)?.present(alert, animated: true)
     }
 
-    /// Add to trip (FR-13.2, FR-13.3): the account's Trips, read as the menu opens, and New
-    /// trip…; either takes targets() in one request. added reports the Trip, and whether it's new.
-    static func addToTripMenu(api: APIClient, over view: UIView, targets: @escaping () -> [String],
-                               added: @escaping (Trip, _ created: Bool) -> Void) -> UIMenu {
-        let create = UIAction(title: String(localized: "New trip…"), image: UIImage(resource: .plus)) { [weak view] _ in
-            guard let view else { return }
-            TripSheets.trip(over: view, title: String(localized: "Create trip"), name: "", description: "", action: String(localized: "Create trip"),
-                            busy: String(localized: "Creating…")) { name, description in
-                do {
-                    let read = try await api.createTrip(name: name, description: description, trackIDs: targets())
-                    added(read.trip, true)
-                    return nil
-                } catch {
-                    return TripsPanel.message(error, String(localized: "Could not save the trip"))
-                }
+    /// New trip… from Add to trip (FR-13.2): a name, then the Trip made with targets in one
+    /// request; created hears it.
+    static func newTrip(api: APIClient, over view: UIView, targets: [String], created: @escaping (Trip) -> Void) {
+        TripSheets.trip(over: view, title: String(localized: "Create trip"), name: "", description: "", action: String(localized: "Create trip"),
+                        busy: String(localized: "Creating…")) { name, description in
+            do {
+                let read = try await api.createTrip(name: name, description: description, trackIDs: targets)
+                created(read.trip)
+                return nil
+            } catch {
+                return TripsPanel.message(error, String(localized: "Could not save the trip"))
             }
         }
-        let trips = UIDeferredMenuElement.uncached { [weak view] completion in
-            Task { @MainActor in
-                guard let read = try? await api.trips() else {
-                    completion([UIAction(title: String(localized: "Could not load your trips"), attributes: .disabled) { _ in }])
-                    return
-                }
-                completion(read.map { item in
-                    UIAction(title: item.trip.name) { [weak view] _ in
-                        Task {
-                            do {
-                                let changed = try await api.changeTripTracks(item.trip.id, trackIDs: targets(), add: true)
-                                added(changed.trip, false)
-                            } catch {
-                                if let view { inform(over: view, TripsPanel.message(error, String(localized: "Could not save the trip"))) }
-                            }
-                        }
-                    }
-                })
-            }
-        }
-        return UIMenu(title: String(localized: "Add to trip"), children: [create, UIMenu(options: .displayInline, children: [trips])])
     }
 }

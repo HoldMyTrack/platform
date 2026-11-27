@@ -90,6 +90,8 @@
         "android": null, "ios": ["PanelTests.testTripsShowNormalAndTheTracksTabKeepsItsMode"]},
        {"id": "rename-and-send", "title": "A Trip is renamed and sent from its sheets", "states": ["trips-half"],
         "android": ["MapFlowsTest.e_aTripIsRenamedAndSentFromSheets"], "ios": ["PanelTests.testATripIsRenamedAndSentFromSheets"]},
+       {"id": "add-to-trip", "title": "Tracks are added to a Trip, or a new one, from Add to trip's sheet",
+        "android": null, "ios": null},
        {"id": "totals-after-rotation", "title": "The open Trip's totals stay on screen after a rotation", "states": ["trips-half-landscape"],
         "android": ["MapFlowsTest.h_theOpenTripsTotalsStayOnScreenAfterARotation"], "ios": null}
      ]},

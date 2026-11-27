@@ -53,6 +53,7 @@ import dev.holdmytrack.android.panel.EditRouteOps
 import dev.holdmytrack.android.panel.FormatParts
 import dev.holdmytrack.android.panel.PanelRules
 import dev.holdmytrack.android.panel.ToolbarRules
+import dev.holdmytrack.android.panel.TripPicker
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.panel.PanelTab
 import dev.holdmytrack.android.photos.PhotoClusters
@@ -219,6 +220,14 @@ class ClientRulesTest {
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
         "masterCheckboxTap" to { input -> JsonPrimitive(if (ToolbarRules.masterTap(input.int("listed"), input.int("checked")) == ToolbarRules.MasterTap.UNCHECK_ALL) "uncheckAll" else "checkAll") },
         "targetSummaryKind" to { input -> JsonPrimitive(PanelRules.targetSummaryKind(input.int("checked"), input.int("targets")).name.lowercase()) },
+        "tripPicker" to { input ->
+            val trips = input["trips"]!!.jsonArray.map { it.jsonObject }.map { TripPicker.Entry(it.string("id")!!, it.string("name")!!, it.strings("trackIds")) }
+            val shown = TripPicker.shown(trips, input.strings("target"), input.string("query").orEmpty())
+            JsonObject(mapOf(
+                "search" to JsonPrimitive(shown.search),
+                "rows" to JsonArray(shown.rows.map { JsonObject(mapOf("id" to JsonPrimitive(it.id), "holdsAll" to JsonPrimitive(it.holdsAll))) }),
+            ))
+        },
         "infoShowsBands" to { input -> JsonPrimitive(PanelRules.infoShowsBands(input.strings("checked").toSet(), input.string("focused"), input.bool("bandsDrawn"))) },
         "attachmentName" to { input -> JsonPrimitive(AttachmentName.of(input.string("header"))) },
         "libraryPageQuery" to { input ->
