@@ -95,6 +95,78 @@
         }
       }
     },
+    "tripPicker.adding" : {
+      "comment" : "Add to trip: the picked Trip while the tracks are added.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adding…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавление…"
+          }
+        }
+      }
+    },
+    "tripPicker.holdsAll" : {
+      "comment" : "Add to trip: a Trip that has every target track, which can't be picked.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already in this trip"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже в этом путешествии"
+          }
+        }
+      }
+    },
+    "tripPicker.noMatch" : {
+      "comment" : "Add to trip: no Trip's name holds what was typed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No trip matches “%@”"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет путешествия, подходящего под «%@»"
+          }
+        }
+      }
+    },
+    "tripPicker.search" : {
+      "comment" : "Add to trip's search field, once there are many Trips.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search trips"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Найдите путешествие"
+          }
+        }
+      }
+    },
     "“%@”" : {
       "comment" : "Tracks tab: one track named as an action's target.",
       "localizations" : {

@@ -29,7 +29,7 @@ object TrackTypePicker {
 
     fun show(context: Context, current: String, known: List<TypeCount>, onPick: (String) -> Unit): Handle {
         val (items, search) = rows(context, current, known)
-        val sheet = PickerSheet.show(context, context.getString(R.string.recording_type_hint), current, items, search, onPick)
+        val sheet = PickerSheet.show(context, context.getString(R.string.recording_type_hint), current, items, search, onPick = onPick)
         return Handle { next ->
             val (nextItems, nextSearch) = rows(context, current, next)
             sheet.replace(nextItems, nextSearch)

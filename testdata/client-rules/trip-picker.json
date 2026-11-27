@@ -1,0 +1,429 @@
+{
+  "rule": "tripPicker",
+  "description": "Add to trip's picker sheet in the apps: the account's Trips in the order the server sends them (newest first), each marked holdsAll when it already has every target track, so it can't be picked; the search field shows once there are more than 8 Trips, and what's typed keeps the Trips whose name holds it, ignoring case and the whitespace around it.",
+  "clients": [
+    "android",
+    "ios"
+  ],
+  "cases": [
+    {
+      "name": "a Trip with every target track holds all; one with some doesn't",
+      "input": {
+        "trips": [
+          {
+            "id": "t1",
+            "name": "Alps 2026",
+            "trackIds": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "id": "t2",
+            "name": "Weekend rides",
+            "trackIds": [
+              "a"
+            ]
+          },
+          {
+            "id": "t3",
+            "name": "alpine lakes",
+            "trackIds": []
+          }
+        ],
+        "target": [
+          "a",
+          "b"
+        ],
+        "query": ""
+      },
+      "expected": {
+        "search": false,
+        "rows": [
+          {
+            "id": "t1",
+            "holdsAll": true
+          },
+          {
+            "id": "t2",
+            "holdsAll": false
+          },
+          {
+            "id": "t3",
+            "holdsAll": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "one target track",
+      "input": {
+        "trips": [
+          {
+            "id": "t1",
+            "name": "Alps 2026",
+            "trackIds": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "id": "t2",
+            "name": "Weekend rides",
+            "trackIds": [
+              "a"
+            ]
+          },
+          {
+            "id": "t3",
+            "name": "alpine lakes",
+            "trackIds": []
+          }
+        ],
+        "target": [
+          "a"
+        ],
+        "query": ""
+      },
+      "expected": {
+        "search": false,
+        "rows": [
+          {
+            "id": "t1",
+            "holdsAll": true
+          },
+          {
+            "id": "t2",
+            "holdsAll": true
+          },
+          {
+            "id": "t3",
+            "holdsAll": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "no Trips yet",
+      "input": {
+        "trips": [],
+        "target": [
+          "a"
+        ],
+        "query": ""
+      },
+      "expected": {
+        "search": false,
+        "rows": []
+      }
+    },
+    {
+      "name": "eight Trips: no search",
+      "input": {
+        "trips": [
+          {
+            "id": "t1",
+            "name": "Trip 1",
+            "trackIds": []
+          },
+          {
+            "id": "t2",
+            "name": "Trip 2",
+            "trackIds": []
+          },
+          {
+            "id": "t3",
+            "name": "Trip 3",
+            "trackIds": []
+          },
+          {
+            "id": "t4",
+            "name": "Trip 4",
+            "trackIds": []
+          },
+          {
+            "id": "t5",
+            "name": "Trip 5",
+            "trackIds": []
+          },
+          {
+            "id": "t6",
+            "name": "Trip 6",
+            "trackIds": []
+          },
+          {
+            "id": "t7",
+            "name": "Trip 7",
+            "trackIds": []
+          },
+          {
+            "id": "t8",
+            "name": "Trip 8",
+            "trackIds": []
+          }
+        ],
+        "target": [
+          "a"
+        ],
+        "query": ""
+      },
+      "expected": {
+        "search": false,
+        "rows": [
+          {
+            "id": "t1",
+            "holdsAll": false
+          },
+          {
+            "id": "t2",
+            "holdsAll": false
+          },
+          {
+            "id": "t3",
+            "holdsAll": false
+          },
+          {
+            "id": "t4",
+            "holdsAll": false
+          },
+          {
+            "id": "t5",
+            "holdsAll": false
+          },
+          {
+            "id": "t6",
+            "holdsAll": false
+          },
+          {
+            "id": "t7",
+            "holdsAll": false
+          },
+          {
+            "id": "t8",
+            "holdsAll": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "nine Trips: search",
+      "input": {
+        "trips": [
+          {
+            "id": "t1",
+            "name": "Trip 1",
+            "trackIds": []
+          },
+          {
+            "id": "t2",
+            "name": "Trip 2",
+            "trackIds": []
+          },
+          {
+            "id": "t3",
+            "name": "Trip 3",
+            "trackIds": []
+          },
+          {
+            "id": "t4",
+            "name": "Trip 4",
+            "trackIds": []
+          },
+          {
+            "id": "t5",
+            "name": "Trip 5",
+            "trackIds": []
+          },
+          {
+            "id": "t6",
+            "name": "Trip 6",
+            "trackIds": []
+          },
+          {
+            "id": "t7",
+            "name": "Trip 7",
+            "trackIds": []
+          },
+          {
+            "id": "t8",
+            "name": "Trip 8",
+            "trackIds": []
+          },
+          {
+            "id": "t9",
+            "name": "Trip 9",
+            "trackIds": []
+          }
+        ],
+        "target": [
+          "a"
+        ],
+        "query": ""
+      },
+      "expected": {
+        "search": true,
+        "rows": [
+          {
+            "id": "t1",
+            "holdsAll": false
+          },
+          {
+            "id": "t2",
+            "holdsAll": false
+          },
+          {
+            "id": "t3",
+            "holdsAll": false
+          },
+          {
+            "id": "t4",
+            "holdsAll": false
+          },
+          {
+            "id": "t5",
+            "holdsAll": false
+          },
+          {
+            "id": "t6",
+            "holdsAll": false
+          },
+          {
+            "id": "t7",
+            "holdsAll": false
+          },
+          {
+            "id": "t8",
+            "holdsAll": false
+          },
+          {
+            "id": "t9",
+            "holdsAll": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "typed text keeps the names that hold it, ignoring case and spaces around it",
+      "input": {
+        "trips": [
+          {
+            "id": "t1",
+            "name": "Alps 2026",
+            "trackIds": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "id": "t2",
+            "name": "Weekend rides",
+            "trackIds": [
+              "a"
+            ]
+          },
+          {
+            "id": "t3",
+            "name": "alpine lakes",
+            "trackIds": []
+          }
+        ],
+        "target": [
+          "a"
+        ],
+        "query": "  ALP "
+      },
+      "expected": {
+        "search": false,
+        "rows": [
+          {
+            "id": "t1",
+            "holdsAll": true
+          },
+          {
+            "id": "t3",
+            "holdsAll": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "a tab or newline around what's typed is ignored too",
+      "input": {
+        "trips": [
+          {
+            "id": "t1",
+            "name": "Alps 2026",
+            "trackIds": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "id": "t2",
+            "name": "Weekend rides",
+            "trackIds": [
+              "a"
+            ]
+          },
+          {
+            "id": "t3",
+            "name": "alpine lakes",
+            "trackIds": []
+          }
+        ],
+        "target": [
+          "a"
+        ],
+        "query": "\talp\n"
+      },
+      "expected": {
+        "search": false,
+        "rows": [
+          {
+            "id": "t1",
+            "holdsAll": true
+          },
+          {
+            "id": "t3",
+            "holdsAll": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "nothing matches",
+      "input": {
+        "trips": [
+          {
+            "id": "t1",
+            "name": "Alps 2026",
+            "trackIds": [
+              "a",
+              "b"
+            ]
+          },
+          {
+            "id": "t2",
+            "name": "Weekend rides",
+            "trackIds": [
+              "a"
+            ]
+          },
+          {
+            "id": "t3",
+            "name": "alpine lakes",
+            "trackIds": []
+          }
+        ],
+        "target": [
+          "a"
+        ],
+        "query": "sea"
+      },
+      "expected": {
+        "search": false,
+        "rows": []
+      }
+    }
+  ]
+}

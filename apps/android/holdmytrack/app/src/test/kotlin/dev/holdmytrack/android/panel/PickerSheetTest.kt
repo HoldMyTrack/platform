@@ -22,4 +22,10 @@ class PickerSheetTest {
     fun `Done with no row left picks nothing`() {
         assertNull(PickerSheet.doneValue("zz", emptyList()))
     }
+
+    @Test
+    fun `Done skips a row that can't be picked`() {
+        val rows = listOf(PickerSheet.Item("a", "Alps", enabled = false), PickerSheet.Item("b", "Alpine lakes"))
+        assertEquals("b", PickerSheet.doneValue("alp", rows))
+    }
 }

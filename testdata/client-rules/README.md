@@ -27,6 +27,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `libraryPageQuery` | `state` (`sort`, `desc`, `page`, `q`, `exclude`, `distance` with `min` and `max`, null for unbounded; `after`, `before`, `trip`), `allTypes` | the query (`page`, `sort`, and `q`, `types`, `minDistance`, `maxDistance`, `from`, `to`, `trip` when set), or null |
 | `libraryPager` | `page`, `total`, `pageSize` | `{ from, to, prev, next }` or null |
 | `downloadBlock` | `tracks` (`{ id, pending, private }`) or `plainTracks` (a count of ordinary ones), `max` (the client's own, 100, when missing) | `{ kind: "too_many", count }`, `{ kind: "pending" \| "private", track }` (an id) or null |
+| `tripPicker` (Android and iOS) | `trips` (`{ id, name, trackIds }`, newest first), `target` (ids), `query` | `{ search, rows }`: `search` a boolean, `rows` `{ id, holdsAll }` |
 | `tripFormAction` (Android and iOS) | `text` (a field as typed), `busy` | boolean |
 | `largeText` (Android and iOS) | `scale` (the text size over its default) | boolean |
 | `mapTracksFilters` (Android and iOS) | `tab` (`tracks`, `trips`, `library`, `sync`) | boolean |
