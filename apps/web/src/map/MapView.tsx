@@ -1,3 +1,4 @@
+import { bandLegendColors } from './bandsGroup.ts';
 import { Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { listQuery, tracksQuery as tracksQueryFor } from './trackQuery.ts';
@@ -9,7 +10,7 @@ import type { MapMode } from './mapMode.ts';
 import { setMapTapsActive } from './mapTaps.ts';
 import { initialSession, mapSessionReducer } from './session.ts';
 import { setListedTracks } from './tracks.ts';
-import { boldTracks, toolbarTarget } from './selection.ts';
+import { boldTracks, infoShowsBands, toolbarTarget } from './selection.ts';
 import { initialPanelTab, tripParam } from './tripUrl.ts';
 import type { SpotCategory } from './spots.ts';
 import { useAreaList } from './useAreaList.ts';
@@ -409,6 +410,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialTrack = nu
               onSelectAll={select.checkAll}
               onInvertSelection={select.invertChecked}
               onShowSelected={select.showTarget}
+              bandColors={infoShowsBands(toolbarTargetIds, focusedTrackId, bands !== null) ? bandLegendColors(satelliteShown) : null}
               hiddenIds={hiddenTrackIds}
               onToggleGroupVisibility={select.toggleGroupVisibility}
               onTracksDeleted={handleTracksDeleted}

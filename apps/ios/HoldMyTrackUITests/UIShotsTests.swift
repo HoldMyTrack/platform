@@ -25,17 +25,22 @@ final class UIShotsTests: XCTestCase {
         let row = app.cells.matching(identifier: "trackRow").firstMatch
         if row.waitForExistence(timeout: 10) {
             row.tap()
-            _ = app.otherElements["trackCard"].waitForExistence(timeout: 10)
+            _ = app.otherElements["trackActions"].waitForExistence(timeout: 10)
             settle()
             shot("track-focused")
-            if app.buttons["cardClose"].exists { app.buttons["cardClose"].tap() }
+            app.buttons["barInfo"].tap()
+            _ = app.staticTexts["Moving time"].waitForExistence(timeout: 10)
+            settle()
+            shot("track-info")
+            if app.otherElements["trackInfo"].exists { app.navigationBars.buttons.firstMatch.tap() }
             settle()
             if !handle.isHittable || handle.label == "Expand the panel" { half(app) }
+            // The focused row's tile: it alone is checked.
             row.buttons["rowTile"].tap()
-            _ = app.otherElements["selectionBar"].waitForExistence(timeout: 5)
+            _ = app.staticTexts["actionsTarget"].waitForExistence(timeout: 5)
             settle()
             shot("tracks-checked")
-            if app.buttons["endSelecting"].exists { app.buttons["endSelecting"].tap() }
+            if app.buttons["selectMenu"].exists { PanelTests.uncheckAll(app) }
             settle()
         }
 

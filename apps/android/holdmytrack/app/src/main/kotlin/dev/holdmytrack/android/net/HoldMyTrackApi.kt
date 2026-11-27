@@ -865,6 +865,19 @@ object HoldMyTrackApi {
         })
     }
 
+    /** `POST /v2/tracks/info` (`docs/SPEC.md` FR-5.8): the toolbar's Info for [trackIds], its lines
+     *  formatted by the server. */
+    fun trackInfo(trackIds: List<String>, onResult: (Result<TrackInfo>) -> Unit) {
+        val request = Request.Builder()
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/info")
+            .post(jsonBody(TrackInfoRequestJson(trackIds)))
+            .build()
+        call(request, { text ->
+            val json = decode<TrackInfoJson>(text)
+            TrackInfo(json.lines.map { TrackInfo.Line(it.label, it.value) }, json.note)
+        }, onResult)
+    }
+
     /** `DELETE /v2/tracks/{id}` (`docs/IMPLEMENTATION.md` §4.7.5) — the track, its
      *  track and its share of Fog coverage, for good. */
     fun deleteTrack(id: String, onResult: (Result<Unit>) -> Unit) {

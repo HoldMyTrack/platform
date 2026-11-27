@@ -26,7 +26,7 @@ data class TrackRowItem(
     val selecting: Boolean = false,
 )
 
-/** The icon for a track's type, on its row's tile and its card: its kind's
+/** The icon for a track's type, on its row's tile: its kind's
  *  ([TrackTypes]). */
 @DrawableRes
 fun typeIcon(type: String): Int = kindIcon(TrackTypes.kind(type))

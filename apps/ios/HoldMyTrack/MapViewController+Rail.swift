@@ -155,7 +155,7 @@ final class MapRail {
                                id: "export")
         for item in [self.layers, self.places, self.locate, self.export] { view.addArrangedSubview(item) }
         view.spacing = DesignTokens.Space.s8
-        // Its panels' own size: the toggle, the selection bar or the recording's status take the rest.
+        // Its panels' own size: the toggle or the recording's status take the rest.
         view.alignment = .fill
     }
 

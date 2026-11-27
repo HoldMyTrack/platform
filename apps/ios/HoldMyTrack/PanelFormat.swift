@@ -74,22 +74,6 @@ struct PanelFormat {
 
     func count(_ n: Int) -> String { NumberFormatter.localizedString(from: NSNumber(value: n), number: .decimal) }
 
-    /// Pace on foot ("8:47 /mi"), speed otherwise ("17.1 km/h"); a dash with no distance or time.
-    func paceOrSpeed(_ kind: TrackKind, meters: Double?, seconds: Int?) -> String {
-        let unitMeters = imperial ? Pace.metersPerMile : 1000
-        if kind.showsPace {
-            guard let perUnit = Pace.secondsPerUnit(meters: meters, seconds: seconds, unitMeters: unitMeters) else { return Self.dash }
-            return "\(Pace.format(perUnit)) /\(unit)"
-        }
-        guard let speed = Pace.speed(meters: meters, seconds: seconds, unitMeters: unitMeters) else { return Self.dash }
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 1
-        formatter.maximumFractionDigits = 1
-        let number = formatter.string(from: NSNumber(value: speed)) ?? "\(speed)"
-        return imperial ? String(localized: "\(number) mph", comment: "A speed in miles an hour.") : String(localized: "\(number) km/h", comment: "A speed in kilometres an hour.")
-    }
-
     /// "Oct 11, 2026, 9:39 AM", in the zone the track was recorded in.
     func startedAt(_ track: Track) -> String { moment(track.startedAt, zone: track.timezone) }
 

@@ -64,6 +64,10 @@ const gpxDownloadsPerHour = 60
 // export at most; each is a query and a PNG drawn in memory.
 const statsCardsPerHour = 600
 
+// trackInfosPerHour bounds `POST /v2/tracks/info` per account. A person opens Info a few times
+// a minute at most; each reads up to 10,000 rows.
+const trackInfosPerHour = 600
+
 // rateKey is who a per-account limit counts a request against: the account, or for the demo
 // account, which every visitor shares (DemoCustomerUserID), the visitor's address, so one
 // heavy visitor doesn't use up everyone else's demo.

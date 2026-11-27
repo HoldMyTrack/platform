@@ -360,6 +360,53 @@ tracks_stats-card:
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
       "404": { $ref: "../components/responses.yaml#/Error" }
       "429": { $ref: "../components/responses.yaml#/Error" }
+tracks_info:
+  post:
+    summary: The Tracks toolbar's Info for one track or a group
+    description: >-
+      One track's type, start and end, distance, moving and elapsed time, pace or speed and
+      elevation gain, or a group's count, first start, last end and totals, in the account's
+      units and language; a line whose value is unknown is left out. Private tracks have type
+      and start alone, and count in a group without adding to its totals.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [track_ids]
+            properties:
+              track_ids:
+                type: array
+                minItems: 1
+                maxItems: 10000
+                items: { type: string, format: uuid }
+    responses:
+      "200":
+        description: The lines, in order
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lines, note]
+              additionalProperties: false
+              properties:
+                lines:
+                  type: array
+                  items:
+                    type: object
+                    required: [label, value]
+                    additionalProperties: false
+                    properties:
+                      label: { type: string }
+                      value: { type: string }
+                note: { type: string, description: "Shown under the lines: what moving time leaves out, or why a Private track has nothing else; empty for none." }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
 tracks_summary:
   get:
     summary: Totals over the tracks the filter selects

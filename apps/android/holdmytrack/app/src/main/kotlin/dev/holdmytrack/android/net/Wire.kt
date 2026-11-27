@@ -275,6 +275,17 @@ internal data class OverlapSpanJson(val key: String, val start: String, val end:
 @Serializable
 internal data class OverlapsRequestJson(val spans: List<OverlapSpanJson>)
 
+/** `POST /v2/tracks/info`'s body. */
+@Serializable
+internal data class TrackInfoRequestJson(@SerialName("track_ids") val trackIds: List<String>)
+
+/** `POST /v2/tracks/info`'s answer. */
+@Serializable
+internal data class TrackInfoJson(val lines: List<TrackInfoLineJson>, val note: String)
+
+@Serializable
+internal data class TrackInfoLineJson(val label: String, val value: String)
+
 /** `POST /v2/tracks/stats-card`'s body: [theme] is `light` or `dark`. */
 @Serializable
 internal data class StatsCardRequestJson(

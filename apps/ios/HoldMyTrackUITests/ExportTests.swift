@@ -38,11 +38,9 @@ final class ExportTests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.buttons["rowTile"].tap()
         app.buttons["panelHandle"].tap()
-        // Checked rows take the top row: the rail steps aside, and the camera comes under the bar.
-        XCTAssertFalse(export.isHittable)
-        let checkedExport = app.buttons["checkedExport"]
-        XCTAssertTrue(checkedExport.waitForExistence(timeout: 5))
-        checkedExport.tap()
+        // The rail stays with rows checked.
+        XCTAssertTrue(export.waitForExistence(timeout: 5))
+        export.tap()
         // Show stats is kept on the phone, so an earlier run may have left it ticked.
         let stats = app.buttons["exportStats"]
         if !stats.isSelected { stats.tap() }

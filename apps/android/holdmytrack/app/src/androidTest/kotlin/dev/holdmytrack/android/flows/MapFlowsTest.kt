@@ -100,7 +100,7 @@ class MapFlowsTest {
         for (row in 0..1) {
             tapUntil({ device.findObjects(id("track_tile_target"))[row] }) { checkedRows() > row }
         }
-        need(id("selection_bar"))
+        need(id("track_actions"))
         need(id("panel_visibility")).click()
         expect("two rows hidden", count(id("track_hidden"), 2))
 
@@ -111,7 +111,7 @@ class MapFlowsTest {
         expect("only Mill Creek Falls listed", count(id("track_text"), 1))
         expect("Mill Creek Falls still hidden", count(id("track_hidden"), 1))
         expect("Mill Creek Falls still checked", count(checkedTiles(), 1))
-        need(id("selection_bar"))
+        need(id("track_actions"))
     }
 
     @Test

@@ -136,6 +136,13 @@ extension APIClient {
         }
     }
 
+    /// `POST /v2/tracks/info` (root docs/SPEC.md FR-5.8): the toolbar's Info for trackIDs, its
+    /// lines formatted by the server.
+    public func trackInfo(_ trackIDs: [String]) async throws -> TrackInfo {
+        let json: TrackInfoJSON = try decode(try await send("POST", "v2/tracks/info", body: TrackInfoRequestJSON(trackIDs: trackIDs)))
+        return TrackInfo(lines: json.lines.map { TrackInfo.Line(label: $0.label, value: $0.value) }, note: json.note)
+    }
+
     /// `POST /v2/tracks/stats-card` (root docs/IMPLEMENTATION.md §4.3.3): the export's stats card
     /// for request as a PNG drawn at the image's own scale, or nil when every track is Pending (204).
     public func statsCard(_ request: ExportStats.Request) async throws -> Data? {

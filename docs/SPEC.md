@@ -282,7 +282,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 
 ### FR-4.6 Pace-colored segments
 
-- The focused track's route is drawn in five bands, slowest blue to fastest red, scaled to its own speed range. No legend, no values, no heart-rate alternative (ADR-0017).
+- The focused track's route is drawn in five bands, slowest blue to fastest red, scaled to its own speed range. No values on the map, and no heart-rate alternative (ADR-0017); Info has the legend (FR-5.8).
 - Chevrons along its straighter stretches point the way it was recorded; a tight bend gets none.
 - Bands follow the simplified line, so a straight stretch can read coarser than its data (`IMPLEMENTATION.md` §4.3.1).
 - Not in Fog.
@@ -434,6 +434,7 @@ stateDiagram-v2
 - At most one track is Focused, by clicking its row or route; any number are Checked. Bold is either, on the map and in its image (FR-4.7). The toolbar acts on the Checked ones when any are, else the Focused one. A Type or Distance filter that hides a Checked track unchecks it.
 - On the web they're independent and checking never moves the camera; in the apps focusing unchecks the rest, and the first check takes the Focused one in (`apps/docs/SPEC.md` FR-2.7).
 - Hiding keeps Focused and Checked; camera fits skip Hidden. A fit over several tracks (the opening view, Dates, a Trip's, the toolbar's over Checked ones) skips Pending and Private ones too, so only a Private row framed alone frames its location's circle (FR-5.11). Opening or closing a Trip clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on tracks still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
+- Info, on the toolbar, shows one track's type, start and end, distance, moving and elapsed time, pace on foot or speed otherwise, and elevation gain; for several, their count, first start, last end and totals, a Private track counting without adding to them. It says that moving time leaves out stretches slower than 1.8 km/h (1.1 mph), and while the Focused track is drawn in pace bands it shows their legend.
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden track stays hidden after Pending clears.
 - Leaving Pending brings the route back at once, and Fog once redrawn.
 - A track entirely inside Private locations is Normal with no geometry.

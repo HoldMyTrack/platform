@@ -17,7 +17,6 @@ data class ModeBarState(
     val sessionReady: Boolean,
     val recording: Boolean,
     val editOpen: Boolean,
-    val selectionShown: Boolean,
     /** Fog is still being re-rendered (`CoverageWatch`). */
     val coverageRendering: Boolean,
     /** The panel's tab: the toggle is the Tracks tab's. */
@@ -88,7 +87,7 @@ class ModeBar(
     fun render() {
         val s = state()
         if (!s.sessionReady) return
-        bar.isVisible = MapChromeRules.modeBarShown(s.recording, s.editOpen, s.selectionShown, s.tab)
+        bar.isVisible = MapChromeRules.modeBarShown(s.recording, s.editOpen, s.tab)
         layersPanel.visibility = View.VISIBLE
         placesPanel.visibility = View.VISIBLE
         renderNotices()

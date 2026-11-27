@@ -530,6 +530,23 @@ export async function getStatsCard(
   return res.blob();
 }
 
+/** `POST /v2/tracks/info`'s answer: the toolbar's Info, formatted by the server. */
+export type TrackInfo = ResponseJson<'/tracks/info', 'post'>;
+
+/** `POST /v2/tracks/info` (docs/SPEC.md FR-5.8): Info's lines for the toolbar's target. */
+export async function getTrackInfo(trackIds: readonly string[], signal?: AbortSignal): Promise<TrackInfo> {
+  const res = await apiFetch(`/tracks/info`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    ...(signal ? { signal } : {}),
+    body: jsonBody<'/tracks/info', 'post'>({ track_ids: [...trackIds] }),
+  });
+  if (!res.ok) {
+    throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
+  }
+  return (await res.json()) as TrackInfo;
+}
+
 /** `GET /v2/map/imagery`: whether satellite imagery is offered now, which the server stops while
  *  the imagery plan nears its monthly limit (docs/SPEC.md FR-4.10). */
 export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {

@@ -17,7 +17,7 @@ extension MapViewController {
         tripsPanel = TripsPanel(api: flow.api, format: format, demo: account.isDemo)
         tracksPanel.onEvent = { [weak self] in self?.handle($0) }
         tripsPanel.onEvent = { [weak self] in self?.handle($0) }
-        for button in tracksPanel.addToTripButtons {
+        for button in [tracksPanel.addToTripButton] {
             button.menu = TripDialogs.addToTripMenu(api: flow.api, over: view, targets: { [weak self] in
                 guard let self else { return [] }
                 return self.session.panel.targets.map(\.id)
@@ -28,10 +28,8 @@ extension MapViewController {
         libraryPanel.onEvent = { [weak self] in self?.handle($0) }
         libraryPanel.setSyncWaiting(syncWaiting)
 
-        for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
+        for v in [tracksPanel.actions, tracksPanel.summary, tripsPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
         for v in [libraryPanel.head, syncPanel?.head].compactMap({ $0 }) as [UIView] { sheet.dragsSheet(v) }
-        // In the mode toggle's place while rows are checked (MapViewController+TopRow).
-        modesRow.insertArrangedSubview(tracksPanel.selectionBar, at: 1)
         for v in [tracksPanel.content, tripsPanel.content, libraryPanel.content, syncPanel?.content].compactMap({ $0 }) {
             v.translatesAutoresizingMaskIntoConstraints = false
             sheet.content.addSubview(v)
@@ -300,9 +298,9 @@ extension MapViewController {
             tripsPanel.setRows(rows, note: session.tripID == nil ? nil : note, format: format)
         }
         let tracksTab = panelTab == .tracks
-        let card = tracksTab && tracksPanel.showsCard
-        tracksPanel.summary.isHidden = !tracksTab || card
-        tracksPanel.card.isHidden = !card
+        let actions = tracksTab && tracksPanel.showsActions
+        tracksPanel.summary.isHidden = !tracksTab || actions
+        tracksPanel.actions.isHidden = !actions
         tripsPanel.head.isHidden = panelTab != .trips
         tracksPanel.content.isHidden = !tracksTab
         tripsPanel.content.isHidden = panelTab != .trips
@@ -330,13 +328,14 @@ extension MapViewController {
         case .toggleChecked(let id):
             if session.panel.toggleChecked(id) { fly([id]) }
         case .clearFocus: session.panel.clearFocus()
-        case .endSelecting, .checkNone: session.panel.clearChecked()
+        case .checkNone: session.panel.clearChecked()
         case .checkAll: session.panel.checkAll()
         case .invert: session.panel.invertChecked()
         case .toggleVisibility: session.panel.toggleTargetVisibility()
         case .fly: fly(session.panel.targets.map(\.id))
         case .edit: edit()
         case .delete: confirmDelete()
+        case .info: showInfo()
         case .download: downloads.start(targets.map(\.id), from: self) { [weak self] in self?.say($0) }
         case .toggleType(let type): session.panel.toggleType(type)
         case .allTypes: session.panel.includeAllTypes()
@@ -574,6 +573,19 @@ extension MapViewController {
         }
         present(nav, animated: true)
         editWindow = editor
+    }
+
+    /// Info over the toolbar's target, with the pace bands' legend while they're drawn for the
+    /// focused track alone.
+    private func showInfo() {
+        let ids = session.panel.targets.map(\.id)
+        guard !ids.isEmpty else { return }
+        let info = TrackInfoViewController(api: flow.api, trackIDs: ids, bandColors: session.panel.checked.isEmpty ? tracksPanel.bandColors : nil)
+        let nav = UINavigationController(rootViewController: info)
+        nav.modalPresentationStyle = .pageSheet
+        nav.sheetPresentationController?.detents = [.medium(), .large()]
+        nav.sheetPresentationController?.prefersGrabberVisible = true
+        present(nav, animated: true)
     }
 
     /// Delete over the toolbar's target (root docs/SPEC.md FR-5.6), confirmed first, one at a

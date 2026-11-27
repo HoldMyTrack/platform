@@ -1,15 +1,15 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The Tracks tab's views (apps/docs/SPEC.md FR-2.7): the Type and Distance filters,
-/// the selection bar while rows are checked, the rows and the target's footer, and the focused
-/// track's card for the sheet's head. It draws PanelState and reports each tap as an Event;
-/// the map screen owns the state and applies them, since most touch the map too.
+/// The Tracks tab's views (apps/docs/SPEC.md FR-2.7): the master checkbox and the Type, Dates and
+/// Distance filters, the rows and the target's footer, and the toolbar for the sheet's head. It
+/// draws PanelState and reports each tap as an Event; the map screen owns the state and applies
+/// them, since most touch the map too.
 final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
-        case tapRow(String), toggleChecked(String), clearFocus, endSelecting
+        case tapRow(String), toggleChecked(String), clearFocus
         case checkAll, checkNone, invert
-        case toggleVisibility, fly, edit, delete, download
+        case toggleVisibility, fly, edit, info, delete, download
         case toggleType(String), allTypes, distance(DistanceRange?), resetFilters, dates
         case openTrip(String)
     }
@@ -18,8 +18,9 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     /// The tab's content, under the sheet's head.
     let content = UIView()
-    /// The focused track, at the head in the range's place while nothing is checked.
-    let card = UIView()
+    /// The toolbar, at the head in the summary's place while it has a target: what it acts on,
+    /// then Show/Hide, Edit, Add to trip, Info, ⋯ with Download and Delete, and Zoom in the accent.
+    let actions = UIView()
     /// "Tracks: 6 · 74.8 km · 9h 6m", under the range.
     let summary = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
 
@@ -35,37 +36,23 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     /// The Dates filter (root docs/SPEC.md FR-5.12), its sheet the map's (DatesViewController).
     let datesButton = UIButton(type: .system)
     private let resetButton = Controls.textButton(String(localized: "panel.resetFilters", defaultValue: "Reset", comment: "Tracks tab: clears the Type and Distance filters."), id: "resetFilters")
-    /// While rows are checked, the map shows it in the mode toggle's place (MapViewController+TopRow).
-    let selectionBar = UIView()
     private let checkAllButton = UIButton(type: .system)
     private let selectMenuButton = Controls.iconButton(Controls.icon(UIImage(resource: .chevronDown), size: 14), label: String(localized: "Check"), id: "selectMenu")
 
-    /// The actions over the toolbar's target, twice: the selection bar's icons and the focused
-    /// track's card's. Delete is the card's; the selection bar's is in its ⋯ menu, with Download.
-    private struct ActionButtons {
-        let visibility: UIButton, edit: UIButton, addToTrip: UIButton, delete: UIButton?, focus: UIButton
-    }
-    private var barActions: ActionButtons!
-    private var cardActions: ActionButtons!
-    /// The selection bar's ⋯: Download (root docs/SPEC.md FR-17.2) and Delete, which don't fit
-    /// across a phone beside the others. A blocked one says why under its title.
+    private let actionsTarget = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
+    private let visibilityButton = Controls.iconButton(UIImage(resource: .eyeOff), label: String(localized: "Hide"), id: "barVisibility")
+    private let editButton = Controls.iconButton(UIImage(resource: .pencil), label: String(localized: "Edit"), id: "barEdit")
+    /// Add to trip, whose menu the map screen builds from the account's Trips.
+    let addToTripButton = Controls.iconButton(UIImage(resource: .bookPlus), label: String(localized: "Add to trip"), id: "barAddToTrip")
+    private let infoButton = Controls.iconButton(UIImage(resource: .info), label: String(localized: "Info"), id: "barInfo")
+    /// Download (root docs/SPEC.md FR-17.2) and Delete, which don't fit across a phone beside the
+    /// others. A blocked one says why under its title.
     private let moreButton = Controls.iconButton(UIImage(resource: .ellipsis), label: String(localized: "More"), id: "barMore")
+    private let focusButton = Controls.iconButton(UIImage(resource: .focus), label: String(localized: "Fly to"), id: "barFocus")
 
-    private let cardIcon = UIImageView()
-    private let cardTitle = Controls.label("", font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
-    private let cardMeta = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
-    /// Distance, Moving and Pace or Speed, each a tile, as on Android; a private track's note instead.
-    private let cardStats = UIStackView()
-    private let cardDistance = TracksPanel.statValue("cardDistance")
-    private let cardMoving = TracksPanel.statValue("cardMoving")
-    private let cardPace = TracksPanel.statValue("cardPace")
-    private let cardPaceLabel = TracksPanel.statLabel("")
-    private let cardPrivate = Controls.label(String(localized: "Entirely inside one of your private locations, so it isn't on the map and has no distance. Moving or removing that location brings it back."),
-                                             font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
-    /// The pace bands' legend, slowest first, while the map draws them.
-    private let cardBands = UIStackView()
-    private let bandSteps = UIStackView()
-    private var bandColors: [String]?
+    /// The pace bands' colors, slowest first, while the map draws them for the focused track:
+    /// Info shows their legend then.
+    private(set) var bandColors: [String]?
 
     private var rows: [TrackRowCell.Row] = []
     private var format: PanelFormat
@@ -73,61 +60,15 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private var byID: [String: Track] = [:]
     private let demo: Bool
 
-    /// The Add to trip buttons, whose menu the map screen builds from the account's Trips.
-    var addToTripButtons: [UIButton] { [barActions.addToTrip, cardActions.addToTrip] }
-
     init(format: PanelFormat, demo: Bool) {
         self.format = format
         self.demo = demo
         super.init()
-        barActions = makeActions(prefix: "bar", delete: false)
-        cardActions = makeActions(prefix: "card", labelled: true)
         buildContent()
-        buildCard()
+        buildActions()
     }
 
     // MARK: Building
-
-    /// The toolbar's icon buttons, or labelled ones for the card: Hide, Edit, Trip, Zoom and
-    /// Delete, each its word under its icon, as Android's card has them.
-    private func makeActions(prefix: String, labelled: Bool = false, delete: Bool = true) -> ActionButtons {
-        func button(_ icon: UIImage, _ label: String, _ word: String, id: String, danger: Bool = false) -> UIButton {
-            guard labelled else { return Controls.iconButton(icon, label: label, id: id) }
-            var config = UIButton.Configuration.plain()
-            config.image = Controls.icon(icon, size: 20)
-            config.imagePlacement = .top
-            config.imagePadding = DesignTokens.Space.s4
-            config.title = word
-            config.baseForegroundColor = UIColor(resource: danger ? .danger : .ink)
-            config.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 2, bottom: 4, trailing: 2)
-            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { a in
-                var a = a
-                a.font = Typeface.sans(DesignTokens.Text.xs, weight: DesignTokens.Weight.semibold, relativeTo: .caption1)
-                return a
-            }
-            config.titleLineBreakMode = .byClipping
-            let b = UIButton(configuration: config)
-            // A fifth of the card each: a long word ("На карту") shrinks rather than being cut.
-            b.titleLabel?.adjustsFontSizeToFitWidth = true
-            b.titleLabel?.minimumScaleFactor = 0.6
-            b.accessibilityLabel = label
-            b.accessibilityIdentifier = id
-            return b
-        }
-        let a = ActionButtons(
-            visibility: button(UIImage(resource: .eye), String(localized: "Hide"), String(localized: "card.hide", defaultValue: "Hide", comment: "The focused track's card: hide it on the map."), id: "\(prefix)Visibility"),
-            edit: button(UIImage(resource: .pencil), String(localized: "Edit"), String(localized: "card.edit", defaultValue: "Edit", comment: "The focused track's card: edit it."), id: "\(prefix)Edit"),
-            addToTrip: button(UIImage(resource: .bookPlus), String(localized: "Add to trip"), String(localized: "card.trip", defaultValue: "Trip", comment: "The focused track's card: add it to a Trip."), id: "\(prefix)AddToTrip"),
-            delete: !delete ? nil : button(UIImage(resource: .trash2), String(localized: "Delete"), String(localized: "card.delete", defaultValue: "Delete", comment: "The focused track's card: delete it."), id: "\(prefix)Delete", danger: true),
-            focus: button(UIImage(resource: .focus), String(localized: "Fly to"), String(localized: "card.zoom", defaultValue: "Zoom", comment: "The focused track's card: fly the camera to it."), id: "\(prefix)Focus")
-        )
-        a.visibility.addAction(UIAction { [weak self] _ in self?.onEvent?(.toggleVisibility) }, for: .primaryActionTriggered)
-        a.edit.addAction(UIAction { [weak self] _ in self?.onEvent?(.edit) }, for: .primaryActionTriggered)
-        a.delete?.addAction(UIAction { [weak self] _ in self?.onEvent?(.delete) }, for: .primaryActionTriggered)
-        a.focus.addAction(UIAction { [weak self] _ in self?.onEvent?(.fly) }, for: .primaryActionTriggered)
-        a.addToTrip.showsMenuAsPrimaryAction = true
-        return a
-    }
 
     private func buildContent() {
         for (button, id) in [(typeButton, "typeFilter"), (datesButton, "datesFilter"), (distanceButton, "distanceFilter")] {
@@ -139,9 +80,6 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         setDates(String(localized: "Dates"), set: false)
         resetButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.resetFilters) }, for: .primaryActionTriggered)
         resetButton.configuration?.titleLineBreakMode = .byTruncatingTail
-        let filters = UIStackView(arrangedSubviews: [typeButton, datesButton, distanceButton, resetButton, UIView()])
-        filters.spacing = DesignTokens.Space.s8
-        filters.alignment = .center
 
         checkAllButton.configuration = .plain()
         checkAllButton.accessibilityIdentifier = "checkAll"
@@ -154,31 +92,24 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             self.onEvent?(all == .all ? .checkNone : .checkAll)
         }, for: .primaryActionTriggered)
         selectMenuButton.showsMenuAsPrimaryAction = true
-        // ×, which unchecks every row, the check box and its menu, then the actions over the
-        // checked group, Zoom in the accent: Android's selection bar.
-        let close = Controls.iconButton(UIImage(resource: .x), label: String(localized: "Uncheck all"), id: "endSelecting")
-        close.addAction(UIAction { [weak self] _ in self?.onEvent?(.endSelecting) }, for: .primaryActionTriggered)
-        barActions.focus.configuration?.baseForegroundColor = UIColor(resource: .accent)
-        moreButton.showsMenuAsPrimaryAction = true
-        let bar = UIStackView(arrangedSubviews: [close, checkAllButton, selectMenuButton, UIView(),
-                                                 barActions.visibility, barActions.edit, barActions.addToTrip, moreButton, barActions.focus])
-        for v in bar.arrangedSubviews { Self.shrinkable(v) }
-        bar.alignment = .center
-        bar.translatesAutoresizingMaskIntoConstraints = false
-        selectionBar.addSubview(bar)
-        selectionBar.backgroundColor = UIColor(resource: .surface)
-        selectionBar.layer.cornerRadius = DesignTokens.Radius.md
-        selectionBar.layer.shadowColor = UIColor.black.cgColor
-        selectionBar.layer.shadowOpacity = 0.15
-        selectionBar.layer.shadowRadius = 2
-        selectionBar.layer.shadowOffset = CGSize(width: 0, height: 1)
-        selectionBar.accessibilityIdentifier = "selectionBar"
-        let inset = DesignTokens.Space.s4
+
+        // The master checkbox and its menu, then the filters, scrolling sideways when they don't fit.
+        let filters = UIStackView(arrangedSubviews: [checkAllButton, selectMenuButton, typeButton, datesButton, distanceButton, resetButton])
+        filters.spacing = DesignTokens.Space.s8
+        filters.setCustomSpacing(0, after: checkAllButton)
+        filters.alignment = .center
+        filters.translatesAutoresizingMaskIntoConstraints = false
+        let scroll = UIScrollView()
+        scroll.showsHorizontalScrollIndicator = false
+        scroll.alwaysBounceHorizontal = false
+        scroll.accessibilityIdentifier = "filterRow"
+        scroll.addSubview(filters)
         NSLayoutConstraint.activate([
-            bar.topAnchor.constraint(equalTo: selectionBar.topAnchor, constant: inset),
-            bar.bottomAnchor.constraint(equalTo: selectionBar.bottomAnchor, constant: -inset),
-            bar.leadingAnchor.constraint(equalTo: selectionBar.leadingAnchor, constant: inset),
-            bar.trailingAnchor.constraint(equalTo: selectionBar.trailingAnchor, constant: -inset),
+            filters.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            filters.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            filters.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            filters.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            filters.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor),
         ])
 
         table.dataSource = self
@@ -194,17 +125,17 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         note.textAlignment = .center
         note.accessibilityIdentifier = "panelNote"
 
-        let top = Controls.column([filters], spacing: DesignTokens.Space.s4)
-        for v in [top, progress, table, footer, note] as [UIView] {
+        for v in [scroll, progress, table, footer, note] as [UIView] {
             v.translatesAutoresizingMaskIntoConstraints = false
             content.addSubview(v)
         }
         let m = DesignTokens.Space.s12
         NSLayoutConstraint.activate([
-            top.topAnchor.constraint(equalTo: content.topAnchor),
-            top.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: m),
-            top.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -m),
-            progress.topAnchor.constraint(equalTo: top.bottomAnchor, constant: DesignTokens.Space.s2),
+            scroll.topAnchor.constraint(equalTo: content.topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: DesignTokens.Space.s4),
+            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+            scroll.heightAnchor.constraint(equalTo: filters.heightAnchor),
+            progress.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: DesignTokens.Space.s2),
             progress.leadingAnchor.constraint(equalTo: content.leadingAnchor),
             progress.trailingAnchor.constraint(equalTo: content.trailingAnchor),
             table.topAnchor.constraint(equalTo: progress.bottomAnchor),
@@ -220,56 +151,34 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         ])
     }
 
-    private func buildCard() {
-        cardIcon.tintColor = UIColor(resource: .inkSecondary)
-        cardIcon.contentMode = .scaleAspectFit
-        cardIcon.widthAnchor.constraint(equalToConstant: 24).isActive = true
-        cardIcon.heightAnchor.constraint(equalToConstant: 24).isActive = true
-        let close = Controls.iconButton(UIImage(resource: .x), label: String(localized: "Close"), id: "cardClose")
-        close.addAction(UIAction { [weak self] _ in self?.onEvent?(.clearFocus) }, for: .primaryActionTriggered)
-        let titles = Controls.column([cardTitle, cardMeta], spacing: DesignTokens.Space.s2)
-        let top = UIStackView(arrangedSubviews: [cardIcon, titles, close])
-        top.spacing = DesignTokens.Space.s8
-        top.alignment = .center
-        // Android's order: Hide, Edit, Trip, Zoom, Delete.
-        let actions = UIStackView(arrangedSubviews: [cardActions.visibility, cardActions.edit, cardActions.addToTrip, cardActions.focus, cardActions.delete!])
-        actions.distribution = .fillEqually
-        for (label, value) in [(TracksPanel.statLabel(String(localized: "card.distance", defaultValue: "Distance", comment: "The focused track's card: its distance.")), cardDistance),
-                               (TracksPanel.statLabel(String(localized: "card.moving", defaultValue: "Moving", comment: "The focused track's card: its moving time.")), cardMoving),
-                               (cardPaceLabel, cardPace)] {
-            let tile = Controls.column([label, value], spacing: 2)
-            tile.isLayoutMarginsRelativeArrangement = true
-            tile.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10)
-            tile.backgroundColor = UIColor(resource: .surfaceTint)
-            tile.layer.cornerRadius = DesignTokens.Radius.md
-            tile.isAccessibilityElement = true
-            cardStats.addArrangedSubview(tile)
-        }
-        cardStats.distribution = .fillEqually
-        cardStats.spacing = DesignTokens.Space.s8
-        cardPrivate.numberOfLines = 0
-        let legend = Typeface.sans(DesignTokens.Text.xs, relativeTo: .caption2)
-        bandSteps.spacing = DesignTokens.Space.s2
-        bandSteps.distribution = .fillEqually
-        bandSteps.heightAnchor.constraint(equalToConstant: 6).isActive = true
-        let slower = Controls.label(String(localized: "Slower"), font: legend, color: UIColor(resource: .inkSecondary))
-        let faster = Controls.label(String(localized: "Faster"), font: legend, color: UIColor(resource: .inkSecondary))
-        for label in [slower, faster] { label.setContentHuggingPriority(.required, for: .horizontal) }
-        for v in [slower, bandSteps, faster] { cardBands.addArrangedSubview(v) }
-        cardBands.spacing = DesignTokens.Space.s8
-        cardBands.alignment = .center
-        cardBands.isHidden = true
-        cardBands.accessibilityIdentifier = "cardBands"
-        let column = Controls.column([top, cardStats, cardPrivate, cardBands, actions], spacing: DesignTokens.Space.s8)
-        column.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(column)
+    /// The toolbar, Android's order: what it acts on, Show/Hide, Edit, Add to trip, Info, ⋯, Zoom.
+    private func buildActions() {
+        visibilityButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.toggleVisibility) }, for: .primaryActionTriggered)
+        editButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.edit) }, for: .primaryActionTriggered)
+        infoButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.info) }, for: .primaryActionTriggered)
+        focusButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.fly) }, for: .primaryActionTriggered)
+        focusButton.configuration?.baseForegroundColor = UIColor(resource: .accent)
+        addToTripButton.showsMenuAsPrimaryAction = true
+        moreButton.showsMenuAsPrimaryAction = true
+        actionsTarget.numberOfLines = 1
+        actionsTarget.lineBreakMode = .byTruncatingTail
+        actionsTarget.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        actionsTarget.accessibilityIdentifier = "actionsTarget"
+        let buttons = [visibilityButton, editButton, addToTripButton, infoButton, moreButton, focusButton]
+        for v in buttons { Self.shrinkable(v) }
+        let row = UIStackView(arrangedSubviews: [actionsTarget] + buttons)
+        row.alignment = .center
+        row.setCustomSpacing(DesignTokens.Space.s4, after: actionsTarget)
+        row.translatesAutoresizingMaskIntoConstraints = false
+        actions.addSubview(row)
         NSLayoutConstraint.activate([
-            column.topAnchor.constraint(equalTo: card.topAnchor),
-            column.bottomAnchor.constraint(equalTo: card.bottomAnchor),
-            column.leadingAnchor.constraint(equalTo: card.leadingAnchor),
-            column.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            row.topAnchor.constraint(equalTo: actions.topAnchor),
+            row.bottomAnchor.constraint(equalTo: actions.bottomAnchor),
+            row.leadingAnchor.constraint(equalTo: actions.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: actions.trailingAnchor),
         ])
-        card.accessibilityIdentifier = "trackCard"
+        actions.accessibilityIdentifier = "trackActions"
+        actions.isHidden = true
     }
 
     // MARK: Rendering
@@ -295,13 +204,12 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
         renderFilters()
         renderToolbar()
-        renderCard()
         let targets = state.targets.compactMap { byID[$0.id] }
         footer.text = format.checkedFooter(count: targets.count, meters: targets.compactMap(\.distanceMeters).reduce(0, +))
     }
 
-    /// Whether the card shows at the head: something focused and nothing checked.
-    var showsCard: Bool { state.focused != nil && !state.selecting && state.focused.flatMap { byID[$0] } != nil }
+    /// Whether the toolbar shows at the head: it has a target.
+    var showsActions: Bool { !state.targets.compactMap { byID[$0.id] }.isEmpty }
 
     /// A list load is under way, or over: the bar over the rows shows once one has run
     /// progressDelay, so a quick pan doesn't flicker. The list keeps its rows meanwhile, and a
@@ -391,25 +299,23 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let anyHidden = targets.contains { state.hidden.contains($0.id) }
         let name = targets.isEmpty ? nil : targetName(targets)
         let deleteDemo = String(localized: "Not available for demo accounts — create an account to delete tracks")
-        for actions in [barActions!, cardActions!] {
-            describe(actions.visibility, use.visibility, image: UIImage(resource: anyHidden ? .eyeOff : .eye),
-                     anyHidden ? String(localized: "Show \(name ?? "") on the map") : String(localized: "Hide \(name ?? "") from the map"))
-            describe(actions.edit, use.edit, demo: String(localized: "Not available for demo accounts — create an account to edit tracks"), targets.count == 1 ? String(localized: "Edit \(name ?? ""): type, name, description and route") : String(localized: "Edit type for \(name ?? "")"))
-            describe(actions.addToTrip, use.addToTrip, demo: String(localized: "Not available for demo accounts — create an account to change trips"), String(localized: "Add \(name ?? "") to a trip"))
-            if let delete = actions.delete { describe(delete, use.delete, demo: deleteDemo, String(localized: "Delete \(name ?? "")", comment: "Delete's label; the placeholder names its target: a Tracks panel track or Trip, or a Photos tab photo.")) }
-            describe(actions.focus, use.focus, String(localized: "Zoom to \(name ?? "")"))
-        }
+        // What a tap does: show (the open eye) or hide (crossed out).
+        describe(visibilityButton, use.visibility, image: UIImage(resource: anyHidden ? .eye : .eyeOff),
+                 anyHidden ? String(localized: "Show \(name ?? "") on the map") : String(localized: "Hide \(name ?? "") from the map"))
+        describe(editButton, use.edit, demo: String(localized: "Not available for demo accounts — create an account to edit tracks"), targets.count == 1 ? String(localized: "Edit \(name ?? ""): type, name, description and route") : String(localized: "Edit type for \(name ?? "")"))
+        describe(addToTripButton, use.addToTrip, demo: String(localized: "Not available for demo accounts — create an account to change trips"), String(localized: "Add \(name ?? "") to a trip"))
+        describe(infoButton, use.info, String(localized: "panel.infoTarget", defaultValue: "Info for \(name ?? "")", comment: "Tracks tab: Info's label; the placeholder names its target."))
+        describe(focusButton, use.focus, String(localized: "Zoom to \(name ?? "")"))
         renderMore(targets, name: name, delete: use.delete, deleteDemo: deleteDemo)
-        cardActions.visibility.configuration?.title = anyHidden
-            ? String(localized: "card.show", defaultValue: "Show", comment: "The focused track's card: show a hidden track on the map.")
-            : String(localized: "card.hide", defaultValue: "Hide", comment: "The focused track's card: hide it on the map.")
+        actionsTarget.text = targets.isEmpty ? nil : state.checked.isEmpty ? format.label(targets[0])
+            : String(localized: "panel.checkedCount", defaultValue: "\(targets.count) checked tracks", comment: "Tracks tab: the checked tracks an action applies to.")
     }
 
     /// The ⋯ menu over targets, named name: Download unless DownloadRules blocks it, then Delete
     /// as ToolbarRules has it. A blocked item is disabled with why under its title.
     private func renderMore(_ targets: [Track], name: String?, delete: ToolbarRules.Use, deleteDemo: String) {
         moreButton.isEnabled = name != nil
-        moreButton.accessibilityLabel = name.map { String(localized: "panel.moreTarget", defaultValue: "More for \($0)", comment: "Tracks tab: the selection bar's ⋯, which holds Download and Delete for the target.") }
+        moreButton.accessibilityLabel = name.map { String(localized: "panel.moreTarget", defaultValue: "More for \($0)", comment: "Tracks tab: the toolbar's ⋯, which holds Download and Delete for the target.") }
             ?? String(localized: "Tap a track, or check some, first")
         guard let name else {
             moreButton.menu = nil
@@ -442,13 +348,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     /// Each action says what it would do, or why it can't; a disabled one stays in view.
     private func describe(_ button: UIButton, _ use: ToolbarRules.Use, image: UIImage? = nil, demo: String? = nil, _ ready: String) {
         button.isEnabled = use.enabled
-        if let image {
-            var config = button.configuration
-            // The card's labelled buttons draw their icons at 20 points, as they're built.
-            let labelled = config?.title != nil
-            config?.image = labelled ? Controls.icon(image, size: 20) : image
-            button.configuration = config
-        }
+        if let image { button.configuration?.image = image }
         button.accessibilityLabel = switch use {
         case .demo: demo ?? ready
         case .noTarget: String(localized: "Tap a track, or check some, first")
@@ -459,49 +359,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     /// The map draws the focused track's pace bands in colors, slowest first, or none (nil).
     func setBands(_ colors: [String]?) {
-        if let colors, colors != bandColors {
-            bandColors = colors
-            bandSteps.arrangedSubviews.forEach { $0.removeFromSuperview() }
-            for color in colors {
-                let step = UIView()
-                step.backgroundColor = CSSColor(color).map { UIColor(red: $0.red, green: $0.green, blue: $0.blue, alpha: $0.alpha) }
-                step.layer.cornerRadius = 3
-                bandSteps.addArrangedSubview(step)
-            }
-        }
-        cardBands.isHidden = colors?.isEmpty ?? true
-    }
-
-    private func renderCard() {
-        guard showsCard, let id = state.focused, let track = byID[id] else { return }
-        let kind = TrackTypes.shared.kind(track.trackType)
-        cardIcon.image = TrackTypes.icon(kind)
-        cardTitle.text = format.label(track)
-        cardMeta.text = ([track.title != nil ? format.startedAt(track) : nil, TrackTypes.shared.label(track.trackType)] as [String?])
-            .compactMap { $0 }.joined(separator: " · ")
-        // A private track has no numbers worth showing: what it is stands in for them.
-        cardStats.isHidden = track.isPrivate
-        cardPrivate.isHidden = !track.isPrivate
-        cardPaceLabel.text = kind.showsPace ? String(localized: "Pace") : String(localized: "Speed")
-        cardDistance.text = format.distance(track.distanceMeters)
-        cardMoving.text = format.duration(track.movingSeconds)
-        cardPace.text = format.paceOrSpeed(kind, meters: track.distanceMeters, seconds: track.movingSeconds)
-        for tile in cardStats.arrangedSubviews {
-            tile.accessibilityLabel = (tile as? UIStackView)?.arrangedSubviews.compactMap { ($0 as? UILabel)?.text }.joined(separator: ", ")
-        }
-    }
-
-    private static func statLabel(_ text: String) -> UILabel {
-        Controls.label(text, font: Typeface.sans(DesignTokens.Text.xs, relativeTo: .caption2), color: UIColor(resource: .inkSecondary))
-    }
-
-    private static func statValue(_ id: String) -> UILabel {
-        let label = Controls.label("", font: Typeface.sans(DesignTokens.Text.lg, weight: DesignTokens.Weight.semibold, relativeTo: .body), color: UIColor(resource: .ink))
-        label.accessibilityIdentifier = id
-        label.numberOfLines = 1
-        label.adjustsFontSizeToFitWidth = true
-        label.minimumScaleFactor = 0.7
-        return label
+        bandColors = colors?.isEmpty == true ? nil : colors
     }
 
     // MARK: Distance
@@ -541,8 +399,8 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         onEvent?(row.selecting ? .toggleChecked(row.track.id) : .tapRow(row.track.id))
     }
 
-    /// A selection bar button keeps 44 points where the row has room and gives up to 6 of them on a
-    /// 375-point phone, where eight of them and the insets don't fit.
+    /// A toolbar button keeps 44 points where the row has room and gives up to 6 of them on a
+    /// narrow phone or at a large text size, where the target's name and six of them don't fit.
     private static func shrinkable(_ view: UIView) {
         for fixed in view.constraints where fixed.firstAttribute == .width && fixed.relation == .equal && fixed.constant == 44 {
             fixed.isActive = false

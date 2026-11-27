@@ -157,47 +157,31 @@ public struct TrackTypeInfo: Equatable, Sendable {
     }
 }
 
-/// What kind of moving a track type is, as the server says (root docs/SPEC.md FR-5.1): its
-/// icon, and pace or speed.
+/// What kind of moving a track type is, as the server says (root docs/SPEC.md FR-5.1): its icon.
 public enum TrackKind: String, Equatable, Sendable, CaseIterable {
-    /// Walking, hiking, running: pace.
+    /// Walking, hiking, running.
     case foot
-    /// Cycling, skating: speed.
+    /// Cycling, skating.
     case wheels
-    /// Driving, motorcycling: speed.
+    /// Driving, motorcycling.
     case motor
     case solowheel
     case eScooter = "e_scooter"
-    /// Everything else, and a kind from a newer server: speed, the safer reading.
+    /// Everything else, and a kind from a newer server.
     case other
 
     public init(wire: String) {
         self = TrackKind(rawValue: wire) ?? .other
     }
-
-    /// Pace reads naturally only on foot.
-    public var showsPace: Bool { self == .foot }
 }
 
-/// Pace and speed from a distance and a moving time, in a unit unitMeters long (a km or a mile).
-public enum Pace {
-    public static let metersPerMile = 1609.344
-
-    /// Seconds per unit, or nil with no distance or no time.
-    public static func secondsPerUnit(meters: Double?, seconds: Int?, unitMeters: Double) -> Double? {
-        guard let meters, let seconds, meters > 0, seconds > 0 else { return nil }
-        return Double(seconds) / (meters / unitMeters)
+/// The toolbar's Info (root docs/SPEC.md FR-5.8): its lines in order, and the note under them, "" for none.
+public struct TrackInfo: Equatable, Sendable {
+    public struct Line: Equatable, Sendable {
+        public let label: String
+        public let value: String
     }
 
-    /// "5:27": minutes and seconds, a halfway second rounding up.
-    public static func format(_ secondsPerUnit: Double) -> String {
-        let total = Int((secondsPerUnit + 0.5).rounded(.down))
-        return "\(total / 60):" + String(format: "%02d", total % 60)
-    }
-
-    /// Units per hour, or nil with no distance or no time.
-    public static func speed(meters: Double?, seconds: Int?, unitMeters: Double) -> Double? {
-        guard let meters, let seconds, meters > 0, seconds > 0 else { return nil }
-        return (meters / unitMeters) / (Double(seconds) / 3600)
-    }
+    public let lines: [Line]
+    public let note: String
 }

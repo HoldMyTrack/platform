@@ -14,12 +14,12 @@ struct PanelTests {
 
     @Test func withNoTargetNothingButTheMasterCheckboxApplies() {
         let use = ToolbarRules.actions(targets: 0, anyPending: false, demo: false)
-        #expect([use.visibility, use.edit, use.addToTrip, use.delete, use.focus].allSatisfy { $0 == .noTarget })
+        #expect([use.visibility, use.edit, use.addToTrip, use.info, use.delete, use.focus].allSatisfy { $0 == .noTarget })
     }
 
     @Test func theDemoAccountLooksButCantChange() {
         let use = ToolbarRules.actions(targets: 2, anyPending: true, demo: true)
-        #expect(use.visibility == .ready && use.focus == .ready)
+        #expect(use.visibility == .ready && use.focus == .ready && use.info == .ready)
         #expect(use.edit == .demo && use.addToTrip == .demo && use.delete == .demo)
     }
 
@@ -64,15 +64,6 @@ struct PanelTests {
     @Test func aKindFromANewerServerIsOther() {
         #expect(TrackKind(wire: "hovercraft") == .other)
         #expect(TrackKind(wire: "e_scooter") == .eScooter)
-        #expect(TrackKind.foot.showsPace && !TrackKind.wheels.showsPace)
-    }
-
-    @Test func paceAndSpeedNeedADistanceAndATime() {
-        #expect(Pace.secondsPerUnit(meters: 0, seconds: 60, unitMeters: 1000) == nil)
-        #expect(Pace.speed(meters: 10_000, seconds: nil, unitMeters: 1000) == nil)
-        #expect(Pace.format(Pace.secondsPerUnit(meters: 10_000, seconds: 3270, unitMeters: 1000)!) == "5:27")
-        #expect(Pace.format(59.5) == "1:00")
-        #expect(Pace.speed(meters: 20_000, seconds: 3600, unitMeters: 1000) == 20)
     }
 
     // MARK: Edit
@@ -211,8 +202,8 @@ struct MapHiddenTests {
 struct TabModeTests {
     @Test func tripsShowNormalWithNoToggleAndTheTracksTabGetsItsPickBack() {
         #expect(TabMode.shown(picked: .fog, onTracksTab: false) == .normal)
-        #expect(!MapChrome.modeBarShown(recording: false, editOpen: false, selectionShown: false, onTracksTab: false))
+        #expect(!MapChrome.modeBarShown(recording: false, editOpen: false, onTracksTab: false))
         #expect(TabMode.shown(picked: .fog, onTracksTab: true) == .fog)
-        #expect(MapChrome.modeBarShown(recording: false, editOpen: false, selectionShown: false, onTracksTab: true))
+        #expect(MapChrome.modeBarShown(recording: false, editOpen: false, onTracksTab: true))
     }
 }

@@ -14,9 +14,9 @@ object MapChromeRules {
     fun normalMode(sessionReady: Boolean, mode: MapMode, recording: Boolean): Boolean =
         sessionReady && mode == MapMode.NORMAL && !recording
 
-    /** The mode toggle: the Tracks tab's, hidden while recording, editing or checking rows. */
-    fun modeBarShown(recording: Boolean, editOpen: Boolean, selectionShown: Boolean, tab: PanelTab): Boolean =
-        tab == PanelTab.TRACKS && !recording && !editOpen && !selectionShown
+    /** The mode toggle: the Tracks tab's, hidden while recording or editing. */
+    fun modeBarShown(recording: Boolean, editOpen: Boolean, tab: PanelTab): Boolean =
+        tab == PanelTab.TRACKS && !recording && !editOpen
 
     /** The mode the map shows: the one picked on the Tracks tab there, Normal on Trips and Sync,
      *  whose sheet and tracks are Normal mode's; back on Tracks, the pick comes back. */
@@ -39,8 +39,8 @@ object MapChromeRules {
     fun coverageNoticeShown(rendering: Boolean, mode: MapMode, sessionReady: Boolean, recording: Boolean): Boolean =
         rendering && mode != MapMode.NORMAL && sessionReady && !recording
 
-    /** The rail (Layers, Find my location), hidden while an editor is open or rows are checked. */
-    fun railShown(editing: Boolean, selectionShown: Boolean): Boolean = !editing && !selectionShown
+    /** The rail (Layers, Find my location), hidden while an editor is open. */
+    fun railShown(editing: Boolean): Boolean = !editing
 
     /** The bottom bar and the record button over it, gone while the Edit window, the Private
      *  location editor or the image export has the screen: a tab or a recording would start
@@ -48,19 +48,15 @@ object MapChromeRules {
     fun bottomBarShown(editOpen: Boolean, privacyEditing: Boolean, exportOpen: Boolean): Boolean =
         !editOpen && !privacyEditing && !exportOpen
 
-    /** The image export's own button under the selection bar, while rows are checked and the rail
-     *  is away, so an image can show the Checked tracks' stats (`docs/SPEC.md` FR-4.7). */
-    fun checkedExportShown(editing: Boolean, selectionShown: Boolean): Boolean = !editing && selectionShown
-
-    /** Whether rows are being checked where the selection bar can show: the sheet up on the
-     *  Tracks tab, no Edit window. */
+    /** Whether rows are being checked in view, so Back unchecks them: the sheet up on the Tracks
+     *  tab, no Edit window. */
     fun selectionShown(sheetVisible: Boolean, selecting: Boolean, tab: PanelTab, editOpen: Boolean): Boolean =
         sheetVisible && selecting && tab == PanelTab.TRACKS && !editOpen
 
     /** The list's summary at the sheet's head: the Tracks tab's, in Normal mode, unless the
-     *  selected track's card has the head. */
-    fun summaryShown(normal: Boolean, tab: PanelTab, showsCard: Boolean): Boolean =
-        normal && tab == PanelTab.TRACKS && !showsCard
+     *  toolbar has the head. */
+    fun summaryShown(normal: Boolean, tab: PanelTab, showsActions: Boolean): Boolean =
+        normal && tab == PanelTab.TRACKS && !showsActions
 
     /** The sheet: Normal mode's, and the Sync tab's even while recording, so what's on the phone
      *  can be sent mid-walk; hidden while an editor has the screen. */

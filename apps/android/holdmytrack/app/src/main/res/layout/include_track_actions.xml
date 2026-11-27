@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The toolbar (panel/TracksPanel.renderToolbar), at the Tracks sheet's head in the summary's
+     place while a track is focused or checked, so it stays in view with the sheet collapsed:
+     what it acts on, then Show/Hide, Edit, Add to trip, Info, ⋯ with Download and Delete, and
+     Zoom in the accent. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/track_actions"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/hmt_space_16"
+    android:paddingEnd="@dimen/hmt_space_8"
+    android:visibility="gone">
+
+    <TextView
+        android:id="@+id/actions_target"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/hmt_space_4"
+        android:layout_weight="1"
+        android:accessibilityLiveRegion="polite"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/hmt_ink_meta"
+        android:textSize="@dimen/hmt_text_sm"
+        tools:text="3 checked" />
+
+    <ImageButton
+        android:id="@+id/panel_visibility"
+        style="@style/Widget.HoldMyTrack.PanelChip"
+        android:contentDescription="@string/panel_no_target"
+        android:src="@drawable/ic_eye_off" />
+
+    <ImageButton
+        android:id="@+id/panel_edit"
+        style="@style/Widget.HoldMyTrack.PanelChip"
+        android:contentDescription="@string/panel_no_target"
+        android:src="@drawable/ic_pencil" />
+
+    <ImageButton
+        android:id="@+id/panel_add_to_trip"
+        style="@style/Widget.HoldMyTrack.PanelChip"
+        android:contentDescription="@string/panel_no_target"
+        android:src="@drawable/ic_book_plus" />
+
+    <ImageButton
+        android:id="@+id/panel_info"
+        style="@style/Widget.HoldMyTrack.PanelChip"
+        android:contentDescription="@string/panel_no_target"
+        android:src="@drawable/ic_info" />
+
+    <!-- Download (panel/TrackDownload, panel/DownloadRules) and Delete, in a menu
+         (panel/SelectionMoreMenu): seven 48 dp controls don't fit across a phone. -->
+    <ImageButton
+        android:id="@+id/panel_more"
+        style="@style/Widget.HoldMyTrack.PanelChip"
+        android:contentDescription="@string/panel_no_target"
+        android:src="@drawable/ic_ellipsis" />
+
+    <ImageButton
+        android:id="@+id/panel_focus"
+        style="@style/Widget.HoldMyTrack.PanelChip.Accent"
+        android:layout_marginStart="@dimen/hmt_space_4"
+        android:contentDescription="@string/panel_no_target"
+        android:src="@drawable/ic_focus" />
+</LinearLayout>

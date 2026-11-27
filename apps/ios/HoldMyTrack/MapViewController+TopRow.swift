@@ -2,32 +2,22 @@ import HoldMyTrackCore
 import UIKit
 
 /// The map's top row (apps/docs/SPEC.md FR-2.2): the mode toggle at its start, or in its
-/// place the selection bar while rows are checked or the recording's status while one runs; the
-/// rail at its end, stepping aside for an editor or checked rows, when the export's camera comes
-/// under the selection bar. The tab bar goes while an editor or the export has the screen. The
-/// decisions are HoldMyTrackCore's MapChrome.
+/// place the recording's status while one runs; the rail at its end, stepping aside for an
+/// editor. The tab bar goes while an editor or the export has the screen. The decisions are
+/// HoldMyTrackCore's MapChrome.
 extension MapViewController {
-    var selectionShown: Bool {
-        MapChrome.selectionShown(sheetVisible: !sheet.isHidden, selecting: session.panel.selecting,
-                                 onTracksTab: panelTab == .tracks, editOpen: editOpen)
-    }
-
     /// Shows what the top row holds now.
     func renderTopRow() {
         // The panel comes after the chrome (viewDidLoad), and renders the row once it's there.
         guard isViewLoaded, tracksPanel != nil else { return }
-        let selecting = selectionShown
         let editing = editOpen || privateLocations.open
-        modes.isHidden = !MapChrome.modeBarShown(recording: recordingLive, editOpen: editOpen, selectionShown: selecting,
-                                                 onTracksTab: panelTab == .tracks)
-        tracksPanel.selectionBar.isHidden = !selecting
+        modes.isHidden = !MapChrome.modeBarShown(recording: recordingLive, editOpen: editOpen, onTracksTab: panelTab == .tracks)
         recordingCard.isHidden = !recordingLive
-        // Room after the toggle, or the row's while it's empty; the bar and the status take it all.
-        modesSpacer.isHidden = selecting || recordingLive
-        rail.view.isHidden = !MapChrome.railShown(editing: editing, selectionShown: selecting)
+        // Room after the toggle, or the row's while it's empty; the status takes it all.
+        modesSpacer.isHidden = recordingLive
+        rail.view.isHidden = !MapChrome.railShown(editing: editing)
         rail.locate.isHidden = recordingLive
         rail.export.isHidden = recordingLive
-        underBar.isHidden = !MapChrome.checkedExportShown(editing: editing, selectionShown: selecting, recording: recordingLive)
         // The sheet's room and the credit follow the row's height (viewDidLayoutSubviews).
         view.setNeedsLayout()
         if rail.view.isHidden { dismissMenus() }

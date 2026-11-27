@@ -20,10 +20,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let modes = ModeToggle()
     /// While recording, its status in the toggle's place (MapViewController+TopRow).
     let recordingCard = RecordingCard()
-    /// The export under the selection bar while rows are checked and the rail is away.
-    lazy var checkedExport = RailItem(UIButton(type: .system), icon: UIImage(resource: .camera),
-                                      label: String(localized: "export.open", defaultValue: "Export map image", comment: "The map's camera button: open the image export."),
-                                      id: "checkedExport")
     /// Whether the tab bar and the record button show (MapChrome.bottomBarShown).
     var onBottomBar: ((Bool) -> Void)?
     /// The recording status's Stop: the tab bar asks first.
@@ -46,8 +42,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let chromeColumn = PassThroughStackView()
     /// The toggle beside the rail.
     let topRow = PassThroughStackView()
-    /// Under the top row, the camera while rows are checked.
-    let underBar = PassThroughStackView()
     let notices = MapNotices()
     private let location = CLLocationManager()
     let modesRow = PassThroughStackView()
@@ -94,7 +88,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var pendingIDs: Set<String> = []
     var awaiting: Set<String> = []
     var pendingTask: Task<Void, Never>?
-    /// Download, the selection bar's (TrackDownload).
+    /// Download, the Tracks toolbar's (TrackDownload).
     lazy var downloads = TrackDownload(api: flow.api)
     /// Bumped whenever tracks change under the same query, so their tiles are fetched again.
     var tracksVersion = 0
@@ -391,11 +385,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         addPrivateLocations(to: style)
     }
 
-    /// How far down the controls over the map reach, the camera under the selection bar included:
-    /// popups and the editors' framing stay below them.
+    /// How far down the controls over the map reach: popups and the editors' framing stay below them.
     var chromeBottom: CGFloat {
-        let lowest = underBar.isHidden ? topRow : underBar
-        return lowest.convert(lowest.bounds, to: view).maxY + DesignTokens.Space.s8
+        topRow.convert(topRow.bounds, to: view).maxY + DesignTokens.Space.s8
     }
 
     /// The tracks' lines a tap is asked about (TrackTap).
@@ -642,7 +634,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         // At a large text size the toggle gives way, so the rail keeps its place.
         modes.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         recordingCard.onStop = { [weak self] in self?.onStopAsked?() }
-        checkedExport.button.addAction(UIAction { [weak self] _ in self?.openExport() }, for: .primaryActionTriggered)
 
         locateButton.addAction(UIAction { [weak self] _ in self?.locate() }, for: .primaryActionTriggered)
         layersButton.addAction(UIAction { [weak self] _ in self?.layersMenu.open() }, for: .primaryActionTriggered)
@@ -651,7 +642,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
         modesSpacer.isHidden = true
         modesSpacer.isUserInteractionEnabled = false
-        // The selection bar joins them with the panel (buildPanel).
         for v in [modes, recordingCard, modesSpacer] { modesRow.addArrangedSubview(v) }
         modesRow.alignment = .center
         let inArea = PassThroughStackView(arrangedSubviews: [spotViews.inArea])
@@ -671,11 +661,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         for v in [start, rail.view] { topRow.addArrangedSubview(v) }
         topRow.spacing = DesignTokens.Space.s8
         topRow.alignment = .top
-        let gap = UIView()
-        gap.isUserInteractionEnabled = false
-        for v in [gap, checkedExport] { underBar.addArrangedSubview(v) }
-        underBar.isHidden = true
-        for v in [topRow, underBar, capturing.banner] { chromeColumn.addArrangedSubview(v) }
+        for v in [topRow, capturing.banner] { chromeColumn.addArrangedSubview(v) }
         chromeColumn.axis = .vertical
         chromeColumn.spacing = DesignTokens.Space.s8
         let column = chromeColumn

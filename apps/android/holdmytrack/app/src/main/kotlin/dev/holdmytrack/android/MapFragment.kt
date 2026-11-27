@@ -257,7 +257,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         views?.panel?.libraryTab?.setSyncWaiting(waiting)
     }
 
-    /** Download, Library's and the selection bar's, made with the fragment: the save screen's launchers can't be
+    /** Download, Library's and the toolbar's, made with the fragment: the save screen's launchers can't be
      *  registered later. */
     private val trackDownload = TrackDownload(this)
 
@@ -364,7 +364,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 sessionReady = modeBarReady,
                 recording = isRecording(),
                 editOpen = editOpen(),
-                selectionShown = views?.sheetChrome?.selectionShown() == true,
                 coverageRendering = coverage.rendering,
                 tab = tab,
             )
@@ -423,7 +422,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         )
         val panel = TracksPanel(
             sheet,
-            findViewById(R.id.selection_bar),
             panelState,
             onMapChanged = ::applyTrackFilter,
             onFly = { views?.camera?.flyTo(it) },
@@ -493,7 +491,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             editOpen = ::editOpen,
             privacyEditing = ::privacyEditing,
             onSheetMoved = { views?.chrome?.applyAttributionMargin() },
-            onSelectionBarChanged = ::renderModeBar,
             onRendered = {
                 bands.render()
                 renderPrivacy()
@@ -743,7 +740,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         v.chrome.placeEditors()
         renderSheet()
         renderBottomBar()
-        v.sheetChrome.renderSelectionBar()
+        v.sheetChrome.renderSelecting()
         renderModeBar()
         v.sheetChrome.renderRail()
         bands.render()
@@ -793,7 +790,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     /** Applies the panel's hidden set, filters, Pending rows and selection to the track layers,
-     *  the bands, the sheet's head and the selection bar. */
+     *  the bands and the sheet's head. */
     private fun applyTrackFilter() {
         style?.takeIf { overlaysAttached }?.let { MapOverlays.setTrackFilter(it, panelState.mapHidden(filtersApply), panelState.highlighted) }
         bands.update(refetch = false)
@@ -1068,6 +1065,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val v = views
         v?.export?.close()
         recording.dismissDialogs()
+        v?.panel?.dismissDialogs()
         // A search waiting to be read, or a Delete finishing, would read in the scope going now.
         v?.panel?.libraryTab?.destroy()
         v?.camera?.release()

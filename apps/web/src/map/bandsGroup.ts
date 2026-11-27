@@ -18,6 +18,9 @@ const ARROWS_LAYER_ID = 'route-bands-arrows';
 const BAND_COLORS = ['#2b6cb0', '#38a169', '#d69e2e', '#dd6b20', '#c53030'];
 // The same steps over imagery, where the green above is lost among trees.
 const SATELLITE_BAND_COLORS = ['#4da6ff', '#3df08a', '#ffd23f', '#ff8c2e', '#ff4d4d'];
+/** The colors the map draws the bands in, which the toolbar's Info shows as their legend
+ *  (TrackInfoDialog.tsx). */
+export const bandLegendColors = (satellite: boolean): readonly string[] => (satellite ? SATELLITE_BAND_COLORS : BAND_COLORS);
 const SATELLITE_EDGE_COLOR = '#14140e';
 const OUTLINE_LAYER_ID = 'route-bands-outline';
 const BAND_OPACITY = 0.95;
@@ -98,7 +101,7 @@ export function bandsGroup(): GroupPart {
           paint: arrowPaint,
         },
       ],
-      // The selected track's card shows the five steps, slowest first.
+      // The apps' Info shows the five steps, slowest first.
       legend: Object.fromEntries(BAND_COLORS.map((color, band) => [`band-${band}`, { color }])),
     },
     // Fog already shows where; lines over it read as noise.

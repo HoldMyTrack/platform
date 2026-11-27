@@ -387,6 +387,24 @@ struct StatsCardRequestJSON: Codable, Sendable, Equatable {
     }
 }
 
+struct TrackInfoRequestJSON: Codable, Sendable, Equatable {
+    let trackIDs: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case trackIDs = "track_ids"
+    }
+}
+
+struct TrackInfoJSON: Codable, Sendable, Equatable {
+    struct Line: Codable, Sendable, Equatable {
+        let label: String
+        let value: String
+    }
+
+    let lines: [Line]
+    let note: String
+}
+
 struct HiddenTracksJSON: Codable, Sendable, Equatable {
     let count: Int
 }

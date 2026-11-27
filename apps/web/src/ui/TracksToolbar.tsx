@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Eye, EyeOff, Focus, Pencil, Trash2 } from 'lucide-react';
+import { Download, Eye, EyeOff, Focus, Info, Pencil, Trash2 } from 'lucide-react';
 import { CheckAllMenu } from './CheckAllMenu.tsx';
 import { deleteTrack, downloadTracksGpx, type Track, type Trip } from '../api.ts';
 import { downloadBlock, MAX_DOWNLOAD_TRACKS } from './downloadTarget.ts';
@@ -7,6 +7,7 @@ import { saveFile } from './saveFile.ts';
 import { rowLabel } from './TrackRow.tsx';
 import { AddToTripMenu } from './AddToTripMenu.tsx';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
+import { TrackInfoDialog } from './TrackInfoDialog.tsx';
 import { formatTotalDistance } from './format.ts';
 import { useUnitSystem } from './units.ts';
 import { t, tn } from '../i18n/index.ts';
@@ -28,11 +29,14 @@ interface TracksToolbarProps {
   onTripAdded: (trip: Trip) => void;
   onTracksDeleted: (ids: string[]) => void;
   onShowSelected: () => void;
+  /** Info's legend: the pace bands' colors, slowest first, while the map draws them for the
+   *  target alone (selection.ts's infoShowsBands), else null. */
+  bandColors: readonly string[] | null;
 }
 
 /**
  * The header toolbar right above the row list (TracksPanel.tsx says what it acts on): the
- * master checkbox and its ▾ menu (All, None, Invert), then Show/hide, Edit, Add to trip,
+ * master checkbox and its ▾ menu (All, None, Invert), then Show/hide, Edit, Add to trip, Info,
  * Download and Delete over the target, and, set off by a divider, Focus on map. Each tooltip names the target
  * ("3 checked tracks", or the focused row's own label), so which one applies is never a guess.
  */
@@ -51,9 +55,11 @@ export function TracksToolbar({
   onTripAdded,
   onTracksDeleted,
   onShowSelected,
+  bandColors,
 }: TracksToolbarProps) {
   // The toolbar's Delete is the only delete entry point, for one track or many.
   const [deletingGroup, setDeletingGroup] = useState(false);
+  const [showingInfo, setShowingInfo] = useState(false);
   // Download's request under way, and the server's refusal to show, naming the track.
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -93,6 +99,7 @@ export function TracksToolbar({
       : t(targetTracks.length === 1 ? 'tracks.edit_one' : 'tracks.edit_many', { target: targetName });
   const deleteTitle = targetName === null ? noTarget : t('tracks.delete_target', { target: targetName });
   const focusTitle = targetName === null ? noTarget : t('tracks.focus_target', { target: targetName });
+  const infoTitle = targetName === null ? noTarget : t('tracks.info_target', { target: targetName });
   const block = downloadBlock(targetTracks);
   const downloadTitle = downloading
     ? t('tracks.downloading')
@@ -135,7 +142,8 @@ export function TracksToolbar({
         aria-label={visibilityTitle}
         title={visibilityTitle}
       >
-        {groupHasHidden ? <EyeOff size={16} /> : <Eye size={16} />}
+        {/* What a click does, as its title says: show (open eye) or hide (crossed out). */}
+        {groupHasHidden ? <Eye size={16} /> : <EyeOff size={16} />}
       </button>
       <button
         type="button"
@@ -155,6 +163,16 @@ export function TracksToolbar({
         onCreated={onTripCreated}
         onAdded={onTripAdded}
       />
+      <button
+        type="button"
+        className="tracks-panel__info"
+        disabled={!hasTarget}
+        onClick={() => setShowingInfo(true)}
+        aria-label={infoTitle}
+        title={infoTitle}
+      >
+        <Info size={16} />
+      </button>
       <button
         type="button"
         className="tracks-panel__download"
@@ -187,6 +205,13 @@ export function TracksToolbar({
         <Focus size={16} />
       </button>
     </div>
+    {showingInfo && (
+      <TrackInfoDialog
+        trackIds={targetTracks.map((a) => a.id)}
+        bandColors={bandColors}
+        onClose={() => setShowingInfo(false)}
+      />
+    )}
     {downloadError !== null && (
       <ConfirmDialog
         title={t('tracks.download_failed')}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { invertedChecks, mapHiddenIds, targetSummaryKind, toggled, toolbarTarget, withoutIds } from '../src/map/selection.ts';
+import { infoShowsBands, invertedChecks, mapHiddenIds, targetSummaryKind, toggled, toolbarTarget, withoutIds } from '../src/map/selection.ts';
 
 const track = (id, trackType = 'walking', distanceMeters = 1000, pending = false) => ({ id, trackType, distanceMeters, pending });
 
@@ -12,6 +12,14 @@ test('toggled adds a missing item and removes a present one', () => {
 test('the toolbar target is the checked set itself, so state identity holds', () => {
   const checked = new Set(['a']);
   assert.equal(toolbarTarget(checked, 'b'), checked);
+});
+
+test('Info shows the bands legend while the target is the focused track alone', () => {
+  assert.equal(infoShowsBands(toolbarTarget(new Set(), 'a'), 'a', true), true);
+  assert.equal(infoShowsBands(toolbarTarget(new Set(['a']), 'a'), 'a', true), true);
+  assert.equal(infoShowsBands(toolbarTarget(new Set(['a', 'b']), 'a'), 'a', true), false);
+  assert.equal(infoShowsBands(toolbarTarget(new Set(['b']), 'a'), 'a', true), false);
+  assert.equal(infoShowsBands(toolbarTarget(new Set(), 'a'), 'a', false), false);
 });
 
 test('withoutIds returns the same set when none of the ids are in it', () => {

@@ -153,7 +153,7 @@ The web's Tracks panel (`docs/SPEC.md` FR-5) as a sheet over the map, with Track
 - The list is read for each range and on every return to the map, keeping what of the focus, checked group and hidden set still exists; every 2 seconds while any row is Pending, including one the list no longer shows.
 - Edit (`docs/SPEC.md` FR-5.5) writes only what changed, one track at a time. A group of mixed types starts with Type empty, and leaving it empty keeps each its own.
 - Delete (`docs/SPEC.md` FR-5.6) asks first; on a failure, what was already deleted is reported as gone.
-- Download (`docs/SPEC.md` FR-17.2) acts on the checked tracks. Past 100 tracks, or with a Pending track or one entirely inside Private locations among them, it says why instead. It saves as Library's does (FR-4.1).
+- Download (`docs/SPEC.md` FR-17.2) acts on the toolbar's target. Past 100 tracks, or with a Pending track or one entirely inside Private locations among them, it says why instead. It saves as Library's does (FR-4.1).
 - The focused track is drawn in pace bands (`docs/SPEC.md` FR-4.6), unless hidden, filtered out or Pending.
 - Route editing (`docs/SPEC.md` FR-5.7, FR-5.9), for one track with a finished route, has Chop, Cut, Split, Move point, Delete point, Undo and Reset. A split leaving a part inside a Private location asks first.
 - The Private location editor (`docs/SPEC.md` FR-7.1) switches the map to Normal and draws every circle. A new one is 200 m at the map's centre; the radius moves in 10 m steps. Cancel, a mode change or a recording starting drops the draft.

@@ -91,6 +91,8 @@ paths:
     $ref: "paths/tracks.yaml#/tracks_overlaps"
   /tracks/stats-card:
     $ref: "paths/tracks.yaml#/tracks_stats-card"
+  /tracks/info:
+    $ref: "paths/tracks.yaml#/tracks_info"
   /tracks/pending:
     $ref: "paths/tracks.yaml#/tracks_pending"
   /tracks/summary:
