@@ -110,14 +110,14 @@ final class RouteEditTests: XCTestCase {
 
     @MainActor
     private func openRouteTab(_ app: XCUIApplication) {
-        let card = app.otherElements["trackCard"]
-        if !card.exists {
+        let actions = app.otherElements["trackActions"]
+        if !actions.exists {
             app.buttons["panelHandle"].tap()
             let row = app.cells.matching(identifier: "trackRow").firstMatch
             XCTAssertTrue(row.waitForExistence(timeout: 15))
             row.tap()
         }
-        let edit = app.buttons["cardEdit"]
+        let edit = app.buttons["barEdit"]
         XCTAssertTrue(edit.waitForExistence(timeout: 10))
         let enabled = NSPredicate(format: "isEnabled == true")
         XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: enabled, object: edit)], timeout: 60), .completed)

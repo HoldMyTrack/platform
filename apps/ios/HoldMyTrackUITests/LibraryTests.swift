@@ -39,7 +39,7 @@ final class LibraryTests: XCTestCase {
 
         // A row opens on the Tracks tab, focused.
         rows.firstMatch.tap()
-        XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 15), "the track focused on the map")
+        XCTAssertTrue(app.otherElements["trackActions"].waitForExistence(timeout: 15), "the track focused on the map")
         XCTAssertTrue(app.tabBars.buttons["tabTracks"].isSelected)
 
         // + opens Sync in Library's place; ‹ and a tap on the tab go back.

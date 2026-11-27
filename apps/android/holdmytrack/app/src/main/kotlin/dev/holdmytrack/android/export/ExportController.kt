@@ -55,7 +55,6 @@ class ExportController(
 
     init {
         root.findViewById<View>(R.id.export_button).setOnClickListener { viewfinder.toggle() }
-        root.findViewById<View>(R.id.checked_export_button).setOnClickListener { viewfinder.toggle() }
     }
 
     val isOpen: Boolean get() = viewfinder.isOpen

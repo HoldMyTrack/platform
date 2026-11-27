@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One of Info's lines (panel/TrackInfoSheet.kt): the label, and the value at the end. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_row_divider"
+    android:minHeight="44dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/hmt_space_8"
+    android:paddingBottom="@dimen/hmt_space_8">
+
+    <TextView
+        android:id="@+id/info_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/hmt_space_12"
+        android:layout_weight="1"
+        android:textColor="@color/hmt_ink_meta"
+        android:textSize="@dimen/hmt_text_md" />
+
+    <TextView
+        android:id="@+id/info_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:textColor="@color/hmt_ink"
+        android:textFontWeight="600"
+        android:textSize="@dimen/hmt_text_md" />
+</LinearLayout>

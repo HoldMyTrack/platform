@@ -59,7 +59,7 @@ final class PhotoTests: XCTestCase {
         let row = app.cells.matching(identifier: "trackRow").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
-        app.buttons["cardEdit"].tap()
+        app.buttons["barEdit"].tap()
 
         let tabs = app.segmentedControls["editTabs"]
         XCTAssertTrue(tabs.waitForExistence(timeout: 5))
@@ -98,7 +98,7 @@ final class PhotoTests: XCTestCase {
         XCTAssertEqual(account.photoCaptions(account.ids[0]), ["From iOS"])
 
         // Open again: the saved photo is listed.
-        app.buttons["cardEdit"].tap()
+        app.buttons["barEdit"].tap()
         XCTAssertTrue(tabs.waitForExistence(timeout: 5))
         tabs.buttons.element(boundBy: 2).tap()
         XCTAssertTrue(app.staticTexts["From iOS"].waitForExistence(timeout: 10))

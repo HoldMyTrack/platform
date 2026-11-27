@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A track's kind as a tile (a row, the selected track's card): the tinted surface, the
+<!-- A track's kind as a tile (a row): the tinted surface, the
      large radius, the kind's icon in it. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Eye, EyeOff, Focus, Pencil, Trash2 } from 'lucide-react';
+import { Download, Eye, EyeOff, Focus, Info, Pencil, Trash2 } from 'lucide-react';
 import { CheckAllMenu } from './CheckAllMenu.tsx';
 import { deleteTrack, downloadTracksGpx, type Track, type Trip } from '../api.ts';
 import { downloadBlock, MAX_DOWNLOAD_TRACKS } from './downloadTarget.ts';
@@ -28,12 +28,14 @@ interface TracksToolbarProps {
   onTripAdded: (trip: Trip) => void;
   onTracksDeleted: (ids: string[]) => void;
   onShowSelected: () => void;
+  /** Opens Info over the target (TrackInfoWindow.tsx), which floats over the map. */
+  onInfo: () => void;
 }
 
 /**
  * The header toolbar right above the row list (TracksPanel.tsx says what it acts on): the
- * master checkbox and its ▾ menu (All, None, Invert), then Show/hide, Edit, Add to trip,
- * Download and Delete over the target, and, set off by a divider, Focus on map. Each tooltip names the target
+ * master checkbox and its ▾ menu (All, None, Invert), then Show/hide and Info, which only look,
+ * Edit and Add to trip, then Download and Delete over the target, and, set off by a divider, Focus on map. Each tooltip names the target
  * ("3 checked tracks", or the focused row's own label), so which one applies is never a guess.
  */
 export function TracksToolbar({
@@ -51,6 +53,7 @@ export function TracksToolbar({
   onTripAdded,
   onTracksDeleted,
   onShowSelected,
+  onInfo,
 }: TracksToolbarProps) {
   // The toolbar's Delete is the only delete entry point, for one track or many.
   const [deletingGroup, setDeletingGroup] = useState(false);
@@ -93,6 +96,7 @@ export function TracksToolbar({
       : t(targetTracks.length === 1 ? 'tracks.edit_one' : 'tracks.edit_many', { target: targetName });
   const deleteTitle = targetName === null ? noTarget : t('tracks.delete_target', { target: targetName });
   const focusTitle = targetName === null ? noTarget : t('tracks.focus_target', { target: targetName });
+  const infoTitle = targetName === null ? noTarget : t('tracks.info_target', { target: targetName });
   const block = downloadBlock(targetTracks);
   const downloadTitle = downloading
     ? t('tracks.downloading')
@@ -135,7 +139,18 @@ export function TracksToolbar({
         aria-label={visibilityTitle}
         title={visibilityTitle}
       >
-        {groupHasHidden ? <EyeOff size={16} /> : <Eye size={16} />}
+        {/* What a click does, as its title says: show (open eye) or hide (crossed out). */}
+        {groupHasHidden ? <Eye size={16} /> : <EyeOff size={16} />}
+      </button>
+      <button
+        type="button"
+        className="tracks-panel__info"
+        disabled={!hasTarget}
+        onClick={onInfo}
+        aria-label={infoTitle}
+        title={infoTitle}
+      >
+        <Info size={16} />
       </button>
       <button
         type="button"

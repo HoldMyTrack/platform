@@ -28,6 +28,12 @@ public enum SheetRules {
     public static func toggled(_ detent: SheetDetent) -> SheetDetent {
         detent == .collapsed ? .half : .collapsed
     }
+
+    /// A row's tap: an open sheet comes down to half the map, so the focused track shows above it
+    /// and the next row is still a tap away; a half or collapsed sheet stays where it is.
+    public static func afterRowTap(_ detent: SheetDetent) -> SheetDetent {
+        detent == .expanded ? .half : detent
+    }
 }
 
 /// Which track a tap on the map picks (apps/docs/SPEC.md FR-2.7: a track within 14

@@ -15,27 +15,29 @@ final class PanelTests: XCTestCase {
         let rows = app.cells.matching(identifier: "trackRow")
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
 
-        // A row's tap focuses it: its card takes the range's place.
+        // A row's tap focuses it: the toolbar takes the summary's place.
         rows.firstMatch.tap()
-        XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["cardEdit"].isEnabled, "the demo account can't edit")
-        XCTAssertTrue(app.buttons["cardFocus"].isEnabled)
-        XCTAssertTrue(app.staticTexts["cardDistance"].exists && app.staticTexts["cardMoving"].exists && app.staticTexts["cardPace"].exists, "the stat tiles")
-        // The map draws its pace bands, and the card their legend.
-        XCTAssertTrue(app.otherElements["cardBands"].waitForExistence(timeout: 10))
-        app.buttons["cardFocus"].tap()
+        XCTAssertTrue(app.otherElements["trackActions"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["barEdit"].isEnabled, "the demo account can't edit")
+        XCTAssertTrue(app.buttons["barFocus"].isEnabled)
+        app.buttons["barFocus"].tap()
         sleep(2)
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = "Pace bands"
         shot.lifetime = .keepAlways
         add(shot)
-        app.buttons["cardClose"].tap()
-        XCTAssertTrue(app.otherElements["cardBands"].waitForNonExistence(timeout: 5))
+        // Info: the server's lines, and the legend of the bands the map draws.
+        app.buttons["barInfo"].tap()
+        XCTAssertTrue(app.otherElements["trackInfo"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Moving time"].waitForExistence(timeout: 10), "the server's lines")
+        XCTAssertTrue(app.otherElements["infoBands"].exists)
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.otherElements["trackInfo"].waitForNonExistence(timeout: 5))
 
-        // The tile checks: the selection bar comes, its ⋯ with Download on and Delete off for the demo.
+        // The tile checks the focused row: its ⋯ has Download on and Delete off for the demo.
         app.buttons["panelHandle"].tap()
         rows.element(boundBy: 0).buttons["rowTile"].tap()
-        XCTAssertTrue(app.otherElements["selectionBar"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["trackActions"].waitForExistence(timeout: 5))
         app.buttons["barMore"].tap()
         XCTAssertTrue(app.buttons["moreDownload"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["moreDownload"].isEnabled)
@@ -46,7 +48,7 @@ final class PanelTests: XCTestCase {
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
         XCTAssertTrue(app.otherElements["ActivityListView"].waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '1 checked · '")).firstMatch.exists, "the footer counts the checked")
-        app.buttons["endSelecting"].tap()
+        Self.uncheckAll(app)
 
         app.tabBars.buttons["tabTrips"].tap()
         XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
@@ -72,7 +74,7 @@ final class PanelTests: XCTestCase {
 
         // Edit one: its new name shows on its row.
         rows.firstMatch.tap()
-        app.buttons["cardEdit"].tap()
+        app.buttons["barEdit"].tap()
         let name = app.textFields["editName"]
         XCTAssertTrue(name.waitForExistence(timeout: 5))
         name.tap()
@@ -96,7 +98,6 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Renamed by iOS"].waitForExistence(timeout: 15))
 
         // Two checked: Edit greys out Name and Description, and says why.
-        app.buttons["cardClose"].tap()
         app.buttons["panelHandle"].tap()
         rows.element(boundBy: 0).buttons["rowTile"].tap()
         rows.element(boundBy: 1).buttons["rowTile"].tap()
@@ -112,15 +113,16 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["editMultiNote"].exists)
         XCTAssertFalse(app.buttons["panelHandle"].exists, "the Tracks sheet is away while Edit is open")
         app.navigationBars.buttons["Cancel"].tap()
-        app.buttons["endSelecting"].tap()
+        Self.uncheckAll(app)
         app.staticTexts["Renamed by iOS"].tap()
-        XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["trackActions"].waitForExistence(timeout: 5))
 
         // Delete it, confirmed: one row fewer.
-        app.buttons["cardDelete"].tap()
+        app.buttons["barMore"].tap()
+        app.buttons["moreDelete"].tap()
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
         app.alerts.buttons.element(boundBy: 1).tap()
-        XCTAssertTrue(app.otherElements["trackCard"].waitForNonExistence(timeout: 15), "the deleted track's card closes")
+        XCTAssertTrue(app.otherElements["trackActions"].waitForNonExistence(timeout: 15), "the toolbar goes with its target")
         app.buttons["panelHandle"].tap()
         let fewer = NSPredicate(format: "count == %d", listed - 1)
         XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: fewer, object: rows)], timeout: 15), .completed)
@@ -266,5 +268,11 @@ final class PanelTests: XCTestCase {
         shot.name = name
         shot.lifetime = .keepAlways
         add(shot)
+    }
+
+    /// The master checkbox's menu: None, which ends selecting.
+    static func uncheckAll(_ app: XCUIApplication) {
+        app.buttons["selectMenu"].tap()
+        app.buttons["None"].tap()
     }
 }

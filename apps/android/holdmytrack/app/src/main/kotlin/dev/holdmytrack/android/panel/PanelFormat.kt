@@ -20,7 +20,6 @@ import java.util.Locale
  */
 object PanelFormat {
 
-    private const val METERS_PER_MILE = 1609.344
     private const val EM_DASH = "—"
 
     private fun locale(res: Resources): Locale = res.configuration.locales[0] ?: Locale.getDefault()
@@ -78,23 +77,6 @@ object PanelFormat {
         is DurationParts.HoursMinutes -> res.getString(R.string.panel_duration_hm, parts.h, parts.m)
         is DurationParts.Minutes -> res.getString(R.string.panel_duration_m, parts.m)
         is DurationParts.Seconds -> res.getString(R.string.panel_duration_s, parts.s)
-    }
-
-    /** The selected track's third number: pace on foot ("8:47 /mi"), speed otherwise
-     *  ("17.1 km/h") — the account's units either way; a dash with no distance or no time. */
-    fun paceOrSpeed(res: Resources, kind: TrackKind, meters: Double?, seconds: Long?): String {
-        val imperial = RecordingFormat.imperial()
-        val unitMeters = if (imperial) METERS_PER_MILE else 1000.0
-        if (kind.showsPace) {
-            val perUnit = Pace.secondsPerUnit(meters, seconds, unitMeters) ?: return EM_DASH
-            return res.getString(if (imperial) R.string.card_pace_mi else R.string.card_pace_km, Pace.format(perUnit))
-        }
-        val speed = Pace.speed(meters, seconds, unitMeters) ?: return EM_DASH
-        val number = NumberFormat.getNumberInstance(locale(res)).apply {
-            minimumFractionDigits = 1
-            maximumFractionDigits = 1
-        }.format(speed)
-        return res.getString(if (imperial) R.string.card_speed_mi else R.string.card_speed_km, number)
     }
 
     /** A row's primary line: its name when it has one, else its start time — also how the

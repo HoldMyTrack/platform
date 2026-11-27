@@ -1896,6 +1896,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tracks/info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The Tracks toolbar's Info for one track or a group
+         * @description One track's type, start and end, distance, moving and elapsed time, pace or speed and elevation gain, or a group's count, first start, last end and totals, in the account's units and language; a line whose value is unknown is left out. Private tracks have type and start alone, and count in a group without adding to its totals.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        track_ids: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description The lines, in order */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            lines: {
+                                label: string;
+                                value: string;
+                            }[];
+                            /** @description Shown under the lines: what moving time leaves out, or why a Private track has nothing else; empty for none. */
+                            note: string;
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+                404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tracks/pending": {
         parameters: {
             query?: never;

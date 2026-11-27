@@ -376,3 +376,8 @@ class ApiException(val code: Int, message: String, val errorCode: String? = null
 /** What the server said about one track type, as it said it: [kind] its wire value
  *  (`panel/TrackKind`), either part missing when a response leaves it out. */
 data class TrackTypeInfo(val kind: String?, val label: String?)
+
+/** The toolbar's Info (`docs/SPEC.md` FR-5.8): its lines in order, and the note under them, "" for none. */
+data class TrackInfo(val lines: List<Line>, val note: String) {
+    data class Line(val label: String, val value: String)
+}

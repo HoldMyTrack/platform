@@ -12,6 +12,89 @@
         }
       }
     },
+    "Info" : {
+      "comment" : "Tracks panel: the toolbar's Info.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сведения"
+          }
+        }
+      }
+    },
+    "info.bands" : {
+      "comment" : "The Tracks toolbar's Info sheet: the pace bands' legend, read aloud.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The route on the map, by pace"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Маршрут на карте по темпу"
+          }
+        }
+      }
+    },
+    "info.failed" : {
+      "comment" : "The Tracks toolbar's Info sheet: its lines couldn't be read.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load the info: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить сведения: %@"
+          }
+        }
+      }
+    },
+    "info.title" : {
+      "comment" : "The Tracks toolbar's Info sheet: its title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Info"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сведения"
+          }
+        }
+      }
+    },
+    "panel.infoTarget" : {
+      "comment" : "Tracks tab: Info's label; the placeholder names its target.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Info for %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сведения: %@"
+          }
+        }
+      }
+    },
     "“%@”" : {
       "comment" : "Tracks tab: one track named as an action's target.",
       "localizations" : {
@@ -100,17 +183,6 @@
         }
       }
     },
-    "%@ km/h" : {
-      "comment" : "A speed in kilometres an hour.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ км/ч"
-          }
-        }
-      }
-    },
     "%@ m" : {
       "comment" : "A Private location's radius in metres.",
       "localizations" : {
@@ -118,17 +190,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ м"
-          }
-        }
-      }
-    },
-    "%@ mph" : {
-      "comment" : "A speed in miles an hour.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ миль/ч"
           }
         }
       }
@@ -626,150 +687,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Захвачено!"
-          }
-        }
-      }
-    },
-    "card.delete" : {
-      "comment" : "The focused track's card: delete it.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Удалить"
-          }
-        }
-      }
-    },
-    "card.distance" : {
-      "comment" : "The focused track's card: its distance.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Distance"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Расстояние"
-          }
-        }
-      }
-    },
-    "card.edit" : {
-      "comment" : "The focused track's card: edit it.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Изменить"
-          }
-        }
-      }
-    },
-    "card.hide" : {
-      "comment" : "The focused track's card: hide it on the map.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скрыть"
-          }
-        }
-      }
-    },
-    "card.moving" : {
-      "comment" : "The focused track's card: its moving time.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moving"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В движении"
-          }
-        }
-      }
-    },
-    "card.show" : {
-      "comment" : "The focused track's card: show a hidden track on the map.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Показать"
-          }
-        }
-      }
-    },
-    "card.trip" : {
-      "comment" : "The focused track's card: add it to a Trip.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trip"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Путешествие"
-          }
-        }
-      }
-    },
-    "card.zoom" : {
-      "comment" : "The focused track's card: fly the camera to it.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zoom"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "На карту"
           }
         }
       }
@@ -2542,7 +2459,7 @@
       }
     },
     "Faster" : {
-      "comment" : "Card: the fast end of the pace bands' legend.",
+      "comment" : "Info: the fast end of the pace bands' legend.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
@@ -8570,17 +8487,6 @@
         }
       }
     },
-    "Pace" : {
-      "comment" : "Tracks panel: the focused track's pace, on foot.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Темп"
-          }
-        }
-      }
-    },
     "panel.checkedCount" : {
       "comment" : "Tracks tab: the checked tracks an action applies to.",
       "extractionState" : "manual",
@@ -8912,7 +8818,7 @@
       }
     },
     "panel.moreTarget" : {
-      "comment" : "Tracks tab: the selection bar's ⋯, which holds Download and Delete for the target.",
+      "comment" : "Tracks tab: the toolbar's ⋯, which holds Download and Delete for the target.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -10896,7 +10802,7 @@
       }
     },
     "Slower" : {
-      "comment" : "Card: the slow end of the pace bands' legend.",
+      "comment" : "Info: the slow end of the pace bands' legend.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
@@ -10913,17 +10819,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмечены некоторые"
-          }
-        }
-      }
-    },
-    "Speed" : {
-      "comment" : "Tracks panel: the focused track's speed.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скорость"
           }
         }
       }

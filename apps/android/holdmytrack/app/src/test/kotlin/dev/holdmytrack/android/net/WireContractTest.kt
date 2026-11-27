@@ -69,6 +69,8 @@ class WireContractTest {
         request(RouteEditRequestJson.serializer().descriptor, "/tracks/{id}/route-edit", "post")
         request(OverlapsRequestJson.serializer().descriptor, "/tracks/overlaps", "post")
         request(StatsCardRequestJson.serializer().descriptor, "/tracks/stats-card", "post")
+        request(TrackInfoRequestJson.serializer().descriptor, "/tracks/info", "post")
+        response(TrackInfoJson.serializer().descriptor, "/tracks/info", "post")
         response(OverlapsJson.serializer().descriptor, "/tracks/overlaps", "post")
         response(UploadResultJson.serializer().descriptor, "/tracks/upload", "post", 202)
         response(UploadResultJson.serializer().descriptor, "/tracks/upload", "post", 200)

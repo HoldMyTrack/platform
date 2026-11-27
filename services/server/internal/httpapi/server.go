@@ -84,6 +84,7 @@ type Server struct {
 	routePointsLimiter *fixedWindowLimiter
 	gpxLimiter         *fixedWindowLimiter
 	statsCardLimiter   *fixedWindowLimiter
+	trackInfoLimiter   *fixedWindowLimiter
 	syncTrackLimiter   *fixedWindowLimiter
 	signupLimiter      *fixedWindowLimiter
 	googleNonceLimiter *fixedWindowLimiter
@@ -117,6 +118,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		routePointsLimiter:    newFixedWindowLimiter(routePointsPerHour, time.Hour),
 		gpxLimiter:            newFixedWindowLimiter(gpxDownloadsPerHour, time.Hour),
 		statsCardLimiter:      newFixedWindowLimiter(statsCardsPerHour, time.Hour),
+		trackInfoLimiter:      newFixedWindowLimiter(trackInfosPerHour, time.Hour),
 		syncTrackLimiter:      newFixedWindowLimiter(syncTracksPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
 		googleNonceLimiter:    newFixedWindowLimiter(googleNoncesPerHour, time.Hour),
@@ -188,6 +190,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("DELETE", "/tracks/{id}"), s.requireNotDemo(s.handleDeleteTrack))
 	s.mux.HandleFunc(route("POST", "/tracks/overlaps"), s.requireVerified(s.handleTrackOverlaps))
 	s.mux.HandleFunc(route("POST", "/tracks/stats-card"), s.requireVerified(s.handleStatsCard))
+	s.mux.HandleFunc(route("POST", "/tracks/info"), s.requireVerified(s.handleTrackInfo))
 	s.mux.HandleFunc(route("GET", "/tracks/pending"), s.requireVerified(s.handleTracksPending))
 	s.mux.HandleFunc(route("GET", "/tracks/summary"), s.requireVerified(s.handleTrackSummary))
 	s.mux.HandleFunc(route("GET", "/tracks/histogram"), s.requireVerified(s.handleTrackHistogram))

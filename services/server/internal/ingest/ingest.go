@@ -556,11 +556,11 @@ type metrics struct {
 	elevationGainM float64
 }
 
-// movingSpeedThresholdMps is the speed below which a segment counts as stopped, not moving,
+// MovingSpeedThresholdMps is the speed below which a segment counts as stopped, not moving,
 // for movingS below. ~1.8 km/h: fast enough to filter GPS jitter while genuinely stationary
 // (a few meters of drift over several seconds), slow enough not to exclude real, deliberate
 // slow walking.
-const movingSpeedThresholdMps = 0.5
+const MovingSpeedThresholdMps = 0.5
 
 // computeMetrics sums points after edit. Elapsed time alone spans a Cut's join (JoinsCut).
 func computeMetrics(points []parse.Point, edit *RouteEdit) metrics {
@@ -581,7 +581,7 @@ func computeMetrics(points []parse.Point, edit *RouteEdit) metrics {
 			}
 		}
 		dt := points[i].Time.Sub(points[i-1].Time).Seconds()
-		if dt > 0 && segM/dt >= movingSpeedThresholdMps {
+		if dt > 0 && segM/dt >= MovingSpeedThresholdMps {
 			movingS += dt
 		}
 	}

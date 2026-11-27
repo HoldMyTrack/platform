@@ -54,16 +54,21 @@ class UiShotsTest {
         step("track-focused") {
             half()
             need(id("track_title")).click()
-            need(id("track_card")); settle()
+            need(id("track_actions")); settle()
             shot("track-focused")
-            device.findObject(id("card_close"))?.click(); settle()
+            need(id("panel_info")).click()
+            device.wait(Until.hasObject(id("info_value")), 10_000); settle()
+            shot("track-info")
+            device.pressBack(); settle()
         }
         step("tracks-checked") {
             half()
+            // The focused row's tile: it alone is checked.
             need(id("track_tile_target")).click()
-            need(id("selection_bar")); settle()
+            need(id("track_actions")); settle()
             shot("tracks-checked")
-            device.findObject(id("selection_close"))?.click(); settle()
+            // Back unchecks every row.
+            device.pressBack(); settle()
         }
         step("fog") {
             need(id("mode_fog")).click(); settle(4_000)
@@ -145,8 +150,6 @@ class UiShotsTest {
             block()
         } catch (e: Throwable) {
             failed += "$name: $e"
-            device.findObject(id("card_close"))?.click()
-            device.findObject(id("selection_close"))?.click()
             device.findObject(id("nav_tracks"))?.click()
             settle()
         }

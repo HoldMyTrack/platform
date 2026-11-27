@@ -6,12 +6,12 @@ object ToolbarRules {
     /** Why an action can or can't be used. */
     enum class Use { READY, NO_TARGET, DEMO, PENDING }
 
-    data class Actions(val visibility: Use, val edit: Use, val addToTrip: Use, val delete: Use, val focus: Use)
+    data class Actions(val visibility: Use, val edit: Use, val addToTrip: Use, val info: Use, val delete: Use, val focus: Use)
 
     /**
      * The actions over [targets]. The demo account looks but can't change (the server's
      * `requireNotDemo`), and a pending row can't be deleted until its reprocess lands, since the
-     * job would race the delete. Showing, hiding and flying to a target change nothing on the server.
+     * job would race the delete. Showing, hiding, Info and flying to a target change nothing on the server.
      */
     fun actions(targets: Int, anyPending: Boolean, demo: Boolean): Actions {
         val look = if (targets == 0) Use.NO_TARGET else Use.READY
@@ -21,7 +21,7 @@ object ToolbarRules {
             else -> Use.READY
         }
         val delete = if (change == Use.READY && anyPending) Use.PENDING else change
-        return Actions(visibility = look, edit = change, addToTrip = change, delete = delete, focus = look)
+        return Actions(visibility = look, edit = change, addToTrip = change, info = look, delete = delete, focus = look)
     }
 
     enum class CheckAll { NONE, SOME, ALL }

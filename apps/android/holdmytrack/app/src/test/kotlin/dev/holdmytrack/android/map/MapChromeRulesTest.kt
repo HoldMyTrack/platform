@@ -36,10 +36,10 @@ class MapChromeRulesTest {
     fun `Trips and Sync show Normal with no toggle, and the Tracks tab gets its pick back`() {
         for (tab in listOf(PanelTab.TRIPS, PanelTab.SYNC)) {
             assertEquals(MapMode.NORMAL, MapChromeRules.tabMode(MapMode.FOG, tab))
-            assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, tab))
+            assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, tab))
         }
         assertEquals(MapMode.FOG, MapChromeRules.tabMode(MapMode.FOG, PanelTab.TRACKS))
-        assertTrue(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, PanelTab.TRACKS))
+        assertTrue(MapChromeRules.modeBarShown(recording = false, editOpen = false, PanelTab.TRACKS))
     }
 
     @Test
@@ -59,19 +59,12 @@ class MapChromeRulesTest {
     }
 
     @Test
-    fun `checking rows hides the mode toggle and the rail`() {
+    fun `checked rows in view are what Back unchecks, and leave the toggle and the rail`() {
         assertTrue(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.TRACKS, editOpen = false))
         assertFalse(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.TRIPS, editOpen = false))
-        assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = true, PanelTab.TRACKS))
-        assertFalse(MapChromeRules.railShown(editing = false, selectionShown = true))
-        assertTrue(MapChromeRules.railShown(editing = false, selectionShown = false))
-    }
-
-    @Test
-    fun `checking rows keeps the image export at hand, without the rail`() {
-        assertTrue(MapChromeRules.checkedExportShown(editing = false, selectionShown = true))
-        assertFalse(MapChromeRules.checkedExportShown(editing = false, selectionShown = false))
-        assertFalse(MapChromeRules.checkedExportShown(editing = true, selectionShown = true))
+        assertFalse(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.TRACKS, editOpen = true))
+        assertTrue(MapChromeRules.railShown(editing = false))
+        assertFalse(MapChromeRules.railShown(editing = true))
     }
 
     @Test
@@ -82,11 +75,11 @@ class MapChromeRulesTest {
     }
 
     @Test
-    fun `the summary is the Tracks tab's head unless the card has it`() {
-        assertTrue(MapChromeRules.summaryShown(normal = true, PanelTab.TRACKS, showsCard = false))
-        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.TRACKS, showsCard = true))
-        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.TRIPS, showsCard = false))
-        assertFalse(MapChromeRules.summaryShown(normal = false, PanelTab.TRACKS, showsCard = false))
+    fun `the summary is the Tracks tab's head unless the toolbar has it`() {
+        assertTrue(MapChromeRules.summaryShown(normal = true, PanelTab.TRACKS, showsActions = false))
+        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.TRACKS, showsActions = true))
+        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.TRIPS, showsActions = false))
+        assertFalse(MapChromeRules.summaryShown(normal = false, PanelTab.TRACKS, showsActions = false))
     }
 
     @Test

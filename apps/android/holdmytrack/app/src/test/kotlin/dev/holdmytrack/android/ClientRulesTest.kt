@@ -216,6 +216,7 @@ class ClientRulesTest {
             }
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
+        "infoShowsBands" to { input -> JsonPrimitive(PanelRules.infoShowsBands(input.strings("checked").toSet(), input.string("focused"), input.bool("bandsDrawn"))) },
         "attachmentName" to { input -> JsonPrimitive(AttachmentName.of(input.string("header"))) },
         "libraryPageQuery" to { input ->
             LibraryRules.pageQuery(libraryState(input["state"]!!.jsonObject), input.strings("allTypes"))?.let { q ->

@@ -347,4 +347,37 @@ describe('map flows', () => {
     assert.equal(await page.getByTestId('tour').count(), 0);
     assert.equal(await page.getByTestId('tour-offer').count(), 0);
   });
+
+  it('11. Info floats over the map, follows the target, gives way to Edit, and closes with Escape or the toolbar', async () => {
+    await page.goto(`${BASE}/#map=6.00/41.45/-81.70&theme=light`);
+    await page.waitForFunction(() => Boolean(window.__holdmytrack));
+    await viewAll();
+    const info = page.getByTestId('track-info');
+    const firstValue = () => info.locator('.track-info__line dd').nth(1).textContent();
+    await row(ids['2026-10-01']).locator('.tracks-panel__text').click();
+    await page.locator('.tracks-panel__info').click();
+    await info.locator('.track-info__line').first().waitFor({ timeout: 30_000 });
+    // No modal: the rows and the map stay in use, and Info follows the toolbar's target.
+    assert.equal(await page.locator('dialog[open]').count(), 0);
+    await page.screenshot({ path: new URL('./screenshots/flows-track-info.png', import.meta.url).pathname });
+    const before = await firstValue();
+    await row(ids['2026-10-05']).locator('.tracks-panel__text').click();
+    await page.waitForFunction((was) => document.querySelectorAll('[data-testid="track-info"] .track-info__line dd')[1]?.textContent !== was, before, { timeout: 30_000 });
+    // Edit takes the same corner, and Info doesn't come back when it closes.
+    await page.locator('.tracks-panel__edit').click();
+    await page.getByTestId('edit-track-window').waitFor({ timeout: 30_000 });
+    assert.equal(await info.count(), 0);
+    await page.getByTestId('edit-track-window').getByRole('button', { name: 'Cancel', exact: true }).click();
+    await page.getByTestId('edit-track-window').waitFor({ state: 'detached' });
+    assert.equal(await info.count(), 0);
+    await page.locator('.tracks-panel__info').click();
+    await info.waitFor();
+    await page.keyboard.press('Escape');
+    await info.waitFor({ state: 'detached' });
+    // Without a target the toolbar goes, and Info with it.
+    await page.locator('.tracks-panel__info').click();
+    await info.waitFor();
+    await page.locator('.maplibregl-canvas').click({ position: { x: 100, y: 650 } });
+    await info.waitFor({ state: 'detached', timeout: 10_000 });
+  });
 });

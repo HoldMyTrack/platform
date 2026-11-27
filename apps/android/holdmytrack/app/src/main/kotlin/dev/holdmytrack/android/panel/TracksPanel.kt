@@ -6,11 +6,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.appcompat.widget.TooltipCompat
@@ -21,7 +17,6 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.holdmytrack.android.R
@@ -30,8 +25,6 @@ import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Trip
-import dev.holdmytrack.android.recording.RecordingTypes
-import dev.holdmytrack.android.ui.LargeText
 
 /** The panel's tabs: the web's `PanelTab`, and the bottom bar's Sync. */
 enum class PanelTab { TRACKS, TRIPS, LIBRARY, SYNC }
@@ -41,8 +34,8 @@ enum class PanelTab { TRACKS, TRIPS, LIBRARY, SYNC }
  * bottom sheet dragged between collapsed — its head alone — half the map and nearly all of it
  * (`BottomSheetBehavior`), a tap on its handle opening it halfway or closing it. On the
  * Tracks tab its head is the listed tracks' totals ([render]), the visible area's under
- * Dates (`map/AreaController`), and under it the Type, Dates and DISTANCE filters,
- * a toolbar over the toolbar's target, the rows and the target's summary. The Trips tab — the
+ * Dates (`map/AreaController`), or the toolbar while it has a target, and under it the master
+ * checkbox with the Type, Dates and DISTANCE filters, the rows and the target's summary. The Trips tab — the
  * bottom bar's Trips — has the account's Trips with one open on the map ([TripsTab]); the
  * Library tab — the bottom bar's Library — every track the account keeps, a page at a time
  * ([LibraryTab]); the Sync tab — Library › Sync — what's on this phone waiting to be added
@@ -57,8 +50,6 @@ enum class PanelTab { TRACKS, TRIPS, LIBRARY, SYNC }
  */
 class TracksPanel(
     private val sheet: View,
-    /** The selection bar over the map — the toolbar while the rows are being checked. */
-    selectionBar: View,
     private val state: PanelState,
     private val onMapChanged: () -> Unit,
     private val onFly: (List<Track>) -> Unit,
@@ -88,7 +79,7 @@ class TracksPanel(
     val syncTab: SyncTab,
     /** The Library tab, `MapFragment`'s to build: its Download needs the fragment. */
     val libraryTab: LibraryTab,
-    /** The selection bar's Download, Library's too: its save screen needs the fragment. */
+    /** The toolbar's Download, Library's too: its save screen needs the fragment. */
     private val download: TrackDownload,
 ) {
     private val context = sheet.context
@@ -115,32 +106,18 @@ class TracksPanel(
     private var datesSet = false
     /** TYPE, DISTANCE and Reset. */
     private val filters = TrackFilters(sheet, state, onChanged = ::changed)
-    private val selectionClose: View = selectionBar.findViewById(R.id.selection_close)
 
-    private val card: View = sheet.findViewById(R.id.track_card)
-    private val cardIcon: ImageView = sheet.findViewById(R.id.card_type_icon)
-    private val cardTitle: TextView = sheet.findViewById(R.id.card_title)
-    private val cardMeta: TextView = sheet.findViewById(R.id.card_meta)
-    private val cardDistance: TextView = sheet.findViewById(R.id.card_distance)
-    private val cardMoving: TextView = sheet.findViewById(R.id.card_moving)
-    private val cardPaceLabel: TextView = sheet.findViewById(R.id.card_pace_label)
-    private val cardPace: TextView = sheet.findViewById(R.id.card_pace)
-    private val cardBands: View = sheet.findViewById(R.id.card_bands)
-    private val cardStats: View = sheet.findViewById(R.id.card_stats)
-    private val cardPrivate: View = sheet.findViewById(R.id.card_private)
-    private val cardVisibility: MaterialButton = sheet.findViewById(R.id.card_visibility)
-
-    /** The actions over the toolbar's target, twice: the selection bar's icons, and the selected
-     *  track's card's — the same rules and the same enabled states, whichever shows. [delete] is
-     *  the card's; the selection bar's is in its ⋯ menu ([SelectionMoreMenu]). */
-    private class Actions(val visibility: View, val edit: View, val addToTrip: View, val delete: View?, val focus: View)
-    private val checkAll: MaterialCheckBox = selectionBar.findViewById(R.id.panel_check_all)
-    private val selectMenu: ImageButton = selectionBar.findViewById(R.id.panel_select_menu)
-    private val visibility: ImageButton = selectionBar.findViewById(R.id.panel_visibility)
-    private val edit: ImageButton = selectionBar.findViewById(R.id.panel_edit)
-    private val addToTrip: ImageButton = selectionBar.findViewById(R.id.panel_add_to_trip)
-    private val more = SelectionMoreMenu(selectionBar.findViewById(R.id.panel_more), download, onDelete = { confirmDelete() })
-    private val focus: ImageButton = selectionBar.findViewById(R.id.panel_focus)
+    /** The toolbar (`include_track_actions`): the actions over its target, Download and Delete in
+     *  its ⋯ menu ([SelectionMoreMenu]). */
+    private val actions: View = sheet.findViewById(R.id.track_actions)
+    private val checkAll: MaterialCheckBox = sheet.findViewById(R.id.panel_check_all)
+    private val selectMenu: ImageButton = sheet.findViewById(R.id.panel_select_menu)
+    private val visibility: ImageButton = sheet.findViewById(R.id.panel_visibility)
+    private val edit: ImageButton = sheet.findViewById(R.id.panel_edit)
+    private val addToTrip: ImageButton = sheet.findViewById(R.id.panel_add_to_trip)
+    private val info: ImageButton = sheet.findViewById(R.id.panel_info)
+    private val more = SelectionMoreMenu(sheet.findViewById(R.id.panel_more), download, onDelete = { confirmDelete() })
+    private val focus: ImageButton = sheet.findViewById(R.id.panel_focus)
     private val list: RecyclerView = sheet.findViewById(R.id.panel_list)
 
     /** Over the rows while a reload runs past [PROGRESS_DELAY_MS]: the list keeps its rows until
@@ -149,20 +126,8 @@ class TracksPanel(
     private val showProgress = Runnable { if (loading && !zoomedOut) progress.visibility = View.VISIBLE }
     private val footer: TextView = sheet.findViewById(R.id.panel_footer)
 
-    private val toolbarActions = Actions(visibility, edit, addToTrip, null, focus)
-    private val cardActions = Actions(
-        cardVisibility,
-        sheet.findViewById(R.id.card_edit),
-        sheet.findViewById(R.id.card_add_to_trip),
-        sheet.findViewById(R.id.card_delete),
-        sheet.findViewById(R.id.card_focus),
-    )
-
-    /** Whether the map draws the selected track's pace bands — its card shows their legend
-     *  only then. */
-    private var bandsShown = false
-
-    /** The legend's steps as last drawn ([setBands]). */
+    /** The pace bands' colors while the map draws them for the focused track, else null: Info
+     *  shows their legend then ([setBands]). */
     private var bandColors: List<String>? = null
 
     private val adapter = RowAdapter()
@@ -215,7 +180,6 @@ class TracksPanel(
         clearFocusOnEmptyTap()
 
         handle.setOnClickListener { setExpanded(!expanded) }
-        LargeText.stack(sheet.findViewById(R.id.card_stats))
         // The collapsed height is the head's bottom edge, whatever the font scale and the totals
         // or title in it make of it — set after the layout pass rather than inside it.
         head.addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
@@ -256,8 +220,8 @@ class TracksPanel(
 
         datesChip.setOnClickListener { onDatesTap() }
 
-        // Only ever shown while something is checked: partly checked, it checks every listed
-        // row; all checked, it unchecks them all, which ends selecting.
+        // Short of all checked, it checks every listed row; all checked, it unchecks them all,
+        // which ends selecting.
         checkAll.setOnClickListener {
             val listed = state.listed
             if (listed.isNotEmpty() && listed.all { it.id in state.checked }) state.clearChecked() else state.checkAll()
@@ -265,21 +229,17 @@ class TracksPanel(
         }
         selectMenu.setOnClickListener { showSelectMenu() }
         TooltipCompat.setTooltipText(selectMenu, res.getString(R.string.panel_select_menu))
-        for (actions in listOf(toolbarActions, cardActions)) {
-            actions.visibility.setOnClickListener {
-                state.toggleTargetVisibility()
-                changed()
-            }
-            actions.focus.setOnClickListener {
-                val hidden = state.mapHidden
-                onFly(state.targets.filter { it.id !in hidden })
-            }
-            actions.edit.setOnClickListener { state.targets.takeIf { it.isNotEmpty() }?.let(onEdit) }
-            actions.addToTrip.setOnClickListener { anchor -> if (tripMenu.target == null) showAddToTrip(anchor) else tripMenu.dismiss() }
-            actions.delete?.setOnClickListener { confirmDelete() }
+        visibility.setOnClickListener {
+            state.toggleTargetVisibility()
+            changed()
         }
-        selectionClose.setOnClickListener { endSelecting() }
-        sheet.findViewById<View>(R.id.card_close).setOnClickListener { clearFocus() }
+        focus.setOnClickListener {
+            val hidden = state.mapHidden
+            onFly(state.targets.filter { it.id !in hidden })
+        }
+        edit.setOnClickListener { state.targets.takeIf { it.isNotEmpty() }?.let(onEdit) }
+        addToTrip.setOnClickListener { anchor -> if (tripMenu.target == null) showAddToTrip(anchor) else tripMenu.dismiss() }
+        info.setOnClickListener { showInfo() }
         render()
     }
 
@@ -375,7 +335,7 @@ class TracksPanel(
         scrollToRow(id)
     }
 
-    /** The selection bar's ×, or Back: everything unchecked, which ends selecting. */
+    /** Back: everything unchecked, which ends selecting. */
     fun endSelecting() {
         if (!state.selecting) return
         state.clearChecked()
@@ -472,33 +432,16 @@ class TracksPanel(
         tripMenu.dismiss()
     }
 
-    /** Whether the rows are being checked — the selection bar over the map then. */
+    /** Whether the rows are being checked. */
     val selecting: Boolean get() = state.selecting
 
-    /** Whether the selected track's card is at the sheet's head, in the totals' place. */
-    val showsCard: Boolean get() = tab == PanelTab.TRACKS && state.focused != null && !state.selecting
+    /** Whether the toolbar is at the sheet's head, in the totals' place: the Tracks tab's, while
+     *  it has a target. */
+    val showsActions: Boolean get() = tab == PanelTab.TRACKS && state.targets.isNotEmpty()
 
-    /** The map draws the selected track's pace bands in [colors], slowest first, or stopped
-     *  (null): the card's legend follows. */
+    /** The map draws the focused track's pace bands in [colors], slowest first, or stopped (null). */
     fun setBands(colors: List<String>?) {
-        if (colors != null && colors != bandColors) {
-            bandColors = colors
-            sheet.findViewById<LinearLayout>(R.id.card_band_steps).apply {
-                removeAllViews()
-                val gap = res.getDimensionPixelSize(R.dimen.hmt_space_2)
-                colors.forEachIndexed { i, color ->
-                    addView(View(context).apply {
-                        setBackgroundResource(R.drawable.bg_pace_band)
-                        backgroundTintList = ColorStateList.valueOf(Color.parseColor(color))
-                    }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
-                        if (i > 0) marginStart = gap
-                    })
-                }
-            }
-        }
-        if (bandsShown == (colors != null)) return
-        bandsShown = colors != null
-        renderCard()
+        bandColors = colors
     }
 
     /** The collapsed sheet's height: its head. */
@@ -531,7 +474,7 @@ class TracksPanel(
         val open = expanded && !held
         handle.contentDescription = res.getString(if (open) R.string.panel_collapse else R.string.panel_expand)
 
-        renderCard()
+        renderActions()
         filters.render()
         renderToolbar(listed)
 
@@ -595,15 +538,17 @@ class TracksPanel(
         }
         val noTarget = res.getString(R.string.panel_no_target)
         val anyHidden = targets.any { it.id in state.hidden }
-        visibility.setImageResource(if (anyHidden) R.drawable.ic_eye_off else R.drawable.ic_eye)
-        cardVisibility.setIconResource(if (anyHidden) R.drawable.ic_eye_off else R.drawable.ic_eye)
-        cardVisibility.setText(if (anyHidden) R.string.card_show else R.string.card_hide)
-        for (actions in listOf(toolbarActions, cardActions)) describeActions(actions, targets, targetName, noTarget, anyHidden)
+        // What a tap does: show (the open eye) or hide (crossed out).
+        visibility.setImageResource(if (anyHidden) R.drawable.ic_eye else R.drawable.ic_eye_off)
+        describeActions(targets, targetName, noTarget, anyHidden)
     }
+
+    /** The target [describeActions] last named its actions for. */
+    private var describedTargets: List<String> = emptyList()
 
     /** Each action says what it would do, or why it can't (as the web's do): disabled actions
      *  stay visible. */
-    private fun describeActions(actions: Actions, targets: List<Track>, targetName: String?, noTarget: String, anyHidden: Boolean) {
+    private fun describeActions(targets: List<Track>, targetName: String?, noTarget: String, anyHidden: Boolean) {
         val use = ToolbarRules.actions(targets.size, targets.any { it.pending }, Session.isDemo)
         fun text(of: ToolbarRules.Use, demo: Int, ready: () -> String) = when (of) {
             ToolbarRules.Use.DEMO -> res.getString(demo)
@@ -614,21 +559,29 @@ class TracksPanel(
         }
         fun ToolbarRules.Use.enabled() = this == ToolbarRules.Use.READY
         describe(
-            actions.visibility,
+            visibility,
             text(use.visibility, 0) { res.getString(if (anyHidden) R.string.panel_show_target else R.string.panel_hide_target, targetName) },
             use.visibility.enabled(),
         )
         describe(
-            actions.edit,
+            edit,
             text(use.edit, R.string.panel_demo_edit) {
                 res.getString(if (targets.size == 1) R.string.panel_edit_one else R.string.panel_edit_many, targetName)
             },
             use.edit.enabled(),
         )
-        describe(actions.addToTrip, text(use.addToTrip, R.string.trip_demo_add) { res.getString(R.string.trip_add_target, targetName) }, use.addToTrip.enabled())
+        describe(addToTrip, text(use.addToTrip, R.string.trip_demo_add) { res.getString(R.string.trip_add_target, targetName) }, use.addToTrip.enabled())
+        describe(info, text(use.info, 0) { res.getString(R.string.panel_info_target, targetName) }, use.info.enabled())
         val deleteText = text(use.delete, R.string.panel_demo_delete) { res.getString(R.string.panel_delete_target, targetName) }
-        if (actions.delete != null) describe(actions.delete, deleteText, use.delete.enabled()) else more.update(targets, targetName, noTarget, deleteText, use.delete.enabled())
-        describe(actions.focus, text(use.focus, 0) { res.getString(R.string.panel_focus_target, targetName) }, use.focus.enabled())
+        // A menu opened over another target, or none, would act on rows the toolbar no longer names.
+        val ids = targets.map { it.id }
+        if (ids != describedTargets) {
+            tripMenu.dismiss()
+            more.dismiss()
+            describedTargets = ids
+        }
+        more.update(targets, targetName, noTarget, deleteText, use.delete.enabled())
+        describe(focus, text(use.focus, 0) { res.getString(R.string.panel_focus_target, targetName) }, use.focus.enabled())
     }
 
     /** The master checkbox's ▾ (the web's `.select-menu`): All, None and Invert over the listed
@@ -661,6 +614,26 @@ class TracksPanel(
             res.getString(R.string.panel_target_one, PanelFormat.rowLabel(res, targets.first()))
         }
         return res.getString(R.string.panel_group_summary, name, PanelFormat.totalDistance(res, targets.sumOf { it.distanceMeters ?: 0.0 }))
+    }
+
+    /** Info ([TrackInfoSheet]) over the toolbar's target, with the bands' legend while they're
+     *  drawn for the focused track alone. */
+    private fun showInfo() {
+        val targets = state.targets
+        if (targets.isEmpty()) return
+        infoSheet?.dismiss()
+        infoSheet = TrackInfoSheet(context, targets.map { it.id }, bandColors.takeIf { PanelRules.infoShowsBands(state.checked, state.focused, it != null) }).also { it.show() }
+    }
+
+    /** The Info open, if any, which goes with the fragment's views ([dismissDialogs]). */
+    private var infoSheet: TrackInfoSheet? = null
+
+    /** The views are going: Info would leak its window, and a late reply would write into them. */
+    fun dismissDialogs() {
+        infoSheet?.dismiss()
+        infoSheet = null
+        dismissPopups()
+        more.dismiss()
     }
 
     /** Opens Add to trip's menu ([AddToTripMenu]) over the toolbar's target. */
@@ -720,29 +693,9 @@ class TracksPanel(
         }
     }
 
-    /** The selected track's card (`include_track_card`), at the head while [showsCard]. */
-    private fun renderCard() {
-        val track = state.focused?.let { id -> state.tracks.firstOrNull { it.id == id } }
-        val shown = showsCard && track != null
-        card.visibility = if (shown) View.VISIBLE else View.GONE
-        if (!shown || track == null) return
-        val kind = TrackTypes.kind(track.trackType)
-        cardIcon.setImageResource(typeIcon(track.trackType))
-        cardTitle.text = PanelFormat.rowLabel(res, track)
-        // The start moves under the title once a name has taken it, as on a row.
-        val named = track.name?.trim()?.isNotEmpty() == true
-        cardMeta.text = listOfNotNull(
-            PanelFormat.startedAt(res, track.startedAt, track.timezone).takeIf { named },
-            TrackTypes.label(track.trackType),
-        ).joinToString(" · ")
-        // A private track has no stats worth showing (FR-5.1): what it is stands in for them.
-        cardStats.visibility = if (track.isPrivate) View.GONE else View.VISIBLE
-        cardPrivate.visibility = if (track.isPrivate) View.VISIBLE else View.GONE
-        cardDistance.text = PanelFormat.distance(res, track.distanceMeters)
-        cardMoving.text = PanelFormat.duration(res, track.movingSeconds)
-        cardPaceLabel.setText(if (kind.showsPace) R.string.card_pace else R.string.card_speed)
-        cardPace.text = PanelFormat.paceOrSpeed(res, kind, track.distanceMeters, track.movingSeconds)
-        cardBands.visibility = if (bandsShown) View.VISIBLE else View.GONE
+    /** The toolbar at the head while [showsActions]. */
+    private fun renderActions() {
+        actions.visibility = if (showsActions) View.VISIBLE else View.GONE
     }
 
     private fun describe(button: View, text: String, enabled: Boolean) {
@@ -843,10 +796,16 @@ class TracksPanel(
         changed()
     }
 
-    /** A row's tap: selected, and the sheet down to its card, so the track shows. */
+    /** A row's tap: focused, the sheet where [SheetRules.afterRowTap] puts it, and then the
+     *  camera, which frames the track above where the sheet comes to rest. */
     private fun selectRow(id: String) {
+        val now = when (resting) {
+            BottomSheetBehavior.STATE_EXPANDED -> SheetRules.Detent.EXPANDED
+            BottomSheetBehavior.STATE_HALF_EXPANDED -> SheetRules.Detent.HALF
+            else -> SheetRules.Detent.COLLAPSED
+        }
+        if (SheetRules.afterRowTap(now) == SheetRules.Detent.HALF && now != SheetRules.Detent.HALF) setExpanded(true)
         select(id)
-        setExpanded(false)
     }
 
     /** A row's Trip badge: that Trip, on the Trips tab, the sheet down so its tracks show. */

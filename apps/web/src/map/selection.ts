@@ -31,6 +31,12 @@ export function toolbarTarget<S extends ReadonlySet<string>>(checked: S, focused
   return new Set(focused !== null ? [focused] : []);
 }
 
+/** Whether Info shows the pace bands' legend: the map draws [focused]'s bands, and the
+ *  toolbar's target is that track alone, checked or only focused. */
+export function infoShowsBands(target: ReadonlySet<string>, focused: string | null, bandsDrawn: boolean): boolean {
+  return bandsDrawn && focused !== null && target.size === 1 && target.has(focused);
+}
+
 /** How the panel's footer names the toolbar's target (FR-5.8's words): the Checked group, or the
  *  Focused row when nothing is checked, so a row that's only focused never reads as checked. */
 export function targetSummaryKind(checkedCount: number, targetCount: number): 'checked' | 'focused' {

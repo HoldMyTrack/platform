@@ -8,8 +8,7 @@ import dev.holdmytrack.android.panel.TracksPanel
 
 /**
  * The Tracks sheet and the chrome that follows it ([MapChromeRules]): the sheet itself, the
- * list's summary at its head, the selection bar in the top row's place while rows are checked, and the
- * rail. Back ends selecting, then collapses an open sheet.
+ * list's summary at its head, and the rail. Back ends selecting, then collapses an open sheet.
  */
 class SheetChrome(
     view: View,
@@ -22,17 +21,13 @@ class SheetChrome(
     private val privacyEditing: () -> Boolean,
     /** The sheet came to rest or its head changed height. */
     private val onSheetMoved: () -> Unit,
-    /** The selection bar came or went. */
-    private val onSelectionBarChanged: () -> Unit,
     /** After every [render], for what else follows the sheet. */
     private val onRendered: () -> Unit,
     private val dismissLayers: () -> Unit,
 ) {
     private val sheet: View = view.findViewById(R.id.tracks_sheet)
     private val summaryHead: View = view.findViewById(R.id.panel_summary_head)
-    private val selectionBar: View = view.findViewById(R.id.selection_bar)
     private val rail: View = view.findViewById(R.id.map_rail)
-    private val checkedExport: View = view.findViewById(R.id.checked_export_panel)
 
     /** Back closes an open sheet before it leaves the map. */
     val collapseOnBack = object : OnBackPressedCallback(false) {
@@ -48,37 +43,26 @@ class SheetChrome(
      *  for the session. The summary at its head is the Tracks tab's. */
     fun render() {
         val normal = normalMode()
-        // The selected track's card takes the summary's place at the head.
-        summaryHead.isVisible = MapChromeRules.summaryShown(normal, panel.tab, panel.showsCard)
+        // The toolbar takes the summary's place at the head.
+        summaryHead.isVisible = MapChromeRules.summaryShown(normal, panel.tab, panel.showsActions)
         // An editor over the map hides the sheet. The Sync tab stays while recording: what's on
         // the phone can be sent mid-walk.
         sheet.isVisible = MapChromeRules.sheetShown(normal, sessionReady(), mode(), panel.tab, editOpen() || privacyEditing())
         if (!normal) panel.dismissPopups()
         onSheetChanged()
-        renderSelectionBar()
+        renderSelecting()
         onRendered()
     }
 
-    /** Whether rows are being checked where the selection bar can show: Normal mode, the
-     *  Tracks tab, no Edit window. */
-    fun selectionShown(): Boolean = MapChromeRules.selectionShown(sheet.isVisible, panel.selecting, panel.tab, editOpen())
-
-    /** The selection bar replaces the top row while [selectionShown]. */
-    fun renderSelectionBar() {
-        val shown = selectionShown()
-        endSelectingOnBack.isEnabled = shown
-        if (selectionBar.isVisible == shown) return
-        selectionBar.visibility = if (shown) View.VISIBLE else View.GONE
-        if (!shown) panel.dismissPopups()
-        onSelectionBarChanged()
-        renderRail()
+    /** Back ends selecting while rows are checked in view ([MapChromeRules.selectionShown]). */
+    fun renderSelecting() {
+        endSelectingOnBack.isEnabled = MapChromeRules.selectionShown(sheet.isVisible, panel.selecting, panel.tab, editOpen())
     }
 
     /** The rail (Layers, Find my location), hidden while an editor is open over the map. */
     fun renderRail() {
         val editing = editOpen() || privacyEditing()
-        rail.isVisible = MapChromeRules.railShown(editing, selectionShown())
-        checkedExport.isVisible = MapChromeRules.checkedExportShown(editing, selectionShown())
+        rail.isVisible = MapChromeRules.railShown(editing)
         if (editing) dismissLayers()
     }
 

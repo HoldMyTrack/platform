@@ -100,6 +100,8 @@ interface TracksPanelProps {
   onInvertSelection: () => void;
   /** Flies to fit the toolbar's target without changing it. */
   onShowSelected: () => void;
+  /** The toolbar's Info (TracksToolbar.tsx). */
+  onInfo: () => void;
   /** Tracks currently hidden from the map — dims the row (there's no per-row eye icon any
    *  more), and what the header toolbar's "Group visible" button toggles in bulk over
    *  `targetIds`. */
@@ -186,6 +188,7 @@ export function TracksPanel({
   onSelectAll,
   onInvertSelection,
   onShowSelected,
+  onInfo,
   hiddenIds,
   onToggleGroupVisibility,
   onTracksDeleted,
@@ -443,6 +446,7 @@ export function TracksPanel({
             onTripAdded={onTripAdded}
             onTracksDeleted={onTracksDeleted}
             onShowSelected={onShowSelected}
+            onInfo={onInfo}
           />
 
           {/* A click on the list's own empty space (or one of its notes) — not on a row —

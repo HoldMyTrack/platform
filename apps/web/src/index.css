@@ -2604,6 +2604,7 @@ button.tracks-panel__trip-badge:hover {
 
   .tracks-panel__edit,
   .tracks-panel__add-trip,
+  .tracks-panel__info,
   .tracks-panel__download,
   .tracks-panel__delete,
   .tracks-panel__visibility,
@@ -2680,7 +2681,8 @@ button.tracks-panel__trip-badge:hover {
    isn't a control, so it draws no ring, and its controls draw theirs. */
 .edit-window:focus,
 .private-locations__window:focus,
-.export-viewfinder:focus {
+.export-viewfinder:focus,
+.track-info:focus {
   outline: none;
 }
 

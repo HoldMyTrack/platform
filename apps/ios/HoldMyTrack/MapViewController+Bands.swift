@@ -3,8 +3,8 @@ import UIKit
 
 /// The focused track's pace bands (root docs/SPEC.md FR-4.6): its metrics fetched when the
 /// focus moves, again after its reprocess lands, and dropped when it clears; drawn by the layers
-/// document's `route-bands` group while its track is drawn (PaceBands.drawn), with the legend on
-/// its card.
+/// document's `route-bands` group while its track is drawn (PaceBands.drawn), with the legend in
+/// Info.
 extension MapViewController {
     /// The focus moved, or with refetch a reprocess landed. Binds what's drawn into the state;
     /// the caller renders.

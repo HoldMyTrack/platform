@@ -12,18 +12,19 @@ public enum ToolbarRules {
         public let visibility: Use
         public let edit: Use
         public let addToTrip: Use
+        public let info: Use
         public let delete: Use
         public let focus: Use
     }
 
     /// The actions over targets tracks. The demo account looks but can't change (the
     /// server's `requireNotDemo`), and a Pending row can't be deleted until its reprocess lands,
-    /// since the job would race the delete. Showing, hiding and flying change nothing on the server.
+    /// since the job would race the delete. Showing, hiding, Info and flying change nothing on the server.
     public static func actions(targets: Int, anyPending: Bool, demo: Bool) -> Actions {
         let look: Use = targets == 0 ? .noTarget : .ready
         let change: Use = demo ? .demo : targets == 0 ? .noTarget : .ready
         let delete: Use = change == .ready && anyPending ? .pending : change
-        return Actions(visibility: look, edit: change, addToTrip: change, delete: delete, focus: look)
+        return Actions(visibility: look, edit: change, addToTrip: change, info: look, delete: delete, focus: look)
     }
 
     public enum CheckAll: Equatable, Sendable { case none, some, all }

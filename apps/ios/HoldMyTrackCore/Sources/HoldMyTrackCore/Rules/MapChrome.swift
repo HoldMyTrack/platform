@@ -35,16 +35,10 @@ public enum MapChrome {
         return .of(picked: picked, shown: state.showLayers)
     }
 
-    /// Whether rows are checked where the selection bar can show: the sheet up on the Tracks tab,
-    /// no Edit window.
-    public static func selectionShown(sheetVisible: Bool, selecting: Bool, onTracksTab: Bool, editOpen: Bool) -> Bool {
-        sheetVisible && selecting && onTracksTab && !editOpen
-    }
-
-    /// The mode toggle: the Tracks tab's, hidden while recording, editing or checking rows; the
-    /// recording's status or the selection bar take its place.
-    public static func modeBarShown(recording: Bool, editOpen: Bool, selectionShown: Bool, onTracksTab: Bool) -> Bool {
-        onTracksTab && !recording && !editOpen && !selectionShown
+    /// The mode toggle: the Tracks tab's, hidden while recording or editing; the recording's
+    /// status takes its place.
+    public static func modeBarShown(recording: Bool, editOpen: Bool, onTracksTab: Bool) -> Bool {
+        onTracksTab && !recording && !editOpen
     }
 
     /// The sheet: Normal mode's, and Library's and its Sync's even while recording, so what's on
@@ -63,14 +57,8 @@ public enum MapChrome {
     /// recording is live, whose camera moves with every fix.
     public static func listFollows(appFlight: Bool, recording: Bool) -> Bool { !appFlight && !recording }
 
-    /// The rail, hidden while an editor has the map or rows are checked.
-    public static func railShown(editing: Bool, selectionShown: Bool) -> Bool { !editing && !selectionShown }
-
-    /// The export's own button under the selection bar, while rows are checked and the rail is
-    /// away, so an image can show the checked tracks' stats.
-    public static func checkedExportShown(editing: Bool, selectionShown: Bool, recording: Bool) -> Bool {
-        !editing && selectionShown && !recording
-    }
+    /// The rail, hidden while an editor has the map.
+    public static func railShown(editing: Bool) -> Bool { !editing }
 
     /// The tab bar and the record button, gone while the Edit window, the Private location editor
     /// or the image export has the screen: a tab or a recording would start under it.

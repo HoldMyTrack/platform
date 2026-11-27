@@ -139,7 +139,7 @@ struct RecordingTests {
 
     @Test func aRecordingShowsOnlyItselfInNormal() {
         #expect(TabMode.shown(picked: .fog, onTracksTab: true, recording: true) == .normal)
-        #expect(!MapChrome.modeBarShown(recording: true, editOpen: false, selectionShown: false, onTracksTab: true))
+        #expect(!MapChrome.modeBarShown(recording: true, editOpen: false, onTracksTab: true))
         #expect(TabMode.hiddenGroups(recording: true) == ["tracks", "route-bands"])
         #expect(TabMode.hiddenGroups(recording: false).isEmpty)
         #expect(TabMode.hiddenGroups(recording: false, editingRoute: true) == [Spots.group], "the places step aside for the route editor")

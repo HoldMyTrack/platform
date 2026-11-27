@@ -329,7 +329,7 @@ Client-side (§5.5); Android and iOS follow the same design (`apps/android/docs/
 
 ### 4.5 Per-track pace, and distance trends
 
-Pace is route context on one track (§4.3.1) and trends a plain rollup per period; nothing further (`VISION.md` §1.1). Moving time is summed in ingest's distance pass (`computeMetrics`). The trends query left-joins its sums onto a `generate_series` of every bucket, so empty periods are zeroes and the chart shows its gaps; the Profile page renders it with the query `GET /v2/tracks/trends` runs.
+Pace is route context on one track (§4.3.1) and trends a plain rollup per period; nothing further (`VISION.md` §1.1). Moving time is summed in ingest's distance pass (`computeMetrics`). **Info's text is the server's** (`internal/trackinfo`, `POST /v2/tracks/info`): its lines and note come formatted in the account's units and language, so pace, speed and the stopped speed the note names (`ingest.MovingSpeedThresholdMps`) have one implementation; each client lays them out and adds the bands' legend from the layers document. The trends query left-joins its sums onto a `generate_series` of every bucket, so empty periods are zeroes and the chart shows its gaps; the Profile page renders it with the query `GET /v2/tracks/trends` runs.
 
 ### 4.6 Overlapping tracks
 
