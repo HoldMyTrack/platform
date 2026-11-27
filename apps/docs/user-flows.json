@@ -31,7 +31,7 @@
        {"id": "private-location-add-delete", "title": "A private location is added on the map and deleted", "states": ["privacy"],
         "android": null, "ios": ["PrivateLocationTests.testAPrivateLocationIsAddedOnTheMapAndDeleted"]},
        {"id": "private-location-keyboard", "title": "The private location editor keeps Save above the keyboard",
-        "android": ["MapFlowsTest.f_thePrivateLocationEditorKeepsSaveAboveTheKeyboard"], "ios": null}
+        "android": ["MapFlowsTest.f_thePrivateLocationEditorKeepsSaveAboveTheKeyboard"], "ios": ["PrivateLocationTests.testAPrivateLocationIsAddedOnTheMapAndDeleted"]}
      ]},
     {"id": "you", "title": "The You tab", "spec": "FR-2.9",
      "flows": [
@@ -59,9 +59,9 @@
     {"id": "filter", "title": "Filter the tracks", "spec": "FR-2.6",
      "flows": [
        {"id": "dates-keep-states", "title": "New Dates keep Checked and Hidden on the tracks still listed", "states": ["tracks-half", "tracks-checked"],
-        "android": ["MapFlowsTest.a_newDatesKeepCheckedAndHiddenOnTheTracksStillListed"], "ios": null},
+        "android": ["MapFlowsTest.a_newDatesKeepCheckedAndHiddenOnTheTracksStillListed"], "ios": ["PanelTests.testNewDatesKeepCheckedAndHiddenOnTheTracksStillListed"]},
        {"id": "dates-keyboard", "title": "The keyboard covers the map without shortening it, so the checked tracks stay listed",
-        "android": ["MapFlowsTest.d_theKeyboardCoversTheMapWithoutShorteningIt"], "ios": null},
+        "android": ["MapFlowsTest.d_theKeyboardCoversTheMapWithoutShorteningIt"], "ios": "Dates picks its days from a calendar, so no keyboard comes up over the map."},
        {"id": "type-and-distance", "spec": "FR-2.7", "title": "The Type and distance chips narrow the list", "states": ["tracks-half"],
         "android": null, "ios": null}
      ]},
@@ -72,9 +72,9 @@
        {"id": "edit-and-delete", "title": "A track is edited and deleted", "states": ["track-focused", "edit-window"],
         "android": null, "ios": ["PanelTests.testEditAndDeleteOnAFreshAccount"]},
        {"id": "dimmed-edit-tab", "title": "A dimmed Edit tab says why on a tap", "states": ["edit-window"],
-        "android": ["MapFlowsTest.a_aDimmedEditTabSaysWhyOnATap"], "ios": null},
+        "android": ["MapFlowsTest.a_aDimmedEditTabSaysWhyOnATap"], "ios": ["PanelTests.testEditAndDeleteOnAFreshAccount"]},
        {"id": "type-picker-add", "title": "The Type picker adds a new type from its sheet", "states": ["edit-window"],
-        "android": ["MapFlowsTest.g_theTypePickerAddsANewTypeFromItsSheet"], "ios": null},
+        "android": ["MapFlowsTest.g_theTypePickerAddsANewTypeFromItsSheet"], "ios": ["PanelTests.testEditAndDeleteOnAFreshAccount"]},
        {"id": "route-chop-split", "title": "A route is chopped and split", "states": ["route-editor"],
         "android": null, "ios": ["RouteEditTests.testAChopAndASplitAreSaved"]},
        {"id": "route-point", "title": "A route's point is moved and deleted on the map", "states": ["route-editor"],
@@ -82,8 +82,8 @@
      ]},
     {"id": "trips", "title": "Trips", "spec": "FR-2.7",
      "flows": [
-       {"id": "open-trip-and-back", "title": "The Trips tab opens the newest Trip, and Back returns to the area", "states": ["trips-half", "trips-collapsed"],
-        "android": ["MapFlowsTest.b_theTripsTabOpensTheNewestTripAndBackReturnsToTheArea"], "ios": null},
+       {"id": "open-trip-and-back", "title": "The Trips tab opens the newest Trip, and Back (iOS: the Tracks tab) returns to the area", "states": ["trips-half", "trips-collapsed"],
+        "android": ["MapFlowsTest.b_theTripsTabOpensTheNewestTripAndBackReturnsToTheArea"], "ios": ["PanelTests.testTheTripsTabOpensTheNewestTripAndTheTracksTabReturnsToTheArea"]},
        {"id": "trips-under-grip", "title": "The Trips list starts under the grip", "states": ["trips-half", "trips-expanded"],
         "android": null, "ios": ["PanelTests.testTheTripsListStartsUnderTheGrip"]},
        {"id": "trips-mode", "title": "Trips show Normal, and the Tracks tab keeps its mode", "states": ["trips-half", "fog"],
@@ -93,7 +93,7 @@
        {"id": "add-to-trip", "title": "Tracks are added to a Trip, or a new one, from Add to trip's sheet",
         "android": null, "ios": null},
        {"id": "totals-after-rotation", "title": "The open Trip's totals stay on screen after a rotation", "states": ["trips-half-landscape"],
-        "android": ["MapFlowsTest.h_theOpenTripsTotalsStayOnScreenAfterARotation"], "ios": null}
+        "android": ["MapFlowsTest.h_theOpenTripsTotalsStayOnScreenAfterARotation"], "ios": ["PanelTests.testTheOpenTripsTotalsStayOnScreenAfterARotation"]}
      ]},
     {"id": "spots", "title": "Spots and Places", "spec": "FR-2.8",
      "flows": [

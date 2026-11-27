@@ -265,6 +265,126 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(email.waitForNonExistence(timeout: 5))
     }
 
+    /// Root docs/SPEC.md FR-5.8: a list reloaded for new Dates keeps Checked and Hidden on the
+    /// tracks still listed.
+    @MainActor
+    func testNewDatesKeepCheckedAndHiddenOnTheTracksStillListed() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        app.buttons["panelHandle"].tap()
+        let rows = app.tables["trackList"].cells.matching(identifier: "trackRow")
+        // The newest first: Mill Creek Falls (Oct 6), then Evening Loop (Oct 5).
+        XCTAssertTrue(rows.element(boundBy: 1).waitForExistence(timeout: 10))
+        rows.element(boundBy: 0).buttons["rowTile"].tap()
+        rows.element(boundBy: 1).buttons["rowTile"].tap()
+        XCTAssertTrue(app.otherElements["trackActions"].waitForExistence(timeout: 5))
+        app.buttons["barVisibility"].tap()
+        let hidden = app.tables["trackList"].buttons.matching(identifier: "badgeHidden")
+        XCTAssertTrue(waitFor(hidden, count: 2), "two rows hidden")
+
+        // From Oct 6, by each track's local day in New York: Mill Creek Falls stays listed and
+        // Evening Loop goes. The calendar opens on the first track's month, October, once the
+        // account's days are in: From's hint names the first track then.
+        app.buttons["datesFilter"].tap()
+        let from = app.buttons["datesAfter"]
+        let known = NSPredicate(format: "value BEGINSWITH 'First track: '")
+        XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: known, object: from)], timeout: 10), .completed, "the first track's day")
+        from.tap()
+        let calendar = app.datePickers["datesCalendar"]
+        XCTAssertTrue(calendar.waitForExistence(timeout: 5))
+        calendar.buttons.matching(NSPredicate(format: "label CONTAINS 'October 6'")).firstMatch.tap()
+        XCTAssertTrue(app.buttons["datesAfterClear"].waitForExistence(timeout: 5), "From is set")
+        app.buttons["Done"].tap()
+        Self.showRows(app, rows)
+        XCTAssertTrue(waitFor(rows, count: 1), "one row listed")
+        // Mill Creek Falls' file has no name: its row is titled by its start.
+        XCTAssertTrue(rows.element(boundBy: 0).staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Oct 6, 2026'")).firstMatch.exists, "Mill Creek Falls listed")
+        XCTAssertTrue(waitFor(hidden, count: 1), "Mill Creek Falls still hidden")
+        XCTAssertTrue(rows.element(boundBy: 0).buttons["rowTile"].label.hasPrefix("Uncheck "), "Mill Creek Falls still checked")
+        XCTAssertTrue(app.otherElements["trackActions"].exists)
+    }
+
+    /// The Trips tab opens the newest Trip on its rows, and the Tracks tab closes it, back on the
+    /// area's list with the sheet folded. iOS has no Back: the Tracks tab is Android's Back here.
+    @MainActor
+    func testTheTripsTabOpensTheNewestTripAndTheTracksTabReturnsToTheArea() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
+        try account.trip("Older trip")
+        // A second apart, so the two are told apart by when they were made.
+        sleep(1)
+        try account.trip("Newest trip", tracks: Array(account.ids.prefix(1)))
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+
+        app.tabBars.buttons["tabTrips"].tap()
+        let folders = app.tables["tripsList"].cells.matching(identifier: "tripFolder")
+        XCTAssertTrue(folders.element(boundBy: 1).waitForExistence(timeout: 10))
+        XCTAssertTrue(folders.element(boundBy: 0).staticTexts["Newest trip"].exists, "the newest first")
+        XCTAssertEqual(folders.element(boundBy: 0).value as? String, "Open")
+        XCTAssertEqual(folders.element(boundBy: 1).value as? String, "Folded")
+        let tripRows = app.tables["tripsList"].cells.matching(identifier: "trackRow")
+        XCTAssertTrue(waitFor(tripRows, count: 1), "the Trip's one row")
+
+        app.tabBars.buttons["tabTracks"].tap()
+        XCTAssertTrue(app.tables["tripsList"].waitForNonExistence(timeout: 5), "the Trip closed")
+        XCTAssertEqual(app.buttons["panelHandle"].label, "Expand the panel", "the sheet folded")
+        app.buttons["panelHandle"].tap()
+        // More rows than the Trip holds: the area's list, not the Trip's.
+        let areaRows = app.tables["trackList"].cells.matching(identifier: "trackRow")
+        let more = NSPredicate(format: "count > 1")
+        XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: more, object: areaRows)], timeout: 10), .completed, "the area's rows")
+    }
+
+    /// The sheet's content ends where the screen does at its resting height, after a rotation too:
+    /// the open Trip's totals show above the tab bar, the sheet not dragged.
+    @MainActor
+    func testTheOpenTripsTotalsStayOnScreenAfterARotation() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
+        try account.trip("Rotation trip", tracks: Array(account.ids.prefix(1)))
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        app.tabBars.buttons["tabTrips"].tap()
+        let stats = app.staticTexts["tripStats"]
+        func onScreen() -> Bool {
+            stats.exists && stats.isHittable && stats.frame.minY < app.tabBars.firstMatch.frame.minY
+        }
+        XCTAssertTrue(stats.waitForExistence(timeout: 10))
+        XCTAssertTrue(onScreen(), "the totals on screen")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+        sleep(1)
+        XCUIDevice.shared.orientation = .portrait
+        // Read once the window is portrait again, so the frames are the new layout's.
+        let window = app.windows.firstMatch
+        let portrait = NSPredicate { _, _ in window.frame.height > window.frame.width }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: portrait, object: nil)], timeout: 5), .completed)
+        let settled = NSPredicate { _, _ in onScreen() }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: settled, object: nil)], timeout: 10), .completed, "the totals on screen after a rotation")
+        keep("Trip after a rotation")
+    }
+
+    /// Whether query holds count elements within ten seconds.
+    private func waitFor(_ query: XCUIElementQuery, count: Int) -> Bool {
+        let holds = NSPredicate(format: "count == %d", count)
+        return XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: holds, object: query)], timeout: 10) == .completed
+    }
+
     private func keep(_ name: String) {
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = name
