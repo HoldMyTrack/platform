@@ -1,14 +1,12 @@
 package dev.holdmytrack.android.panel
 
 import android.annotation.SuppressLint
-import android.content.res.ColorStateList
 import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.appcompat.widget.TooltipCompat
@@ -112,9 +110,6 @@ class TracksPanel(
     /** The toolbar (`include_track_actions`): what it acts on, then the actions over it, Download
      *  and Delete in its ⋯ menu ([SelectionMoreMenu]). */
     private val actions: View = sheet.findViewById(R.id.track_actions)
-    private val actionsTarget: View = sheet.findViewById(R.id.actions_target)
-    private val actionsTile: ImageView = sheet.findViewById(R.id.actions_tile)
-    private val actionsTargetText: TextView = sheet.findViewById(R.id.actions_target_text)
     private val checkAll: MaterialCheckBox = sheet.findViewById(R.id.panel_check_all)
     private val selectMenu: ImageButton = sheet.findViewById(R.id.panel_select_menu)
     private val visibility: ImageButton = sheet.findViewById(R.id.panel_visibility)
@@ -698,25 +693,9 @@ class TracksPanel(
         }
     }
 
-    /** The toolbar at the head while [showsActions], naming its target ([ToolbarRules.head]) as
-     *  its row does: the type's tile and the distance, or the checked ✓ with the count and total.
-     *  The full name ([targetSummary]) is the tooltip and what a screen reader says. */
+    /** The toolbar at the head while [showsActions]. */
     private fun renderActions() {
         actions.visibility = if (showsActions) View.VISIBLE else View.GONE
-        val targets = state.targets
-        if (!showsActions) return
-        val head = ToolbarRules.head(targets, checked = state.checked.isNotEmpty())
-        val checked = head.type == null
-        actionsTile.setImageResource(head.type?.let(::typeIcon) ?: R.drawable.ic_check)
-        actionsTile.backgroundTintList = if (checked) ColorStateList.valueOf(context.getColor(R.color.hmt_accent)) else null
-        actionsTile.imageTintList = ColorStateList.valueOf(context.getColor(if (checked) R.color.hmt_on_accent else R.color.hmt_ink_secondary))
-        actionsTargetText.text = when {
-            checked -> listOfNotNull(head.count.toString(), head.meters?.let { PanelFormat.totalDistance(res, it) }).joinToString(" · ")
-            else -> head.meters?.let { PanelFormat.distance(res, it) }.orEmpty()
-        }
-        val label = targetSummary(targets)
-        actionsTarget.contentDescription = label
-        TooltipCompat.setTooltipText(actionsTarget, label)
     }
 
     private fun describe(button: View, text: String, enabled: Boolean) {

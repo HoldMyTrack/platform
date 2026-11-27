@@ -37,7 +37,7 @@ final class PanelTests: XCTestCase {
         // The tile checks the focused row: its ⋯ has Download on and Delete off for the demo.
         app.buttons["panelHandle"].tap()
         rows.element(boundBy: 0).buttons["rowTile"].tap()
-        XCTAssertTrue(app.staticTexts["actionsTarget"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["trackActions"].waitForExistence(timeout: 5))
         app.buttons["barMore"].tap()
         XCTAssertTrue(app.buttons["moreDownload"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["moreDownload"].isEnabled)

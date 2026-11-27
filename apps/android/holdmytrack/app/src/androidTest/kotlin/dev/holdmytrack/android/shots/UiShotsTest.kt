@@ -65,7 +65,7 @@ class UiShotsTest {
             half()
             // The focused row's tile: it alone is checked.
             need(id("track_tile_target")).click()
-            need(id("actions_target")); settle()
+            need(id("track_actions")); settle()
             shot("tracks-checked")
             // Back unchecks every row.
             device.pressBack(); settle()

@@ -23,16 +23,6 @@ struct PanelTests {
         #expect(use.edit == .demo && use.addToTrip == .demo && use.delete == .demo)
     }
 
-    @Test func theHeadNamesOneTrackByTypeAndDistanceAndAGroupByCountAndTotal() {
-        let ride = Track(id: "a", startedAt: "2026-10-11T09:39:00Z", trackType: "cycling", distanceMeters: 10300)
-        let walk = Track(id: "b", startedAt: "2026-10-11T09:39:00Z", trackType: "walking", distanceMeters: 2000)
-        let hidden = Track(id: "c", startedAt: "2026-10-11T09:39:00Z", trackType: "walking")
-        #expect(ToolbarRules.head([ride], checked: false) == .init(type: "cycling", count: 1, meters: 10300))
-        #expect(ToolbarRules.head([hidden], checked: false) == .init(type: "walking", count: 1, meters: nil))
-        #expect(ToolbarRules.head([ride], checked: true) == .init(type: nil, count: 1, meters: 10300))
-        #expect(ToolbarRules.head([ride, walk], checked: true) == .init(type: nil, count: 2, meters: 12300))
-    }
-
     @Test func aPendingTargetBlocksDeleteAlone() {
         let use = ToolbarRules.actions(targets: 3, anyPending: true, demo: false)
         #expect(use.delete == .pending && !use.delete.enabled)

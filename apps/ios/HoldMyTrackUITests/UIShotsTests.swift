@@ -37,7 +37,7 @@ final class UIShotsTests: XCTestCase {
             if !handle.isHittable || handle.label == "Expand the panel" { half(app) }
             // The focused row's tile: it alone is checked.
             row.buttons["rowTile"].tap()
-            _ = app.staticTexts["actionsTarget"].waitForExistence(timeout: 5)
+            _ = app.otherElements["trackActions"].waitForExistence(timeout: 5)
             settle()
             shot("tracks-checked")
             if app.buttons["selectMenu"].exists { PanelTests.uncheckAll(app) }
