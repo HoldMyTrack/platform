@@ -132,8 +132,13 @@ object PickerSheet {
             adapter.busy = value to send.busy
             note = null
             render()
+            // Held open until the request answers, so its outcome is never lost to a swipe or Back.
+            dialog.setCancelable(false)
+            dialog.behavior.isDraggable = false
             send.run(value) { failure ->
                 if (!dialog.isShowing) return@run
+                dialog.setCancelable(true)
+                dialog.behavior.isDraggable = true
                 adapter.busy = null
                 if (failure == null) {
                     dialog.dismiss()

@@ -29,13 +29,15 @@ final class PanelTests: XCTestCase {
         // Info: the server's lines, and the legend of the bands the map draws.
         app.buttons["barInfo"].tap()
         XCTAssertTrue(app.otherElements["trackInfo"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Moving time"].waitForExistence(timeout: 10), "the server's lines")
+        // Each line is one element to VoiceOver, its label and value together.
+        let moving = app.otherElements["trackInfo"].otherElements.matching(NSPredicate(format: "label BEGINSWITH 'Moving time, '")).firstMatch
+        XCTAssertTrue(moving.waitForExistence(timeout: 10), "the server's lines")
         XCTAssertTrue(app.otherElements["infoBands"].exists)
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.otherElements["trackInfo"].waitForNonExistence(timeout: 5))
 
         // The tile checks the focused row: its ⋯ has Download on and Delete off for the demo.
-        app.buttons["panelHandle"].tap()
+        Self.showRows(app, rows)
         rows.element(boundBy: 0).buttons["rowTile"].tap()
         XCTAssertTrue(app.otherElements["trackActions"].waitForExistence(timeout: 5))
         app.buttons["barMore"].tap()
@@ -98,7 +100,7 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Renamed by iOS"].waitForExistence(timeout: 15))
 
         // Two checked: Edit greys out Name and Description, and says why.
-        app.buttons["panelHandle"].tap()
+        Self.showRows(app, rows)
         rows.element(boundBy: 0).buttons["rowTile"].tap()
         rows.element(boundBy: 1).buttons["rowTile"].tap()
         app.buttons["barEdit"].tap()
@@ -123,7 +125,7 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
         app.alerts.buttons.element(boundBy: 1).tap()
         XCTAssertTrue(app.otherElements["trackActions"].waitForNonExistence(timeout: 15), "the toolbar goes with its target")
-        app.buttons["panelHandle"].tap()
+        Self.showRows(app, rows)
         let fewer = NSPredicate(format: "count == %d", listed - 1)
         XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: fewer, object: rows)], timeout: 15), .completed)
     }
@@ -268,6 +270,13 @@ final class PanelTests: XCTestCase {
         shot.name = name
         shot.lifetime = .keepAlways
         add(shot)
+    }
+
+    /// The sheet opened to its rows if it's folded. A row's tap leaves it where it was
+    /// (SheetRules.afterRowTap), so a handle tap could fold it instead.
+    static func showRows(_ app: XCUIApplication, _ rows: XCUIElementQuery) {
+        if !rows.element(boundBy: 0).isHittable { app.buttons["panelHandle"].tap() }
+        XCTAssertTrue(rows.element(boundBy: 0).waitForExistence(timeout: 5))
     }
 
     /// The master checkbox's menu: None, which ends selecting.

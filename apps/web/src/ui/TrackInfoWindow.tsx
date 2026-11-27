@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { getTrackInfo, type TrackInfo } from '../api.ts';
 import { t } from '../i18n/index.ts';
+import { infoReadDelay } from '../map/selection.ts';
 import { useWindowFocus } from './useWindowFocus.ts';
-
-/** How long a changed target waits, with no further change, before Info reads it. */
-const FOLLOW_DELAY_MS = 400;
 
 interface TrackInfoWindowProps {
   /** The toolbar's target: Info follows it while open. */
@@ -28,14 +26,14 @@ export function TrackInfoWindow({ trackIds, bandColors, onClose }: TrackInfoWind
   const key = trackIds.join(',');
   useWindowFocus(windowRef);
 
-  // The first read goes at once. A target that changes while Info is open waits for the clicks to
-  // pause, so checking rows one by one doesn't spend the account's hourly Info limit
-  // (services/server/internal/httpapi/rate_limits.go): a request the client drops still counts.
-  const opened = useRef(false);
+  // The target last read: set once a read starts, so React's dev-only second run of the effect on
+  // mount still reads at once (infoReadDelay).
+  const readKey = useRef<string | null>(null);
   useEffect(() => {
     const abort = new AbortController();
     const timer = setTimeout(
       () => {
+        readKey.current = key;
         getTrackInfo(key.split(','), abort.signal).then(
           (info) => setLoaded({ key, info }),
           (err: unknown) => {
@@ -43,9 +41,8 @@ export function TrackInfoWindow({ trackIds, bandColors, onClose }: TrackInfoWind
           },
         );
       },
-      opened.current ? FOLLOW_DELAY_MS : 0,
+      infoReadDelay(readKey.current),
     );
-    opened.current = true;
     return () => {
       clearTimeout(timer);
       abort.abort();
