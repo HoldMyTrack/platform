@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.annotation.StringRes
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -230,16 +231,18 @@ class SyncTab(
         similarSheet?.dismiss()
         similarSheet = null
         destroy()
-        SyncProgress.removeListener(progressListener)
-        RecordingSends.removeListener(recordingsListener)
         pause()
         onCandidates(emptyList(), null)
     }
 
     /** The map's view is going, or the tab: Delete's question too, which would go with its window
-     *  undismissed, and its recording stay held. */
+     *  undismissed, and its recording stay held. The listeners go with them: [RecordingSends]
+     *  outlives the view, and one left on would read the store into a view that's gone. */
     fun destroy() {
         deleteDialog?.dismiss()
+        showing = false
+        SyncProgress.removeListener(progressListener)
+        RecordingSends.removeListener(recordingsListener)
     }
 
     /** Back on screen — from Health Connect access, a recording's Edit, or the app itself: what's kept
@@ -563,8 +566,7 @@ class SyncTab(
         hidden = store.all()
         render()
         onWaitingChanged()
-        Snackbar.make(list, if (wasHidden) R.string.sync_unhidden else R.string.sync_hidden, Snackbar.LENGTH_LONG)
-            .apply { if (bar.visibility == View.VISIBLE) anchorView = bar }
+        snackbar(if (wasHidden) R.string.sync_unhidden else R.string.sync_hidden)
             .setAction(R.string.sync_undo) {
                 val again = hiddenStore()
                 if (wasHidden) again.hide(key) else again.unhide(key)
@@ -574,6 +576,13 @@ class SyncTab(
             }
             .show()
     }
+
+    /** A Snackbar over the whole screen, above the Sync bar or the bottom bar, whichever shows.
+     *  One made from the list sits under the sheet, which hides it and takes the tap on Undo. */
+    private fun snackbar(@StringRes text: Int): Snackbar =
+        Snackbar.make(activity.findViewById(android.R.id.content), text, Snackbar.LENGTH_LONG).apply {
+            anchorView = if (bar.isVisible) bar else activity.findViewById<View>(R.id.bottom_bar)?.takeIf { it.isVisible }
+        }
 
     private fun confirmDelete(candidate: Candidate) {
         // A double tap: one question, so closing it is closing the hold.
@@ -590,9 +599,7 @@ class SyncTab(
                     val refusal = RecordingSends.refusal(RecordingSends.deletion(candidate.key, stored))
                     if (refusal != null) {
                         render()
-                        Snackbar.make(list, refusal, Snackbar.LENGTH_LONG)
-                            .apply { if (bar.isVisible) anchorView = bar }
-                            .show()
+                        snackbar(refusal).show()
                         return@launch
                     }
                     store.delete(candidate.externalId)

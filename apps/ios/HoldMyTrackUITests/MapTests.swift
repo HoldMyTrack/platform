@@ -75,6 +75,53 @@ final class MapTests: XCTestCase {
         XCTAssertEqual(places.label, before)
     }
 
+    /// The Layers menu: each pick counts on the button, Show layers hides the picks and keeps
+    /// them, a pick while it's off turns it back on, and the picks survive a relaunch. They're
+    /// the phone's, not the account's, so the test puts back Roads alone, which a new install has.
+    @MainActor
+    func testTheLayersMenuCountsAndKeepsItsPicks() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base, samples: ["west-side.gpx"])
+        defer { account.delete() }
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        let layers = app.buttons["layers"]
+        let show = app.switches["showLayers"]
+        defer { app.setLayers(roads: true, paths: [], show: true) }
+        app.setLayers(roads: true, paths: [], show: true)
+        XCTAssertEqual(layers.label, "Layers, 1", "Roads")
+
+        app.openLayers()
+        app.buttons["Bike paths"].tap()
+        XCTAssertTrue(app.buttons["Bike paths"].isSelected)
+        XCTAssertEqual(layers.label, "Layers, 2", "Roads and Bike paths")
+        show.tap()
+        XCTAssertEqual(show.value as? String, "0")
+        XCTAssertEqual(layers.label, "Layers, 2", "hidden, the picks kept")
+        XCTAssertTrue(app.buttons["Bike paths"].isSelected)
+        app.buttons["Shared paths"].tap()
+        XCTAssertEqual(show.value as? String, "1", "a pick shows the layers again")
+        XCTAssertEqual(layers.label, "Layers, 3")
+        app.closeMenu()
+
+        app.terminate()
+        app.launchArguments = ["-hmtTourSeen"]
+        app.launch()
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        let kept = NSPredicate(format: "label == 'Layers, 3'")
+        XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: kept, object: layers)], timeout: 10), .completed, "kept across a relaunch")
+
+        // With nothing picked, Show layers has nothing to show and can't be changed.
+        app.setLayers(roads: false, paths: [], show: true)
+        XCTAssertEqual(layers.label, "Layers")
+        app.openLayers()
+        XCTAssertFalse(show.isEnabled)
+        app.closeMenu()
+    }
+
     /// An account with nothing on the map is pointed to Sync, as on Android: the notice's Sync
     /// opens the Sync tab.
     @MainActor
@@ -160,5 +207,33 @@ extension XCUIApplication {
         // The menu stays open for more picks, and closes on a tap outside it.
         otherElements["map"].coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.6)).tap()
         XCTAssertTrue(item.waitForNonExistence(timeout: 5))
+    }
+
+    /// The Layers menu opened, tapped again until it is: a tap during the map's first load is lost.
+    func openLayers() {
+        let roads = buttons["Roads"]
+        for _ in 0..<5 where !roads.exists {
+            buttons["layers"].tap()
+            _ = roads.waitForExistence(timeout: 2)
+        }
+        XCTAssertTrue(roads.exists, "the Layers menu opened")
+    }
+
+    /// An open menu closed by a tap on the map beside it.
+    func closeMenu() {
+        otherElements["map"].coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.6)).tap()
+        XCTAssertTrue(buttons["Roads"].waitForNonExistence(timeout: 5))
+    }
+
+    /// The Layers picks set through the menu: Roads, the named paths and Show layers.
+    func setLayers(roads: Bool, paths: Set<String>, show: Bool) {
+        openLayers()
+        if buttons["Roads"].isSelected != roads { buttons["Roads"].tap() }
+        for path in ["Bike paths", "Shared paths", "Mountain bike trails"] where buttons[path].isSelected != paths.contains(path) {
+            buttons[path].tap()
+        }
+        let toggle = switches["showLayers"]
+        if toggle.isEnabled, (toggle.value as? String == "1") != show { toggle.tap() }
+        closeMenu()
     }
 }

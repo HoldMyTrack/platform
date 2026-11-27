@@ -379,6 +379,103 @@ final class PanelTests: XCTestCase {
         keep("Trip after a rotation")
     }
 
+    /// Root docs/SPEC.md FR-5.2–FR-5.3: Type and Distance narrow the list, and Reset clears both.
+    @MainActor
+    func testTheTypeAndDistanceFiltersNarrowTheList() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        app.buttons["panelHandle"].tap()
+        let rows = app.tables["trackList"].cells.matching(identifier: "trackRow")
+        XCTAssertTrue(rows.element(boundBy: 1).waitForExistence(timeout: 10))
+        // The opening view's list, once it has settled.
+        sleep(2)
+        let listed = rows.count
+
+        // Type: Mill Creek Falls is the one Cycling track.
+        let type = app.buttons["typeFilter"]
+        type.tap()
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Cycling, '")).firstMatch.tap()
+        XCTAssertTrue(waitFor(rows, count: listed - 1), "Cycling off the list")
+        XCTAssertEqual(type.value as? String, "Filtered")
+        app.buttons["resetFilters"].tap()
+        XCTAssertTrue(waitFor(rows, count: listed), "Reset brings it back")
+        XCTAssertEqual(type.value as? String, "All types")
+
+        // Distance: the shortest end dragged to 3 mi of the slider's 1 to 4 leaves the 3.6 mi
+        // ride and drops the shorter Evening Loop.
+        app.buttons["distanceFilter"].tap()
+        let range = app.otherElements["distanceRange"]
+        XCTAssertTrue(range.waitForExistence(timeout: 5))
+        let shortest = range.descendants(matching: .any)["Shortest"]
+        let longest = range.descendants(matching: .any)["Longest"]
+        // The knobs sit on the track's ends, 1 and 4 mi: 3 mi is a third of the way back from 4.
+        let step = (longest.frame.midX - shortest.frame.midX) / 3
+        let from = shortest.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        from.press(forDuration: 0.2, thenDragTo: from.withOffset(CGVector(dx: 2 * step, dy: 0)))
+        XCTAssertEqual(shortest.value as? String, "3 mi")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        XCTAssertTrue(range.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(waitFor(rows, count: 1), "the 3.6 mi ride alone")
+        app.buttons["resetFilters"].tap()
+        XCTAssertTrue(waitFor(rows, count: listed), "Reset clears Distance too")
+    }
+
+    /// Add to trip's sheet adds the checked tracks to a Trip in one tap, or to a new one named
+    /// in its own sheet, which the Trips tab then opens.
+    @MainActor
+    func testTracksAreAddedToATripOrANewOneFromAddToTrip() throws {
+        let base = try LaunchTests.requireDevStack(self)
+        let account = try TestAccount(base: base)
+        defer { account.delete() }
+        try account.trip("Lakeside", tracks: [])
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
+        app.launch()
+        account.signIn(app)
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        app.buttons["panelHandle"].tap()
+        let rows = app.tables["trackList"].cells.matching(identifier: "trackRow")
+        XCTAssertTrue(rows.element(boundBy: 1).waitForExistence(timeout: 10))
+
+        // Two checked, into Lakeside.
+        rows.element(boundBy: 0).buttons["rowTile"].tap()
+        rows.element(boundBy: 1).buttons["rowTile"].tap()
+        app.buttons["barAddToTrip"].tap()
+        let picker = app.otherElements["tripPicker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        let lakeside = app.cells.matching(identifier: "tripPickerRow").containing(NSPredicate(format: "label == 'Lakeside'")).firstMatch
+        XCTAssertTrue(lakeside.waitForExistence(timeout: 10))
+        lakeside.tap()
+        XCTAssertTrue(picker.waitForNonExistence(timeout: 10), "the sheet closes once added")
+        XCTAssertTrue(app.staticTexts["toast"].waitForExistence(timeout: 5), "the confirmation")
+        XCTAssertEqual(account.trips()["Lakeside"]?.count, 2, "both in Lakeside")
+
+        // One, into a new Trip: the Trips tab opens it.
+        Self.uncheckAll(app)
+        Self.showRows(app, rows)
+        rows.element(boundBy: 0).buttons["rowTile"].tap()
+        app.buttons["barAddToTrip"].tap()
+        let new = app.cells["tripPickerNew"]
+        XCTAssertTrue(new.waitForExistence(timeout: 10))
+        new.tap()
+        let name = app.textFields["tripName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.tap()
+        name.typeText("Ridge weekend")
+        app.buttons["tripSave"].tap()
+        XCTAssertTrue(name.waitForNonExistence(timeout: 10))
+        let folder = app.cells.matching(NSPredicate(format: "identifier == 'tripFolder' AND value == 'Open'")).firstMatch
+        XCTAssertTrue(folder.waitForExistence(timeout: 10), "the new Trip open on the Trips tab")
+        XCTAssertTrue(folder.staticTexts["Ridge weekend"].exists)
+        XCTAssertEqual(account.trips()["Ridge weekend"]?.count, 1)
+    }
+
     /// Whether query holds count elements within ten seconds.
     private func waitFor(_ query: XCUIElementQuery, count: Int) -> Bool {
         let holds = NSPredicate(format: "count == %d", count)
