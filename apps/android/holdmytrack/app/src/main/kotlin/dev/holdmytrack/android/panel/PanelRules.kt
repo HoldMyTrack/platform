@@ -11,6 +11,14 @@ object PanelRules {
     fun infoShowsBands(checked: Set<String>, focused: String?, bandsDrawn: Boolean): Boolean =
         bandsDrawn && focused != null && targetIds(checked, focused) == setOf(focused)
 
+    enum class SummaryKind { CHECKED, FOCUSED }
+
+    /** How the foot line names the toolbar's target (`docs/SPEC.md` FR-5.8's words): the Checked
+     *  group, or the Focused track when nothing is checked, so a track that's only focused never
+     *  reads as checked. */
+    fun targetSummaryKind(checked: Int, targets: Int): SummaryKind =
+        if (checked == 0 && targets > 0) SummaryKind.FOCUSED else SummaryKind.CHECKED
+
     /** What the toolbar acts on: the checked group whenever anything is checked, else the
      *  selected row alone, else nothing. Checked wins so an action never reaches past what was ticked. */
     fun targetIds(checked: Set<String>, focused: String?): Set<String> = when {

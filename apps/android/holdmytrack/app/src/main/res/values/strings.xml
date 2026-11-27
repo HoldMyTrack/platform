@@ -434,6 +434,7 @@
     <string name="panel_no_target">Tap a track, or check some, first</string>
     <string name="panel_target_one">“%1$s”</string>
     <string name="panel_footer">%1$d checked · %2$s</string>
+    <string name="panel_footer_focused">“%1$s” · %2$s</string>
     <string name="panel_reset">Reset</string>
     <string name="panel_info_target">Info for %1$s</string>
     <string name="info_title">Info</string>

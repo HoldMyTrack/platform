@@ -218,6 +218,7 @@ class ClientRulesTest {
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
         "masterCheckboxTap" to { input -> JsonPrimitive(if (ToolbarRules.masterTap(input.int("listed"), input.int("checked")) == ToolbarRules.MasterTap.UNCHECK_ALL) "uncheckAll" else "checkAll") },
+        "targetSummaryKind" to { input -> JsonPrimitive(PanelRules.targetSummaryKind(input.int("checked"), input.int("targets")).name.lowercase()) },
         "infoShowsBands" to { input -> JsonPrimitive(PanelRules.infoShowsBands(input.strings("checked").toSet(), input.string("focused"), input.bool("bandsDrawn"))) },
         "attachmentName" to { input -> JsonPrimitive(AttachmentName.of(input.string("header"))) },
         "libraryPageQuery" to { input ->

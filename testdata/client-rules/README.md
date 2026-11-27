@@ -42,6 +42,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `panelState` | `tracks` (`{ id, trackType, distanceMeters }`), `state` (`checked`, `focused`, `hidden`, `excludedTypes`, `distanceFilter`), `event` | the state after it |
 | `boldTracks` | `checked` (ids), `focused` | ids |
 | `masterCheckboxTap` | `listed`, `checked` (counts: the listed rows, and how many of them are checked) | `"checkAll"` or `"uncheckAll"` |
+| `targetSummaryKind` | `checked`, `targets` (counts) | `"checked"` or `"focused"` |
 | `infoShowsBands` | `checked` (ids), `focused`, `bandsDrawn` | boolean |
 | `targetVisibility` | `hidden`, `target` (ids) | hidden ids |
 | `photoScope` | `mode` (`normal`, `fog`), `editWindowIds`, `focused`, `tripId` | `{ track }`, `{ trip }` or `null` |

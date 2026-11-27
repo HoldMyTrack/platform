@@ -128,6 +128,10 @@ struct PanelFormat {
     }
 
     /// The Tracks tab's footer: "2 checked · 12.4 km", the toolbar's target and its distance.
+    func focusedFooter(label: String, meters: Double) -> String {
+        String(localized: "panel.footerFocused", defaultValue: "“\(label)” · \(totalDistance(meters))", comment: "The Tracks tab's footer for the focused track alone: its name, and its distance.")
+    }
+
     func checkedFooter(count: Int, meters: Double) -> String {
         String(localized: "panel.footer", defaultValue: "\(self.count(count)) checked · \(totalDistance(meters))", comment: "The Tracks tab's footer: how many tracks the toolbar acts on, and their distance.")
     }
