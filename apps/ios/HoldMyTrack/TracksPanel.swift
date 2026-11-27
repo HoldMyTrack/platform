@@ -279,7 +279,9 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let listed = state.listed
         let all = ToolbarRules.checkAll(listed: listed.count, checked: listed.filter { state.checked.contains($0.id) }.count)
         var config = checkAllButton.configuration ?? .plain()
-        config.image = UIImage(resource: all == .all ? .check : all == .some ? .square : .square)
+        // Partly checked draws a dash, as Android's and the web's boxes do: a tap then unchecks them
+        // all (ToolbarRules.masterTap), which an empty box wouldn't suggest.
+        config.image = UIImage(resource: all == .all ? .check : all == .some ? .squareMinus : .square)
         config.baseForegroundColor = UIColor(resource: all == .none ? .inkSecondary : .accent)
         checkAllButton.configuration = config
         let clears = ToolbarRules.masterTap(listed: listed.count, checked: listed.filter { state.checked.contains($0.id) }.count) == .uncheckAll

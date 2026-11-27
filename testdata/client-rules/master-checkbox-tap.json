@@ -5,6 +5,7 @@
     { "name": "none checked", "input": { "listed": 3, "checked": 0 }, "expected": "checkAll" },
     { "name": "some checked", "input": { "listed": 3, "checked": 1 }, "expected": "uncheckAll" },
     { "name": "all checked", "input": { "listed": 3, "checked": 3 }, "expected": "uncheckAll" },
-    { "name": "one row, checked", "input": { "listed": 1, "checked": 1 }, "expected": "uncheckAll" }
+    { "name": "one row, checked", "input": { "listed": 1, "checked": 1 }, "expected": "uncheckAll" },
+    { "name": "nothing listed", "input": { "listed": 0, "checked": 0 }, "expected": "checkAll" }
   ]
 }
