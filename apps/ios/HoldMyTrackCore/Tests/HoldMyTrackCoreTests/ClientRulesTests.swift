@@ -247,6 +247,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["watched": .list(watched), "moved": .bool(answer.moved), "finished": .ids(answer.finished)]
     },
     "boldTracks": { input in .ids(PanelRules.boldIDs(checked: Set(input.strings("checked")), focused: input["focused"].string)) },
+    "masterCheckboxTap": { input in .string(ToolbarRules.masterTap(listed: input.int("listed"), checked: input.int("checked")) == .uncheckAll ? "uncheckAll" : "checkAll") },
     "infoShowsBands": { input in .bool(PanelRules.infoShowsBands(checked: Set(input.strings("checked")), focused: input["focused"].string, bandsDrawn: input["bandsDrawn"].bool!)) },
     "toolbarTarget": { input in .ids(PanelRules.targetIDs(checked: Set(input.strings("checked")), focused: input["focused"].string)) },
     "targetVisibility": { input in .ids(PanelRules.toggledVisibility(hidden: Set(input.strings("hidden")), target: Set(input.strings("target")))) },

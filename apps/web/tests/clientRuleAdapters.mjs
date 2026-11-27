@@ -27,7 +27,7 @@ import { distanceBandParts, distanceParts, durationParts, totalDistanceParts } f
 import { fractionAt, photoRoute, pointAt, startFraction } from '../src/ui/photoRoute.ts';
 import { clampView, fitSize, panBy, zoomAt } from '../src/ui/photoZoom.ts';
 import { trackTimeZone } from '../src/ui/timeZone.ts';
-import { boldTracks, infoShowsBands, invertedChecks, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
+import { boldTracks, infoShowsBands, invertedChecks, masterCheckboxTap, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { statsCardPlacement, statsOffered } from '../src/map/exportStats.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
 import { cameraEnd, cameraStep, cardFor, nextStep, stepChanges, tourStart } from '../src/ui/tour/tourRules.ts';
@@ -97,6 +97,7 @@ export const rules = {
     return { started: change.started, finished: change.finished, left: sorted(change.left), landed: sorted(change.landed), awaiting: sorted(change.awaiting), pending: sorted(change.pending) };
   },
   boldTracks: ({ checked, focused }) => boldTracks(new Set(checked), focused ?? null),
+  masterCheckboxTap: ({ listed, checked }) => masterCheckboxTap(listed, checked),
   infoShowsBands: ({ checked, focused, bandsDrawn }) => infoShowsBands(toolbarTarget(new Set(checked), focused ?? null), focused ?? null, bandsDrawn),
   toolbarTarget: ({ checked, focused }) => sorted(toolbarTarget(new Set(checked), focused ?? null)),
   statsOffered: ({ checked, tripId }) => statsOffered(new Set(checked), tripId ?? null),

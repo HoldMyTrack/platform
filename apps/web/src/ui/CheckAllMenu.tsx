@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { t } from '../i18n/index.ts';
+import { masterCheckboxTap } from '../map/selection.ts';
 import { useDismiss } from './useDismiss.ts';
 
 interface CheckAllMenuProps {
@@ -26,6 +27,7 @@ export function CheckAllMenu({ total, checkedCount, onAll, onNone, onInvert }: C
   const boxRef = useRef<HTMLInputElement>(null);
   const allChecked = total > 0 && checkedCount === total;
   const someChecked = checkedCount > 0 && !allChecked;
+  const clears = masterCheckboxTap(total, checkedCount) === 'uncheckAll';
   useEffect(() => {
     if (boxRef.current) boxRef.current.indeterminate = someChecked;
   }, [someChecked]);
@@ -38,9 +40,9 @@ export function CheckAllMenu({ total, checkedCount, onAll, onNone, onInvert }: C
         className="tracks-panel__checkbox"
         checked={allChecked}
         disabled={total === 0}
-        aria-label={allChecked ? t('tracks.uncheck_all_label') : t('tracks.check_all_label')}
-        title={allChecked ? t('tracks.uncheck_all') : t('tracks.check_all')}
-        onChange={() => (allChecked ? onNone() : onAll())}
+        aria-label={clears ? t('tracks.uncheck_all_label') : t('tracks.check_all_label')}
+        title={clears ? t('tracks.uncheck_all') : t('tracks.check_all')}
+        onChange={() => (clears ? onNone() : onAll())}
       />
       <div className="select-menu" ref={menuRef}>
         <button
