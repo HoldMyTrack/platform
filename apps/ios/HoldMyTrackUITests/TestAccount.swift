@@ -92,9 +92,9 @@ final class TestAccount {
         (try? call("GET", "/v2/private-locations", nil)) as? [[String: Any]] ?? []
     }
 
-    /// A Trip named name holding every uploaded track.
-    func trip(_ name: String) throws {
-        try call("POST", "/v2/trips", ["name": name, "description": "", "track_ids": ids])
+    /// A Trip named name holding the tracks, every uploaded one unless given.
+    func trip(_ name: String, tracks: [String]? = nil) throws {
+        try call("POST", "/v2/trips", ["name": name, "description": "", "track_ids": tracks ?? ids])
     }
 
     func delete() {
