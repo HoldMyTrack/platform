@@ -15,8 +15,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.Configurator
 import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.Configurator
+import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
@@ -38,6 +39,8 @@ import org.junit.runners.MethodSorters
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Pattern
 import kotlin.concurrent.thread
 
 /**
@@ -48,7 +51,7 @@ import kotlin.concurrent.thread
  * reaching the Sync sheet, the keyboard covering the map without shortening it, and a Trip
  * renamed and sent from its sheets, the Private location editor keeping Save above the keyboard,
  * the Type picker adding a type from its sheet, and the open Trip's totals on screen after a
- * rotation. One fresh
+ * rotation, and the notification's Stop asking first. One fresh
  * account ([TestAccount]) serves the class, in method-name order.
  */
 @RunWith(AndroidJUnit4::class)
@@ -270,34 +273,10 @@ class MapFlowsTest {
         signIn()
         // Its own name each run, so a walk an earlier run left can't pass for this one.
         val walk = "$WALK ${System.currentTimeMillis() % 100_000}"
-        val locations = context.getSystemService(LocationManager::class.java)
-        locations.addTestProvider(
-            LocationManager.GPS_PROVIDER, false, false, false, false, true, true, true,
-            ProviderProperties.POWER_USAGE_LOW, ProviderProperties.ACCURACY_FINE,
-        )
-        locations.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
-        var walking = true
-        // A walk north from Cleveland's Public Square, a fix a second, ~11 m apart.
-        val walker = thread {
-            var step = 0
-            while (walking) {
-                val fix = Location(LocationManager.GPS_PROVIDER).apply {
-                    latitude = 41.4993 + step * 0.0001
-                    longitude = -81.6944
-                    accuracy = 5f
-                    speed = 1.4f
-                    time = System.currentTimeMillis()
-                    elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-                }
-                runCatching { locations.setTestProviderLocation(LocationManager.GPS_PROVIDER, fix) }
-                step++
-                Thread.sleep(1_000)
-            }
-        }
-        try {
+        walking {
             need(id("record_button")).click()
             need(id("recording_status"))
-            // A recording keeps only past a minute of moving time (`RecordingService.MIN_DURATION_MS`).
+            // A recording keeps only past a minute of moving time (`RecordingRules.MIN_DURATION_MS`).
             Thread.sleep(RECORDING_MS)
             need(id("recording_status_stop")).click()
             need(By.res("android", "button1")).click()
@@ -307,10 +286,6 @@ class MapFlowsTest {
             retrying { need(id("recording_name")).text = walk }
             retrying { need(id("recording_save")).click() }
             assertTrue("the Save screen closed", device.wait(Until.gone(id("recording_save")), TIMEOUT_MS))
-        } finally {
-            walking = false
-            walker.join()
-            runCatching { locations.removeTestProvider(LocationManager.GPS_PROVIDER) }
         }
         need(id("panel_handle"))
         // Save sends it: once the server has processed it, Library lists it. Library reads its
@@ -332,6 +307,85 @@ class MapFlowsTest {
         retrying { need(id("library_delete")).click() }
         retrying { need(By.res("android", "button1")).click() }
         assertTrue("the walk was deleted", device.wait(Until.gone(row), TIMEOUT_MS))
+    }
+
+    /** The notification's Stop asks first in the app (`RecordingController.confirmStop`): Keep
+     *  recording keeps it, Stop ends it. Under a minute of moving time, the stopped walk is
+     *  dropped, so nothing is left to clean up. */
+    @Test
+    fun i_theNotificationsStopAsksFirst() {
+        signIn()
+        walking {
+            need(id("record_button")).click()
+            need(id("recording_status"))
+            tapNotificationStop()
+            need(By.text(context.getString(R.string.recording_stop_confirm_title)))
+            need(By.res("android", "button2")).click()
+            assertTrue("Keep recording keeps it", device.wait(Until.hasObject(id("recording_status")), SHORT_MS))
+            tapNotificationStop()
+            need(By.text(context.getString(R.string.recording_stop_confirm_title)))
+            need(By.res("android", "button1")).click()
+            assertTrue("Stop ends it", device.wait(Until.gone(id("recording_status")), TIMEOUT_MS))
+            // Past a minute of moving time, Stop keeps the walk and opens its Save screen; under
+            // it, the walk is dropped, which is what leaves nothing behind.
+            if (device.wait(Until.hasObject(id("recording_save")), SHORT_MS)) {
+                retrying { need(id("recording_discard")).click() }
+                retrying { need(By.res("android", "button1")).click() }
+                fail("the walk ran past a minute and was kept; discarded")
+            }
+        }
+    }
+
+    /** From the home screen, as a person does: the shade, then the recording notification's Stop. */
+    private fun tapNotificationStop() {
+        device.pressHome()
+        device.openNotification()
+        // Some versions show action labels in capitals.
+        val label = Pattern.compile(Pattern.quote(context.getString(R.string.recording_stop)), Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE)
+        val stop = By.pkg("com.android.systemui").text(label)
+        if (!device.wait(Until.hasObject(stop), SHORT_MS)) {
+            // Collapsed under other notifications: its actions show once it's expanded.
+            val title = need(By.pkg("com.android.systemui").text(context.getString(R.string.recording_notification_title)))
+            title.swipe(Direction.DOWN, 1f)
+        }
+        // The shade slides down, and a tap before it has settled is lost; the notification is
+        // posted again every few seconds, replacing the view.
+        retrying { still(stop).click() }
+    }
+
+    /** Runs [block] while the GPS provider walks north from Cleveland's Public Square, a fix a
+     *  second, ~11 m apart: an emulator recording needs a moving location, or Stop drops it. */
+    private fun walking(block: () -> Unit) {
+        val locations = context.getSystemService(LocationManager::class.java)
+        locations.addTestProvider(
+            LocationManager.GPS_PROVIDER, false, false, false, false, true, true, true,
+            ProviderProperties.POWER_USAGE_LOW, ProviderProperties.ACCURACY_FINE,
+        )
+        locations.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
+        val walking = AtomicBoolean(true)
+        val walker = thread {
+            var step = 0
+            while (walking.get()) {
+                val fix = Location(LocationManager.GPS_PROVIDER).apply {
+                    latitude = 41.4993 + step * 0.0001
+                    longitude = -81.6944
+                    accuracy = 5f
+                    speed = 1.4f
+                    time = System.currentTimeMillis()
+                    elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
+                }
+                runCatching { locations.setTestProviderLocation(LocationManager.GPS_PROVIDER, fix) }
+                step++
+                Thread.sleep(1_000)
+            }
+        }
+        try {
+            block()
+        } finally {
+            walking.set(false)
+            walker.join()
+            runCatching { locations.removeTestProvider(LocationManager.GPS_PROVIDER) }
+        }
     }
 
     private fun need(selector: BySelector): UiObject2 =

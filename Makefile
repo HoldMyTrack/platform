@@ -73,9 +73,10 @@ verify: ## Headless Playwright map checks against a dev server (test profile)
 verify-build: ## Build, then run the same checks against the production bundle
 	$(TEST) sh -c "npm run build && npm run verify:build"
 
-doc-checks: ## Document citations and the writing rules a pattern can catch
+doc-checks: ## Document citations, the writing rules a pattern can catch, and the user-flow list
 	scripts/check-doc-refs.sh
 	scripts/check-doc-style.sh
+	scripts/check-user-flows.py
 
 test: test-go test-unit verify verify-build doc-checks ## Every CI test suite that needs only Docker
 
