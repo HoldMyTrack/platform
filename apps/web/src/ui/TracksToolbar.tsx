@@ -7,7 +7,6 @@ import { saveFile } from './saveFile.ts';
 import { rowLabel } from './TrackRow.tsx';
 import { AddToTripMenu } from './AddToTripMenu.tsx';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
-import { TrackInfoDialog } from './TrackInfoDialog.tsx';
 import { formatTotalDistance } from './format.ts';
 import { useUnitSystem } from './units.ts';
 import { t, tn } from '../i18n/index.ts';
@@ -29,15 +28,14 @@ interface TracksToolbarProps {
   onTripAdded: (trip: Trip) => void;
   onTracksDeleted: (ids: string[]) => void;
   onShowSelected: () => void;
-  /** Info's legend: the pace bands' colors, slowest first, while the map draws them for the
-   *  target alone (selection.ts's infoShowsBands), else null. */
-  bandColors: readonly string[] | null;
+  /** Opens Info over the target (TrackInfoWindow.tsx), which floats over the map. */
+  onInfo: () => void;
 }
 
 /**
  * The header toolbar right above the row list (TracksPanel.tsx says what it acts on): the
- * master checkbox and its ▾ menu (All, None, Invert), then Show/hide, Edit, Add to trip, Info,
- * Download and Delete over the target, and, set off by a divider, Focus on map. Each tooltip names the target
+ * master checkbox and its ▾ menu (All, None, Invert), then Show/hide and Info, which only look,
+ * Edit and Add to trip, then Download and Delete over the target, and, set off by a divider, Focus on map. Each tooltip names the target
  * ("3 checked tracks", or the focused row's own label), so which one applies is never a guess.
  */
 export function TracksToolbar({
@@ -55,11 +53,10 @@ export function TracksToolbar({
   onTripAdded,
   onTracksDeleted,
   onShowSelected,
-  bandColors,
+  onInfo,
 }: TracksToolbarProps) {
   // The toolbar's Delete is the only delete entry point, for one track or many.
   const [deletingGroup, setDeletingGroup] = useState(false);
-  const [showingInfo, setShowingInfo] = useState(false);
   // Download's request under way, and the server's refusal to show, naming the track.
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -147,6 +144,16 @@ export function TracksToolbar({
       </button>
       <button
         type="button"
+        className="tracks-panel__info"
+        disabled={!hasTarget}
+        onClick={onInfo}
+        aria-label={infoTitle}
+        title={infoTitle}
+      >
+        <Info size={16} />
+      </button>
+      <button
+        type="button"
         className="tracks-panel__edit"
         disabled={readOnly || !hasTarget}
         onClick={() => onEdit(targetTracks)}
@@ -163,16 +170,6 @@ export function TracksToolbar({
         onCreated={onTripCreated}
         onAdded={onTripAdded}
       />
-      <button
-        type="button"
-        className="tracks-panel__info"
-        disabled={!hasTarget}
-        onClick={() => setShowingInfo(true)}
-        aria-label={infoTitle}
-        title={infoTitle}
-      >
-        <Info size={16} />
-      </button>
       <button
         type="button"
         className="tracks-panel__download"
@@ -205,13 +202,6 @@ export function TracksToolbar({
         <Focus size={16} />
       </button>
     </div>
-    {showingInfo && (
-      <TrackInfoDialog
-        trackIds={targetTracks.map((a) => a.id)}
-        bandColors={bandColors}
-        onClose={() => setShowingInfo(false)}
-      />
-    )}
     {downloadError !== null && (
       <ConfirmDialog
         title={t('tracks.download_failed')}

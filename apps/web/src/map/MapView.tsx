@@ -41,6 +41,7 @@ import { useViewOnMap } from './useViewOnMap.ts';
 import type { Track } from '../api.ts';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { TracksPanel, type PanelTab } from '../ui/TracksPanel.tsx';
+import { TrackInfoWindow } from '../ui/TrackInfoWindow.tsx';
 import type { EditWindowResult } from '../ui/EditTrackWindow.tsx';
 import { MapControls } from '../ui/MapControls.tsx';
 import { PhotoPopup } from '../ui/PhotoPopup.tsx';
@@ -240,6 +241,17 @@ export function MapView({ initialPrivateLocationsOpen = false, initialTrack = nu
 
   const spots = useSpots(map, spotsShown);
   const bands = useRouteMetrics(map, focusedTrackId, routeMetricsVersion, mapHiddenIds, pendingIds);
+
+  // Info over the toolbar's listed target, following it while open; it closes with the toolbar,
+  // and gives way to the Edit window in the same corner.
+  const [infoOpen, setInfoOpen] = useState(false);
+  const infoTargetIds = useMemo(() => filteredTracks.filter((a) => toolbarTargetIds.has(a.id)).map((a) => a.id), [filteredTracks, toolbarTargetIds]);
+  const infoAvailable = mapMode === 'normal' && panelTab === 'tracks' && !editOpen && infoTargetIds.length > 0;
+  // Reset while rendering, React's pattern for state that follows a value: closed stays closed
+  // when the toolbar comes back.
+  if (infoOpen && !infoAvailable) setInfoOpen(false);
+  const openInfo = useCallback(() => setInfoOpen(true), []);
+  const closeInfo = useCallback(() => setInfoOpen(false), []);
   const exportScene = useMemo(
     () => ({ flavor, mode: mapMode, tracksQuery, listedIds, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite: satelliteShown, roads, photos: photoLayer.exportPhotos }),
     [flavor, mapMode, tracksQuery, listedIds, mapHiddenIds, boldIds, bands, paths, satelliteShown, roads, photoLayer.exportPhotos],
@@ -410,7 +422,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialTrack = nu
               onSelectAll={select.checkAll}
               onInvertSelection={select.invertChecked}
               onShowSelected={select.showTarget}
-              bandColors={infoShowsBands(toolbarTargetIds, focusedTrackId, bands !== null) ? bandLegendColors(satelliteShown) : null}
+              onInfo={openInfo}
               hiddenIds={hiddenTrackIds}
               onToggleGroupVisibility={select.toggleGroupVisibility}
               onTracksDeleted={handleTracksDeleted}
@@ -495,6 +507,16 @@ export function MapView({ initialPrivateLocationsOpen = false, initialTrack = nu
               placesOpen={tour.open.places === true}
               fogLevelOpen={tour.open.fogLevel === true}
               capped={mapMode === 'normal' && tripId === null && areaState.capped && areaTotal !== null ? { shown: tracks.length, total: areaTotal } : null}
+              info={
+                infoOpen &&
+                infoAvailable && (
+                  <TrackInfoWindow
+                    trackIds={infoTargetIds}
+                    bandColors={infoShowsBands(toolbarTargetIds, focusedTrackId, bands !== null) ? bandLegendColors(satelliteShown) : null}
+                    onClose={closeInfo}
+                  />
+                )
+              }
             />
           )}
           {map && spots.openSpot && <SpotPopup map={map} spot={spots.openSpot} capturedAt={spots.capturedAt(spots.openSpot.id)} onClose={spots.closeSpot} />}

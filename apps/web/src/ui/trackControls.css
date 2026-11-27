@@ -715,9 +715,29 @@
   background: rgb(var(--fm-accent-rgb) / 12%);
 }
 
-/* TrackInfoDialog.tsx: the server's lines as label and value, the pace bands' legend, the note. */
+/* TrackInfoWindow.tsx: the Edit window's look (.edit-route), on a line of its own under the map's
+   toggles (MapControls.tsx), which stay in use: Satellite changes the bands' colors. */
+.track-info-line {
+  flex-basis: 100%;
+}
+
+.track-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-10);
+  max-width: 360px;
+  box-sizing: border-box;
+  padding: var(--fm-space-12) var(--fm-space-16);
+  border-radius: var(--fm-radius-lg);
+  background: rgb(var(--fm-surface-rgb) / 96%);
+  box-shadow: var(--fm-shadow-md);
+  color: var(--fm-ink);
+  pointer-events: auto;
+}
+
+/* The server's lines as label and value, the pace bands' legend, the note. */
 .track-info__lines {
-  margin: 0 0 var(--fm-space-12);
+  margin: 0;
 }
 
 .track-info__line {
@@ -743,7 +763,6 @@
   display: flex;
   align-items: center;
   gap: var(--fm-space-8);
-  margin-bottom: var(--fm-space-12);
   font-size: var(--fm-text-sm);
   color: rgb(var(--fm-ink-rgb) / 60%);
 }
@@ -761,7 +780,7 @@
 }
 
 .track-info__note {
-  margin: 0 0 var(--fm-space-16);
+  margin: 0;
   font-size: var(--fm-text-sm);
   line-height: 1.5;
   color: rgb(var(--fm-ink-rgb) / 60%);

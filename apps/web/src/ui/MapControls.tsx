@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { MapMode } from '../map/mapMode.ts';
 import type { Overlays } from '../map/overlays.ts';
@@ -35,11 +36,13 @@ interface MapControlsProps {
   fogLevelOpen?: boolean;
   /** How many the area holds when the list, and so the map, was cut at its limit (docs/SPEC.md FR-5.11). */
   capped: { shown: number; total: number } | null;
+  /** Info (TrackInfoWindow.tsx), on a line of its own under the toggles and their notices. */
+  info?: ReactNode;
 }
 
 /** The controls over the map's top edge: the mode toggle with Fog's level menu, Layers, Places,
  *  Satellite, their notices, and the pills under them: places' Show in this area, and the area's cap. */
-export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, explored, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, placesOpen = false, fogLevelOpen = false, capped }: MapControlsProps) {
+export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, explored, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, placesOpen = false, fogLevelOpen = false, capped, info }: MapControlsProps) {
   return (
     <>
       <div className="map-toggles">
@@ -64,6 +67,7 @@ export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChang
             <span className="coverage-notice__pill">{t('map.coverage_updating')}</span>
           </div>
         )}
+        {info && <div className="track-info-line">{info}</div>}
       </div>
       <div className="map-area">
         {map && <ShowInArea map={map} categories={spotsShown} />}

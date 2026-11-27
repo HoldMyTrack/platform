@@ -19,7 +19,7 @@ const BAND_COLORS = ['#2b6cb0', '#38a169', '#d69e2e', '#dd6b20', '#c53030'];
 // The same steps over imagery, where the green above is lost among trees.
 const SATELLITE_BAND_COLORS = ['#4da6ff', '#3df08a', '#ffd23f', '#ff8c2e', '#ff4d4d'];
 /** The colors the map draws the bands in, which the toolbar's Info shows as their legend
- *  (TrackInfoDialog.tsx). */
+ *  (TrackInfoWindow.tsx). */
 export const bandLegendColors = (satellite: boolean): readonly string[] => (satellite ? SATELLITE_BAND_COLORS : BAND_COLORS);
 const SATELLITE_EDGE_COLOR = '#14140e';
 const OUTLINE_LAYER_ID = 'route-bands-outline';

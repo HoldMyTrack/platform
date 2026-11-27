@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The toolbar (panel/TracksPanel.renderToolbar), at the Tracks sheet's head in the summary's
      place while a track is focused or checked, so it stays in view with the sheet collapsed:
-     what it acts on, then Show/Hide, Edit, Add to trip, Info, ⋯ with Download and Delete, and
+     what it acts on, then Show/Hide, Info, Edit, Add to trip, ⋯ with Download and Delete, and
      Zoom in the accent. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -34,6 +34,12 @@
         android:src="@drawable/ic_eye_off" />
 
     <ImageButton
+        android:id="@+id/panel_info"
+        style="@style/Widget.HoldMyTrack.PanelChip"
+        android:contentDescription="@string/panel_no_target"
+        android:src="@drawable/ic_info" />
+
+    <ImageButton
         android:id="@+id/panel_edit"
         style="@style/Widget.HoldMyTrack.PanelChip"
         android:contentDescription="@string/panel_no_target"
@@ -44,12 +50,6 @@
         style="@style/Widget.HoldMyTrack.PanelChip"
         android:contentDescription="@string/panel_no_target"
         android:src="@drawable/ic_book_plus" />
-
-    <ImageButton
-        android:id="@+id/panel_info"
-        style="@style/Widget.HoldMyTrack.PanelChip"
-        android:contentDescription="@string/panel_no_target"
-        android:src="@drawable/ic_info" />
 
     <!-- Download (panel/TrackDownload, panel/DownloadRules) and Delete, in a menu
          (panel/SelectionMoreMenu): seven 48 dp controls don't fit across a phone. -->
