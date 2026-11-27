@@ -1,0 +1,149 @@
+{
+  "description": "What a person does in the apps, by feature, with the UI test that walks each flow in each app (AGENTS.md, Code and tests). A feature cites its apps/docs/SPEC.md requirement, and a flow under another one cites its own; a flow names the apps/docs/ui-states.json entries it passes through. Per app, a flow holds its tests as Class.method, a reason no UI test walks it, or null for a test not written yet. scripts/check-user-flows.py fails on a named test that doesn't exist, a UI test no flow names, or an unknown state or requirement, and lists the nulls.",
+  "features": [
+    {"id": "session", "title": "Sign in and session", "spec": "FR-1.1",
+     "flows": [
+       {"id": "no-session-opens-sign-in", "spec": "FR-1.2", "title": "With no session the app opens on Sign in", "states": ["sign-in"],
+        "android": null, "ios": ["LaunchTests.testWithNoSessionTheAppOpensOnSignIn"]},
+       {"id": "demo-sign-in-and-out", "spec": "FR-1.3", "title": "The demo signs in, and Sign out returns to Sign in", "states": ["sign-in", "tracks-collapsed"],
+        "android": null, "ios": ["LaunchTests.testTheDemoSignsInAndSignOutReturnsToSignIn"]},
+       {"id": "refused-sign-in", "title": "A refused sign-in shows the server's message", "states": ["sign-in"],
+        "android": null, "ios": ["LaunchTests.testTheServersMessageShowsAsSent"]},
+       {"id": "second-sign-in", "spec": "FR-1.2", "title": "Every sign-in opens the map on the account's tracks",
+        "android": null, "ios": ["MapReturnTests.testASecondSignInOpensOnTheTracks"]},
+       {"id": "provider-sign-in", "title": "Sign in with Google or Apple",
+        "android": "Needs a real Google account and its consent screen; checked by hand.",
+        "ios": "Needs a real Google or Apple account and its consent screen; checked by hand."},
+       {"id": "verify-email", "spec": "FR-1.4", "title": "A new account enters the emailed code",
+        "android": null, "ios": null},
+       {"id": "update-screen", "spec": "FR-1.8", "title": "A build the server refuses opens the Update screen", "states": ["update-screen"],
+        "android": null, "ios": null}
+     ]},
+    {"id": "settings", "title": "Settings and the site's pages", "spec": "FR-1.5",
+     "flows": [
+       {"id": "settings-signed-in", "title": "Settings opens signed in and closes", "states": ["settings"],
+        "android": null, "ios": ["SitePageTests.testSettingsOpensSignedInAndCloses"]},
+       {"id": "first-run-gate", "title": "A first run waits on Settings",
+        "android": null, "ios": ["SitePageTests.testTheFirstRunGatesOnSettings"]}
+     ]},
+    {"id": "privacy", "title": "Privacy", "spec": "FR-1.7",
+     "flows": [
+       {"id": "private-location-add-delete", "title": "A private location is added on the map and deleted", "states": ["privacy"],
+        "android": null, "ios": ["PrivateLocationTests.testAPrivateLocationIsAddedOnTheMapAndDeleted"]},
+       {"id": "private-location-keyboard", "title": "The private location editor keeps Save above the keyboard",
+        "android": ["MapFlowsTest.f_thePrivateLocationEditorKeepsSaveAboveTheKeyboard"], "ios": null}
+     ]},
+    {"id": "you", "title": "The You tab", "spec": "FR-2.9",
+     "flows": [
+       {"id": "you-rows", "title": "The You tab lists its rows and opens Privacy", "states": ["you", "privacy"],
+        "android": null, "ios": ["YouTests.testTheYouTabListsItsRowsAndPrivacy"]},
+       {"id": "delete-account", "title": "Delete account signs out", "states": ["sign-in"],
+        "android": null, "ios": ["YouTests.testDeleteAccountSignsOut"]}
+     ]},
+    {"id": "modes", "title": "Switch the map's mode", "spec": "FR-2.2",
+     "flows": [
+       {"id": "switch-modes", "title": "The map opens and switches between Normal and Fog", "states": ["tracks-collapsed", "fog"],
+        "android": null, "ios": ["MapTests.testTheMapOpensAndSwitchesModes"]},
+       {"id": "fog-levels", "title": "Fog's level menu locks a level, and a tap names the place", "states": ["fog-levels"],
+        "android": null, "ios": ["MapTests.testFogsLevelMenuLocksALevelAndATapNamesAPlace"]},
+       {"id": "layers", "title": "The Layers menu draws roads and paths", "states": ["layers-menu"],
+        "android": null, "ios": null}
+     ]},
+    {"id": "map-reads", "title": "The map stays current", "spec": "FR-2.7",
+     "flows": [
+       {"id": "empty-map", "title": "An empty map points to Sync",
+        "android": null, "ios": ["MapTests.testAnEmptyMapPointsToSync"]},
+       {"id": "return-reads-map", "title": "A track that arrived while the app was away is there on its return",
+        "android": null, "ios": ["MapReturnTests.testTheAppsReturnReadsTheMapAgain", "MapReturnTests.testTheAppsReturnDrawsTheNewTrack"]}
+     ]},
+    {"id": "filter", "title": "Filter the tracks", "spec": "FR-2.6",
+     "flows": [
+       {"id": "dates-keep-states", "title": "New Dates keep Checked and Hidden on the tracks still listed", "states": ["tracks-half", "tracks-checked"],
+        "android": ["MapFlowsTest.a_newDatesKeepCheckedAndHiddenOnTheTracksStillListed"], "ios": null},
+       {"id": "dates-keyboard", "title": "The keyboard covers the map without shortening it, so the checked tracks stay listed",
+        "android": ["MapFlowsTest.d_theKeyboardCoversTheMapWithoutShorteningIt"], "ios": null},
+       {"id": "type-and-distance", "spec": "FR-2.7", "title": "The Type and distance chips narrow the list", "states": ["tracks-half"],
+        "android": null, "ios": null}
+     ]},
+    {"id": "tracks", "title": "View and edit tracks", "spec": "FR-2.7",
+     "flows": [
+       {"id": "demo-cant-change", "title": "The demo lists its tracks, focuses one and can't change it", "states": ["tracks-half", "track-focused"],
+        "android": null, "ios": ["PanelTests.testTheDemoListsItsTracksAndCantChangeThem"]},
+       {"id": "edit-and-delete", "title": "A track is edited and deleted", "states": ["track-focused", "edit-window"],
+        "android": null, "ios": ["PanelTests.testEditAndDeleteOnAFreshAccount"]},
+       {"id": "dimmed-edit-tab", "title": "A dimmed Edit tab says why on a tap", "states": ["edit-window"],
+        "android": ["MapFlowsTest.a_aDimmedEditTabSaysWhyOnATap"], "ios": null},
+       {"id": "type-picker-add", "title": "The Type picker adds a new type from its sheet", "states": ["edit-window"],
+        "android": ["MapFlowsTest.g_theTypePickerAddsANewTypeFromItsSheet"], "ios": null},
+       {"id": "route-chop-split", "title": "A route is chopped and split", "states": ["route-editor"],
+        "android": null, "ios": ["RouteEditTests.testAChopAndASplitAreSaved"]},
+       {"id": "route-point", "title": "A route's point is moved and deleted on the map", "states": ["route-editor"],
+        "android": null, "ios": ["RouteEditTests.testDeleteAndMoveAPointOnTheMap"]}
+     ]},
+    {"id": "trips", "title": "Trips", "spec": "FR-2.7",
+     "flows": [
+       {"id": "open-trip-and-back", "title": "The Trips tab opens the newest Trip, and Back returns to the area", "states": ["trips-half", "trips-collapsed"],
+        "android": ["MapFlowsTest.b_theTripsTabOpensTheNewestTripAndBackReturnsToTheArea"], "ios": null},
+       {"id": "trips-under-grip", "title": "The Trips list starts under the grip", "states": ["trips-half", "trips-expanded"],
+        "android": null, "ios": ["PanelTests.testTheTripsListStartsUnderTheGrip"]},
+       {"id": "trips-mode", "title": "Trips show Normal, and the Tracks tab keeps its mode", "states": ["trips-half", "fog"],
+        "android": null, "ios": ["PanelTests.testTripsShowNormalAndTheTracksTabKeepsItsMode"]},
+       {"id": "rename-and-send", "title": "A Trip is renamed and sent from its sheets", "states": ["trips-half"],
+        "android": ["MapFlowsTest.e_aTripIsRenamedAndSentFromSheets"], "ios": ["PanelTests.testATripIsRenamedAndSentFromSheets"]},
+       {"id": "totals-after-rotation", "title": "The open Trip's totals stay on screen after a rotation", "states": ["trips-half-landscape"],
+        "android": ["MapFlowsTest.h_theOpenTripsTotalsStayOnScreenAfterARotation"], "ios": null}
+     ]},
+    {"id": "spots", "title": "Spots and Places", "spec": "FR-2.8",
+     "flows": [
+       {"id": "capture", "title": "Walking into a Spot captures it", "states": ["spot-popup"],
+        "android": null, "ios": ["CaptureTests.testWalkingIntoAPlaceCapturesIt"]},
+       {"id": "places-category", "title": "A picked category shows its places in the area", "states": ["places-menu"],
+        "android": null, "ios": ["MapTests.testAPickedCategoryShowsItsPlacesInTheArea"]}
+     ]},
+    {"id": "photos", "title": "Photos", "spec": "FR-2.10",
+     "flows": [
+       {"id": "photo-from-marker", "title": "A Trip's photo opens from its marker and full size",
+        "android": null, "ios": ["PhotoTests.testATripsPhotoOpensFromItsMarkerAndFullSize"]},
+       {"id": "photo-added", "title": "A photo added through Save survives a reload", "states": ["photos-tab"],
+        "android": null, "ios": ["PhotoTests.testAPhotoAddedThroughSaveSurvivesAReload"]}
+     ]},
+    {"id": "export", "title": "Map image export", "spec": "FR-2.11",
+     "flows": [
+       {"id": "export-image", "title": "The viewfinder sizes the image, and capture saves and shares it", "states": ["export"],
+        "android": null, "ios": ["ExportTests.testTheViewfinderSizesTheImageAndCaptureSavesAndShares"]}
+     ]},
+    {"id": "tour", "title": "Tour", "spec": "FR-2.12",
+     "flows": [
+       {"id": "whole-tour", "title": "The demo takes the whole tour and can take it again",
+        "android": null, "ios": ["TourTests.testTheDemoTakesTheWholeTourAndCanTakeItAgain"]},
+       {"id": "tour-offer-and-cards", "title": "A new account is offered the tour and earns each card once",
+        "android": null, "ios": ["TourTests.testAnAccountIsOfferedTheTourAndEarnsEachCardOnce"]}
+     ]},
+    {"id": "sync", "title": "Sync and imports", "spec": "FR-3.5",
+     "flows": [
+       {"id": "health-connect", "title": "Health Connect's sessions are listed and sent", "states": ["sync-half"],
+        "android": "No Health Connect test double (docs/DEVELOPMENT.md, \"Android verification\"); checked by hand on a device.",
+        "ios": "Health Connect is Android's; iOS reads no health platform yet."},
+       {"id": "hide-and-undo", "title": "A row swiped away is hidden, with Undo", "states": ["sync-half"],
+        "android": null, "ios": null},
+       {"id": "file-opened-in-app", "title": "A file opened in the app is listed on Upload and sent on a tap", "states": ["upload"],
+        "android": null, "ios": ["YouTests.testAFileOpenedInTheAppIsUploaded"]},
+       {"id": "upload-reaches-library", "title": "An upload that finishes processing reaches Library", "states": ["upload", "library-half"],
+        "android": null, "ios": ["YouTests.testAnUploadThatFinishesProcessingReachesLibrary"]}
+     ]},
+    {"id": "library", "title": "Library", "spec": "FR-4.1",
+     "flows": [
+       {"id": "find-and-open", "title": "The demo finds a track, opens it and reaches Sync", "states": ["library-half", "library-expanded"],
+        "android": null, "ios": ["LibraryTests.testTheDemoFindsATrackOpensItAndReachesSync"]}
+     ]},
+    {"id": "recording", "title": "Record", "spec": "FR-5.1",
+     "flows": [
+       {"id": "record-and-save", "title": "A recording is stopped, saved and reaches Library", "states": ["recording", "library-half"],
+        "android": ["MapFlowsTest.c_aSavedRecordingReachesLibrary"], "ios": ["RecordingTests.testATapRecordsAndAHoldStopsAndSaves"]},
+       {"id": "offered-back", "title": "A recording the app died in is offered back",
+        "android": null, "ios": ["RecordingTests.testARecordingTheAppDiesInIsOfferedBack"]},
+       {"id": "stop-outside-app", "title": "Stop from outside the app asks first",
+        "android": ["MapFlowsTest.i_theNotificationsStopAsksFirst"], "ios": ["RecordingTests.testTheLiveActivitysStopAsksFirst"]}
+     ]}
+  ]
+}

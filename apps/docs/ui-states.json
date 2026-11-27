@@ -1,5 +1,5 @@
 {
-  "description": "The screens and states both apps must keep looking alike (AGENTS.md, Code and tests). Each app's shot test (Android UiShotsTest, iOS LayoutShotsTests) captures every entry by id on the demo account, and scripts/ui-compare.py puts the two side by side with these notes: expect is what both should show, differences what may differ and why, pending a decided change not made yet, open a difference seen but not decided. An entry with a capture reason can't be reached on the demo account and is listed only.",
+  "description": "The screens and states both apps must keep looking alike (AGENTS.md, Code and tests). Each app's shot test (Android UiShotsTest, iOS UIShotsTests) captures every entry by id on the demo account, and scripts/ui-compare.py puts the two side by side with these notes: expect is what both should show, differences what may differ and why, pending a decided change not made yet, open a difference seen but not decided. An entry with a capture reason can't be reached on the demo account and is listed only.",
   "setups": {
     "default": "Portrait, the phone's default text size.",
     "landscape": "Landscape, the phone's default text size.",
