@@ -520,14 +520,16 @@ class TracksPanel(
     }
 
     private fun renderToolbar(listed: List<Track>) {
-        val all = ToolbarRules.checkAll(listed.size, listed.count { it.id in state.checked })
+        // One count for the box's look and its label, so the two can't disagree.
+        val checkedCount = listed.count { it.id in state.checked }
+        val all = ToolbarRules.checkAll(listed.size, checkedCount)
         checkAll.isEnabled = listed.isNotEmpty()
         checkAll.checkedState = when (all) {
             ToolbarRules.CheckAll.ALL -> MaterialCheckBox.STATE_CHECKED
             ToolbarRules.CheckAll.SOME -> MaterialCheckBox.STATE_INDETERMINATE
             ToolbarRules.CheckAll.NONE -> MaterialCheckBox.STATE_UNCHECKED
         }
-        val clears = ToolbarRules.masterTap(listed.size, listed.count { it.id in state.checked }) == ToolbarRules.MasterTap.UNCHECK_ALL
+        val clears = ToolbarRules.masterTap(listed.size, checkedCount) == ToolbarRules.MasterTap.UNCHECK_ALL
         checkAll.contentDescription = res.getString(if (clears) R.string.panel_uncheck_all else R.string.panel_check_all)
         selectMenu.isEnabled = listed.isNotEmpty()
 

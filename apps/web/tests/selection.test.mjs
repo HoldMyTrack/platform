@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { infoShowsBands, invertedChecks, mapHiddenIds, targetSummaryKind, toggled, toolbarTarget, withoutIds } from '../src/map/selection.ts';
+import { infoReadDelay, infoShowsBands, invertedChecks, mapHiddenIds, targetSummaryKind, toggled, toolbarTarget, withoutIds } from '../src/map/selection.ts';
 
 const track = (id, trackType = 'walking', distanceMeters = 1000, pending = false) => ({ id, trackType, distanceMeters, pending });
 
@@ -20,6 +20,11 @@ test('Info shows the bands legend while the target is the focused track alone', 
   assert.equal(infoShowsBands(toolbarTarget(new Set(['a', 'b']), 'a'), 'a', true), false);
   assert.equal(infoShowsBands(toolbarTarget(new Set(['b']), 'a'), 'a', true), false);
   assert.equal(infoShowsBands(toolbarTarget(new Set(), 'a'), 'a', false), false);
+});
+
+test('Info reads at once the first time, then waits for a changed target to settle', () => {
+  assert.equal(infoReadDelay(null), 0);
+  assert.equal(infoReadDelay('a'), 400);
 });
 
 test('withoutIds returns the same set when none of the ids are in it', () => {

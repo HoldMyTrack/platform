@@ -27,7 +27,7 @@ import dev.holdmytrack.android.R
  * field's ([dev.holdmytrack.android.recording.TrackTypePicker]), the You tab's Language and Add to
  * trip ([AddToTripSheet]). A pick applies at once and closes it, so it has no Save, or with
  * [Sending] closes once its request lands; a [lead] row heads the list outside the search, and
- * its pick always closes at once; ✕, Back, a swipe or a tap outside close it with nothing
+ * its pick always closes at once; Back, a swipe or a tap outside close it with nothing
  * picked. With a [Search] it has a search field over the list, which decides the rows
  * shown for what's typed (the Type picker's adds an Add "…" row); the field isn't focused at first,
  * so the keyboard doesn't hide the list, and its Done picks the top row ([doneValue]). The current
@@ -91,7 +91,6 @@ object PickerSheet {
         val empty: TextView = content.findViewById(R.id.picker_empty)
         val list: RecyclerView = content.findViewById(R.id.picker_list)
         toolbar.title = title
-        toolbar.setNavigationOnClickListener { dialog.cancel() }
 
         var pick: (String) -> Unit = {}
         val adapter = Rows(current) { pick(it) }
@@ -133,8 +132,13 @@ object PickerSheet {
             adapter.busy = value to send.busy
             note = null
             render()
+            // Held open until the request answers, so its outcome is never lost to a swipe or Back.
+            dialog.setCancelable(false)
+            dialog.behavior.isDraggable = false
             send.run(value) { failure ->
                 if (!dialog.isShowing) return@run
+                dialog.setCancelable(true)
+                dialog.behavior.isDraggable = true
                 adapter.busy = null
                 if (failure == null) {
                     dialog.dismiss()

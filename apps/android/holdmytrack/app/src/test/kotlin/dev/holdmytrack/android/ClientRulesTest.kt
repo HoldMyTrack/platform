@@ -52,10 +52,10 @@ import dev.holdmytrack.android.map.PrivateLocationsOverlay
 import dev.holdmytrack.android.panel.EditRouteOps
 import dev.holdmytrack.android.panel.FormatParts
 import dev.holdmytrack.android.panel.PanelRules
-import dev.holdmytrack.android.panel.ToolbarRules
-import dev.holdmytrack.android.panel.TripPicker
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.panel.PanelTab
+import dev.holdmytrack.android.panel.ToolbarRules
+import dev.holdmytrack.android.panel.TripPicker
 import dev.holdmytrack.android.photos.PhotoClusters
 import dev.holdmytrack.android.photos.PhotoMarkerScope
 import dev.holdmytrack.android.photos.PhotoRoute

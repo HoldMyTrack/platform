@@ -37,6 +37,17 @@ export function infoShowsBands(target: ReadonlySet<string>, focused: string | nu
   return bandsDrawn && focused !== null && target.size === 1 && target.has(focused);
 }
 
+/** How long a changed target waits, with no further change, before Info reads it. */
+export const INFO_FOLLOW_DELAY_MS = 400;
+
+/** How long Info waits before reading its target, given the target it last read ([readKey], null
+ *  before its first read): the first read goes at once, and a later one waits for the clicks to
+ *  pause, so checking rows one by one doesn't spend the account's hourly Info limit (a request
+ *  the client drops still counts). */
+export function infoReadDelay(readKey: string | null): number {
+  return readKey === null ? 0 : INFO_FOLLOW_DELAY_MS;
+}
+
 /** What a tap on the master checkbox does, from how many of the [listed] rows are [checked]:
  *  with none, it checks every listed row; with some or all, it unchecks them all, so a partly
  *  checked box clears in one tap and All stays in its ▾ menu. */

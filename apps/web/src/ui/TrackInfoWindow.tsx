@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getTrackInfo, type TrackInfo } from '../api.ts';
 import { t } from '../i18n/index.ts';
+import { infoReadDelay } from '../map/selection.ts';
 import { useWindowFocus } from './useWindowFocus.ts';
 
 interface TrackInfoWindowProps {
@@ -25,15 +26,27 @@ export function TrackInfoWindow({ trackIds, bandColors, onClose }: TrackInfoWind
   const key = trackIds.join(',');
   useWindowFocus(windowRef);
 
+  // The target last read: set once a read starts, so React's dev-only second run of the effect on
+  // mount still reads at once (infoReadDelay).
+  const readKey = useRef<string | null>(null);
   useEffect(() => {
     const abort = new AbortController();
-    getTrackInfo(key.split(','), abort.signal).then(
-      (info) => setLoaded({ key, info }),
-      (err: unknown) => {
-        if (!abort.signal.aborted) setFailed({ key, message: err instanceof Error ? err.message : String(err) });
+    const timer = setTimeout(
+      () => {
+        readKey.current = key;
+        getTrackInfo(key.split(','), abort.signal).then(
+          (info) => setLoaded({ key, info }),
+          (err: unknown) => {
+            if (!abort.signal.aborted) setFailed({ key, message: err instanceof Error ? err.message : String(err) });
+          },
+        );
       },
+      infoReadDelay(readKey.current),
     );
-    return () => abort.abort();
+    return () => {
+      clearTimeout(timer);
+      abort.abort();
+    };
   }, [key]);
 
   useEffect(() => {
