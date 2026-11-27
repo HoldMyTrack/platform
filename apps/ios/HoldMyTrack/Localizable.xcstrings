@@ -8707,6 +8707,24 @@
         }
       }
     },
+    "panel.footerFocused" : {
+      "comment" : "The Tracks tab's footer for the focused track alone: its name, and its distance.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%1$@” · %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%1$@» · %2$@"
+          }
+        }
+      }
+    },
     "panel.inTrips" : {
       "comment" : "Tracks tab: a row's badge for several Trips, read out with their names.",
       "extractionState" : "manual",

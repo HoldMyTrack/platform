@@ -458,6 +458,7 @@
     <string name="panel_no_target">Сначала нажмите на трек или отметьте несколько</string>
     <string name="panel_target_one">«%1$s»</string>
     <string name="panel_footer">Отмечено: %1$d · %2$s</string>
+    <string name="panel_footer_focused">«%1$s» · %2$s</string>
     <string name="panel_reset">Сбросить</string>
     <string name="panel_info_target">Сведения: %1$s</string>
     <string name="info_title">Сведения</string>

@@ -202,7 +202,10 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         renderFilters()
         renderToolbar()
         let targets = state.targets.compactMap { byID[$0.id] }
-        footer.text = format.checkedFooter(count: targets.count, meters: targets.compactMap(\.distanceMeters).reduce(0, +))
+        let meters = targets.compactMap(\.distanceMeters).reduce(0, +)
+        footer.text = PanelRules.targetSummaryKind(checked: state.checked.count, targets: targets.count) == .focused
+            ? format.focusedFooter(label: format.label(targets[0]), meters: meters)
+            : format.checkedFooter(count: targets.count, meters: meters)
     }
 
     /// Whether the toolbar shows at the head: it has a target.

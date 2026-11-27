@@ -1,0 +1,10 @@
+{
+  "rule": "targetSummaryKind",
+  "description": "How the Tracks panel's foot line names the toolbar's target (docs/SPEC.md FR-5.8's words): the Checked group, or the Focused track when nothing is checked, so a track that's only focused never reads as checked.",
+  "cases": [
+    { "name": "a focused track alone", "input": { "checked": 0, "targets": 1 }, "expected": "focused" },
+    { "name": "one checked", "input": { "checked": 1, "targets": 1 }, "expected": "checked" },
+    { "name": "several checked", "input": { "checked": 3, "targets": 3 }, "expected": "checked" },
+    { "name": "nothing targeted", "input": { "checked": 0, "targets": 0 }, "expected": "checked" }
+  ]
+}

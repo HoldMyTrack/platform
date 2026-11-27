@@ -13,6 +13,15 @@ public enum PanelRules {
         return targetIDs(checked: checked, focused: focused) == [focused]
     }
 
+    public enum SummaryKind: String, Equatable, Sendable { case checked, focused }
+
+    /// How the foot line names the toolbar's target (root docs/SPEC.md FR-5.8's words): the
+    /// Checked group, or the Focused track when nothing is checked, so a track that's only focused
+    /// never reads as checked.
+    public static func targetSummaryKind(checked: Int, targets: Int) -> SummaryKind {
+        checked == 0 && targets > 0 ? .focused : .checked
+    }
+
     /// What the toolbar acts on: the checked group whenever anything is checked, else the
     /// selected row alone, else nothing. Checked wins so an action never reaches past what was
     /// ticked.

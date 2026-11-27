@@ -496,11 +496,11 @@ class TracksPanel(
         }
 
         val targets = state.targets
-        footer.text = res.getString(
-            R.string.panel_footer,
-            targets.size,
-            PanelFormat.totalDistance(res, targets.sumOf { it.distanceMeters ?: 0.0 }),
-        )
+        val distance = PanelFormat.totalDistance(res, targets.sumOf { it.distanceMeters ?: 0.0 })
+        footer.text = when (PanelRules.targetSummaryKind(state.checked.size, targets.size)) {
+            PanelRules.SummaryKind.FOCUSED -> res.getString(R.string.panel_footer_focused, PanelFormat.rowLabel(res, targets.first()), distance)
+            PanelRules.SummaryKind.CHECKED -> res.getString(R.string.panel_footer, targets.size, distance)
+        }
         if (tripMenu.target.let { it != null && it != targets.map { t -> t.id } }) tripMenu.dismiss()
     }
 

@@ -27,6 +27,10 @@ struct PanelFormatTests {
         #expect(format.checkedFooter(count: 1234, meters: 0).hasPrefix("1,234 checked · "))
     }
 
+    @Test func theFooterNamesAFocusedTrackAndItsDistance() {
+        #expect(format.focusedFooter(label: "Morning run", meters: 5_200) == "“Morning run” · \(format.totalDistance(5_200))")
+    }
+
     @Test func aMomentJoinsTheDateAndTimeWithAComma() throws {
         let utc = try #require(TimeZone(identifier: "UTC"))
         let moment = PanelFormat.dateTime(Date(timeIntervalSince1970: 1_790_000_000), zone: utc)
