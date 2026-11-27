@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.graphics.toColorInt
-import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.FailureText
@@ -32,7 +31,6 @@ class TrackInfoSheet(private val context: Context, trackIds: List<String>, priva
     private val note: TextView = content.findViewById(R.id.info_note)
 
     init {
-        content.findViewById<MaterialToolbar>(R.id.info_toolbar).setNavigationOnClickListener { dialog.dismiss() }
         dialog.setContentView(content)
         HoldMyTrackApi.trackInfo(trackIds) { result ->
             if (!dialog.isShowing) return@trackInfo

@@ -20,7 +20,7 @@
      "expect": "A row tapped: the toolbar takes the summary's place, its buttons spread across it: Hide (the crossed eye), Info, Edit (dimmed for the demo), Add to trip, ⋯ and Zoom in the accent. The sheet stays at half, the list under the toolbar. The mode toggle and the rail stay. The map draws the track in pace bands, above the sheet."},
     {"id": "track-info", "setup": "default", "title": "A track's Info",
      "expect": "Info tapped on the focused track: a sheet titled Info with the server's lines (Type, Start, End, Distance, Moving time, Elapsed time, Pace or Speed, Elevation gain), the pace bands' legend from Slower to Faster, and the note on what moving time leaves out.",
-     "differences": [{"what": "A bottom sheet with ✕ on Android, a page sheet with a grabber and Close on iOS.", "why": "Each platform's sheet."}]},
+     "differences": [{"what": "A bottom sheet with a drag handle and no ✕ on Android, a page sheet with a grabber and Close on iOS.", "why": "Each platform's way out of a sheet: Android has Back, a swipe down and a tap on the map; iOS has no Back."}]},
     {"id": "tracks-checked", "setup": "default", "title": "A track checked",
      "expect": "The focused row's tile tapped: the toolbar stays, the master checkbox is ticked, and the bottom line counts one checked. The mode toggle and the rail stay."},
     {"id": "fog", "setup": "default", "title": "Fog of War",

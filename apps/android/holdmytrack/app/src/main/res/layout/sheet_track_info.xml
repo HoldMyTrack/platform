@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The toolbar's Info as a bottom sheet (panel/TrackInfoSheet.kt): ✕ and the title, the
-     server's lines as label and value, the pace bands' legend while the map draws them, and the
-     server's note. -->
+<!-- The toolbar's Info as a bottom sheet (panel/TrackInfoSheet.kt): the drag handle and the
+     title, as sheet_map.xml has, and no ✕: Back, a swipe down and a tap on the map close it, and
+     there is nothing to cancel. Then the server's lines as label and value, the pace bands'
+     legend while the map draws them, and the server's note. -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -13,14 +14,18 @@
         android:orientation="vertical"
         android:paddingBottom="@dimen/hmt_space_20">
 
+        <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/hmt_space_8"
+            android:paddingBottom="0dp"
+            app:tint="@color/hmt_border_strong" />
+
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/info_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:theme="@style/ThemeOverlay.HoldMyTrack.FormSheetToolbar"
-            app:navigationContentDescription="@string/picker_close"
-            app:navigationIcon="@drawable/ic_x"
-            app:navigationIconTint="@color/hmt_ink"
             app:title="@string/info_title"
             app:titleTextAppearance="?attr/textAppearanceTitleMedium" />
 
