@@ -26,6 +26,14 @@ object ToolbarRules {
 
     enum class CheckAll { NONE, SOME, ALL }
 
+    enum class MasterTap { CHECK_ALL, UNCHECK_ALL }
+
+    /** What a tap on the master checkbox does, from how many of the [listed] rows are [checked]:
+     *  with none, it checks every listed row; with some or all, it unchecks them all, so a partly
+     *  checked box clears in one tap and All stays in its ▾ menu. */
+    fun masterTap(listed: Int, checked: Int): MasterTap =
+        if (checked > 0 && listed > 0) MasterTap.UNCHECK_ALL else MasterTap.CHECK_ALL
+
     /** The master checkbox over [listed] rows, [checked] of them checked. */
     fun checkAll(listed: Int, checked: Int): CheckAll = when {
         listed > 0 && checked == listed -> CheckAll.ALL

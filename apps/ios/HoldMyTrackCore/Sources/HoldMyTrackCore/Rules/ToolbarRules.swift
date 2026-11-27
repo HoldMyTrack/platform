@@ -29,6 +29,15 @@ public enum ToolbarRules {
 
     public enum CheckAll: Equatable, Sendable { case none, some, all }
 
+    public enum MasterTap: Equatable, Sendable { case checkAll, uncheckAll }
+
+    /// What a tap on the master checkbox does, from how many of the listed rows are checked:
+    /// with none, it checks every listed row; with some or all, it unchecks them all, so a partly
+    /// checked box clears in one tap and All stays in its ▾ menu.
+    public static func masterTap(listed: Int, checked: Int) -> MasterTap {
+        checked > 0 && listed > 0 ? .uncheckAll : .checkAll
+    }
+
     /// The master checkbox over listed rows, checked of them checked.
     public static func checkAll(listed: Int, checked: Int) -> CheckAll {
         if listed > 0 && checked == listed { return .all }

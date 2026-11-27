@@ -52,6 +52,7 @@ import dev.holdmytrack.android.map.PrivateLocationsOverlay
 import dev.holdmytrack.android.panel.EditRouteOps
 import dev.holdmytrack.android.panel.FormatParts
 import dev.holdmytrack.android.panel.PanelRules
+import dev.holdmytrack.android.panel.ToolbarRules
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.panel.PanelTab
 import dev.holdmytrack.android.photos.PhotoClusters
@@ -216,6 +217,7 @@ class ClientRulesTest {
             }
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
+        "masterCheckboxTap" to { input -> JsonPrimitive(if (ToolbarRules.masterTap(input.int("listed"), input.int("checked")) == ToolbarRules.MasterTap.UNCHECK_ALL) "uncheckAll" else "checkAll") },
         "infoShowsBands" to { input -> JsonPrimitive(PanelRules.infoShowsBands(input.strings("checked").toSet(), input.string("focused"), input.bool("bandsDrawn"))) },
         "attachmentName" to { input -> JsonPrimitive(AttachmentName.of(input.string("header"))) },
         "libraryPageQuery" to { input ->

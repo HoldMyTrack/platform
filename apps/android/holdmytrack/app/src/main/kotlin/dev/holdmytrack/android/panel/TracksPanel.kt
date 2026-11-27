@@ -220,11 +220,13 @@ class TracksPanel(
 
         datesChip.setOnClickListener { onDatesTap() }
 
-        // Short of all checked, it checks every listed row; all checked, it unchecks them all,
-        // which ends selecting.
+        // ToolbarRules.masterTap: unchecking them all ends selecting.
         checkAll.setOnClickListener {
             val listed = state.listed
-            if (listed.isNotEmpty() && listed.all { it.id in state.checked }) state.clearChecked() else state.checkAll()
+            when (ToolbarRules.masterTap(listed.size, listed.count { it.id in state.checked })) {
+                ToolbarRules.MasterTap.UNCHECK_ALL -> state.clearChecked()
+                ToolbarRules.MasterTap.CHECK_ALL -> state.checkAll()
+            }
             changed()
         }
         selectMenu.setOnClickListener { showSelectMenu() }
@@ -525,7 +527,8 @@ class TracksPanel(
             ToolbarRules.CheckAll.SOME -> MaterialCheckBox.STATE_INDETERMINATE
             ToolbarRules.CheckAll.NONE -> MaterialCheckBox.STATE_UNCHECKED
         }
-        checkAll.contentDescription = res.getString(if (all == ToolbarRules.CheckAll.ALL) R.string.panel_uncheck_all else R.string.panel_check_all)
+        val clears = ToolbarRules.masterTap(listed.size, listed.count { it.id in state.checked }) == ToolbarRules.MasterTap.UNCHECK_ALL
+        checkAll.contentDescription = res.getString(if (clears) R.string.panel_uncheck_all else R.string.panel_check_all)
         selectMenu.isEnabled = listed.isNotEmpty()
 
         // The toolbar names its target, so which of the group and the selected row it acts on

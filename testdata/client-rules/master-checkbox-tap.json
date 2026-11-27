@@ -1,0 +1,10 @@
+{
+  "rule": "masterCheckboxTap",
+  "description": "What a tap on the master checkbox does, from how many of the listed rows are checked: with none, it checks every listed row; with some or all, it unchecks them all, so a partly checked box clears in one tap and All stays in its menu.",
+  "cases": [
+    { "name": "none checked", "input": { "listed": 3, "checked": 0 }, "expected": "checkAll" },
+    { "name": "some checked", "input": { "listed": 3, "checked": 1 }, "expected": "uncheckAll" },
+    { "name": "all checked", "input": { "listed": 3, "checked": 3 }, "expected": "uncheckAll" },
+    { "name": "one row, checked", "input": { "listed": 1, "checked": 1 }, "expected": "uncheckAll" }
+  ]
+}

@@ -37,6 +37,13 @@ export function infoShowsBands(target: ReadonlySet<string>, focused: string | nu
   return bandsDrawn && focused !== null && target.size === 1 && target.has(focused);
 }
 
+/** What a tap on the master checkbox does, from how many of the [listed] rows are [checked]:
+ *  with none, it checks every listed row; with some or all, it unchecks them all, so a partly
+ *  checked box clears in one tap and All stays in its ▾ menu. */
+export function masterCheckboxTap(listed: number, checked: number): 'checkAll' | 'uncheckAll' {
+  return checked > 0 && listed > 0 ? 'uncheckAll' : 'checkAll';
+}
+
 /** How the panel's footer names the toolbar's target (FR-5.8's words): the Checked group, or the
  *  Focused row when nothing is checked, so a row that's only focused never reads as checked. */
 export function targetSummaryKind(checkedCount: number, targetCount: number): 'checked' | 'focused' {

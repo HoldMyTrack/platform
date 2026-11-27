@@ -41,6 +41,7 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `statsCardPlacement` | `width`, `height` (the image), `card` (`{ width, height }`) | `{ x, y }` |
 | `panelState` | `tracks` (`{ id, trackType, distanceMeters }`), `state` (`checked`, `focused`, `hidden`, `excludedTypes`, `distanceFilter`), `event` | the state after it |
 | `boldTracks` | `checked` (ids), `focused` | ids |
+| `masterCheckboxTap` | `listed`, `checked` (counts: the listed rows, and how many of them are checked) | `"checkAll"` or `"uncheckAll"` |
 | `infoShowsBands` | `checked` (ids), `focused`, `bandsDrawn` | boolean |
 | `targetVisibility` | `hidden`, `target` (ids) | hidden ids |
 | `photoScope` | `mode` (`normal`, `fog`), `editWindowIds`, `focused`, `tripId` | `{ track }`, `{ trip }` or `null` |

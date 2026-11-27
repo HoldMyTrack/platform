@@ -87,8 +87,8 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         checkAllButton.addAction(UIAction { [weak self] _ in
             guard let self else { return }
             let listed = self.state.listed
-            let all = ToolbarRules.checkAll(listed: listed.count, checked: listed.filter { self.state.checked.contains($0.id) }.count)
-            self.onEvent?(all == .all ? .checkNone : .checkAll)
+            let tap = ToolbarRules.masterTap(listed: listed.count, checked: listed.filter { self.state.checked.contains($0.id) }.count)
+            self.onEvent?(tap == .uncheckAll ? .checkNone : .checkAll)
         }, for: .primaryActionTriggered)
         selectMenuButton.showsMenuAsPrimaryAction = true
 
@@ -282,7 +282,8 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         config.image = UIImage(resource: all == .all ? .check : all == .some ? .square : .square)
         config.baseForegroundColor = UIColor(resource: all == .none ? .inkSecondary : .accent)
         checkAllButton.configuration = config
-        checkAllButton.accessibilityLabel = all == .all ? String(localized: "Uncheck all tracks") : String(localized: "Check all tracks")
+        let clears = ToolbarRules.masterTap(listed: listed.count, checked: listed.filter { state.checked.contains($0.id) }.count) == .uncheckAll
+        checkAllButton.accessibilityLabel = clears ? String(localized: "Uncheck all tracks") : String(localized: "Check all tracks")
         checkAllButton.accessibilityValue = all == .some ? String(localized: "Some checked") : nil
         checkAllButton.isEnabled = !listed.isEmpty
         selectMenuButton.menu = UIMenu(children: [
