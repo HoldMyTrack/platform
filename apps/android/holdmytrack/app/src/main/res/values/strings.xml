@@ -644,6 +644,7 @@
     <string name="trip_new">New trip…</string>
     <string name="trip_holds_all">Already in this trip</string>
     <string name="trip_adding">Adding…</string>
+    <string name="trip_added">Added to “%1$s”.</string>
     <string name="trip_add_title">Add to trip</string>
     <string name="trip_search_hint">Search trips</string>
     <string name="trip_search_none">No trip matches “%1$s”</string>

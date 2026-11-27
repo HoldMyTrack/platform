@@ -48,7 +48,7 @@ final class TripPickerViewController: UIViewController, UITableViewDataSource, U
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .bg)
         view.accessibilityIdentifier = "tripPicker"
-        navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) })
+        navigationItem.leftBarButtonItem = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) })
         search.placeholder = String(localized: "tripPicker.search", defaultValue: "Search trips", comment: "Add to trip's search field, once there are many Trips.")
         search.searchBarStyle = .minimal
         search.returnKeyType = .done

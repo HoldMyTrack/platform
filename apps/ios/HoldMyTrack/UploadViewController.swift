@@ -44,7 +44,7 @@ final class UploadViewController: UIViewController, UIDocumentPickerDelegate {
         upload.onClose = onClose
         let close = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak upload] _ in upload?.dismiss(animated: true) })
         close.accessibilityIdentifier = "uploadClose"
-        upload.navigationItem.rightBarButtonItem = close
+        upload.navigationItem.leftBarButtonItem = close
         let nav = UINavigationController(rootViewController: upload)
         nav.modalPresentationStyle = .pageSheet
         nav.sheetPresentationController?.detents = [.medium(), .large()]

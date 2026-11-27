@@ -690,6 +690,7 @@
     <string name="trip_new">Новое путешествие…</string>
     <string name="trip_holds_all">Уже в этом путешествии</string>
     <string name="trip_adding">Добавление…</string>
+    <string name="trip_added">Добавлено в «%1$s».</string>
     <string name="trip_add_title">Добавить в путешествие</string>
     <string name="trip_search_hint">Найдите путешествие</string>
     <string name="trip_search_none">Нет путешествия, подходящего под «%1$s»</string>
