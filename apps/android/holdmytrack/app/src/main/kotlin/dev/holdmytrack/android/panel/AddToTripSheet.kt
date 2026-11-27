@@ -1,6 +1,7 @@
 package dev.holdmytrack.android.panel
 
 import android.content.Context
+import android.widget.Toast
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
@@ -10,7 +11,8 @@ import dev.holdmytrack.android.net.Trip
  * Add to trip (`docs/SPEC.md` FR-13) as a [PickerSheet]: New trip…, then every Trip, newest first
  * — read each time the sheet opens — with how many tracks it holds, and a search field once there
  * are many ([TripPicker]). One that already holds all of the target can't be picked. Picking a
- * Trip adds the target to it in one request and closes the sheet; a failure stays in the sheet.
+ * Trip adds the target to it in one request, closes the sheet and says so in a Toast; a failure
+ * stays in the sheet.
  */
 class AddToTripSheet(
     private val context: Context,
@@ -53,6 +55,9 @@ class AddToTripSheet(
                 added.onSuccess {
                     done(null)
                     onTripsChanged()
+                    trips.find { it.id == value }?.let { trip ->
+                        Toast.makeText(context, res.getString(R.string.trip_added, trip.name), Toast.LENGTH_LONG).show()
+                    }
                 }.onFailure { failure -> done(FailureText.of(failure, res.getString(R.string.trip_save_failed))) }
             }
         }

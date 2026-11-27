@@ -428,7 +428,7 @@ extension MapViewController {
             tripsPanel.added(trip)
             onWantsTrips?(trip.id)
         } else {
-            TripDialogs.inform(over: view, String(localized: "Added to “\(trip.name)”."))
+            say(String(localized: "Added to “\(trip.name)”."))
         }
     }
 

@@ -26,7 +26,7 @@ final class TrackInfoViewController: UIViewController {
         view.backgroundColor = UIColor(resource: .surface)
         view.accessibilityIdentifier = "trackInfo"
         title = String(localized: "info.title", defaultValue: "Info", comment: "The Tracks toolbar's Info sheet: its title.")
-        navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) })
+        navigationItem.leftBarButtonItem = UIBarButtonItem(systemItem: .close, primaryAction: UIAction { [weak self] _ in self?.dismiss(animated: true) })
         status.numberOfLines = 0
         column.addArrangedSubview(status)
         let scroll = UIScrollView()

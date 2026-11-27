@@ -458,7 +458,9 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         libraryHost?.switchTo(.sync)
         selectedViewController = sync
         guard !account.isDemo else {
-            TripDialogs.inform(over: view, String(localized: "Not available for demo accounts — create an account to upload your own tracks."))
+            // Over whatever sheet is up, which would cover a Toast on the tabs.
+            let top = TripDialogs.top(view) ?? self
+            Toast.show(String(localized: "Not available for demo accounts — create an account to upload your own tracks."), over: top.view, above: top === self ? tabBar : nil)
             return
         }
         Uploads.shared.share(files)
