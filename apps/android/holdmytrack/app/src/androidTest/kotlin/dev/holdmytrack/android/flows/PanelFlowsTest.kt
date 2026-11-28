@@ -160,7 +160,9 @@ class PanelFlowsTest {
             tapUntil({ still(id("library_sync")) }) { device.hasObject(row) }
             // Walks an earlier failed run left hidden may be counted already.
             val before = hiddenCount()
-            retrying { still(row).parent.swipe(Direction.LEFT, 0.8f) }
+            // The whole row: a swipe hides it only past half the row's width, more than the
+            // title's column spans.
+            retrying { still(row).parent.parent.swipe(Direction.LEFT, 0.9f) }
             expect("Show hidden counts it", waitUntil { hiddenCount() == before + 1 })
             expect("hidden off the list", device.wait(Until.gone(row), SHORT_MS))
             retrying { need(By.text(context.getString(R.string.sync_undo))).click() }
