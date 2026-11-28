@@ -241,21 +241,15 @@ class SignInActivity : AppCompatActivity() {
     /** The device's IANA zone — what the web sends as `tz` — so a new account starts on it. */
     private fun timezone(): String = ZoneId.systemDefault().id
 
-    /**
-     * The client-side check is only for the two fields being filled in at all. Everything else
-     * — whether the address parses, whether the password is long enough, whether the account
-     * exists — is the server's to judge, and its wording is what gets shown, so the two can
-     * never disagree about what is acceptable.
-     */
+    /** Sends the fields, or says one is missing ([SignInFields]). */
     private fun withCredentials(request: (String, String, (Result<Account>) -> Unit) -> Unit) {
-        val address = email.text.toString().trim()
-        val secret = password.text.toString()
-        if (address.isEmpty() || secret.isEmpty()) {
-            showError(getString(R.string.credentials_required))
-            return
+        when (val fields = SignInFields.of(email.text.toString(), password.text.toString())) {
+            SignInFields.Missing -> showError(getString(R.string.credentials_required))
+            is SignInFields.Submit -> {
+                setBusy(true)
+                request(fields.email, fields.password, ::onResult)
+            }
         }
-        setBusy(true)
-        request(address, secret, ::onResult)
     }
 
     /** Destroyed by a rotation, as against left by the user: an answer landing after it still
