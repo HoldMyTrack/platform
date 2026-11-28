@@ -6,8 +6,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.BySelector
-import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.Until
 import dev.holdmytrack.android.BuildConfig
 import dev.holdmytrack.android.R
@@ -113,29 +111,10 @@ class SessionFlowsTest {
         return hidden
     }
 
-    /** Opens the app with no session, on Sign in. */
-    private fun signedOut() {
-        instrumentation.runOnMainSync { Session.clear() }
-        start()
-        need(id("email"))
-    }
-
-    private fun openYou() {
-        tapUntil({ still(id("nav_you")) }) { device.hasObject(id("you_privacy")) }
-    }
-
     /** You's Sign out, scrolled to: it sits at the page's foot. */
     private fun signOut() {
         scrollTo(id("you_sign_out"))
         tapUntil({ still(id("you_sign_out")) }) { device.hasObject(id("email")) }
-    }
-
-    private fun scrollTo(selector: BySelector) {
-        repeat(5) {
-            if (device.hasObject(selector)) return
-            device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, 1f)
-        }
-        need(selector)
     }
 
     @Before

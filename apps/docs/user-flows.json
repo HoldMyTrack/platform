@@ -24,9 +24,9 @@
     {"id": "settings", "title": "Settings and the site's pages", "spec": "FR-1.5",
      "flows": [
        {"id": "settings-signed-in", "title": "Settings opens signed in and closes", "states": ["settings"],
-        "android": null, "ios": ["SitePageTests.testSettingsOpensSignedInAndCloses"]},
+        "android": ["YouFlowsTest.settingsOpensSignedInAndCloses"], "ios": ["SitePageTests.testSettingsOpensSignedInAndCloses"]},
        {"id": "first-run-gate", "title": "A first run waits on Settings",
-        "android": null, "ios": ["SitePageTests.testTheFirstRunGatesOnSettings"]}
+        "android": ["YouFlowsTest.aFirstRunWaitsOnSettings"], "ios": ["SitePageTests.testTheFirstRunGatesOnSettings"]}
      ]},
     {"id": "privacy", "title": "Privacy", "spec": "FR-1.7",
      "flows": [
@@ -38,9 +38,9 @@
     {"id": "you", "title": "The You tab", "spec": "FR-2.9",
      "flows": [
        {"id": "you-rows", "title": "The You tab lists its rows and opens Privacy", "states": ["you", "privacy"],
-        "android": null, "ios": ["YouTests.testTheYouTabListsItsRowsAndPrivacy"]},
+        "android": ["YouFlowsTest.theYouTabListsItsRowsAndOpensPrivacy"], "ios": ["YouTests.testTheYouTabListsItsRowsAndPrivacy"]},
        {"id": "delete-account", "title": "Delete account signs out", "states": ["sign-in"],
-        "android": null, "ios": ["YouTests.testDeleteAccountSignsOut"]}
+        "android": ["YouFlowsTest.deleteAccountSignsOut"], "ios": ["YouTests.testDeleteAccountSignsOut"]}
      ]},
     {"id": "modes", "title": "Switch the map's mode", "spec": "FR-2.2",
      "flows": [
