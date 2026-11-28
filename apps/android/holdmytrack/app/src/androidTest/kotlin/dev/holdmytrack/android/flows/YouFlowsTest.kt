@@ -1,11 +1,14 @@
 package dev.holdmytrack.android.flows
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.Until
+import dev.holdmytrack.android.MainActivity
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.web.WebPageActivity
 import org.junit.After
 import org.junit.Before
 import org.junit.BeforeClass
@@ -35,8 +38,8 @@ class YouFlowsTest {
     fun settingsOpensSignedInAndCloses() {
         signIn(account())
         openYou()
-        // Left You: the page's web view isn't listed by its id once the page has loaded.
-        tapUntil({ still(id("you_account")) }) { !device.hasObject(id("you_account")) }
+        // The page's screen in front: its web view isn't listed by its id once the page has loaded.
+        tapUntil({ still(id("you_account")) }) { resumedActivity() is WebPageActivity }
         expect("the account's Settings", device.wait(Until.hasObject(By.text(COUNTRY)), TIMEOUT_MS))
         expect("not the sign-in form", !device.hasObject(By.text(context.getString(R.string.sign_in))))
         device.pressBack()
@@ -55,7 +58,8 @@ class YouFlowsTest {
         tapAway(id("submit"))
         need(By.text(context.getString(R.string.settings_onboarding_title)))
         expect("the page", device.wait(Until.hasObject(By.text(COUNTRY)), TIMEOUT_MS))
-        expect("no map behind the first run", !device.hasObject(id("bottom_bar")) && !device.hasObject(id("panel_handle")))
+        // Asked of every screen alive, not the one in front, which covers whatever is behind it.
+        expect("no map behind the first run", !mapAlive())
         expect("Save and continue", device.wait(Until.hasObject(By.text(Pattern.compile("Save and continue", Pattern.CASE_INSENSITIVE))), TIMEOUT_MS))
     }
 
@@ -93,23 +97,16 @@ class YouFlowsTest {
         expect("Sign in says the account was deleted", need(id("notice")).text == context.getString(R.string.account_deleted))
     }
 
-    private fun openYou() {
-        tapUntil({ still(id("nav_you")) }) { device.hasObject(id("you_account")) }
-    }
-
-    /** Opens the app with no session, on Sign in. */
-    private fun signedOut() {
-        instrumentation.runOnMainSync { dev.holdmytrack.android.net.Session.clear() }
-        start()
-        need(id("email"))
-    }
-
-    private fun scrollTo(selector: BySelector) {
-        repeat(6) {
-            if (device.hasObject(selector)) return
-            device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, 0.8f)
+    /** Whether a map screen is alive, in front or behind another. */
+    private fun mapAlive(): Boolean {
+        var alive = false
+        instrumentation.runOnMainSync {
+            val monitor = ActivityLifecycleMonitorRegistry.getInstance()
+            alive = Stage.entries.filter { it != Stage.DESTROYED }.any { stage ->
+                monitor.getActivitiesInStage(stage).any { it is MainActivity }
+            }
         }
-        need(selector)
+        return alive
     }
 
     @Before

@@ -14,6 +14,7 @@ import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.Configurator
+import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
@@ -200,6 +201,27 @@ fun tapAway(selector: BySelector) {
         if (device.wait(Until.gone(selector), SIGN_IN_MS)) return
     }
     fail("tapped three times, still on screen: $selector")
+}
+
+/** Opens the app with no session, on Sign in. */
+fun signedOut() {
+    instrumentation.runOnMainSync { Session.clear() }
+    start()
+    need(id("email"))
+}
+
+/** The bottom bar's You, tapped until its page shows. */
+fun openYou() {
+    tapUntil({ still(id("nav_you")) }) { device.hasObject(id("you_account")) }
+}
+
+/** Scrolls the page down until [selector] is on screen. */
+fun scrollTo(selector: BySelector) {
+    repeat(6) {
+        if (device.hasObject(selector)) return
+        device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, 0.8f)
+    }
+    need(selector)
 }
 
 /** Opens the app signed in to [account], on the map, whoever it was left signed in as. */
