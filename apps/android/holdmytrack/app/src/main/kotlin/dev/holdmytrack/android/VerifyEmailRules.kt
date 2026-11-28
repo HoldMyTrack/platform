@@ -9,6 +9,6 @@ sealed interface VerifyAction {
     data object Check : VerifyAction
 
     companion object {
-        fun of(typed: String): VerifyAction = typed.trim().let { if (it.isEmpty()) Check else Submit(it) }
+        fun of(typed: String): VerifyAction = typed.trimWhiteSpace().let { if (it.isEmpty()) Check else Submit(it) }
     }
 }
