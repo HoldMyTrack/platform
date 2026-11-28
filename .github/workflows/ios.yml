@@ -1,5 +1,5 @@
 # Runs the iOS package's tests, then builds the app and runs its unit tests (apps/ios/docs/ROADMAP.md,
-# 3.4 and 4.0), when a change touches the app, the shared rule cases it implements, the API
+# 3.4 and 4.0), and beside them SwiftLint and the Release build, when a change touches the app, the shared rule cases it implements, the API
 # contract its wire models follow, or the web and Android files its palette, fonts and icons are
 # made from, Markdown aside. Its own workflow, not a job in ci.yml, so the path filter keeps the
 # macOS runner off every other pull request. On a pull request the filter is a job, as in ci.yml,
@@ -151,3 +151,55 @@ jobs:
           files: apps/ios/HoldMyTrackCore/coverage.lcov,apps/ios/app-coverage.lcov
           flags: swift
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  # SwiftLint and the Release build, as ci.yml's "Android lint and release build": the lint
+  # judges correctness, warnings failing (apps/ios/.swiftlint.yml), against the findings kept in
+  # apps/ios/swiftlint-baseline.json; the build is what the TestFlight upload archives, unsigned,
+  # with Debug-only code left out and stamp-build.sh's Release path. A lint failure still lets the
+  # build run, so one run reports both.
+  lint:
+    name: iOS lint and release build
+    needs: changes
+    if: needs.changes.outputs.ios == 'true'
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/ios
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # A Release build's number is the commit count (scripts/stamp-build.sh).
+          fetch-depth: 0
+      - uses: actions/cache@v6
+        with:
+          path: ~/spm
+          key: spm-${{ hashFiles('apps/ios/HoldMyTrack.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+      # Pinned and checked, as Gradle pins Android Lint: the runner image's own SwiftLint moves.
+      - name: SwiftLint 0.65.1
+        run: |
+          curl -sSL -o "$RUNNER_TEMP/swiftlint.zip" https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swiftlint.zip
+          echo "c1e429b0599cf1b516f369a2d9ec04eaf0e436f3c12b637df8851fa52ff694d0  $RUNNER_TEMP/swiftlint.zip" | shasum -a 256 -c -
+          unzip -q "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP/swiftlint"
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        run: |
+          "$RUNNER_TEMP/swiftlint/swiftlint" lint --quiet --strict --baseline swiftlint-baseline.json ||
+            { "$RUNNER_TEMP/swiftlint/swiftlint" lint --quiet --baseline swiftlint-baseline.json --reporter html > swiftlint-report.html; exit 1; }
+      - name: Release build
+        run: |
+          set -o pipefail
+          xcodebuild build -project HoldMyTrack.xcodeproj -scheme HoldMyTrack -configuration Release \
+            -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO \
+            -clonedSourcePackagesDirPath ~/spm -derivedDataPath "$RUNNER_TEMP/dd" | tail -n 100
+      - if: always() && steps.lint.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: swiftlint-report
+          path: apps/ios/swiftlint-report.html
+      - if: always() && steps.lint.outcome == 'failure'
+        name: Lint result
+        run: |
+          echo "::error::SwiftLint found new issues: the Lint step lists them, the swiftlint-report artifact too"
+          exit 1

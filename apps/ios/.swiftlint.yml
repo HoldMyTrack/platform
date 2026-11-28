@@ -1,0 +1,22 @@
+# SwiftLint for the iOS app, as Android Lint runs for Android (.github/workflows/ios.yml, "iOS lint
+# and release build"): correctness rules, run with --strict so a warning fails, and today's
+# findings kept in swiftlint-baseline.json, as lint-baseline.xml keeps Android's. Rules that judge
+# style or size are off, as Android Lint has none: scripts/check-file-size.sh watches length.
+included:
+  - HoldMyTrack
+  - HoldMyTrackCore/Sources
+  - HoldMyTrackCore/Tests
+  - HoldMyTrackTests
+  - HoldMyTrackUITests
+  - HoldMyTrackWidgets
+disabled_rules:
+  - line_length
+  - identifier_name
+  - type_name
+  - trailing_comma
+  - file_length
+  - type_body_length
+  - function_body_length
+  - function_parameter_count
+  - cyclomatic_complexity
+  - large_tuple

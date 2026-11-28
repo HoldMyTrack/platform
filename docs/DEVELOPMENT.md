@@ -105,6 +105,10 @@ The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` 
 
 CI also runs `./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:optimizeReleaseResources`. Lint fails on any warning `app/lint-baseline.xml` doesn't list: fix a new one, and run `:app:updateLintBaseline` only to drop entries a fix removed. The release is compiled through R8 and resource shrinking but not packaged, since packaging needs the upload key.
 
+### iOS verification
+
+CI also runs SwiftLint (`apps/ios/.swiftlint.yml`) and compiles the Release build, unsigned, as `apps/ios/scripts/upload-testflight.sh` archives it, which drops the Debug-only code and takes `stamp-build.sh`'s Release path. Lint fails on any warning `apps/ios/swiftlint-baseline.json` doesn't list: fix a new one, and run `swiftlint lint --write-baseline swiftlint-baseline.json` in `apps/ios` only to drop entries a fix removed. `make test-ios` runs the lint too.
+
 ### End-to-end suites
 
 Each client's flows run against the dev stack, which `make e2e-stack` rebuilds from the checkout it runs in, starts and waits for on `.env`'s `API_PORT`. The rebuild applies that checkout's migrations to the dev database, and the stack keeps running that checkout's code after the run. Every checkout shares the one compose project, so a new worktree needs the main checkout's `.env` and any `compose.override.yaml` copied in; without `.env` the target stops. A release runs its client's suite on the commit it ships (`DEPLOY.md` §10).
@@ -131,7 +135,7 @@ Each client's flows run against the dev stack, which `make e2e-stack` rebuilds f
 
 `.github/workflows/contract.yml` fails a pull request touching `services/server/api/` on a change an installed client can't follow, such as a response field removed: against the base branch (`scripts/check-contract-break.sh`), and against each release tag `android/<versionCode>` or `ios/<build>` from the minimum production's `/healthz` reports for that app, counting only breaks the pull request adds (`scripts/check-contract-release.sh`). An intended break carries the `contract-break` label and ships with a raised `MIN_ANDROID_BUILD` (`DEPLOY.md` §10). A change oasdiff calls breaking that no client can feel, such as declaring a limit the server already enforced, goes in `services/server/api/breaking-ignore.txt` with why.
 
-`.github/workflows/ios.yml` runs the iOS tests on a macOS runner only for a push or pull request touching a file other than Markdown under `apps/ios/`, `testdata/client-rules/`, `services/server/api/` or the design sources `scripts/make-design.py` reads; it is its own workflow so that path filter keeps the macOS runner off every other pull request, and a nightly run on `main` runs it whatever changed. On a pull request the filter is its `changes` job, as in `ci.yml`, so a skipped run still reports its check and the check can be required. Its UI tests aren't in it: they need the dev stack ("End-to-end suites").
+`.github/workflows/ios.yml` runs the iOS tests on a macOS runner only for a push or pull request touching a file other than Markdown under `apps/ios/`, `testdata/client-rules/`, `services/server/api/` or the design sources `scripts/make-design.py` reads; it is its own workflow so that path filter keeps the macOS runner off every other pull request, and a nightly run on `main` runs it whatever changed. Its two jobs, the tests and the lint with the Release build, match Android's. On a pull request the filter is its `changes` job, as in `ci.yml`, so a skipped run still reports its checks and they can be required. Its UI tests aren't in it: they need the dev stack ("End-to-end suites").
 
 ## Writing a migration
 
