@@ -117,11 +117,29 @@ final class YouTests: XCTestCase {
         app.cells["youDelete"].tap()
         let field = app.alerts.textFields["deleteEmail"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
+        // The server judges what's typed, as on Android: Delete is never off, and a wrong email
+        // brings the dialog back with the server's refusal, the email kept for correcting.
         let delete = app.alerts.buttons["Delete"]
-        XCTAssertFalse(delete.isEnabled, "off until an email is typed")
-        field.typeText(account.email)
         XCTAssertTrue(delete.isEnabled)
+        let wrong = "nobody@example.com"
+        field.typeText(wrong)
         delete.tap()
+        // The refusal, which only the dialog shown again holds: the first can linger as it goes.
+        let refused = app.alerts.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "That isn't this account's email address"))
+        let shown = NSPredicate(format: "count > 0")
+        XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: shown, object: refused)], timeout: 10), .completed, "the server's refusal")
+        XCTAssertEqual(field.value as? String, wrong, "what was typed, kept")
+        XCTAssertTrue(delete.isHittable, "Delete whole on screen above the keyboard")
+        // The dialog shown again has the field in focus, the caret after the kept text. A tap on
+        // it would raise the edit menu, which takes the next tap, meant for Delete.
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: wrong.count))
+        field.typeText(account.email)
+        XCTAssertEqual(field.value as? String, account.email)
+        // A tap straight after typing can go to the keyboard as it settles: again until it closes.
+        for _ in 0..<3 where field.exists {
+            delete.tap()
+            _ = field.waitForNonExistence(timeout: 3)
+        }
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 15), "signed out")
         XCTAssertTrue(app.staticTexts["signInNotice"].exists, "Sign in says the account was deleted")
     }
