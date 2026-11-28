@@ -10754,6 +10754,24 @@
         }
       }
     },
+    "signIn.missing" : {
+      "comment" : "Sign in: tapped with the email or the password empty.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter an email and a password."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите адрес почты и пароль."
+          }
+        }
+      }
+    },
     "signIn.showPassword" : {
       "comment" : "Sign in: show the password typed.",
       "extractionState" : "manual",

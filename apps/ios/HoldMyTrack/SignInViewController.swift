@@ -63,9 +63,6 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         password.returnKeyType = .go
         email.addAction(UIAction { [weak self] _ in self?.password.becomeFirstResponder() }, for: .editingDidEndOnExit)
         password.addAction(UIAction { [weak self] _ in self?.submit() }, for: .editingDidEndOnExit)
-        for field in [email, password] {
-            field.addAction(UIAction { [weak self] _ in self?.updateEnabled() }, for: .editingChanged)
-        }
 
         primary.addAction(UIAction { [weak self] _ in self?.submit() }, for: .primaryActionTriggered)
         signUp.addAction(UIAction { [weak self] _ in self?.browserRoundTrip(.signup) }, for: .primaryActionTriggered)
@@ -181,9 +178,7 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
     // MARK: State
 
     private func updateEnabled() {
-        let filled = !(email.text ?? "").trimmingCharacters(in: .whitespaces).isEmpty && !(password.text ?? "").isEmpty
-        primary.isEnabled = filled && !busy
-        for button in [demo, google, facebook, signUp, forgot] { button.isEnabled = !busy }
+        for button in [primary, demo, google, facebook, signUp, forgot] { button.isEnabled = !busy }
         apple.isUserInteractionEnabled = !busy
         apple.alpha = busy ? 0.5 : 1
     }
@@ -208,10 +203,13 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
     }
 
     private func submit() {
-        guard primary.isEnabled else { return }
-        let address = (email.text ?? "").trimmingCharacters(in: .whitespaces)
-        let secret = password.text ?? ""
-        run { try await $0.login(email: address, password: secret) }
+        guard !busy else { return }
+        switch SignInFields.of(email: email.text ?? "", password: password.text ?? "") {
+        case .missing:
+            showError(String(localized: "signIn.missing", defaultValue: "Enter an email and a password.", comment: "Sign in: tapped with the email or the password empty."))
+        case .submit(let address, let secret):
+            run { try await $0.login(email: address, password: secret) }
+        }
     }
 
     private func startDemo() {

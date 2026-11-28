@@ -380,6 +380,17 @@ class ClientRulesTest {
             fun at(span: String, end: String) = Instant.EPOCH.plusNanos(Math.round(input[span]!!.jsonObject[end]!!.jsonPrimitive.double * 1_000_000))
             JsonPrimitive(Similar.overlaps(at("a", "start"), at("a", "end"), at("b", "start"), at("b", "end")))
         },
+        "signInFields" to { input ->
+            when (val fields = SignInFields.of(input.string("email")!!, input.string("password")!!)) {
+                SignInFields.Missing -> JsonPrimitive("missing")
+                is SignInFields.Submit -> buildJsonObject {
+                    put("submit", buildJsonObject {
+                        put("email", fields.email)
+                        put("password", fields.password)
+                    })
+                }
+            }
+        },
         "verifyAction" to { input ->
             when (val action = VerifyAction.of(input.string("typed")!!)) {
                 VerifyAction.Check -> JsonPrimitive("check")
