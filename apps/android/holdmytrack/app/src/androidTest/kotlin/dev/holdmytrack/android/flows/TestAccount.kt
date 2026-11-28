@@ -98,7 +98,9 @@ class TestAccount private constructor(val email: String, val password: String, p
         private val TESTING = listOf("west-side.gpx", "evening-loop.tcx", "mill-creek-falls.fit")
         private val FROM_ZIP = listOf("2026-08-02 Italy.gpx", "2026-08-03 Italy.gpx", "2026-08-04 Italy.gpx")
 
-        fun create(): TestAccount {
+        /** [tracks] false leaves it with none, [country] false leaves its Country unset for the
+         *  first run. */
+        fun create(tracks: Boolean = true, country: Boolean = true): TestAccount {
             val cookies = mutableMapOf<String, Cookie>()
             val client = OkHttpClient.Builder()
                 .cookieJar(object : CookieJar {
@@ -115,11 +117,17 @@ class TestAccount private constructor(val email: String, val password: String, p
                 put("password", account.password)
             })
             // A fresh account goes to the first-run setup until it has a Country.
-            account.call("PATCH", "/v2/account/settings", buildJsonObject {
-                put("display_name", "")
-                put("country", "US")
-                put("timezone", "America/New_York")
-            })
+            if (country) {
+                account.call("PATCH", "/v2/account/settings", buildJsonObject {
+                    put("display_name", "")
+                    put("country", "US")
+                    put("timezone", "America/New_York")
+                })
+            }
+            if (!tracks) {
+                account.settle(0)
+                return account
+            }
             TESTING.forEach { name -> account.upload(name, account.download("/static/testing/$name")) }
             ZipInputStream(account.download("/static/testing/holdmytrack-sample.zip").inputStream()).use { zip ->
                 generateSequence { zip.nextEntry }.filter { it.name in FROM_ZIP }.forEach { entry ->
