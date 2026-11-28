@@ -1,6 +1,7 @@
 package dev.holdmytrack.android.flows
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -8,6 +9,8 @@ import android.location.LocationManager
 import android.location.provider.ProviderProperties
 import android.os.SystemClock
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.Configurator
@@ -167,22 +170,45 @@ fun expandSheet() {
     if (!expanded()) tapUntil({ need(id("panel_handle")) }, expanded)
 }
 
-/** Opens the app signed in to [account], on the map, whoever it was left signed in as. */
-fun signIn(account: TestAccount) {
-    instrumentation.runOnMainSync { Session.clear() }
+/** The activity on screen now, or null between two. */
+fun resumedActivity(): Activity? {
+    var resumed: Activity? = null
+    instrumentation.runOnMainSync {
+        resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).singleOrNull()
+    }
+    return resumed
+}
+
+/** Starts the app afresh, keeping whatever session it has, and returns once its new screen has
+ *  replaced the old one: until then a query finds the old screen's views. */
+fun start() {
     // The tour's offer would cover the map. The phone keeps whether it was offered, not the
     // account (TourStore), so the flows mark it seen.
     TourStore(context).let { it.save(it.load().copy(tour = true)) }
+    val before = resumedActivity()
     context.startActivity(
         Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
     )
+    expect("the app started afresh", waitUntil { resumedActivity().let { it != null && it !== before } })
+}
+
+/** Taps [selector] until its screen goes, waiting out a sign-in each time: a tap that lands before
+ *  the screen settles is lost, and a sign-in can take seconds. */
+fun tapAway(selector: BySelector) {
+    for (attempt in 1..3) {
+        retrying { device.findObject(selector)?.click() }
+        if (device.wait(Until.gone(selector), SIGN_IN_MS)) return
+    }
+    fail("tapped three times, still on screen: $selector")
+}
+
+/** Opens the app signed in to [account], on the map, whoever it was left signed in as. */
+fun signIn(account: TestAccount) {
+    instrumentation.runOnMainSync { Session.clear() }
+    start()
     need(id("email").enabled(true)).text = account.email
     need(id("password")).text = account.password
-    // A tap that lands before the screen settles is lost; tap until the sign-in screen goes.
-    for (attempt in 1..3) {
-        retrying { device.findObject(id("submit"))?.click() }
-        if (device.wait(Until.gone(id("submit")), SIGN_IN_MS)) break
-    }
+    tapAway(id("submit"))
     need(id("panel_handle"))
 }
 

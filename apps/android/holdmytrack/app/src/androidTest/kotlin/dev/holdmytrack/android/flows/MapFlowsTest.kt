@@ -433,7 +433,7 @@ class MapFlowsTest {
         @JvmStatic
         fun deleteAccount() {
             restoreDevice()
-            account.delete()
+            if (::account.isInitialized) account.delete()
         }
     }
 }
