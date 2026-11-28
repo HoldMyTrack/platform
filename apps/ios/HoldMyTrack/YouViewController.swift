@@ -498,22 +498,24 @@ final class YouViewController: UITableViewController {
     // MARK: Delete account (root docs/SPEC.md FR-1.12)
 
     /// Android's dialog: what goes, and how to confirm, by typing the account's email. The
-    /// server judges the email as typed, an empty one too; a refusal brings the dialog back with why. On success the phone
-    /// forgets the account and Sign in says it was deleted. An Apple-linked account's
-    /// authorization is revoked by the server.
-    private func confirmDelete(error: String? = nil) {
+    /// server judges the email; a refusal brings the dialog back with why, keeping what was
+    /// typed, and without what goes, already read: with all three and the keyboard up, the
+    /// dialog outgrows the screen and cuts its buttons off. On success the phone forgets the account and Sign in says it was deleted. An
+    /// Apple-linked account's authorization is revoked by the server.
+    private func confirmDelete(error: String? = nil, typed: String = "") {
         let hint = String(localized: "delete.hint", defaultValue: "Deletes your account and everything in it, for good: every track and the files you uploaded, your photos, Trips, Private locations and captured places, and the recordings on this phone that haven't synced. It can't be undone, and backups keep it for up to 8 weeks.",
                           comment: "Delete account: what goes.")
         let confirm = String(localized: "delete.confirm", defaultValue: "You'll be signed out everywhere, and everything in the account will be gone within a few minutes. To confirm, type your email address, \(account.email).",
                              comment: "Delete account: how to confirm, with the account's email.")
         let alert = UIAlertController(title: String(localized: "delete.title", defaultValue: "Delete account", comment: "Delete account: the dialog's title."),
-                                      message: [hint, confirm, error].compactMap { $0 }.joined(separator: "\n\n"), preferredStyle: .alert)
+                                      message: (error.map { [$0, confirm] } ?? [hint, confirm]).joined(separator: "\n\n"), preferredStyle: .alert)
         alert.addTextField { field in
             field.placeholder = String(localized: "delete.email", defaultValue: "Email address", comment: "Delete account: the email field.")
             field.keyboardType = .emailAddress
             field.autocapitalizationType = .none
             field.autocorrectionType = .no
             field.accessibilityIdentifier = "deleteEmail"
+            field.text = typed
         }
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
         let deleteAction = UIAlertAction(title: String(localized: "delete.submit", defaultValue: "Delete", comment: "Delete account: the button."), style: .destructive) { [weak self, weak alert] _ in
@@ -524,7 +526,7 @@ final class YouViewController: UITableViewController {
                     try await self.flow.api.deleteAccount(email: typed)
                     self.flow.accountDeleted()
                 } catch {
-                    self.confirmDelete(error: (error as? APIError)?.serverMessage ?? String(localized: "The account couldn't be deleted. Try again."))
+                    self.confirmDelete(error: (error as? APIError)?.serverMessage ?? String(localized: "The account couldn't be deleted. Try again."), typed: typed)
                 }
             }
         }
