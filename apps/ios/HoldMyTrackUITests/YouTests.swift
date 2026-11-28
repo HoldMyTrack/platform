@@ -117,10 +117,17 @@ final class YouTests: XCTestCase {
         app.cells["youDelete"].tap()
         let field = app.alerts.textFields["deleteEmail"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
+        // The server judges what's typed, as on Android: Delete is never off, and an empty field
+        // brings the dialog back with the server's refusal.
         let delete = app.alerts.buttons["Delete"]
-        XCTAssertFalse(delete.isEnabled, "off until an email is typed")
-        field.typeText(account.email)
         XCTAssertTrue(delete.isEnabled)
+        let text = { app.alerts.firstMatch.staticTexts.allElementsBoundByIndex.map(\.label).joined(separator: "\n") }
+        let first = text()
+        delete.tap()
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "the dialog back")
+        XCTAssertTrue(text().hasPrefix(first) && text().count > first.count, "with the server's refusal under what it said")
+        field.tap()
+        field.typeText(account.email)
         delete.tap()
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 15), "signed out")
         XCTAssertTrue(app.staticTexts["signInNotice"].exists, "Sign in says the account was deleted")

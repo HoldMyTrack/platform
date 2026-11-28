@@ -498,7 +498,7 @@ final class YouViewController: UITableViewController {
     // MARK: Delete account (root docs/SPEC.md FR-1.12)
 
     /// Android's dialog: what goes, and how to confirm, by typing the account's email. The
-    /// server judges the email; a refusal brings the dialog back with why. On success the phone
+    /// server judges the email as typed, an empty one too; a refusal brings the dialog back with why. On success the phone
     /// forgets the account and Sign in says it was deleted. An Apple-linked account's
     /// authorization is revoked by the server.
     private func confirmDelete(error: String? = nil) {
@@ -508,31 +508,26 @@ final class YouViewController: UITableViewController {
                              comment: "Delete account: how to confirm, with the account's email.")
         let alert = UIAlertController(title: String(localized: "delete.title", defaultValue: "Delete account", comment: "Delete account: the dialog's title."),
                                       message: [hint, confirm, error].compactMap { $0 }.joined(separator: "\n\n"), preferredStyle: .alert)
-        var deleteAction: UIAlertAction!
         alert.addTextField { field in
             field.placeholder = String(localized: "delete.email", defaultValue: "Email address", comment: "Delete account: the email field.")
             field.keyboardType = .emailAddress
             field.autocapitalizationType = .none
             field.autocorrectionType = .no
             field.accessibilityIdentifier = "deleteEmail"
-            field.addAction(UIAction { _ in
-                deleteAction.isEnabled = !(field.text ?? "").trimmingCharacters(in: .whitespaces).isEmpty
-            }, for: .editingChanged)
         }
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        deleteAction = UIAlertAction(title: String(localized: "delete.submit", defaultValue: "Delete", comment: "Delete account: the button."), style: .destructive) { [weak self, weak alert] _ in
+        let deleteAction = UIAlertAction(title: String(localized: "delete.submit", defaultValue: "Delete", comment: "Delete account: the button."), style: .destructive) { [weak self, weak alert] _ in
             guard let self else { return }
             let typed = alert?.textFields?.first?.text ?? ""
             Task {
                 do {
-                    try await self.flow.api.deleteAccount(email: typed.trimmingCharacters(in: .whitespaces))
+                    try await self.flow.api.deleteAccount(email: typed)
                     self.flow.accountDeleted()
                 } catch {
                     self.confirmDelete(error: (error as? APIError)?.serverMessage ?? String(localized: "The account couldn't be deleted. Try again."))
                 }
             }
         }
-        deleteAction.isEnabled = false
         alert.addAction(deleteAction)
         present(alert, animated: true)
     }
