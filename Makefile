@@ -84,8 +84,10 @@ test: test-go test-unit verify verify-build doc-checks ## Every CI test suite th
 test-android: ## Android JUnit tests and lint (JDK 17 and the Android SDK)
 	cd apps/android/holdmytrack && ./gradlew --continue :app:testDebugUnitTest :app:lintDebug
 
-test-ios: ## iOS design-file drift, the scripts' tests, package tests and the app's unit tests (Xcode; IOS_DESTINATION)
+test-ios: ## iOS design-file drift, SwiftLint, the scripts' tests, package tests and the app's unit tests (Xcode, SwiftLint; IOS_DESTINATION)
 	@command -v xcodebuild >/dev/null || { echo "test-ios needs macOS with Xcode"; exit 1; }
+	@command -v swiftlint >/dev/null || { echo "test-ios needs SwiftLint: brew install swiftlint"; exit 1; }
+	cd apps/ios && swiftlint lint --quiet --strict --baseline swiftlint-baseline.json
 	cd apps/ios && scripts/make-design.py --check
 	cd apps/ios/scripts && python3 -m unittest test_check_strings
 	cd apps/ios/HoldMyTrackCore && swift test
