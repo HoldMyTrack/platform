@@ -3,7 +3,7 @@
 public enum SignInFields: Equatable, Sendable {
     /// Send them: the email trimmed, the password as typed.
     case submit(email: String, password: String)
-    /// The email is blank or the password empty.
+    /// The email is blank, by Unicode's White_Space, or the password empty.
     case missing
 
     public static func of(email: String, password: String) -> SignInFields {

@@ -10,8 +10,12 @@ sealed interface SignInFields {
     data object Missing : SignInFields
 
     companion object {
+        /** Unicode's White_Space, as iOS trims it: Kotlin's [Char.isWhitespace] also counts the
+         *  separators U+001C–U+001F and misses U+0085. */
+        private fun isWhiteSpace(c: Char): Boolean = c == '\u0085' || (c.isWhitespace() && c !in '\u001c'..'\u001f')
+
         fun of(email: String, password: String): SignInFields {
-            val address = email.trim()
+            val address = email.trim(::isWhiteSpace)
             return if (address.isEmpty() || password.isEmpty()) Missing else Submit(address, password)
         }
     }
