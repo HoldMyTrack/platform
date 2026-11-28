@@ -15,9 +15,9 @@
         "android": "Needs a real Google account and its consent screen; checked by hand.",
         "ios": "Needs a real Google or Apple account and its consent screen; checked by hand."},
        {"id": "verify-email", "spec": "FR-1.4", "title": "A new account enters the emailed code",
-        "android": null, "ios": null},
+        "android": "The dev stack skips email verification (SKIP_EMAIL_VERIFICATION); checked by hand against a stack that sends the code.", "ios": "The dev stack skips email verification (SKIP_EMAIL_VERIFICATION); checked by hand against a stack that sends the code."},
        {"id": "update-screen", "spec": "FR-1.8", "title": "A build the server refuses opens the Update screen", "states": ["update-screen"],
-        "android": null, "ios": null}
+        "android": "Needs the server to refuse the build (MIN_ANDROID_BUILD, MIN_IOS_BUILD), which the dev stack leaves unset; checked by hand.", "ios": "Needs the server to refuse the build (MIN_ANDROID_BUILD, MIN_IOS_BUILD), which the dev stack leaves unset; checked by hand."}
      ]},
     {"id": "settings", "title": "Settings and the site's pages", "spec": "FR-1.5",
      "flows": [
@@ -47,7 +47,7 @@
        {"id": "fog-levels", "title": "Fog's level menu locks a level, and a tap names the place", "states": ["fog-levels"],
         "android": null, "ios": ["MapTests.testFogsLevelMenuLocksALevelAndATapNamesAPlace"]},
        {"id": "layers", "title": "The Layers menu draws roads and paths", "states": ["layers-menu"],
-        "android": null, "ios": null}
+        "android": ["PanelFlowsTest.theLayersMenuCountsAndKeepsItsPicks"], "ios": ["MapTests.testTheLayersMenuCountsAndKeepsItsPicks"]}
      ]},
     {"id": "map-reads", "title": "The map stays current", "spec": "FR-2.7",
      "flows": [
@@ -63,7 +63,7 @@
        {"id": "dates-keyboard", "title": "The keyboard covers the map without shortening it, so the checked tracks stay listed",
         "android": ["MapFlowsTest.d_theKeyboardCoversTheMapWithoutShorteningIt"], "ios": "Dates picks its days from a calendar, so no keyboard comes up over the map."},
        {"id": "type-and-distance", "spec": "FR-2.7", "title": "The Type and distance chips narrow the list", "states": ["tracks-half"],
-        "android": null, "ios": null}
+        "android": ["PanelFlowsTest.theTypeAndDistanceFiltersNarrowTheList"], "ios": ["PanelTests.testTheTypeAndDistanceFiltersNarrowTheList"]}
      ]},
     {"id": "tracks", "title": "View and edit tracks", "spec": "FR-2.7",
      "flows": [
@@ -91,7 +91,7 @@
        {"id": "rename-and-send", "title": "A Trip is renamed and sent from its sheets", "states": ["trips-half"],
         "android": ["MapFlowsTest.e_aTripIsRenamedAndSentFromSheets"], "ios": ["PanelTests.testATripIsRenamedAndSentFromSheets"]},
        {"id": "add-to-trip", "title": "Tracks are added to a Trip, or a new one, from Add to trip's sheet",
-        "android": null, "ios": null},
+        "android": ["PanelFlowsTest.tracksAreAddedToATripOrANewOneFromAddToTrip"], "ios": ["PanelTests.testTracksAreAddedToATripOrANewOneFromAddToTrip"]},
        {"id": "totals-after-rotation", "title": "The open Trip's totals stay on screen after a rotation", "states": ["trips-half-landscape"],
         "android": ["MapFlowsTest.h_theOpenTripsTotalsStayOnScreenAfterARotation"], "ios": ["PanelTests.testTheOpenTripsTotalsStayOnScreenAfterARotation"]}
      ]},
@@ -127,7 +127,7 @@
         "android": "No Health Connect test double (docs/DEVELOPMENT.md, \"Android verification\"); checked by hand on a device.",
         "ios": "Health Connect is Android's; iOS reads no health platform yet."},
        {"id": "hide-and-undo", "title": "A row swiped away is hidden, with Undo", "states": ["sync-half"],
-        "android": null, "ios": null},
+        "android": ["PanelFlowsTest.aSyncRowSwipedAwayIsHiddenWithUndo"], "ios": ["RecordingTests.testATapRecordsAndAHoldStopsAndSaves"]},
        {"id": "file-opened-in-app", "title": "A file opened in the app is listed on Upload and sent on a tap", "states": ["upload"],
         "android": null, "ios": ["YouTests.testAFileOpenedInTheAppIsUploaded"]},
        {"id": "upload-reaches-library", "title": "An upload that finishes processing reaches Library", "states": ["upload", "library-half"],

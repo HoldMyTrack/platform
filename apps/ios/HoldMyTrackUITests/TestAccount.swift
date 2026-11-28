@@ -97,6 +97,15 @@ final class TestAccount {
         try call("POST", "/v2/trips", ["name": name, "description": "", "track_ids": tracks ?? ids])
     }
 
+    /// Each Trip's tracks, by its name.
+    func trips() -> [String: [String]] {
+        let json = (try? call("GET", "/v2/trips", nil)) as? [String: Any]
+        let rows = json?["trips"] as? [[String: Any]] ?? []
+        return Dictionary(rows.compactMap { row in
+            (row["name"] as? String).map { ($0, row["track_ids"] as? [String] ?? []) }
+        }, uniquingKeysWith: { first, _ in first })
+    }
+
     func delete() {
         _ = try? call("DELETE", "/v2/account", ["email": email])
     }

@@ -41,6 +41,12 @@ class TestAccount private constructor(val email: String, val password: String, p
         })
     }
 
+    /** Each Trip's track ids, by its name. */
+    fun trips(): Map<String, List<String>> =
+        call("GET", "/v2/trips", null)!!.jsonObject["trips"]!!.jsonArray.map { it.jsonObject }.associate { trip ->
+            trip["name"]!!.jsonPrimitive.content to trip["track_ids"]!!.jsonArray.map { it.jsonPrimitive.content }
+        }
+
     fun delete() {
         runCatching { call("DELETE", "/v2/account", buildJsonObject { put("email", email) }) }
     }

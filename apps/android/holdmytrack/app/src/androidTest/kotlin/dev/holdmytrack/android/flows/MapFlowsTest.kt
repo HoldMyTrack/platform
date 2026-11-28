@@ -1,32 +1,18 @@
 package dev.holdmytrack.android.flows
 
-import android.Manifest
-import android.content.Context
-import android.content.Intent
-import android.location.Location
-import android.location.LocationManager
-import android.location.provider.ProviderProperties
 import android.os.SystemClock
 import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.BySelector
-import androidx.test.uiautomator.Configurator
 import androidx.test.uiautomator.Direction
-import androidx.test.uiautomator.StaleObjectException
-import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import dev.holdmytrack.android.MainActivity
 import dev.holdmytrack.android.R
-import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.RecordingService
-import dev.holdmytrack.android.tour.TourStore
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertTrue
@@ -39,9 +25,7 @@ import org.junit.runners.MethodSorters
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
-import kotlin.concurrent.thread
 
 /**
  * End-to-end flows over the map's state rules, on an emulator against the dev stack the app was
@@ -353,79 +337,6 @@ class MapFlowsTest {
         retrying { still(stop).click() }
     }
 
-    /** Runs [block] while the GPS provider walks north from Cleveland's Public Square, a fix a
-     *  second, ~11 m apart: an emulator recording needs a moving location, or Stop drops it. */
-    private fun walking(block: () -> Unit) {
-        val locations = context.getSystemService(LocationManager::class.java)
-        locations.addTestProvider(
-            LocationManager.GPS_PROVIDER, false, false, false, false, true, true, true,
-            ProviderProperties.POWER_USAGE_LOW, ProviderProperties.ACCURACY_FINE,
-        )
-        locations.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
-        val walking = AtomicBoolean(true)
-        val walker = thread {
-            var step = 0
-            while (walking.get()) {
-                val fix = Location(LocationManager.GPS_PROVIDER).apply {
-                    latitude = 41.4993 + step * 0.0001
-                    longitude = -81.6944
-                    accuracy = 5f
-                    speed = 1.4f
-                    time = System.currentTimeMillis()
-                    elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-                }
-                runCatching { locations.setTestProviderLocation(LocationManager.GPS_PROVIDER, fix) }
-                step++
-                Thread.sleep(1_000)
-            }
-        }
-        try {
-            block()
-        } finally {
-            walking.set(false)
-            walker.join()
-            runCatching { locations.removeTestProvider(LocationManager.GPS_PROVIDER) }
-        }
-    }
-
-    private fun need(selector: BySelector): UiObject2 =
-        device.wait(Until.findObject(selector), TIMEOUT_MS) ?: fail("not on screen: $selector")
-
-    /** Fails with what was on screen saved for whoever reads the failure (adb pull it). */
-    private fun fail(message: String): Nothing {
-        val dir = context.getExternalFilesDir(null)
-        device.takeScreenshot(java.io.File(dir, "failure.png"))
-        device.dumpWindowHierarchy(java.io.File(dir, "failure.xml"))
-        throw AssertionError(message)
-    }
-
-    /** Fails, saving the screen, unless [holds]. */
-    private fun expect(message: String, holds: Boolean) {
-        if (!holds) fail(message)
-    }
-
-    /** Whether [holds] comes true within the timeout, asked every quarter second. */
-    private fun waitUntil(holds: () -> Boolean): Boolean {
-        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
-        while (true) {
-            if (holds()) return true
-            if (SystemClock.uptimeMillis() > deadline) return false
-            Thread.sleep(250)
-        }
-    }
-
-    /** At least [n] of [selector] on screen. */
-    private fun atLeast(selector: BySelector, n: Int) =
-        expect("fewer than $n on screen: $selector", waitUntil { device.findObjects(selector).size >= n })
-
-    /** Exactly [n] of [selector] on screen, within the timeout. */
-    private fun count(selector: BySelector, n: Int): Boolean = waitUntil { device.findObjects(selector).size == n }
-
-    /** Rows whose check target offers to uncheck them (`panel_row_uncheck`). */
-    private fun checkedTiles(): BySelector = id("track_tile_target").descStartsWith("Uncheck ")
-
-    private fun checkedRows(): Int = device.findObjects(checkedTiles()).size
-
     /** Sets Dates' From to [day] through its sheet and the picker's calendar, then Done. Not typed:
      *  the dialogs slide as the keyboard comes and goes, and taps land on what moved under
      *  ([d_theKeyboardCoversTheMapWithoutShorteningIt] has the keyboard's own case). */
@@ -453,35 +364,6 @@ class MapFlowsTest {
         tapUntil({ need(By.descContains(label)) }) { picked.containsMatchIn(need(id("mtrl_picker_header_selection_text")).text) }
         tapUntil({ need(id("confirm_button")) }) { !device.hasObject(id("confirm_button")) }
         tapUntil({ still(By.text(context.getString(R.string.dates_done))) }) { !device.hasObject(id("dates_after")) }
-    }
-
-    /** [selector] once it's on screen and its bounds have held for half a second, two readings
-     *  in a row: a dialog sliding back down as the keyboard goes, or a layout that stalls for a
-     *  dropped frame, takes a tap meant for it elsewhere. */
-    private fun still(selector: BySelector): UiObject2 {
-        var last = need(selector).visibleBounds
-        var held = 0
-        expect("still moving: $selector", waitUntil {
-            Thread.sleep(250)
-            val now = need(selector).visibleBounds
-            held = if (now == last) held + 1 else 0
-            last = now
-            held >= STILL_READINGS
-        })
-        return need(selector)
-    }
-
-    /** Taps what [target] finds until [done] holds, for taps the app can drop while it settles. */
-    private fun tapUntil(target: () -> UiObject2, done: () -> Boolean) {
-        for (attempt in 1..3) {
-            retrying { target().click() }
-            val deadline = SystemClock.uptimeMillis() + SHORT_MS
-            while (SystemClock.uptimeMillis() < deadline) {
-                if (done()) return
-                Thread.sleep(250)
-            }
-        }
-        fail("tapped three times, nothing changed")
     }
 
     /** The sheet's content ends where the screen does at its resting height, after a rotation too
@@ -512,62 +394,10 @@ class MapFlowsTest {
         return totals.visibleBounds.height() > 0 && totals.visibleBounds.top < bar.visibleBounds.top
     }
 
-    /** The bottom bar's Trips tapped until it's the one marked and the sheet shows its list.
-     *  Each tap waits for the bar to stop moving: back from the Save screen it's still being laid
-     *  out, and a tap read from those bounds lands on the record button and starts a recording,
-     *  which then hides the sheet from every flow after. */
-    private fun openTrips() {
-        tapUntil({ still(id("nav_trips")) }) {
-            if (device.hasObject(id("recording_status"))) fail("a tap on Trips started a recording")
-            device.hasObject(id("nav_trips").selected(true)) && device.hasObject(id("trips_list"))
-        }
-    }
+    private fun signIn() = signIn(account)
 
-    /** The Tracks sheet open full height, so its rows are on screen. */
-    private fun expandSheet() {
-        val expanded = { device.hasObject(id("panel_handle").descStartsWith("Collapse")) }
-        need(id("panel_handle"))
-        if (!expanded()) tapUntil({ need(id("panel_handle")) }, expanded)
-    }
-
-    /** Runs [action] again if the view it found was replaced meanwhile. */
-    private fun retrying(action: () -> Unit) {
-        repeat(3) {
-            try {
-                return action()
-            } catch (_: StaleObjectException) {
-                device.waitForIdle()
-            }
-        }
-        action()
-    }
-
-    /** Opens the app signed in to the test account, on the map, whoever it was left signed in as. */
-    private fun signIn() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync { Session.clear() }
-        // The tour's offer would cover the map. The phone keeps whether it was offered, not the
-        // account (TourStore), so the flows mark it seen.
-        TourStore(context).let { it.save(it.load().copy(tour = true)) }
-        context.startActivity(
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
-        )
-        need(id("email").enabled(true)).text = account.email
-        need(id("password")).text = account.password
-        // A tap that lands before the screen settles is lost; tap until the sign-in screen goes.
-        for (attempt in 1..3) {
-            retrying { device.findObject(id("submit"))?.click() }
-            if (device.wait(Until.gone(id("submit")), SIGN_IN_MS)) break
-        }
-        need(id("panel_handle"))
-    }
-
-    /** Wakes and unlocks an emulator that booted asleep, so [need] doesn't time out on a black
-     *  screen. */
     @Before
-    fun wake() {
-        device.wakeUp()
-        device.executeShellCommand("wm dismiss-keyguard")
-    }
+    fun wake() = wakeDevice()
 
     /** A recording a failed flow left running would hide the sheet from every flow after it. */
     @After
@@ -576,19 +406,12 @@ class MapFlowsTest {
     }
 
     private companion object {
-        const val PACKAGE = "dev.holdmytrack.android"
-        // Generous: an emulator on a busy machine takes seconds to draw a screen.
-        const val TIMEOUT_MS = 60_000L
-        const val SHORT_MS = 5_000L
         /** How long the server may take to process a sent recording. */
         const val INGEST_MS = 120_000L
         /** Months the picker may page forward to reach a day: Dates' bounds span the account. */
         const val MONTHS = 24
         /** Quarter seconds the map's height is read under the keyboard. */
         const val KEYBOARD_SAMPLES = 12
-        /** Quarter-second readings a view's bounds must hold before it's tapped ([still]). */
-        const val STILL_READINGS = 2
-        const val SIGN_IN_MS = 15_000L
         const val RECORDING_MS = 70_000L
         const val TRIP = "Flows trip"
         const val SHEET_TRIP = "Sheets trip"
@@ -597,38 +420,19 @@ class MapFlowsTest {
         const val RENAMED_TRIP = "Sheets trip, renamed"
         const val WALK = "Flows walk"
 
-        val instrumentation get() = InstrumentationRegistry.getInstrumentation()
-        val context: Context get() = instrumentation.targetContext
-        val device: UiDevice get() = UiDevice.getInstance(instrumentation)
         lateinit var account: TestAccount
-
-        /** The device's own stay-on setting, put back after the class. */
-        var stayOn = "0"
-
-        fun id(name: String): BySelector = By.res(PACKAGE, name)
 
         @BeforeClass
         @JvmStatic
         fun createAccount() {
-            // The map animates while recording (the camera follows, the button pulses), so the app
-            // never goes idle; waiting for it before each query would time every query out.
-            Configurator.getInstance().waitForIdleTimeout = 0
-            val automation = instrumentation.uiAutomation
-            listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.POST_NOTIFICATIONS)
-                .forEach { automation.grantRuntimePermission(PACKAGE, it) }
-            automation.executeShellCommand("appops set $PACKAGE android:mock_location allow").close()
-            // A loaded emulator's own apps (the launcher) can stop responding; their dialog would cover the app.
-            automation.executeShellCommand("settings put global hide_error_dialogs 1").close()
-            // Kept on for the class, since a flow's waits can outlast the screen-off timeout.
-            stayOn = device.executeShellCommand("settings get global stay_on_while_plugged_in").trim().takeIf { it.toIntOrNull() != null } ?: "0"
-            device.executeShellCommand("settings put global stay_on_while_plugged_in 7")
+            prepareDevice()
             account = TestAccount.create()
         }
 
         @AfterClass
         @JvmStatic
         fun deleteAccount() {
-            device.executeShellCommand("settings put global stay_on_while_plugged_in $stayOn")
+            restoreDevice()
             account.delete()
         }
     }
