@@ -500,8 +500,9 @@ final class YouViewController: UITableViewController {
     /// Android's dialog: what goes, and how to confirm, by typing the account's email. The
     /// server judges the email; a refusal brings the dialog back with why, keeping what was
     /// typed, and without what goes, already read: with all three and the keyboard up, the
-    /// dialog outgrows the screen and cuts its buttons off. On success the phone forgets the account and Sign in says it was deleted. An
-    /// Apple-linked account's authorization is revoked by the server.
+    /// dialog outgrows the screen and cuts its buttons off. On success the phone forgets the
+    /// account and Sign in says it was deleted. An Apple-linked account's authorization is
+    /// revoked by the server.
     private func confirmDelete(error: String? = nil, typed: String = "") {
         let hint = String(localized: "delete.hint", defaultValue: "Deletes your account and everything in it, for good: every track and the files you uploaded, your photos, Trips, Private locations and captured places, and the recordings on this phone that haven't synced. It can't be undone, and backups keep it for up to 8 weeks.",
                           comment: "Delete account: what goes.")
