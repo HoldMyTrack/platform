@@ -1,5 +1,6 @@
 package dev.holdmytrack.android.panel
 
+import dev.holdmytrack.android.trimWhiteSpace
 import dev.holdmytrack.android.net.Track
 
 /** The Edit window's field writes, as values: the web's `fieldWrites` (`ui/editSave.ts`) and iOS's
@@ -18,11 +19,11 @@ object EditPlan {
      * the answer been lost.
      */
     fun writes(tracks: List<Track>, type: String, name: String, description: String, written: Collection<Write>, unsure: Set<String>): List<Write> {
-        val picked = type.trim()
+        val picked = type.trimWhiteSpace()
         val single = tracks.size == 1
         return tracks.mapNotNull { track ->
             val held = written.lastOrNull { it.id == track.id } ?: Write(track.id, track.trackType, track.name.orEmpty(), track.description.orEmpty())
-            val next = if (single) Write(track.id, picked, name.trim(), description) else held.copy(trackType = picked.ifEmpty { held.trackType })
+            val next = if (single) Write(track.id, picked, name.trimWhiteSpace(), description) else held.copy(trackType = picked.ifEmpty { held.trackType })
             next.takeIf { it != held || track.id in unsure }
         }
     }

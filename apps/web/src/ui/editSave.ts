@@ -2,6 +2,7 @@ import type { TrackDetail } from '../api.ts';
 import type { MessageKey } from '../i18n/en.ts';
 import { MAX_TRACK_DESCRIPTION_LEN, MAX_TRACK_NAME_LEN, MAX_TRACK_TYPE_LEN, MAX_PHOTO_CAPTION_LEN } from '../limits.ts';
 import { waitingPhotos, type PhotoDraft } from './photoDraft.ts';
+import { trimWhiteSpace } from '../whiteSpace.ts';
 
 /** What `updateTrack` writes — the PATCH endpoint is a full replace of all three. */
 export interface TrackFields {
@@ -30,8 +31,8 @@ export function fieldWrites(
   written: ReadonlyMap<string, TrackFields>,
   unsure: ReadonlySet<string>,
 ): { id: string; fields: TrackFields }[] {
-  const type = typedType.trim();
-  const name = typedName.trim();
+  const type = trimWhiteSpace(typedType);
+  const name = trimWhiteSpace(typedName);
   return tracks.flatMap((track) => {
     const held = written.get(track.id) ?? {
       trackType: track.trackType,

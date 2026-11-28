@@ -1,12 +1,14 @@
 {
   "rule": "verifyAction",
-  "description": "What the apps' check-your-email screen does on Confirm with what's in its code field (apps/docs/SPEC.md FR-1.4): nothing but whitespace asks the server whether the code, typed on the web, confirmed the address (\"check\"); anything else is sent trimmed for the server to judge ({ submit }).",
+  "description": "What the apps' check-your-email screen does on Confirm with what's in its code field (apps/docs/SPEC.md FR-1.4): nothing but whitespace (Unicode's White_Space property) asks the server whether the code, typed on the web, confirmed the address (\"check\"); anything else is sent trimmed of that whitespace for the server to judge ({ submit }).",
   "clients": ["android", "ios"],
   "cases": [
     { "name": "a code is sent", "input": { "typed": "123456" }, "expected": { "submit": "123456" } },
     { "name": "surrounding whitespace is trimmed, inner spaces kept", "input": { "typed": " 123 456\n" }, "expected": { "submit": "123 456" } },
     { "name": "a short or odd code is still the server's to refuse", "input": { "typed": "12a" }, "expected": { "submit": "12a" } },
     { "name": "an empty field checks", "input": { "typed": "" }, "expected": "check" },
-    { "name": "spaces, a tab and a no-break space check", "input": { "typed": " \t " }, "expected": "check" }
+    { "name": "a space, a tab and a no-break space check", "input": { "typed": " \t\u00a0" }, "expected": "check" },
+    { "name": "a next-line character is whitespace, trimmed", "input": { "typed": "\u0085123456\u0085" }, "expected": { "submit": "123456" } },
+    { "name": "a control character isn't whitespace, kept", "input": { "typed": "\u001f123456" }, "expected": { "submit": "\u001f123456" } }
   ]
 }

@@ -8,6 +8,8 @@
     { "name": "empty", "input": { "text": "", "busy": false }, "expected": false },
     { "name": "spaces only", "input": { "text": "   ", "busy": false }, "expected": false },
     { "name": "a newline and a tab only", "input": { "text": "\n\t", "busy": false }, "expected": false },
-    { "name": "a request already running", "input": { "text": "Lakeside", "busy": true }, "expected": false }
+    { "name": "a request already running", "input": { "text": "Lakeside", "busy": true }, "expected": false },
+    { "name": "a next-line character only", "input": { "text": "\u0085", "busy": false }, "expected": false },
+    { "name": "a control character isn't whitespace", "input": { "text": "\u001f", "busy": false }, "expected": true }
   ]
 }
