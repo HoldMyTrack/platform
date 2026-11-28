@@ -1,15 +1,12 @@
 package dev.holdmytrack.android.flows
 
-import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.Until
-import dev.holdmytrack.android.MainActivity
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.RecordingService
-import dev.holdmytrack.android.tour.TourStore
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Before
@@ -201,12 +198,8 @@ class PanelFlowsTest {
     /** Opens the app on the demo account, as [signIn] does for the test account. */
     private fun signInDemo() {
         instrumentation.runOnMainSync { Session.clear() }
-        TourStore(context).let { it.save(it.load().copy(tour = true)) }
-        context.startActivity(
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
-        )
-        // A tap that lands before the screen settles is lost.
-        tapUntil({ still(id("demo").enabled(true)) }) { !device.hasObject(id("demo")) }
+        start()
+        tapAway(id("demo"))
         need(id("panel_handle"))
     }
 
@@ -265,7 +258,7 @@ class PanelFlowsTest {
         @JvmStatic
         fun deleteAccount() {
             restoreDevice()
-            account.delete()
+            if (::account.isInitialized) account.delete()
         }
     }
 }
