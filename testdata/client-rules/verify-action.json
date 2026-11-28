@@ -7,7 +7,7 @@
     { "name": "surrounding whitespace is trimmed, inner spaces kept", "input": { "typed": " 123 456\n" }, "expected": { "submit": "123 456" } },
     { "name": "a short or odd code is still the server's to refuse", "input": { "typed": "12a" }, "expected": { "submit": "12a" } },
     { "name": "an empty field checks", "input": { "typed": "" }, "expected": "check" },
-    { "name": "spaces, a tab and a no-break space check", "input": { "typed": " \t\u00a0" }, "expected": "check" },
+    { "name": "a space, a tab and a no-break space check", "input": { "typed": " \t\u00a0" }, "expected": "check" },
     { "name": "a next-line character is whitespace, trimmed", "input": { "typed": "\u0085123456\u0085" }, "expected": { "submit": "123456" } },
     { "name": "a control character isn't whitespace, kept", "input": { "typed": "\u001f123456" }, "expected": { "submit": "\u001f123456" } }
   ]

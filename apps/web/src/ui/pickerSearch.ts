@@ -1,3 +1,5 @@
+import { trimWhiteSpace } from '../whiteSpace.ts';
+
 /** What SearchPicker's search reads of a row. */
 export interface Searchable {
   value: string;
@@ -24,7 +26,7 @@ export function codePoints(s: string): number {
  *  query, then anything containing it; the caller's own order is kept within each rank. A row's
  *  detail (a type's count) is never searched. */
 export function search<T extends Searchable>(options: T[], query: string): T[] {
-  const q = fold(query.trim());
+  const q = fold(trimWhiteSpace(query));
   const ranked: T[][] = [[], [], []];
   for (const o of options) {
     const label = fold(o.label);
@@ -38,7 +40,7 @@ export function search<T extends Searchable>(options: T[], query: string): T[] {
 /** The rows a search shows: the matches, then, while no option's value or label equals the
  *  trimmed query, the row `create` builds from it (null when it can't be a value). */
 export function searchRows<T extends Searchable>(options: T[], query: string, create?: (text: string) => T | null): T[] {
-  const text = query.trim();
+  const text = trimWhiteSpace(query);
   if (!text) return options;
   const matches = search(options, text);
   const q = fold(text);

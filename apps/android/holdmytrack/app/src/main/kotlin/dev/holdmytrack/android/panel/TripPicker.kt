@@ -1,5 +1,7 @@
 package dev.holdmytrack.android.panel
 
+import dev.holdmytrack.android.trimWhiteSpace
+
 /** What Add to trip's picker sheet shows ([AddToTripSheet]). */
 object TripPicker {
     /** From this many Trips, the sheet has a search field. */
@@ -16,7 +18,7 @@ object TripPicker {
     /** The rows for [trips], newest first as the server sends them, over [target], keeping those
      *  whose name holds [query], ignoring case and the whitespace around it. */
     fun shown(trips: List<Entry>, target: List<String>, query: String): Shown {
-        val typed = query.trim()
+        val typed = query.trimWhiteSpace()
         val rows = trips.filter { typed.isEmpty() || it.name.contains(typed, ignoreCase = true) }
             .map { Row(it.id, it.trackIds.containsAll(target)) }
         return Shown(search = trips.size >= SEARCH_FROM, rows = rows)

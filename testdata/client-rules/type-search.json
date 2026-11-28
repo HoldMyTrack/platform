@@ -15,6 +15,7 @@
     { "name": "length is counted in code points: two of a four-point emoji fit ten", "input": { "options": [], "query": "🚴‍♀️🚴‍♀️", "maxLength": 10 }, "expected": { "shown": [], "add": "🚴‍♀️🚴‍♀️" } },
     { "name": "length is counted in code points: one past the limit", "input": { "options": [], "query": "🚴🚴🚴", "maxLength": 2 }, "expected": { "shown": [], "add": null } },
     { "name": "length is counted in code points: at the limit", "input": { "options": [], "query": "🚴🚴", "maxLength": 2 }, "expected": { "shown": [], "add": "🚴🚴" } },
-    { "name": "too long to add", "input": { "options": [{ "value": "walking", "label": "Walking", "count": 3 }], "query": "kayaking", "maxLength": 5 }, "expected": { "shown": [], "add": null } }
+    { "name": "too long to add", "input": { "options": [{ "value": "walking", "label": "Walking", "count": 3 }], "query": "kayaking", "maxLength": 5 }, "expected": { "shown": [], "add": null } },
+    { "name": "a next-line character around the query is whitespace", "input": { "options": [{ "value": "dog_walk", "label": "Dog Walk", "count": 4 }, { "value": "walk", "label": "Walk", "count": 1 }], "query": "\u0085walk\u0085", "maxLength": 50 }, "expected": { "shown": ["walk", "dog_walk"], "add": null } }
   ]
 }

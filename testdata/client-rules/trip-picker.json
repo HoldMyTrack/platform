@@ -424,6 +424,7 @@
         "search": false,
         "rows": []
       }
-    }
+    },
+    { "name": "a next-line character around the text is whitespace", "input": { "trips": [{ "id": "t1", "name": "Alps 2026", "trackIds": ["a", "b"] }, { "id": "t2", "name": "Weekend rides", "trackIds": ["a"] }, { "id": "t3", "name": "alpine lakes", "trackIds": [] }], "target": ["a"], "query": "\u0085alp\u0085" }, "expected": { "search": false, "rows": [{ "id": "t1", "holdsAll": true }, { "id": "t3", "holdsAll": false }] } }
   ]
 }

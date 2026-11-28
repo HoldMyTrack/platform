@@ -1,5 +1,6 @@
 package dev.holdmytrack.android.recording
 
+import dev.holdmytrack.android.trimWhiteSpace
 import java.text.Normalizer
 
 /** The Type picker's search (`testdata/client-rules/type-search.json`), the web's `pickerSearch.ts`. */
@@ -16,7 +17,7 @@ object TypeSearch {
      *  it, keeping [options]' order within each rank; the trimmed query is offered as [Result.add]
      *  while no option's label or value equals it and it fits [maxLength]. */
     fun search(options: List<Option>, query: String, maxLength: Int): Result {
-        val text = query.trim()
+        val text = query.trimWhiteSpace()
         if (text.isEmpty()) return Result(options, null)
         val q = fold(text)
         val ranked = List(3) { mutableListOf<Option>() }
