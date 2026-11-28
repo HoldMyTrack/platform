@@ -16,7 +16,10 @@ final class LaunchTests: XCTestCase {
         let app = launchSignedOut()
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.secureTextFields["password"].exists)
-        XCTAssertFalse(app.buttons["primary"].isEnabled, "Sign in waits for both fields")
+        // The app's only check, as on Android: a field left empty is said, not sent.
+        app.buttons["primary"].tap()
+        XCTAssertTrue(app.staticTexts["signInError"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["signInError"].label, "Enter an email and a password.")
         XCTAssertTrue(app.buttons["showPassword"].exists, "the password's show toggle")
         XCTAssertTrue(app.staticTexts["demoOr"].exists, "or before the demo")
         // Shown and hidden again, the password keeps what was typed.

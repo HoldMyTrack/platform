@@ -1,0 +1,15 @@
+{
+  "rule": "signInFields",
+  "description": "What the apps' Sign in does with its two fields (apps/docs/SPEC.md FR-1.1): an email that is only whitespace, or an empty password, is missing, said by the app; anything else is sent, the email trimmed and the password as typed, for the server to judge.",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "both filled are sent", "input": { "email": "ann@example.com", "password": "secret" }, "expected": { "submit": { "email": "ann@example.com", "password": "secret" } } },
+    { "name": "the email is trimmed, the password kept as typed", "input": { "email": " ann@example.com\n", "password": " secret " }, "expected": { "submit": { "email": "ann@example.com", "password": " secret " } } },
+    { "name": "a malformed email is still the server's to refuse", "input": { "email": "ann", "password": "x" }, "expected": { "submit": { "email": "ann", "password": "x" } } },
+    { "name": "a password of spaces is the server's to refuse", "input": { "email": "ann@example.com", "password": "   " }, "expected": { "submit": { "email": "ann@example.com", "password": "   " } } },
+    { "name": "an empty email is missing", "input": { "email": "", "password": "secret" }, "expected": "missing" },
+    { "name": "an email of spaces, a tab and a no-break space is missing", "input": { "email": " \t ", "password": "secret" }, "expected": "missing" },
+    { "name": "an empty password is missing", "input": { "email": "ann@example.com", "password": "" }, "expected": "missing" },
+    { "name": "both empty are missing", "input": { "email": "", "password": "" }, "expected": "missing" }
+  ]
+}

@@ -212,6 +212,12 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         func at(_ span: String, _ end: String) -> Date { Date(timeIntervalSince1970: input[span][end].double! / 1000) }
         return .bool(SyncSimilar.overlaps(at("a", "start"), at("a", "end"), at("b", "start"), at("b", "end")))
     },
+    "signInFields": { input in
+        switch SignInFields.of(email: input["email"].string!, password: input["password"].string!) {
+        case .missing: .string("missing")
+        case .submit(let email, let password): .object(["submit": .object(["email": .string(email), "password": .string(password)])])
+        }
+    },
     "verifyAction": { input in
         switch VerifyAction.of(input["typed"].string!) {
         case .check: .string("check")
